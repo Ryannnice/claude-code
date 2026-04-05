@@ -12,6 +12,7 @@ import type { FooterItem } from 'src/state/AppStateStore.js';
 import { getCwd } from 'src/utils/cwd.js';
 import { isQueuedCommandEditable, popAllEditable } from 'src/utils/messageQueueManager.js';
 import stripAnsi from 'strip-ansi';
+import { isBuddyEnabled } from '../../buddy/availability.js';
 import { companionReservedColumns } from '../../buddy/CompanionSprite.js';
 import { findBuddyTriggerPositions, useBuddyNotification } from '../../buddy/useBuddyNotification.js';
 import { FastModePicker } from '../../commands/fast/fast.js';
@@ -309,7 +310,7 @@ function PromptInput({
   const {
     companion: _companion,
     companionMuted
-  } = feature('BUDDY') ? getGlobalConfig() : {
+  } = isBuddyEnabled() ? getGlobalConfig() : {
     companion: undefined,
     companionMuted: undefined
   };
@@ -1786,7 +1787,7 @@ function PromptInput({
       }
       switch (footerItemSelected) {
         case 'companion':
-          if (feature('BUDDY')) {
+          if (isBuddyEnabled()) {
             selectFooterItem(null);
             void onSubmit('/buddy');
           }
@@ -1981,9 +1982,7 @@ function PromptInput({
     });
   }, [effortNotificationText, addNotification, removeNotification]);
   useBuddyNotification();
-  const companionSpeaking = feature('BUDDY') ?
-  // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
-  useAppState(s => s.companionReaction !== undefined) : false;
+  const companionSpeaking = useAppState(s => s.companionReaction !== undefined) && isBuddyEnabled();
   const {
     columns,
     rows
