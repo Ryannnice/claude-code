@@ -1,34 +1,56 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 Markdown 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Markdown } from 'src/components/Markdown.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from 'src/components/MessageResponse.js';
+// 复用 RejectedPlanMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { RejectedPlanMessage } from 'src/components/messages/UserToolResultMessage/RejectedPlanMessage.js';
+// 引入 BLACK_CIRCLE，将 src/constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { BLACK_CIRCLE } from 'src/constants/figures.js';
+// 复用 getModeColor 工具函数，把通用处理留在 src/utils/permissions/PermissionMode.js 中维护。
 import { getModeColor } from 'src/utils/permissions/PermissionMode.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { ToolProgressData } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolProgressData } from '../../Tool.js';
+// 类型依赖 { ProgressMessage } 来自 ../../types/message.js，用于校准工具调用的数据契约。
 import type { ProgressMessage } from '../../types/message.js';
+// 复用 getDisplayPath 工具函数，把通用处理留在 ../../utils/file.js 中维护。
 import { getDisplayPath } from '../../utils/file.js';
+// 复用 getPlan 工具函数，把通用处理留在 ../../utils/plans.js 中维护。
 import { getPlan } from '../../utils/plans.js';
+// 类型依赖 { ThemeName } 来自 ../../utils/theme.js，用于校准工具调用的数据契约。
 import type { ThemeName } from '../../utils/theme.js';
+// 类型依赖 { Output } 来自 ./ExitPlanModeV2Tool.js，用于校准工具调用的数据契约。
 import type { Output } from './ExitPlanModeV2Tool.js';
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(): React.ReactNode {
+  // 返回 `null`，作为工具调用这次计算的结果。
   return null;
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: Output, _progressMessagesForMessage: ProgressMessage<ToolProgressData>[], {
   theme: _theme
 }: {
   theme: ThemeName;
 }): React.ReactNode {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     plan,
     filePath
   } = output;
+  // isEmpty记录 `plan.trim` 是否成立，工具调用随后按该结果分支。
   const isEmpty = !plan || plan.trim() === '';
+  // displayPath 路径数据读取`getDisplayPath`，供工具调用后续处理使用。
   const displayPath = filePath ? getDisplayPath(filePath) : '';
+  // awaitingLeaderApproval保存`output.awaitingLeaderApproval`，供工具实现 UI后续判断或输出使用。
   const awaitingLeaderApproval = output.awaitingLeaderApproval;
 
   // Simplified message for empty plans
+  // 满足 `isEmpty` 时，工具调用执行该分支。
   if (isEmpty) {
+    // 返回 `<Box flexDirection="column" marginTop={1}>`，作为工具调用这次计算的结果。
     return <Box flexDirection="column" marginTop={1}>
         <Box flexDirection="row">
           <Text color={getModeColor('plan')}>{BLACK_CIRCLE}</Text>
@@ -38,7 +60,9 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
   }
 
   // When awaiting leader approval, show a different message
+  // 满足 `awaitingLeaderApproval` 时，工具调用执行该分支。
   if (awaitingLeaderApproval) {
+    // 返回 `<Box flexDirection="column" marginTop={1}>`，作为工具调用这次计算的结果。
     return <Box flexDirection="column" marginTop={1}>
         <Box flexDirection="row">
           <Text color={getModeColor('plan')}>{BLACK_CIRCLE}</Text>
@@ -52,6 +76,7 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
         </MessageResponse>
       </Box>;
   }
+  // 返回 `<Box flexDirection="column" marginTop={1}>`，作为工具调用这次计算的结果。
   return <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
         <Text color={getModeColor('plan')}>{BLACK_CIRCLE}</Text>
@@ -65,6 +90,7 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
       </MessageResponse>
     </Box>;
 }
+// renderToolUseRejectedMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseRejectedMessage({
   plan
 }: {
@@ -74,7 +100,9 @@ export function renderToolUseRejectedMessage({
 }: {
   theme: ThemeName;
 }): React.ReactNode {
+  // planContent读取`getPlan`，供工具调用后续处理使用。
   const planContent = plan ?? getPlan() ?? 'No plan found';
+  // 返回 `<Box flexDirection="column">`，作为工具调用这次计算的结果。
   return <Box flexDirection="column">
       <RejectedPlanMessage plan={planContent} />
     </Box>;

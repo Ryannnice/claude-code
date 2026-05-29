@@ -1,14 +1,24 @@
+// 接入 AGENT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
+// 接入 ASK_USER_QUESTION_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
+// 接入 ENTER_PLAN_MODE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { ENTER_PLAN_MODE_TOOL_NAME } from '../../tools/EnterPlanModeTool/constants.js'
+// 接入 EXIT_PLAN_MODE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js'
+// 接入 SKILL_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { SKILL_TOOL_NAME } from '../../tools/SkillTool/constants.js'
+// 复用 getIsGit 工具函数，把通用处理留在 ../../utils/git.js 中维护。
 import { getIsGit } from '../../utils/git.js'
+// 引入 registerBundledSkill，将 ../bundledSkills.js 中已经封装好的能力接到本文件流程里。
 import { registerBundledSkill } from '../bundledSkills.js'
 
+// MIN_AGENTS 集合 命名 `5`，让后续代码直接表达这个值的用途。
 const MIN_AGENTS = 5
+// MAX_AGENTS 集合 命名 `30`，让后续代码直接表达这个值的用途。
 const MAX_AGENTS = 30
 
+// WORKER_INSTRUCTIONS 集合固定为 ``After you finish implementing the change:`，作为batch后续展示或比较的基准。
 const WORKER_INSTRUCTIONS = `After you finish implementing the change:
 1. **Simplify** — Invoke the \`${SKILL_TOOL_NAME}\` tool with \`skill: "simplify"\` to review and clean up your changes.
 2. **Run unit tests** — Run the project's test suite (check for package.json scripts, Makefile targets, or common commands like \`npm test\`, \`bun test\`, \`pytest\`, \`go test\`). If tests fail, fix them.
@@ -16,7 +26,9 @@ const WORKER_INSTRUCTIONS = `After you finish implementing the change:
 4. **Commit and push** — Commit all changes with a clear message, push the branch, and create a PR with \`gh pr create\`. Use a descriptive title. If \`gh\` is not available or the push fails, note it in your final message.
 5. **Report** — End with a single line: \`PR: <url>\` so the coordinator can track it. If no PR was created, end with \`PR: none — <reason>\`.`
 
+// buildPrompt 封装batch的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildPrompt(instruction: string): string {
+  // 返回 ``# Batch: Parallel Work Orchestration`，作为batch这次计算的结果。
   return `# Batch: Parallel Work Orchestration
 
 You are orchestrating a large, parallelizable change across this codebase.
@@ -88,8 +100,10 @@ When all agents have reported, render the final table and a one-line summary (e.
 `
 }
 
+// NOT_A_GIT_REPO_MESSAGE 消息数据固定为 ``This is not a git repository. The \`/batch\` command req...`，作为batch后续展示或比较的基准。
 const NOT_A_GIT_REPO_MESSAGE = `This is not a git repository. The \`/batch\` command requires a git repo because it spawns agents in isolated git worktrees and creates PRs from each. Initialize a repo first, or run this from inside an existing one.`
 
+// MISSING_INSTRUCTION_MESSAGE 消息数据保存``Provide an instruction describing the batch change you w...`，作为后续固定文本处理的输入。
 const MISSING_INSTRUCTION_MESSAGE = `Provide an instruction describing the batch change you want to make.
 
 Examples:
@@ -97,7 +111,9 @@ Examples:
   /batch replace all uses of lodash with native equivalents
   /batch add type annotations to all untyped function parameters`
 
+// registerBatchSkill 封装batch的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function registerBatchSkill(): void {
+  // 调用 registerBundledSkill，触发batch此处需要的副作用。
   registerBundledSkill({
     name: 'batch',
     description:
@@ -107,17 +123,25 @@ export function registerBatchSkill(): void {
     argumentHint: '<instruction>',
     userInvocable: true,
     disableModelInvocation: true,
+    // getPromptForCommand 根据 args 读取或计算batch需要的结果。
     async getPromptForCommand(args) {
+      // instruction格式化`args.trim`，供batch后续处理使用。
       const instruction = args.trim()
+      // instruction缺失时提前走兜底路径，避免batch继续依赖无效输入。
       if (!instruction) {
+        // 返回列表结果，保留batch已经排好的条目顺序。
         return [{ type: 'text', text: MISSING_INSTRUCTION_MESSAGE }]
       }
 
+      // isGit记录 `getIsGit` 是否成立，batch随后按该结果分支。
       const isGit = await getIsGit()
+      // isGit缺失时提前走兜底路径，避免batch继续依赖无效输入。
       if (!isGit) {
+        // 返回列表结果，保留batch已经排好的条目顺序。
         return [{ type: 'text', text: NOT_A_GIT_REPO_MESSAGE }]
       }
 
+      // 返回列表结果，保留batch已经排好的条目顺序。
       return [{ type: 'text', text: buildPrompt(instruction) }]
     },
   })

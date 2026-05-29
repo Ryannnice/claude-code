@@ -1,7 +1,12 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 import { feature } from 'bun:bundle'
+// 复用 satisfies 工具函数，把通用处理留在 src/utils/semver.js 中维护。
 import { satisfies } from 'src/utils/semver.js'
+// 复用 isRunningWithBun 工具函数，把通用处理留在 ../utils/bundledMode.js 中维护。
 import { isRunningWithBun } from '../utils/bundledMode.js'
+// 复用 getPlatform 工具函数，把通用处理留在 ../utils/platform.js 中维护。
 import { getPlatform } from '../utils/platform.js'
+// 类型依赖 { KeybindingBlock } 来自 ./types.js，用于校准default Bindings的数据契约。
 import type { KeybindingBlock } from './types.js'
 
 /**
@@ -12,12 +17,14 @@ import type { KeybindingBlock } from './types.js'
 // Platform-specific image paste shortcut:
 // - Windows: alt+v (ctrl+v is system paste)
 // - Other platforms: ctrl+v
+// IMAGE_PASTE_KEY读取`getPlatform`，供default Bindings后续处理使用。
 const IMAGE_PASTE_KEY = getPlatform() === 'windows' ? 'alt+v' : 'ctrl+v'
 
 // Modifier-only chords (like shift+tab) may fail on Windows Terminal without VT mode
 // See: https://github.com/microsoft/terminal/issues/879#issuecomment-618801651
 // Node enabled VT mode in 24.2.0 / 22.17.0: https://github.com/nodejs/node/pull/58358
 // Bun enabled VT mode in 1.2.23: https://github.com/oven-sh/bun/pull/21161
+// SUPPORTS_TERMINAL_VT_MODE 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const SUPPORTS_TERMINAL_VT_MODE =
   getPlatform() !== 'windows' ||
   (isRunningWithBun()
@@ -27,8 +34,10 @@ const SUPPORTS_TERMINAL_VT_MODE =
 // Platform-specific mode cycle shortcut:
 // - Windows without VT mode: meta+m (shift+tab doesn't work reliably)
 // - Other platforms: shift+tab
+// MODE_CYCLE_KEY 命名 `SUPPORTS_TERMINAL_VT_MODE ? 'shift+tab' : 'meta+m'`，让后续代码直接表达这个值的用途。
 const MODE_CYCLE_KEY = SUPPORTS_TERMINAL_VT_MODE ? 'shift+tab' : 'meta+m'
 
+// DEFAULT_BINDINGS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const DEFAULT_BINDINGS: KeybindingBlock[] = [
   {
     context: 'Global',

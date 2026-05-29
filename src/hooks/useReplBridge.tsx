@@ -1,31 +1,58 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 React、useCallback、useEffect、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useEffect, useRef } from 'react';
+// 引入 setMainLoopModelOverride，将 ../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { setMainLoopModelOverride } from '../bootstrap/state.js';
+// 引入 BridgePermissionCallbacks、BridgePermissionResponse、isBridgePermissionResponse，将 ../bridge/bridgePermissionCallbacks.js 中已经封装好的能力接到本文件流程里。
 import { type BridgePermissionCallbacks, type BridgePermissionResponse, isBridgePermissionResponse } from '../bridge/bridgePermissionCallbacks.js';
+// 引入 buildBridgeConnectUrl，将 ../bridge/bridgeStatusUtil.js 中已经封装好的能力接到本文件流程里。
 import { buildBridgeConnectUrl } from '../bridge/bridgeStatusUtil.js';
+// 引入 extractInboundMessageFields，将 ../bridge/inboundMessages.js 中已经封装好的能力接到本文件流程里。
 import { extractInboundMessageFields } from '../bridge/inboundMessages.js';
+// 类型依赖 { BridgeState, ReplBridgeHandle } 来自 ../bridge/replBridge.js，用于校准React hook 状态流的数据契约。
 import type { BridgeState, ReplBridgeHandle } from '../bridge/replBridge.js';
+// 引入 setReplBridgeHandle，将 ../bridge/replBridgeHandle.js 中已经封装好的能力接到本文件流程里。
 import { setReplBridgeHandle } from '../bridge/replBridgeHandle.js';
+// 类型依赖 { Command } 来自 ../commands.js，用于校准React hook 状态流的数据契约。
 import type { Command } from '../commands.js';
+// 引入 getSlashCommandToolSkills、isBridgeSafeCommand，将 ../commands.js 中已经封装好的能力接到本文件流程里。
 import { getSlashCommandToolSkills, isBridgeSafeCommand } from '../commands.js';
+// 引入 getRemoteSessionUrl，将 ../constants/product.js 中已经封装好的能力接到本文件流程里。
 import { getRemoteSessionUrl } from '../constants/product.js';
+// 引入 useNotifications，将 ../context/notifications.js 中已经封装好的能力接到本文件流程里。
 import { useNotifications } from '../context/notifications.js';
+// 类型依赖 { PermissionMode, SDKMessage } 来自 ../entrypoints/agentSdkTypes.js，用于校准React hook 状态流的数据契约。
 import type { PermissionMode, SDKMessage } from '../entrypoints/agentSdkTypes.js';
+// 类型依赖 { SDKControlResponse } 来自 ../entrypoints/sdk/controlTypes.js，用于校准React hook 状态流的数据契约。
 import type { SDKControlResponse } from '../entrypoints/sdk/controlTypes.js';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js';
+// 引入 useAppState、useAppStateStore、useSetAppState，将 ../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState, useAppStateStore, useSetAppState } from '../state/AppState.js';
+// 类型依赖 { Message } 来自 ../types/message.js，用于校准React hook 状态流的数据契约。
 import type { Message } from '../types/message.js';
+// 复用 getCwd 工具函数，把通用处理留在 ../utils/cwd.js 中维护。
 import { getCwd } from '../utils/cwd.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../utils/errors.js 中维护。
 import { errorMessage } from '../utils/errors.js';
+// 复用 enqueue 工具函数，把通用处理留在 ../utils/messageQueueManager.js 中维护。
 import { enqueue } from '../utils/messageQueueManager.js';
+// 复用 buildSystemInitMessage 工具函数，把通用处理留在 ../utils/messages/systemInit.js 中维护。
 import { buildSystemInitMessage } from '../utils/messages/systemInit.js';
+// 复用 createBridgeStatusMessage、createSystemMessage 工具函数，把通用处理留在 ../utils/messages.js 中维护。
 import { createBridgeStatusMessage, createSystemMessage } from '../utils/messages.js';
+// 复用 getAutoModeUnavailableNotification、getAutoModeUnavailableReason、isAutoModeGateEnabled、isBypassPermissionsModeDisabled、transitionPermissionMode 工具函数，把通用处理留在 ../utils/permissions/permissionSetup.js 中维护。
 import { getAutoModeUnavailableNotification, getAutoModeUnavailableReason, isAutoModeGateEnabled, isBypassPermissionsModeDisabled, transitionPermissionMode } from '../utils/permissions/permissionSetup.js';
+// 复用 getLeaderToolUseConfirmQueue 工具函数，把通用处理留在 ../utils/swarm/leaderPermissionBridge.js 中维护。
 import { getLeaderToolUseConfirmQueue } from '../utils/swarm/leaderPermissionBridge.js';
 
 /** How long after a failure before replBridgeEnabled is auto-cleared (stops retries). */
+// BRIDGE_FAILURE_DISMISS_MS 集合 命名 `10_000`，让后续代码直接表达这个值的用途。
 export const BRIDGE_FAILURE_DISMISS_MS = 10_000;
 
 /**
@@ -37,6 +64,7 @@ export const BRIDGE_FAILURE_DISMISS_MS = 10_000;
  * top stuck client generated 2,879 × 401/day alone (17% of all 401s on the
  * route).
  */
+// MAX_CONSECUTIVE_INIT_FAILURES 集合保存`3`，供后续判断或组装使用。
 const MAX_CONSECUTIVE_INIT_FAILURES = 3;
 
 /**
@@ -50,57 +78,89 @@ const MAX_CONSECUTIVE_INIT_FAILURES = 3;
  *
  * Inbound messages from claude.ai are injected into the REPL via queuedCommands.
  */
+// useReplBridge 封装useReplBridge的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useReplBridge(messages: Message[], setMessages: (action: React.SetStateAction<Message[]>) => void, abortControllerRef: React.RefObject<AbortController | null>, commands: readonly Command[], mainLoopModel: string): {
+  // 这个回调绑定到 sendBridgeResult: () => void;，负责React hook 状态流在该局部场景下的响应。
   sendBridgeResult: () => void;
 } {
+  // handleRef 引用保存 hook 状态，让React hook use Repl B...跨渲染复用同一个容器。
   const handleRef = useRef<ReplBridgeHandle | null>(null);
+  // teardownPromiseRef 引用保存 hook 状态，让React hook use Repl B...跨渲染复用同一个容器。
   const teardownPromiseRef = useRef<Promise<void> | undefined>(undefined);
+  // lastWrittenIndexRef 引用保存`useRef`，供React hook后续处理使用。
   const lastWrittenIndexRef = useRef(0);
   // Tracks UUIDs already flushed as initial messages. Persists across
   // bridge reconnections so Bridge #2+ only sends new messages — sending
   // duplicate UUIDs causes the server to kill the WebSocket.
+  // flushedUUIDsRef 引用保存`useRef`，供React hook后续处理使用。
   const flushedUUIDsRef = useRef(new Set<string>());
+  // failureTimeoutRef 引用保存 hook 状态，让React hook use Repl B...跨渲染复用同一个容器。
   const failureTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // Persists across effect re-runs (unlike the effect's local state). Reset
   // only on successful init. Hits MAX_CONSECUTIVE_INIT_FAILURES → fuse blown
   // for the session, regardless of replBridgeEnabled re-toggling.
+  // consecutiveFailuresRef 引用保存`useRef`，供React hook后续处理使用。
   const consecutiveFailuresRef = useRef(0);
+  // setAppState 状态保存`useSetAppState`，供React hook后续处理使用。
   const setAppState = useSetAppState();
+  // commandsRef 引用保存`useRef`，供React hook后续处理使用。
   const commandsRef = useRef(commands);
+  // current更新为 `commands`，确保useReplBridge后续读取最新状态。
   commandsRef.current = commands;
+  // mainLoopModelRef 引用保存`useRef`，供React hook后续处理使用。
   const mainLoopModelRef = useRef(mainLoopModel);
+  // current更新为 `mainLoopModel`，确保useReplBridge后续读取最新状态。
   mainLoopModelRef.current = mainLoopModel;
+  // messagesRef 引用保存`useRef`，供React hook后续处理使用。
   const messagesRef = useRef(messages);
+  // current更新为 `messages`，确保useReplBridge后续读取最新状态。
   messagesRef.current = messages;
+  // store保存`useAppStateStore`，供React hook后续处理使用。
   const store = useAppStateStore();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     addNotification
   } = useNotifications();
+  // replBridgeEnabled保存`feature`，供React hook后续处理使用。
   const replBridgeEnabled = feature('BRIDGE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s => s.replBridgeEnabled 完成React hook 状态流里的对应操作。
   useAppState(s => s.replBridgeEnabled) : false;
+  // replBridgeConnected保存`feature`，供React hook后续处理使用。
   const replBridgeConnected = feature('BRIDGE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s_0 => s_0.replBridgeConnected 完成React hook 状态流里的对应操作。
   useAppState(s_0 => s_0.replBridgeConnected) : false;
+  // replBridgeOutboundOnly保存`feature`，供React hook后续处理使用。
   const replBridgeOutboundOnly = feature('BRIDGE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s_1 => s_1.replBridgeOutboundOnly 完成React hook 状态流里的对应操作。
   useAppState(s_1 => s_1.replBridgeOutboundOnly) : false;
+  // replBridgeInitialName保存`feature`，供React hook后续处理使用。
   const replBridgeInitialName = feature('BRIDGE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s_2 => s_2.replBridgeInitialName 完成React hook 状态流里的对应操作。
   useAppState(s_2 => s_2.replBridgeInitialName) : undefined;
 
   // Initialize/teardown bridge when enabled state changes.
   // Passes current messages as initialMessages so the remote session
   // starts with the existing conversation context (e.g. from /bridge).
+  // 调用 useEffect，触发React hook此处需要的副作用。
   useEffect(() => {
     // feature() check must use positive pattern for dead code elimination —
     // negative pattern (if (!feature(...)) return) does NOT eliminate
     // dynamic imports below.
+    // 满足 `feature('BRIDGE_MODE')` 时，React hook执行该分支。
     if (feature('BRIDGE_MODE')) {
+      // replBridgeEnabled缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
       if (!replBridgeEnabled) return;
+      // outboundOnly保存`replBridgeOutboundOnly`，供后续判断或组装使用。
       const outboundOnly = replBridgeOutboundOnly;
+      // notifyBridgeFailed 封装useReplBridge的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
       function notifyBridgeFailed(detail?: string): void {
+        // 满足 `outboundOnly` 时，React hook执行该分支。
         if (outboundOnly) return;
+        // 调用 addNotification，触发React hook此处需要的副作用。
         addNotification({
           key: 'bridge-failed',
           jsx: <>
@@ -110,44 +170,64 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           priority: 'immediate'
         });
       }
+      // 满足 `consecutiveFailuresRef.current >= MAX_CONSECUTIVE` 时，React hook执行该分支。
       if (consecutiveFailuresRef.current >= MAX_CONSECUTIVE_INIT_FAILURES) {
+        // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[bridge:repl] Hook: ${consecutiveFailuresRef.current} consecutive init failures, not retrying this session`);
         // Clear replBridgeEnabled so /remote-control doesn't mistakenly show
         // BridgeDisconnectDialog for a bridge that never connected.
+        // fuseHint保存`'disabled after repeated failures · restart to retry'`，作为后续固定文本处理的输入。
         const fuseHint = 'disabled after repeated failures · restart to retry';
+        // 调用 notifyBridgeFailed，触发React hook此处需要的副作用。
         notifyBridgeFailed(fuseHint);
+        // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
         setAppState(prev => {
+          // 组合条件 `prev.replBridgeError === fuseHint && !prev.replBridgeEnabled` 成立时，React hook 状态流才启用这条专门路径。
           if (prev.replBridgeError === fuseHint && !prev.replBridgeEnabled) return prev;
+          // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
           return {
             ...prev,
             replBridgeError: fuseHint,
             replBridgeEnabled: false
           };
         });
+        // React hook use Repl Bridge在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // cancelled标记React hook use Repl B...是否启用对应路径。
       let cancelled = false;
       // Capture messages.length now so we don't re-send initial messages
       // through writeMessages after the bridge connects.
+      // initialMessageCount 消息数据保存 `messages.length` 的判断结果，供React hook use Repl B...后续分支直接复用。
       const initialMessageCount = messages.length;
+      // 调用 void，触发React hook此处需要的副作用。
       void (async () => {
+        // 保护这一段可能失败的React hook 状态流操作，确保异常能进入相邻错误处理。
         try {
           // Wait for any in-progress teardown to complete before registering
           // a new environment. Without this, the deregister HTTP call from
           // the previous teardown races with the new register call, and the
           // server may tear down the freshly-created environment.
+          // 满足 `teardownPromiseRef.current` 时，React hook执行该分支。
           if (teardownPromiseRef.current) {
+            // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
             logForDebugging('[bridge:repl] Hook: waiting for previous teardown to complete before re-init');
+            // 等待 `teardownPromiseRef.current` 完成，再继续React hook use Repl Bridge的异步流程。
             await teardownPromiseRef.current;
+            // current更新为 `undefined`，确保useReplBridge后续读取最新状态。
             teardownPromiseRef.current = undefined;
+            // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
             logForDebugging('[bridge:repl] Hook: previous teardown complete, proceeding with re-init');
           }
+          // 满足 `cancelled` 时，React hook执行该分支。
           if (cancelled) return;
 
           // Dynamic import so the module is tree-shaken in external builds
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             initReplBridge
           } = await import('../bridge/initReplBridge.js');
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             shouldShowAppUpgradeMessage
           } = await import('../bridge/envLessBridgeConfig.js');
@@ -161,11 +241,15 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           // pointer-clear so the session survives clean exits, not just
           // crashes. Non-assistant bridges clear the pointer on teardown
           // (crash-recovery only).
+          // perpetual标记React hook use Repl B...是否启用对应路径。
           let perpetual = false;
+          // 满足 `feature('KAIROS')` 时，React hook执行该分支。
           if (feature('KAIROS')) {
+            // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
             const {
               isAssistantMode
             } = await import('../assistant/index.js');
+            // perpetual更新为 `isAssistantMode()`，确保useReplBridge后续读取最新状态。
             perpetual = isAssistantMode();
           }
 
@@ -177,30 +261,44 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           // disk write before we enqueue with the @path prefix. Caller doesn't
           // await — messages with attachments just land in the queue slightly
           // later, which is fine (web messages aren't rapid-fire).
+          // handleInboundMessage 封装useReplBridge的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
           async function handleInboundMessage(msg: SDKMessage): Promise<void> {
+            // 保护这一段可能失败的React hook 状态流操作，确保异常能进入相邻错误处理。
             try {
+              // fields 集合保存`extractInboundMessageFields`，供React hook后续处理使用。
               const fields = extractInboundMessageFields(msg);
+              // fields 集合缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
               if (!fields) return;
+              // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
               const {
                 uuid
               } = fields;
 
               // Dynamic import keeps the bridge code out of non-BRIDGE_MODE builds.
+              // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
               const {
                 resolveAndPrepend
               } = await import('../bridge/inboundAttachments.js');
+              // sanitized保存`fields.content`，供后续判断或组装使用。
               let sanitized = fields.content;
+              // 满足 `feature('KAIROS_GITHUB_WEBHOOKS')` 时，React hook执行该分支。
               if (feature('KAIROS_GITHUB_WEBHOOKS')) {
                 /* eslint-disable @typescript-eslint/no-require-imports */
+                // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
                 const {
                   sanitizeInboundWebhookContent
                 } = require('../bridge/webhookSanitizer.js') as typeof import('../bridge/webhookSanitizer.js');
                 /* eslint-enable @typescript-eslint/no-require-imports */
+                // sanitized更新为 `sanitizeInboundWebhookContent(fields.content)`，确保useReplBridge后续读取最新状态。
                 sanitized = sanitizeInboundWebhookContent(fields.content);
               }
+              // 文本内容读取`resolveAndPrepend`，供React hook后续处理使用。
               const content = await resolveAndPrepend(msg, sanitized);
+              // preview格式化`content.slice`，供React hook后续处理使用。
               const preview = typeof content === 'string' ? content.slice(0, 80) : `[${content.length} content blocks]`;
+              // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
               logForDebugging(`[bridge:repl] Injecting inbound user message: ${preview}${uuid ? ` uuid=${uuid}` : ''}`);
+              // 调用 enqueue，触发React hook此处需要的副作用。
               enqueue({
                 value: content,
                 mode: 'prompt' as const,
@@ -214,6 +312,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                 bridgeOrigin: true
               });
             } catch (e) {
+              // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
               logForDebugging(`[bridge:repl] handleInboundMessage failed: ${e}`, {
                 level: 'error'
               });
@@ -221,42 +320,65 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           }
 
           // State change callback — maps bridge lifecycle events to AppState.
+          // handleStateChange 封装useReplBridge的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
           function handleStateChange(state: BridgeState, detail_0?: string): void {
+            // 满足 `cancelled` 时，React hook执行该分支。
             if (cancelled) return;
+            // 满足 `outboundOnly` 时，React hook执行该分支。
             if (outboundOnly) {
+              // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
               logForDebugging(`[bridge:repl] Mirror state=${state}${detail_0 ? ` detail=${detail_0}` : ''}`);
               // Sync replBridgeConnected so the forwarding effect starts/stops
               // writing as the transport comes up or dies.
+              // 当 `state` 匹配 `'failed'` 时，React hook执行对应分支。
               if (state === 'failed') {
+                // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
                 setAppState(prev_3 => {
+                  // prev_3.replBridgeConnected缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
                   if (!prev_3.replBridgeConnected) return prev_3;
+                  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                   return {
                     ...prev_3,
                     replBridgeConnected: false
                   };
                 });
+              // React hook use Repl Bridge在这里处理 `} else if (state === 'ready' || state === 'connected') {`，完成这一小步状态转换。
               } else if (state === 'ready' || state === 'connected') {
+                // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
                 setAppState(prev_4 => {
+                  // 满足 `prev_4.replBridgeConnected` 时，React hook执行该分支。
                   if (prev_4.replBridgeConnected) return prev_4;
+                  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                   return {
                     ...prev_4,
                     replBridgeConnected: true
                   };
                 });
               }
+              // React hook use Repl Bridge在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
+            // handle保存`handleRef.current`，供React hook use Repl B...后续判断或输出使用。
             const handle = handleRef.current;
+            // 按照 state 的取值选择React hook 状态流的具体处理分支。
             switch (state) {
               case 'ready':
+                // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
                 setAppState(prev_9 => {
+                  // connectUrl构建`buildBridgeConnectUrl`，供React hook后续处理使用。
                   const connectUrl = handle && handle.environmentId !== '' ? buildBridgeConnectUrl(handle.environmentId, handle.sessionIngressUrl) : prev_9.replBridgeConnectUrl;
+                  // sessionUrl 会话数据读取`getRemoteSessionUrl`，供React hook后续处理使用。
                   const sessionUrl = handle ? getRemoteSessionUrl(handle.bridgeSessionId, handle.sessionIngressUrl) : prev_9.replBridgeSessionUrl;
+                  // envId 命名 `handle?.environmentId`，让后续代码直接表达这个值的用途。
                   const envId = handle?.environmentId;
+                  // sessionId 会话数据 命名 `handle?.bridgeSessionId`，让后续代码直接表达这个值的用途。
                   const sessionId = handle?.bridgeSessionId;
+                  // 组合条件 `prev_9.replBridgeConnected && !prev_9.replBridgeS` 成立时，React hook 状态流才启用这条专门路径。
                   if (prev_9.replBridgeConnected && !prev_9.replBridgeSessionActive && !prev_9.replBridgeReconnecting && prev_9.replBridgeConnectUrl === connectUrl && prev_9.replBridgeSessionUrl === sessionUrl && prev_9.replBridgeEnvironmentId === envId && prev_9.replBridgeSessionId === sessionId) {
+                    // 返回 `prev_9`，作为React hook 状态流这次计算的结果。
                     return prev_9;
                   }
+                  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                   return {
                     ...prev_9,
                     replBridgeConnected: true,
@@ -269,11 +391,15 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                     replBridgeError: undefined
                   };
                 });
+                // 结束这个分支或循环，避免React hook 状态流继续落入后续路径。
                 break;
               case 'connected':
                 {
+                  // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
                   setAppState(prev_8 => {
+                    // 满足 `prev_8.replBridgeSessionActive` 时，React hook执行该分支。
                     if (prev_8.replBridgeSessionActive) return prev_8;
+                    // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                     return {
                       ...prev_8,
                       replBridgeConnected: true,
@@ -288,12 +414,19 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   // to put system/init on the REPL-bridge wire. Skills load is
                   // async (memoized, cheap after REPL startup); fire-and-forget
                   // so the connected-state transition isn't blocked.
+                  // 满足 `getFeatureValue_CACHED_MAY_BE_STALE('tengu_bridge_system_init', false)` 时，React hook执行该分支。
                   if (getFeatureValue_CACHED_MAY_BE_STALE('tengu_bridge_system_init', false)) {
+                    // 调用 void，触发React hook此处需要的副作用。
                     void (async () => {
+                      // 保护这一段可能失败的React hook 状态流操作，确保异常能进入相邻错误处理。
                       try {
+                        // skills 集合读取`getSlashCommandToolSkills`，供React hook后续处理使用。
                         const skills = await getSlashCommandToolSkills(getCwd());
+                        // 满足 `cancelled` 时，React hook执行该分支。
                         if (cancelled) return;
+                        // state_0 状态读取`store.getState`，供React hook后续处理使用。
                         const state_0 = store.getState();
+                        // 调用 handleRef.current?.writeSdkMessages([buildSystemInitMessage({，完成这一处局部操作。
                         handleRef.current?.writeSdkMessages([buildSystemInitMessage({
                           // tools/mcpClients/plugins redacted for REPL-bridge:
                           // MCP-prefixed tool names and server names leak which
@@ -318,28 +451,37 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                           fastMode: state_0.fastMode
                         })]);
                       } catch (err_0) {
+                        // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
                         logForDebugging(`[bridge:repl] Failed to send system/init: ${errorMessage(err_0)}`, {
                           level: 'error'
                         });
                       }
                     })();
                   }
+                  // 结束这个分支或循环，避免React hook 状态流继续落入后续路径。
                   break;
                 }
               case 'reconnecting':
+                // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
                 setAppState(prev_7 => {
+                  // 满足 `prev_7.replBridgeReconnecting` 时，React hook执行该分支。
                   if (prev_7.replBridgeReconnecting) return prev_7;
+                  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                   return {
                     ...prev_7,
                     replBridgeReconnecting: true,
                     replBridgeSessionActive: false
                   };
                 });
+                // 结束这个分支或循环，避免React hook 状态流继续落入后续路径。
                 break;
               case 'failed':
                 // Clear any previous failure dismiss timer
+                // 调用 clearTimeout，触发React hook此处需要的副作用。
                 clearTimeout(failureTimeoutRef.current);
+                // 调用 notifyBridgeFailed，触发React hook此处需要的副作用。
                 notifyBridgeFailed(detail_0);
+                // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
                 setAppState(prev_5 => ({
                   ...prev_5,
                   replBridgeError: detail_0,
@@ -348,11 +490,17 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   replBridgeConnected: false
                 }));
                 // Auto-disable after timeout so the hook stops retrying.
+                // current更新为 `setTimeout(() => {`，确保useReplBridge后续读取最新状态。
                 failureTimeoutRef.current = setTimeout(() => {
+                  // 满足 `cancelled` 时，React hook执行该分支。
                   if (cancelled) return;
+                  // current更新为 `undefined`，确保useReplBridge后续读取最新状态。
                   failureTimeoutRef.current = undefined;
+                  // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
                   setAppState(prev_6 => {
+                    // prev_6.replBridgeError 错误信息缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
                     if (!prev_6.replBridgeError) return prev_6;
+                    // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                     return {
                       ...prev_6,
                       replBridgeEnabled: false,
@@ -360,59 +508,87 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                     };
                   });
                 }, BRIDGE_FAILURE_DISMISS_MS);
+                // 结束这个分支或循环，避免React hook 状态流继续落入后续路径。
                 break;
             }
           }
 
           // Map of pending bridge permission response handlers, keyed by request_id.
           // Each entry is an onResponse handler waiting for CCR to reply.
+          // pendingPermissionHandlers 权限数据封装成回调，供React hook use Repl B...在事件触发或异步步骤中调用。
           const pendingPermissionHandlers = new Map<string, (response: BridgePermissionResponse) => void>();
 
           // Dispatch incoming control_response messages to registered handlers
+          // handlePermissionResponse 封装useReplBridge的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
           function handlePermissionResponse(msg_0: SDKControlResponse): void {
+            // requestId 请求数据保存`msg_0.response?.request_id`，供React hook use Repl B...后续判断或输出使用。
             const requestId = msg_0.response?.request_id;
+            // requestId 请求数据缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
             if (!requestId) return;
+            // handler读取`pendingPermissionHandlers.get`，供React hook后续处理使用。
             const handler = pendingPermissionHandlers.get(requestId);
+            // handler缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
             if (!handler) {
+              // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
               logForDebugging(`[bridge:repl] No handler for control_response request_id=${requestId}`);
+              // React hook use Repl Bridge在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
+            // 调用 pendingPermissionHandlers.delete，触发React hook此处需要的副作用。
             pendingPermissionHandlers.delete(requestId);
             // Extract the permission decision from the control_response payload
+            // inner保存`msg_0.response`，供React hook use Repl B...后续判断或输出使用。
             const inner = msg_0.response;
+            // 组合条件 `inner.subtype === 'success' && inner.response && isBridgePermissionResponse(inner...` 成立时，React hook 状态流才启用这条专门路径。
             if (inner.subtype === 'success' && inner.response && isBridgePermissionResponse(inner.response)) {
+              // 调用 handler，触发React hook此处需要的副作用。
               handler(inner.response);
             }
           }
+          // handle_0保存`initReplBridge`，供React hook后续处理使用。
           const handle_0 = await initReplBridge({
             outboundOnly,
             tags: outboundOnly ? ['ccr-mirror'] : undefined,
             onInboundMessage: handleInboundMessage,
             onPermissionResponse: handlePermissionResponse,
+            // onInterrupt 使用 无 完成React hook 状态流里的对应操作。
             onInterrupt() {
+              // 调用 abortControllerRef.current?.abort();，完成这一处局部操作。
               abortControllerRef.current?.abort();
             },
+            // onSetModel 使用 model 完成React hook 状态流里的对应操作。
             onSetModel(model) {
+              // resolved标记React hook use Repl B...是否启用对应路径。
               const resolved = model === 'default' ? null : model ?? null;
+              // setMainLoopModelOverride 写入新的状态值，使React hook 状态流后续读取保持一致。
               setMainLoopModelOverride(resolved);
+              // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
               setAppState(prev_10 => {
+                // 满足 `prev_10.mainLoopModelForSession === resolved` 时，React hook执行该分支。
                 if (prev_10.mainLoopModelForSession === resolved) return prev_10;
+                // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                 return {
                   ...prev_10,
                   mainLoopModelForSession: resolved
                 };
               });
             },
+            // onSetMaxThinkingTokens 使用 maxTokens 完成React hook 状态流里的对应操作。
             onSetMaxThinkingTokens(maxTokens) {
+              // enabled标记React hook use Repl B...是否启用对应路径。
               const enabled = maxTokens !== null;
+              // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
               setAppState(prev_11 => {
+                // 满足 `prev_11.thinkingEnabled === enabled` 时，React hook执行该分支。
                 if (prev_11.thinkingEnabled === enabled) return prev_11;
+                // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                 return {
                   ...prev_11,
                   thinkingEnabled: enabled
                 };
               });
             },
+            // onSetPermissionMode 使用 mode 完成React hook 状态流里的对应操作。
             onSetPermissionMode(mode) {
               // Policy guards MUST fire before transitionPermissionMode —
               // its internal auto-gate check is a defensive throw (with a
@@ -424,22 +600,30 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               // These mirror print.ts handleSetPermissionMode; the bridge
               // can't import the checks directly (bootstrap-isolation), so
               // it relies on this verdict to emit the error response.
+              // 当 `mode` 匹配 `'bypassPermissions'` 时，React hook执行对应分支。
               if (mode === 'bypassPermissions') {
+                // 满足 `isBypassPermissionsModeDisabled()` 时，React hook执行该分支。
                 if (isBypassPermissionsModeDisabled()) {
+                  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                   return {
                     ok: false,
                     error: 'Cannot set permission mode to bypassPermissions because it is disabled by settings or configuration'
                   };
                 }
+                // 满足 `!store.getState().toolPermissionContext.isBypassPermissionsModeAvailable` 时，React hook执行该分支。
                 if (!store.getState().toolPermissionContext.isBypassPermissionsModeAvailable) {
+                  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                   return {
                     ok: false,
                     error: 'Cannot set permission mode to bypassPermissions because the session was not launched with --dangerously-skip-permissions'
                   };
                 }
               }
+              // 组合条件 `feature('TRANSCRIPT_CLASSIFIER') && mode === 'auto' && !isAutoModeGateEnabled()` 成立时，React hook 状态流才启用这条专门路径。
               if (feature('TRANSCRIPT_CLASSIFIER') && mode === 'auto' && !isAutoModeGateEnabled()) {
+                // reason读取`getAutoModeUnavailableReason`，供React hook后续处理使用。
                 const reason = getAutoModeUnavailableReason();
+                // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                 return {
                   ok: false,
                   error: reason ? `Cannot set permission mode to auto: ${getAutoModeUnavailableNotification(reason)}` : 'Cannot set permission mode to auto'
@@ -447,10 +631,15 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               }
               // Guards passed — apply via the centralized transition so
               // prePlanMode stashing and auto-mode state sync all fire.
+              // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
               setAppState(prev_12 => {
+                // current保存`prev_12.toolPermissionContext.mode`，供React hook use Repl B...后续判断或输出使用。
                 const current = prev_12.toolPermissionContext.mode;
+                // 满足 `current === mode` 时，React hook执行该分支。
                 if (current === mode) return prev_12;
+                // next保存`transitionPermissionMode`，供React hook后续处理使用。
                 const next = transitionPermissionMode(current, mode, prev_12.toolPermissionContext);
+                // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                 return {
                   ...prev_12,
                   toolPermissionContext: {
@@ -460,52 +649,75 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                 };
               });
               // Recheck queued permission prompts now that mode changed.
+              // setImmediate 写入新的状态值，使React hook 状态流后续读取保持一致。
               setImmediate(() => {
+                // 调用 getLeaderToolUseConfirmQueue，触发React hook此处需要的副作用。
                 getLeaderToolUseConfirmQueue()?.(currentQueue => {
+                  // 调用 currentQueue.forEach，触发React hook此处需要的副作用。
                   currentQueue.forEach(item => {
+                    // 显式忽略 `item.recheckPermission()` 的返回值，只保留它触发的副作用。
                     void item.recheckPermission();
                   });
+                  // 返回 `currentQueue`，作为React hook 状态流这次计算的结果。
                   return currentQueue;
                 });
               });
+              // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
               return {
                 ok: true
               };
             },
             onStateChange: handleStateChange,
             initialMessages: messages.length > 0 ? messages : undefined,
+            // 这个回调绑定到 getMessages: () => messagesRef.current,，负责React hook 状态流在该局部场景下的响应。
             getMessages: () => messagesRef.current,
             previouslyFlushedUUIDs: flushedUUIDsRef.current,
             initialName: replBridgeInitialName,
             perpetual
           });
+          // 满足 `cancelled` 时，React hook执行该分支。
           if (cancelled) {
             // Effect was cancelled while initReplBridge was in flight.
             // Tear down the handle to avoid leaking resources (poll loop,
             // WebSocket, registered environment, cleanup callback).
+            // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
             logForDebugging(`[bridge:repl] Hook: init cancelled during flight, tearing down${handle_0 ? ` env=${handle_0.environmentId}` : ''}`);
+            // 满足 `handle_0` 时，React hook执行该分支。
             if (handle_0) {
+              // 显式忽略 `handle_0.teardown()` 的返回值，只保留它触发的副作用。
               void handle_0.teardown();
             }
+            // React hook use Repl Bridge在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
+          // handle_0缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
           if (!handle_0) {
             // initReplBridge returned null — a precondition failed. For most
             // cases (no_oauth, policy_denied, etc.) onStateChange('failed')
             // already fired with a specific hint. The GrowthBook-gate-off case
             // is intentionally silent — not a failure, just not rolled out.
+            // React hook use Repl Bridge在这里处理 `consecutiveFailuresRef.current++`，完成这一小步状态转换。
             consecutiveFailuresRef.current++;
+            // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
             logForDebugging(`[bridge:repl] Init returned null (precondition or session creation failed); consecutive failures: ${consecutiveFailuresRef.current}`);
+            // 调用 clearTimeout，触发React hook此处需要的副作用。
             clearTimeout(failureTimeoutRef.current);
+            // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
             setAppState(prev_13 => ({
               ...prev_13,
               replBridgeError: prev_13.replBridgeError ?? 'check debug logs for details'
             }));
+            // current更新为 `setTimeout(() => {`，确保useReplBridge后续读取最新状态。
             failureTimeoutRef.current = setTimeout(() => {
+              // 满足 `cancelled` 时，React hook执行该分支。
               if (cancelled) return;
+              // current更新为 `undefined`，确保useReplBridge后续读取最新状态。
               failureTimeoutRef.current = undefined;
+              // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
               setAppState(prev_14 => {
+                // prev_14.replBridgeError 错误信息缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
                 if (!prev_14.replBridgeError) return prev_14;
+                // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
                 return {
                   ...prev_14,
                   replBridgeEnabled: false,
@@ -513,17 +725,26 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                 };
               });
             }, BRIDGE_FAILURE_DISMISS_MS);
+            // React hook use Repl Bridge在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
+          // current更新为 `handle_0`，确保useReplBridge后续读取最新状态。
           handleRef.current = handle_0;
+          // setReplBridgeHandle 写入新的状态值，使React hook 状态流后续读取保持一致。
           setReplBridgeHandle(handle_0);
+          // current更新为 `0`，确保useReplBridge后续读取最新状态。
           consecutiveFailuresRef.current = 0;
           // Skip initial messages in the forwarding effect — they were
           // already loaded as session events during creation.
+          // current更新为 `initialMessageCount`，确保useReplBridge后续读取最新状态。
           lastWrittenIndexRef.current = initialMessageCount;
+          // 满足 `outboundOnly` 时，React hook执行该分支。
           if (outboundOnly) {
+            // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
             setAppState(prev_15 => {
+              // 组合条件 `prev_15.replBridgeConnected && prev_15.replBridgeSessionId === handle_0.bridgeSes...` 成立时，React hook 状态流才启用这条专门路径。
               if (prev_15.replBridgeConnected && prev_15.replBridgeSessionId === handle_0.bridgeSessionId) return prev_15;
+              // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
               return {
                 ...prev_15,
                 replBridgeConnected: true,
@@ -533,12 +754,16 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                 replBridgeError: undefined
               };
             });
+            // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
             logForDebugging(`[bridge:repl] Mirror initialized, session=${handle_0.bridgeSessionId}`);
           } else {
             // Build bridge permission callbacks so the interactive permission
             // handler can race bridge responses against local user interaction.
+            // permissionCallbacks 权限数据 集中保存React hook use Repl Bridge要一起传递的字段。
             const permissionCallbacks: BridgePermissionCallbacks = {
+              // sendRequest 使用 requestId_0, toolName, input, toolUseId, descript… 完成React hook 状态流里的对应操作。
               sendRequest(requestId_0, toolName, input, toolUseId, description, permissionSuggestions, blockedPath) {
+                // 调用 handle_0.sendControlRequest，触发React hook此处需要的副作用。
                 handle_0.sendControlRequest({
                   type: 'control_request',
                   request_id: requestId_0,
@@ -557,10 +782,13 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   }
                 });
               },
+              // sendResponse 使用 requestId_1, response 完成React hook 状态流里的对应操作。
               sendResponse(requestId_1, response) {
+                // payload 集中保存React hook use Repl Bridge要一起传递的字段。
                 const payload: Record<string, unknown> = {
                   ...response
                 };
+                // 调用 handle_0.sendControlResponse，触发React hook此处需要的副作用。
                 handle_0.sendControlResponse({
                   type: 'control_response',
                   response: {
@@ -570,29 +798,43 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
                   }
                 });
               },
+              // cancelRequest 使用 requestId_2 完成React hook 状态流里的对应操作。
               cancelRequest(requestId_2) {
+                // 调用 handle_0.sendControlCancelRequest，触发React hook此处需要的副作用。
                 handle_0.sendControlCancelRequest(requestId_2);
               },
+              // onResponse 使用 requestId_3, handler_0 完成React hook 状态流里的对应操作。
               onResponse(requestId_3, handler_0) {
+                // pendingPermissionHandlers.set 写入新的状态值，使React hook 状态流后续读取保持一致。
                 pendingPermissionHandlers.set(requestId_3, handler_0);
+                // 返回 `() => {`，作为React hook 状态流这次计算的结果。
                 return () => {
+                  // 调用 pendingPermissionHandlers.delete，触发React hook此处需要的副作用。
                   pendingPermissionHandlers.delete(requestId_3);
                 };
               }
             };
+            // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
             setAppState(prev_16 => ({
               ...prev_16,
               replBridgePermissionCallbacks: permissionCallbacks
             }));
+            // URL读取`getRemoteSessionUrl`，供React hook后续处理使用。
             const url = getRemoteSessionUrl(handle_0.bridgeSessionId, handle_0.sessionIngressUrl);
             // environmentId === '' signals the v2 env-less path. buildBridgeConnectUrl
             // builds an env-specific connect URL, which doesn't exist without an env.
+            // hasEnv标记React hook use Repl B...是否启用对应路径。
             const hasEnv = handle_0.environmentId !== '';
+            // connectUrl_0构建`buildBridgeConnectUrl`，供React hook后续处理使用。
             const connectUrl_0 = hasEnv ? buildBridgeConnectUrl(handle_0.environmentId, handle_0.sessionIngressUrl) : undefined;
+            // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
             setAppState(prev_17 => {
+              // 组合条件 `prev_17.replBridgeConnected && prev_17.replBridge` 成立时，React hook 状态流才启用这条专门路径。
               if (prev_17.replBridgeConnected && prev_17.replBridgeSessionUrl === url) {
+                // 返回 `prev_17`，作为React hook 状态流这次计算的结果。
                 return prev_17;
               }
+              // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
               return {
                 ...prev_17,
                 replBridgeConnected: true,
@@ -608,9 +850,13 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             // assistant mode) falls back to v1 at initReplBridge.ts — skip the
             // v2-only upgrade nudge for them. Own try/catch so a cosmetic
             // GrowthBook hiccup doesn't hit the outer init-failure handler.
+            // upgradeNudge保存`shouldShowAppUpgradeMessage`，供React hook后续处理使用。
             const upgradeNudge = !perpetual ? await shouldShowAppUpgradeMessage().catch(() => false) : false;
+            // 满足 `cancelled` 时，React hook执行该分支。
             if (cancelled) return;
+            // setMessages 写入新的状态值，使React hook 状态流后续读取保持一致。
             setMessages(prev_18 => [...prev_18, createBridgeStatusMessage(url, upgradeNudge ? 'Please upgrade to the latest version of the Claude mobile app to see your Remote Control sessions.' : undefined)]);
+            // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
             logForDebugging(`[bridge:repl] Hook initialized, session=${handle_0.bridgeSessionId}`);
           }
         } catch (err) {
@@ -620,21 +866,34 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
           // error), don't count that toward the fuse or spam a stale error
           // into the UI. Also fixes pre-existing spurious setAppState/
           // setMessages on cancelled throws.
+          // 满足 `cancelled` 时，React hook执行该分支。
           if (cancelled) return;
+          // React hook use Repl Bridge在这里处理 `consecutiveFailuresRef.current++`，完成这一小步状态转换。
           consecutiveFailuresRef.current++;
+          // errMsg保存`errorMessage`，供React hook后续处理使用。
           const errMsg = errorMessage(err);
+          // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`[bridge:repl] Init failed: ${errMsg}; consecutive failures: ${consecutiveFailuresRef.current}`);
+          // 调用 clearTimeout，触发React hook此处需要的副作用。
           clearTimeout(failureTimeoutRef.current);
+          // 调用 notifyBridgeFailed，触发React hook此处需要的副作用。
           notifyBridgeFailed(errMsg);
+          // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
           setAppState(prev_0 => ({
             ...prev_0,
             replBridgeError: errMsg
           }));
+          // current更新为 `setTimeout(() => {`，确保useReplBridge后续读取最新状态。
           failureTimeoutRef.current = setTimeout(() => {
+            // 满足 `cancelled` 时，React hook执行该分支。
             if (cancelled) return;
+            // current更新为 `undefined`，确保useReplBridge后续读取最新状态。
             failureTimeoutRef.current = undefined;
+            // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
             setAppState(prev_1 => {
+              // prev_1.replBridgeError 错误信息缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
               if (!prev_1.replBridgeError) return prev_1;
+              // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
               return {
                 ...prev_1,
                 replBridgeEnabled: false,
@@ -642,25 +901,40 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
               };
             });
           }, BRIDGE_FAILURE_DISMISS_MS);
+          // outboundOnly缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
           if (!outboundOnly) {
+            // setMessages 写入新的状态值，使React hook 状态流后续读取保持一致。
             setMessages(prev_2 => [...prev_2, createSystemMessage(`Remote Control failed to connect: ${errMsg}`, 'warning')]);
           }
         }
       })();
+      // 返回 `() => {`，作为React hook 状态流这次计算的结果。
       return () => {
+        // cancelled更新为 `true`，确保useReplBridge后续读取最新状态。
         cancelled = true;
+        // 调用 clearTimeout，触发React hook此处需要的副作用。
         clearTimeout(failureTimeoutRef.current);
+        // current更新为 `undefined`，确保useReplBridge后续读取最新状态。
         failureTimeoutRef.current = undefined;
+        // 满足 `handleRef.current` 时，React hook执行该分支。
         if (handleRef.current) {
+          // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`[bridge:repl] Hook cleanup: starting teardown for env=${handleRef.current.environmentId} session=${handleRef.current.bridgeSessionId}`);
+          // current更新为 `handleRef.current.teardown()`，确保useReplBridge后续读取最新状态。
           teardownPromiseRef.current = handleRef.current.teardown();
+          // current更新为 `null`，确保useReplBridge后续读取最新状态。
           handleRef.current = null;
+          // setReplBridgeHandle 写入新的状态值，使React hook 状态流后续读取保持一致。
           setReplBridgeHandle(null);
         }
+        // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
         setAppState(prev_19 => {
+          // 组合条件 `!prev_19.replBridgeConnected && !prev_19.replBrid` 成立时，React hook 状态流才启用这条专门路径。
           if (!prev_19.replBridgeConnected && !prev_19.replBridgeSessionActive && !prev_19.replBridgeError) {
+            // 返回 `prev_19`，作为React hook 状态流这次计算的结果。
             return prev_19;
           }
+          // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
           return {
             ...prev_19,
             replBridgeConnected: false,
@@ -674,6 +948,7 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
             replBridgePermissionCallbacks: undefined
           };
         });
+        // current更新为 `0`，确保useReplBridge后续读取最新状态。
         lastWrittenIndexRef.current = 0;
       };
     }
@@ -682,40 +957,60 @@ export function useReplBridge(messages: Message[], setMessages: (action: React.S
   // Write new messages as they appear.
   // Also re-runs when replBridgeConnected changes (bridge finishes init),
   // so any messages that arrived before the bridge was ready get written.
+  // 调用 useEffect，触发React hook此处需要的副作用。
   useEffect(() => {
     // Positive feature() guard — see first useEffect comment
+    // 满足 `feature('BRIDGE_MODE')` 时，React hook执行该分支。
     if (feature('BRIDGE_MODE')) {
+      // replBridgeConnected缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
       if (!replBridgeConnected) return;
+      // handle_1 命名 `handleRef.current`，让后续代码直接表达这个值的用途。
       const handle_1 = handleRef.current;
+      // handle_1缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
       if (!handle_1) return;
 
       // Clamp the index in case messages were compacted (array shortened).
       // After compaction the ref could exceed messages.length, and without
       // clamping no new messages would be forwarded.
+      // 满足 `lastWrittenIndexRef.current > messages.length` 时，React hook执行该分支。
       if (lastWrittenIndexRef.current > messages.length) {
+        // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[bridge:repl] Compaction detected: lastWrittenIndex=${lastWrittenIndexRef.current} > messages.length=${messages.length}, clamping`);
       }
+      // startIndex 索引保存`Math.min`，供React hook后续处理使用。
       const startIndex = Math.min(lastWrittenIndexRef.current, messages.length);
 
       // Collect new messages since last write
+      // newMessages 消息数据 从空数组开始收集，后续循环会按处理顺序追加条目。
       const newMessages: Message[] = [];
+      // 循环处理 `let i = startIndex; i < messages.length; i++`，让React hook 状态流逐项把同类条目按顺序走完。
       for (let i = startIndex; i < messages.length; i++) {
+        // msg_1 命名 `messages[i]`，让后续代码直接表达这个值的用途。
         const msg_1 = messages[i];
+        // 组合条件 `msg_1 && (msg_1.type === 'user' || msg_1.type === 'assistant' || msg_1.type === '...` 成立时，React hook 状态流才启用这条专门路径。
         if (msg_1 && (msg_1.type === 'user' || msg_1.type === 'assistant' || msg_1.type === 'system' && msg_1.subtype === 'local_command')) {
+          // newMessages 消息数据追加新条目，保持收集顺序与输入顺序一致。
           newMessages.push(msg_1);
         }
       }
+      // current更新为 `messages.length`，确保useReplBridge后续读取最新状态。
       lastWrittenIndexRef.current = messages.length;
+      // 满足 `newMessages.length > 0` 时，React hook执行该分支。
       if (newMessages.length > 0) {
+        // 调用 handle_1.writeMessages，触发React hook此处需要的副作用。
         handle_1.writeMessages(newMessages);
       }
     }
   }, [messages, replBridgeConnected]);
+  // sendBridgeResult保存`useCallback`，供React hook后续处理使用。
   const sendBridgeResult = useCallback(() => {
+    // 满足 `feature('BRIDGE_MODE')` 时，React hook执行该分支。
     if (feature('BRIDGE_MODE')) {
+      // 调用 handleRef.current?.sendResult();，完成这一处局部操作。
       handleRef.current?.sendResult();
     }
   }, []);
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     sendBridgeResult
   };

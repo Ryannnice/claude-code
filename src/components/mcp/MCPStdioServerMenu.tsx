@@ -1,32 +1,55 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useState } from 'react';
+// 类型依赖 { CommandResultDisplay } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../../commands.js';
+// 引入 useExitOnCtrlCDWithKeybindings，将 ../../hooks/useExitOnCtrlCDWithKeybindings.js 中已经封装好的能力接到本文件流程里。
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+// 引入 Box、color、Text、useTheme，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, color, Text, useTheme } from '../../ink.js';
+// 接入 getMcpConfigByName 服务层能力，把外部通信或共享状态交给 ../../services/mcp/config.js 处理。
 import { getMcpConfigByName } from '../../services/mcp/config.js';
+// 接入 useMcpReconnect、useMcpToggleEnabled 服务层能力，把外部通信或共享状态交给 ../../services/mcp/MCPConnectionManager.js 处理。
 import { useMcpReconnect, useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js';
+// 接入 describeMcpConfigFilePath、filterMcpPromptsByServer 服务层能力，把外部通信或共享状态交给 ../../services/mcp/utils.js 处理。
 import { describeMcpConfigFilePath, filterMcpPromptsByServer } from '../../services/mcp/utils.js';
+// 引入 useAppState，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../state/AppState.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { errorMessage } from '../../utils/errors.js';
+// 复用 capitalize 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { capitalize } from '../../utils/stringUtils.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 Select，将 ../CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../CustomSelect/index.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 KeyboardShortcutHint，将 ../design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
+// 引入 Spinner，将 ../Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from '../Spinner.js';
+// 引入 CapabilitiesSection，将 ./CapabilitiesSection.js 中已经封装好的能力接到本文件流程里。
 import { CapabilitiesSection } from './CapabilitiesSection.js';
+// 类型依赖 { StdioServerInfo } 来自 ./types.js，用于校准终端渲染的数据契约。
 import type { StdioServerInfo } from './types.js';
+// 复用 handleReconnectError、handleReconnectResult 工具函数，把通用处理留在 ./utils/reconnectHelpers.js 中维护。
 import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   server: StdioServerInfo;
   serverToolsCount: number;
+  // 这个回调绑定到 onViewTools: () => void;，负责终端渲染在该局部场景下的响应。
   onViewTools: () => void;
+  // 这个回调绑定到 onCancel: () => void;，负责终端渲染在该局部场景下的响应。
   onCancel: () => void;
   onComplete: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
   borderless?: boolean;
 };
+// MCPStdioServerMenu 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function MCPStdioServerMenu({
   server,
   serverToolsCount,
@@ -35,31 +58,49 @@ export function MCPStdioServerMenu({
   onComplete,
   borderless = false
 }: Props): React.ReactNode {
+  // 从 `useTheme()` 按位置拆出 theme，让MCP 界面组件 MCPStdio Server Menu分别处理这些返回值。
   const [theme] = useTheme();
+  // exitState 状态保存`useExitOnCtrlCDWithKeybindings`，供终端渲染后续处理使用。
   const exitState = useExitOnCtrlCDWithKeybindings();
+  // mcp保存`useAppState`，供终端渲染后续处理使用。
   const mcp = useAppState(s => s.mcp);
+  // reconnectMcpServer保存`useMcpReconnect`，供终端渲染后续处理使用。
   const reconnectMcpServer = useMcpReconnect();
+  // toggleMcpServer保存`useMcpToggleEnabled`，供终端渲染后续处理使用。
   const toggleMcpServer = useMcpToggleEnabled();
+  // isReconnecting 由 React state 持有，setIsReconnecting 会在用户操作或异步结果返回时触发刷新。
   const [isReconnecting, setIsReconnecting] = useState(false);
+  // handleToggleEnabled保存`React.useCallback`，供终端渲染后续处理使用。
   const handleToggleEnabled = React.useCallback(async () => {
+    // wasEnabled标记终端渲染MCP 界面组件 MCPStdio Server Menu是否启用对应路径。
     const wasEnabled = server.client.type !== 'disabled';
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // 等待 `toggleMcpServer(server.name)` 完成，再继续MCP 界面组件 MCPStdio Server Menu的异步流程。
       await toggleMcpServer(server.name);
       // Return to the server list so user can continue managing other servers
+      // 调用 onCancel，触发终端渲染此处需要的副作用。
       onCancel();
     } catch (err) {
+      // action保存`wasEnabled ? 'disable' : 'enable'`，供终端渲染MCP 界面组件 MCPStdio Server Menu后续判断或输出使用。
       const action = wasEnabled ? 'disable' : 'enable';
+      // 调用 onComplete，触发终端渲染此处需要的副作用。
       onComplete(`Failed to ${action} MCP server '${server.name}': ${errorMessage(err)}`);
     }
   }, [server.client.type, server.name, toggleMcpServer, onCancel, onComplete]);
+  // capitalizedServerName保存`capitalize`，供终端渲染后续处理使用。
   const capitalizedServerName = capitalize(String(server.name));
 
   // Count MCP prompts for this server (skills are shown in /skills, not here)
+  // serverCommandsCount 命令数据筛选`filterMcpPromptsByServer`，供终端渲染后续处理使用。
   const serverCommandsCount = filterMcpPromptsByServer(mcp.commands, server.name).length;
+  // menuOptions 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const menuOptions = [];
 
   // Only show "View tools" if server is not disabled and has tools
+  // `server.client.type` 与 `'disabled' && serverToolsC` 不一致时刷新派生状态，避免使用过期结果。
   if (server.client.type !== 'disabled' && serverToolsCount > 0) {
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: 'View tools',
       value: 'tools'
@@ -67,25 +108,32 @@ export function MCPStdioServerMenu({
   }
 
   // Only show reconnect option if the server is not disabled
+  // `server.client.type` 与 `'disabled'` 不一致时刷新派生状态，避免使用过期结果。
   if (server.client.type !== 'disabled') {
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: 'Reconnect',
       value: 'reconnectMcpServer'
     });
   }
+  // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
   menuOptions.push({
     label: server.client.type !== 'disabled' ? 'Disable' : 'Enable',
     value: 'toggle-enabled'
   });
 
   // If there are no other options, add a back option so Select handles escape
+  // menuOptions 集合为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
   if (menuOptions.length === 0) {
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: 'Back',
       value: 'back'
     });
   }
+  // 满足 `isReconnecting` 时，终端渲染执行该分支。
   if (isReconnecting) {
+    // 返回 `<Box flexDirection="column" gap={1} padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="text">
           Reconnecting to <Text bold>{server.name}</Text>
@@ -97,6 +145,7 @@ export function MCPStdioServerMenu({
         <Text dimColor>This may take a few moments.</Text>
       </Box>;
   }
+  // 返回 `<Box flexDirection="column">`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column">
       <Box flexDirection="column" paddingX={1} borderStyle={borderless ? undefined : 'round'}>
         <Box marginBottom={1}>
@@ -137,26 +186,41 @@ export function MCPStdioServerMenu({
             </Box>}
         </Box>
 
+        {/* MCP 界面组件 MCPStdio Server Menu处理 `{menuOptions.length > 0 && <Box marginTop={1}>`，完成这一小步状态转换。 */}
         {menuOptions.length > 0 && <Box marginTop={1}>
             <Select options={menuOptions} onChange={async value => {
+          // 当 `value` 匹配 `'tools'` 时，终端渲染执行对应分支。
           if (value === 'tools') {
+            // 调用 onViewTools，触发终端渲染此处需要的副作用。
             onViewTools();
+          // MCP 界面组件 MCPStdio Server Menu在这里处理 `} else if (value === 'reconnectMcpServer') {`，完成这一小步状态转换。
           } else if (value === 'reconnectMcpServer') {
+            // setIsReconnecting 写入新的状态值，使终端渲染后续读取保持一致。
             setIsReconnecting(true);
+            // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
             try {
+              // 结果保存`reconnectMcpServer`，供终端渲染后续处理使用。
               const result = await reconnectMcpServer(server.name);
+              // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
               const {
                 message
               } = handleReconnectResult(result, server.name);
+              // 调用 onComplete?.(message);，完成这一处局部操作。
               onComplete?.(message);
             } catch (err_0) {
+              // 调用 onComplete?.(handleReconnectError(err_0, server.name));，完成这一处局部操作。
               onComplete?.(handleReconnectError(err_0, server.name));
             } finally {
+              // setIsReconnecting 写入新的状态值，使终端渲染后续读取保持一致。
               setIsReconnecting(false);
             }
+          // MCP 界面组件 MCPStdio Server Menu在这里处理 `} else if (value === 'toggle-enabled') {`，完成这一小步状态转换。
           } else if (value === 'toggle-enabled') {
+            // 等待 `handleToggleEnabled()` 完成，再继续MCP 界面组件 MCPStdio Server Menu的异步流程。
             await handleToggleEnabled();
+          // MCP 界面组件 MCPStdio Server Menu在这里处理 `} else if (value === 'back') {`，完成这一小步状态转换。
           } else if (value === 'back') {
+            // 调用 onCancel，触发终端渲染此处需要的副作用。
             onCancel();
           }
         }} onCancel={onCancel} />

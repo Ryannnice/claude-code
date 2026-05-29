@@ -6,34 +6,49 @@
  * Part of the main.tsx React/JSX extraction effort. See sibling PRs
  * perf/extract-interactive-helpers and perf/launch-repl.
  */
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 类型依赖 { AssistantSession } 来自 ./assistant/sessionDiscovery.js，用于校准dialog Launchers的数据契约。
 import type { AssistantSession } from './assistant/sessionDiscovery.js';
+// 类型依赖 { StatsStore } 来自 ./context/stats.js，用于校准dialog Launchers的数据契约。
 import type { StatsStore } from './context/stats.js';
+// 类型依赖 { Root } 来自 ./ink.js，用于校准dialog Launchers的数据契约。
 import type { Root } from './ink.js';
+// 引入 renderAndRun、showSetupDialog，将 ./interactiveHelpers.js 中已经封装好的能力接到本文件流程里。
 import { renderAndRun, showSetupDialog } from './interactiveHelpers.js';
+// 引入 KeybindingSetup，将 ./keybindings/KeybindingProviderSetup.js 中已经封装好的能力接到本文件流程里。
 import { KeybindingSetup } from './keybindings/KeybindingProviderSetup.js';
+// 类型依赖 { AppState } 来自 ./state/AppStateStore.js，用于校准dialog Launchers的数据契约。
 import type { AppState } from './state/AppStateStore.js';
+// 类型依赖 { AgentMemoryScope } 来自 ./tools/AgentTool/agentMemory.js，用于校准dialog Launchers的数据契约。
 import type { AgentMemoryScope } from './tools/AgentTool/agentMemory.js';
+// 类型依赖 { TeleportRemoteResponse } 来自 ./utils/conversationRecovery.js，用于校准dialog Launchers的数据契约。
 import type { TeleportRemoteResponse } from './utils/conversationRecovery.js';
+// 类型依赖 { FpsMetrics } 来自 ./utils/fpsTracker.js，用于校准dialog Launchers的数据契约。
 import type { FpsMetrics } from './utils/fpsTracker.js';
+// 类型依赖 { ValidationError } 来自 ./utils/settings/validation.js，用于校准dialog Launchers的数据契约。
 import type { ValidationError } from './utils/settings/validation.js';
 
 // Type-only access to ResumeConversation's Props via the module type.
 // No runtime cost - erased at compile time.
+// ResumeConversationProps 固化dialog Launchers里传递的数据形状，帮助调用方按同一结构读写字段。
 type ResumeConversationProps = React.ComponentProps<typeof import('./screens/ResumeConversation.js').ResumeConversation>;
 
 /**
  * Site ~3173: SnapshotUpdateDialog (agent memory snapshot update prompt).
  * Original callback wiring: onComplete={done}, onCancel={() => done('keep')}.
  */
+// launchSnapshotUpdateDialog 封装dialogLaunchers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchSnapshotUpdateDialog(root: Root, props: {
   agentType: string;
   scope: AgentMemoryScope;
   snapshotTimestamp: string;
 }): Promise<'merge' | 'keep' | 'replace'> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     SnapshotUpdateDialog
   } = await import('./components/agents/SnapshotUpdateDialog.js');
+  // 返回 `showSetupDialog<'merge' | 'keep' | 'replace'>(root, done => <SnapshotUp...`，作为dialog Launchers这次计算的结果。
   return showSetupDialog<'merge' | 'keep' | 'replace'>(root, done => <SnapshotUpdateDialog agentType={props.agentType} scope={props.scope} snapshotTimestamp={props.snapshotTimestamp} onComplete={done} onCancel={() => done('keep')} />);
 }
 
@@ -41,13 +56,17 @@ export async function launchSnapshotUpdateDialog(root: Root, props: {
  * Site ~3250: InvalidSettingsDialog (settings validation errors).
  * Original callback wiring: onContinue={done}, onExit passed through from caller.
  */
+// launchInvalidSettingsDialog 封装dialogLaunchers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchInvalidSettingsDialog(root: Root, props: {
   settingsErrors: ValidationError[];
+  // 这个回调绑定到 onExit: () => void;，负责dialog Launchers在该局部场景下的响应。
   onExit: () => void;
 }): Promise<void> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     InvalidSettingsDialog
   } = await import('./components/InvalidSettingsDialog.js');
+  // 返回 `showSetupDialog(root, done => <InvalidSettingsDialog settingsErrors={pr...`，作为dialog Launchers这次计算的结果。
   return showSetupDialog(root, done => <InvalidSettingsDialog settingsErrors={props.settingsErrors} onContinue={done} onExit={props.onExit} />);
 }
 
@@ -55,12 +74,15 @@ export async function launchInvalidSettingsDialog(root: Root, props: {
  * Site ~4229: AssistantSessionChooser (pick a bridge session to attach to).
  * Original callback wiring: onSelect={id => done(id)}, onCancel={() => done(null)}.
  */
+// launchAssistantSessionChooser 封装dialogLaunchers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchAssistantSessionChooser(root: Root, props: {
   sessions: AssistantSession[];
 }): Promise<string | null> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     AssistantSessionChooser
   } = await import('./assistant/AssistantSessionChooser.js');
+  // 返回 `showSetupDialog<string | null>(root, done => <AssistantSessionChooser s...`，作为dialog Launchers这次计算的结果。
   return showSetupDialog<string | null>(root, done => <AssistantSessionChooser sessions={props.sessions} onSelect={id => done(id)} onCancel={() => done(null)} />);
 }
 
@@ -70,17 +92,25 @@ export async function launchAssistantSessionChooser(root: Root, props: {
  * success, null on cancel. Rejects on install failure so the caller can
  * distinguish errors from user cancellation.
  */
+// launchAssistantInstallWizard 封装dialogLaunchers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchAssistantInstallWizard(root: Root): Promise<string | null> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     NewInstallWizard,
     computeDefaultInstallDir
   } = await import('./commands/assistant/assistant.js');
+  // defaultDir保存`computeDefaultInstallDir`，供dialog Launchers后续处理使用。
   const defaultDir = await computeDefaultInstallDir();
+  // 这个回调绑定到 let rejectWithError: (reason: Error) => void;，负责dialog Launchers在该局部场景下的响应。
   let rejectWithError: (reason: Error) => void;
+  // errorPromise 异步任务封装成回调，供dialog Launchers在事件触发或异步步骤中调用。
   const errorPromise = new Promise<never>((_, reject) => {
+    // rejectWithError 错误信息更新为 `reject`，确保dialogLaunchers后续读取最新状态。
     rejectWithError = reject;
   });
+  // resultPromise 异步任务保存 `done` 启动的异步任务，稍后再决定等待还是后台完成。
   const resultPromise = showSetupDialog<string | null>(root, done => <NewInstallWizard defaultDir={defaultDir} onInstalled={dir => done(dir)} onCancel={() => done(null)} onError={message => rejectWithError(new Error(`Installation failed: ${message}`))} />);
+  // 返回 `Promise.race([resultPromise, errorPromise])`，作为dialog Launchers这次计算的结果。
   return Promise.race([resultPromise, errorPromise]);
 }
 
@@ -88,10 +118,13 @@ export async function launchAssistantInstallWizard(root: Root): Promise<string |
  * Site ~4549: TeleportResumeWrapper (interactive teleport session picker).
  * Original callback wiring: onComplete={done}, onCancel={() => done(null)}, source="cliArg".
  */
+// launchTeleportResumeWrapper 封装dialogLaunchers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchTeleportResumeWrapper(root: Root): Promise<TeleportRemoteResponse | null> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     TeleportResumeWrapper
   } = await import('./components/TeleportResumeWrapper.js');
+  // 返回 `showSetupDialog<TeleportRemoteResponse | null>(root, done => <TeleportR...`，作为dialog Launchers这次计算的结果。
   return showSetupDialog<TeleportRemoteResponse | null>(root, done => <TeleportResumeWrapper onComplete={done} onCancel={() => done(null)} source="cliArg" />);
 }
 
@@ -99,13 +132,16 @@ export async function launchTeleportResumeWrapper(root: Root): Promise<TeleportR
  * Site ~4597: TeleportRepoMismatchDialog (pick a local checkout of the target repo).
  * Original callback wiring: onSelectPath={done}, onCancel={() => done(null)}.
  */
+// launchTeleportRepoMismatchDialog 封装dialogLaunchers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchTeleportRepoMismatchDialog(root: Root, props: {
   targetRepo: string;
   initialPaths: string[];
 }): Promise<string | null> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     TeleportRepoMismatchDialog
   } = await import('./components/TeleportRepoMismatchDialog.js');
+  // 返回 `showSetupDialog<string | null>(root, done => <TeleportRepoMismatchDialo...`，作为dialog Launchers这次计算的结果。
   return showSetupDialog<string | null>(root, done => <TeleportRepoMismatchDialog targetRepo={props.targetRepo} initialPaths={props.initialPaths} onSelectPath={done} onCancel={() => done(null)} />);
 }
 
@@ -114,16 +150,20 @@ export async function launchTeleportRepoMismatchDialog(root: Root, props: {
  * Uses renderAndRun, NOT showSetupDialog. Wraps in <App><KeybindingSetup>.
  * Preserves original Promise.all parallelism between getWorktreePaths and imports.
  */
+// launchResumeChooser 封装dialogLaunchers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchResumeChooser(root: Root, appProps: {
+  // 这个回调绑定到 getFpsMetrics: () => FpsMetrics | undefined;，负责dialog Launchers在该局部场景下的响应。
   getFpsMetrics: () => FpsMetrics | undefined;
   stats: StatsStore;
   initialState: AppState;
 }, worktreePathsPromise: Promise<string[]>, resumeProps: Omit<ResumeConversationProps, 'worktreePaths'>): Promise<void> {
+  // dialog Launchers先整理这一处局部数据，后续分支可以直接读取。
   const [worktreePaths, {
     ResumeConversation
   }, {
     App
   }] = await Promise.all([worktreePathsPromise, import('./screens/ResumeConversation.js'), import('./components/App.js')]);
+  // 等待 `renderAndRun(root, <App getFpsMetrics={appProps.getFpsMetrics} stats={a...` 完成，再继续dialog Launchers的异步流程。
   await renderAndRun(root, <App getFpsMetrics={appProps.getFpsMetrics} stats={appProps.stats} initialState={appProps.initialState}>
       <KeybindingSetup>
         <ResumeConversation {...resumeProps} worktreePaths={worktreePaths} />

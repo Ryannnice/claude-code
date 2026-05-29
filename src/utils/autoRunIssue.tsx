@@ -1,11 +1,20 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useRef } from 'react';
+// 复用 KeyboardShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { KeyboardShortcutHint } from '../components/design-system/KeyboardShortcutHint.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 引入 useKeybinding，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../keybindings/useKeybinding.js';
+// Props 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
+  // 这个回调绑定到 onRun: () => void;，负责共享工具在该局部场景下的响应。
   onRun: () => void;
+  // 这个回调绑定到 onCancel: () => void;，负责共享工具在该局部场景下的响应。
   onCancel: () => void;
   reason: string;
 };
@@ -14,82 +23,131 @@ type Props = {
  * Component that shows a notification about running /issue command
  * with the ability to cancel via ESC key
  */
+// AutoRunIssueNotification 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AutoRunIssueNotification(t0) {
+  // $保存`_c`，供共享工具后续处理使用。
   const $ = _c(8);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onRun,
     onCancel,
     reason
   } = t0;
+  // hasRunRef 引用记录 `useRef` 是否成立，共享工具随后按该结果分支。
   const hasRunRef = useRef(false);
+  // t1 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t1 = {
       context: "Confirmation"
     };
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // 调用 useKeybinding，触发共享工具此处需要的副作用。
   useKeybinding("confirm:no", onCancel, t1);
+  // t2 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // t3 暂存 `[onRun]` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== onRun) {
+    // t2 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t2 = () => {
+      // hasRunRef.current缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!hasRunRef.current) {
+        // current更新为 `true`，确保共享工具后续读取最新状态。
         hasRunRef.current = true;
+        // 调用 onRun，触发共享工具此处需要的副作用。
         onRun();
       }
     };
+    // t3 暂存 `[onRun]` 生成的渲染片段，后续返回路径直接复用。
     t3 = [onRun];
+    // $[1] 缓存 `onRun`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = onRun;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
+    // $[3] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t3;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
+    // t3 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[3];
   }
+  // 调用 useEffect，触发共享工具此处需要的副作用。
   useEffect(t2, t3);
+  // t4 暂存 `<Box><Text bold={true}>Running feedback capture...</Text>...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+    // t4 暂存 `<Box><Text bold={true}>Running feedback capture...</Text>...` 生成的渲染片段，后续返回路径直接复用。
     t4 = <Box><Text bold={true}>Running feedback capture...</Text></Box>;
+    // $[4] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[4];
   }
+  // t5 暂存 `<Box><Text dimColor={true}>Press <KeyboardShortcutHint sh...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+    // t5 暂存 `<Box><Text dimColor={true}>Press <KeyboardShortcutHint sh...` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Box><Text dimColor={true}>Press <KeyboardShortcutHint shortcut="Esc" action="cancel" /> anytime</Text></Box>;
+    // $[5] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[5];
   }
+  // t6 暂存 `<Box flexDirection="column" marginTop={1}>{t4}{t5}<Box><T...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[6] !== reason) {
+    // t6 暂存 `<Box flexDirection="column" marginTop={1}>{t4}{t5}<Box><T...` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Box flexDirection="column" marginTop={1}>{t4}{t5}<Box><Text dimColor={true}>Reason: {reason}</Text></Box></Box>;
+    // $[6] 缓存 `reason`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = reason;
+    // $[7] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[7];
   }
+  // 返回 `t6`，作为共享工具这次计算的结果。
   return t6;
 }
+// AutoRunIssueReason 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AutoRunIssueReason = 'feedback_survey_bad' | 'feedback_survey_good';
 
 /**
  * Determines if /issue should auto-run for Ant users
  */
+// shouldAutoRunIssue 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldAutoRunIssue(reason: AutoRunIssueReason): boolean {
   // Only for Ant users
+  // `"external"` 与 `'ant'` 不一致时刷新派生状态，避免使用过期结果。
   if ("external" !== 'ant') {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
+  // 按照 reason 的取值选择共享工具的具体处理分支。
   switch (reason) {
     case 'feedback_survey_bad':
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     case 'feedback_survey_good':
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     default:
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
   }
 }
@@ -98,24 +156,33 @@ export function shouldAutoRunIssue(reason: AutoRunIssueReason): boolean {
  * Returns the appropriate command to auto-run based on the reason
  * ANT-ONLY: good-claude command only exists in ant builds
  */
+// getAutoRunCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getAutoRunCommand(reason: AutoRunIssueReason): string {
   // Only ant builds have the /good-claude command
+  // 只有 `"external" === 'ant' && reason === 'feedback_surv` 满足时，共享工具才执行该分支。
   if ("external" === 'ant' && reason === 'feedback_survey_good') {
+    // 返回 `'/good-claude'`，作为共享工具这次计算的结果。
     return '/good-claude';
   }
+  // 返回 `'/issue'`，作为共享工具这次计算的结果。
   return '/issue';
 }
 
 /**
  * Gets a human-readable description of why /issue is being auto-run
  */
+// getAutoRunIssueReasonText 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getAutoRunIssueReasonText(reason: AutoRunIssueReason): string {
+  // 按照 reason 的取值选择共享工具的具体处理分支。
   switch (reason) {
     case 'feedback_survey_bad':
+      // 返回 `'You responded "Bad" to the feedback survey'`，作为共享工具这次计算的结果。
       return 'You responded "Bad" to the feedback survey';
     case 'feedback_survey_good':
+      // 返回 `'You responded "Good" to the feedback survey'`，作为共享工具这次计算的结果。
       return 'You responded "Good" to the feedback survey';
     default:
+      // 返回 `'Unknown reason'`，作为共享工具这次计算的结果。
       return 'Unknown reason';
   }
 }

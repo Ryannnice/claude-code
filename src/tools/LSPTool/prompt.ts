@@ -1,5 +1,7 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 export const LSP_TOOL_NAME = 'LSP' as const
 
+// DESCRIPTION保存`Protocol`，供工具调用后续处理使用。
 export const DESCRIPTION = `Interact with Language Server Protocol (LSP) servers to get code intelligence features.
 
 Supported operations:

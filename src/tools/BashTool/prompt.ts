@@ -1,59 +1,91 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 引入 prependBullets，将 ../../constants/prompts.js 中已经封装好的能力接到本文件流程里。
 import { prependBullets } from '../../constants/prompts.js'
+// 复用 getAttributionTexts 工具函数，把通用处理留在 ../../utils/attribution.js 中维护。
 import { getAttributionTexts } from '../../utils/attribution.js'
+// 复用 hasEmbeddedSearchTools 工具函数，把通用处理留在 ../../utils/embeddedTools.js 中维护。
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js'
+// 复用 shouldIncludeGitInstructions 工具函数，把通用处理留在 ../../utils/gitSettings.js 中维护。
 import { shouldIncludeGitInstructions } from '../../utils/gitSettings.js'
+// 复用 getClaudeTempDir 工具函数，把通用处理留在 ../../utils/permissions/filesystem.js 中维护。
 import { getClaudeTempDir } from '../../utils/permissions/filesystem.js'
+// 复用 SandboxManager 工具函数，把通用处理留在 ../../utils/sandbox/sandbox-adapter.js 中维护。
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
+// 复用 jsonStringify 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonStringify } from '../../utils/slowOperations.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   getDefaultBashTimeoutMs,
   getMaxBashTimeoutMs,
 } from '../../utils/timeouts.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   getUndercoverInstructions,
   isUndercover,
 } from '../../utils/undercover.js'
+// 引入 AGENT_TOOL_NAME，将 ../AgentTool/constants.js 中已经封装好的能力接到本文件流程里。
 import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
+// 引入 FILE_EDIT_TOOL_NAME，将 ../FileEditTool/constants.js 中已经封装好的能力接到本文件流程里。
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
+// 引入 FILE_READ_TOOL_NAME，将 ../FileReadTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
+// 引入 FILE_WRITE_TOOL_NAME，将 ../FileWriteTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
+// 引入 GLOB_TOOL_NAME，将 ../GlobTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { GLOB_TOOL_NAME } from '../GlobTool/prompt.js'
+// 引入 GREP_TOOL_NAME，将 ../GrepTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { GREP_TOOL_NAME } from '../GrepTool/prompt.js'
+// 引入 TodoWriteTool，将 ../TodoWriteTool/TodoWriteTool.js 中已经封装好的能力接到本文件流程里。
 import { TodoWriteTool } from '../TodoWriteTool/TodoWriteTool.js'
+// 引入 BASH_TOOL_NAME，将 ./toolName.js 中已经封装好的能力接到本文件流程里。
 import { BASH_TOOL_NAME } from './toolName.js'
 
+// getDefaultTimeoutMs 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getDefaultTimeoutMs(): number {
+  // 返回 `getDefaultBashTimeoutMs()`，作为工具调用这次计算的结果。
   return getDefaultBashTimeoutMs()
 }
 
+// getMaxTimeoutMs 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getMaxTimeoutMs(): number {
+  // 返回 `getMaxBashTimeoutMs()`，作为工具调用这次计算的结果。
   return getMaxBashTimeoutMs()
 }
 
+// getBackgroundUsageNote 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getBackgroundUsageNote(): string | null {
+  // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)` 时，工具调用执行该分支。
   if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null
   }
+  // 返回 `"You can use the `run_in_background` parameter to run the command in th...`，作为工具调用这次计算的结果。
   return "You can use the `run_in_background` parameter to run the command in the background. Only use this if you don't need the result immediately and are OK being notified when the command completes later. You do not need to check the output right away - you'll be notified when it finishes. You do not need to use '&' at the end of the command when using this parameter."
 }
 
+// getCommitAndPRInstructions 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getCommitAndPRInstructions(): string {
   // Defense-in-depth: undercover instructions must survive even if the user
   // has disabled git instructions entirely. Attribution stripping and model-ID
   // hiding are mechanical and work regardless, but the explicit "don't blow
   // your cover" instructions are the last line of defense against the model
   // volunteering an internal codename in a commit message.
+  // undercoverSection 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const undercoverSection =
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? getUndercoverInstructions() + '\n'
       : ''
 
+  // 满足 `!shouldIncludeGitInstructions()` 时，工具调用执行该分支。
   if (!shouldIncludeGitInstructions()) return undercoverSection
 
   // For ant users, use the short version pointing to skills
+  // 当 `process.env.USER_TYPE` 匹配 `'ant'` 时，工具调用执行对应分支。
   if (process.env.USER_TYPE === 'ant') {
+    // skillsSection保存`isEnvTruthy`，供工具调用后续处理使用。
     const skillsSection = !isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)
       ? `For git commits and pull requests, use the \`/commit\` and \`/commit-push-pr\` skills:
 - \`/commit\` - Create a git commit with staged changes
@@ -65,6 +97,7 @@ Before creating a pull request, run \`/simplify\` to review your changes, then t
 
 `
       : ''
+    // 返回 ``${undercoverSection}# Git operations`，作为工具调用这次计算的结果。
     return `${undercoverSection}# Git operations
 
 ${skillsSection}IMPORTANT: NEVER skip hooks (--no-verify, --no-gpg-sign, etc) unless the user explicitly requests it.
@@ -76,8 +109,10 @@ Use the gh command via the Bash tool for other GitHub-related tasks including wo
   }
 
   // For external users, include full inline instructions
+  // 从 `getAttributionTexts()` 解构 commit、pr，减少Bash 工具 prompt对同一对象的重复访问。
   const { commit: commitAttribution, pr: prAttribution } = getAttributionTexts()
 
+  // 返回 ``# Committing changes with git`，作为工具调用这次计算的结果。
   return `# Committing changes with git
 
 Only create commits when requested by the user. If unclear, ask first. When the user asks you to create a new git commit, follow these steps carefully:
@@ -164,31 +199,47 @@ Important:
 // CLI flags) without deduping, so paths like ~/.cache appear 3× in allowOnly.
 // Dedup here before inlining into the prompt — affects only what the model sees,
 // not sandbox enforcement. Saves ~150-200 tokens/request when sandbox is enabled.
+// dedup 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function dedup<T>(arr: T[] | undefined): T[] | undefined {
+  // !arr || arr为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (!arr || arr.length === 0) return arr
+  // 返回列表结果，保留工具调用已经排好的条目顺序。
   return [...new Set(arr)]
 }
 
+// getSimpleSandboxSection 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSimpleSandboxSection(): string {
+  // 满足 `!SandboxManager.isSandboxingEnabled()` 时，工具调用执行该分支。
   if (!SandboxManager.isSandboxingEnabled()) {
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return ''
   }
 
+  // fsReadConfig 配置读取`SandboxManager.getFsReadConfig`，供工具调用后续处理使用。
   const fsReadConfig = SandboxManager.getFsReadConfig()
+  // fsWriteConfig 配置读取`SandboxManager.getFsWriteConfig`，供工具调用后续处理使用。
   const fsWriteConfig = SandboxManager.getFsWriteConfig()
+  // networkRestrictionConfig 配置读取`SandboxManager.getNetworkRestrictionConfig`，供工具调用后续处理使用。
   const networkRestrictionConfig = SandboxManager.getNetworkRestrictionConfig()
+  // allowUnixSockets 集合读取`SandboxManager.getAllowUnixSockets`，供工具调用后续处理使用。
   const allowUnixSockets = SandboxManager.getAllowUnixSockets()
+  // ignoreViolations 集合读取`SandboxManager.getIgnoreViolations`，供工具调用后续处理使用。
   const ignoreViolations = SandboxManager.getIgnoreViolations()
+  // allowUnsandboxedCommands 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const allowUnsandboxedCommands =
     SandboxManager.areUnsandboxedCommandsAllowed()
 
   // Replace the per-UID temp dir literal (e.g. /private/tmp/claude-1001/) with
   // "$TMPDIR" so the prompt is identical across users — avoids busting the
   // cross-user global prompt cache. The sandbox already sets $TMPDIR at runtime.
+  // claudeTempDir读取`getClaudeTempDir`，供工具调用后续处理使用。
   const claudeTempDir = getClaudeTempDir()
+  // normalizeAllowOnly封装成回调，供Bash 工具 prompt在事件触发或异步步骤中调用。
   const normalizeAllowOnly = (paths: string[]): string[] =>
+    // 这个回调绑定到 [...new Set(paths)].map(p => (p === claudeTempDir ? '$TMPDIR' : p))，负责工具调用在该局部场景下的响应。
     [...new Set(paths)].map(p => (p === claudeTempDir ? '$TMPDIR' : p))
 
+  // filesystemConfig 文件数据 集中保存Bash 工具 prompt要一起传递的字段。
   const filesystemConfig = {
     read: {
       denyOnly: dedup(fsReadConfig.denyOnly),
@@ -202,6 +253,7 @@ function getSimpleSandboxSection(): string {
     },
   }
 
+  // networkConfig 配置 集中保存Bash 工具 prompt要一起传递的字段。
   const networkConfig = {
     ...(networkRestrictionConfig?.allowedHosts && {
       allowedHosts: dedup(networkRestrictionConfig.allowedHosts),
@@ -212,19 +264,27 @@ function getSimpleSandboxSection(): string {
     ...(allowUnixSockets && { allowUnixSockets: dedup(allowUnixSockets) }),
   }
 
+  // restrictionsLines 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const restrictionsLines = []
+  // 满足 `Object.keys(filesystemConfig).length > 0` 时，工具调用执行该分支。
   if (Object.keys(filesystemConfig).length > 0) {
+    // restrictionsLines 集合追加新条目，保持收集顺序与输入顺序一致。
     restrictionsLines.push(`Filesystem: ${jsonStringify(filesystemConfig)}`)
   }
+  // 满足 `Object.keys(networkConfig).length > 0` 时，工具调用执行该分支。
   if (Object.keys(networkConfig).length > 0) {
+    // restrictionsLines 集合追加新条目，保持收集顺序与输入顺序一致。
     restrictionsLines.push(`Network: ${jsonStringify(networkConfig)}`)
   }
+  // 满足 `ignoreViolations` 时，工具调用执行该分支。
   if (ignoreViolations) {
+    // restrictionsLines 集合追加新条目，保持收集顺序与输入顺序一致。
     restrictionsLines.push(
       `Ignored violations: ${jsonStringify(ignoreViolations)}`,
     )
   }
 
+  // sandboxOverrideItems 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   const sandboxOverrideItems: Array<string | string[]> =
     allowUnsandboxedCommands
       ? [
@@ -255,11 +315,13 @@ function getSimpleSandboxSection(): string {
           'If a command fails due to sandbox restrictions, work with the user to adjust sandbox settings instead.',
         ]
 
+  // items 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const items: Array<string | string[]> = [
     ...sandboxOverrideItems,
     'For temporary files, always use the `$TMPDIR` environment variable. TMPDIR is automatically set to the correct sandbox-writable directory in sandbox mode. Do NOT use `/tmp` directly - use `$TMPDIR` instead.',
   ]
 
+  // 返回列表结果，保留工具调用已经排好的条目顺序。
   return [
     '',
     '## Command sandbox',
@@ -272,11 +334,14 @@ function getSimpleSandboxSection(): string {
   ].join('\n')
 }
 
+// getSimplePrompt 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getSimplePrompt(): string {
   // Ant-native builds alias find/grep to embedded bfs/ugrep in Claude's shell,
   // so we don't steer away from them (and Glob/Grep tools are removed).
+  // embedded保存`hasEmbeddedSearchTools`，供工具调用后续处理使用。
   const embedded = hasEmbeddedSearchTools()
 
+  // toolPreferenceItems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const toolPreferenceItems = [
     ...(embedded
       ? []
@@ -290,10 +355,12 @@ export function getSimplePrompt(): string {
     'Communication: Output text directly (NOT echo/printf)',
   ]
 
+  // avoidCommands 命令数据保存`embedded`，供Bash 工具 prompt后续判断或输出使用。
   const avoidCommands = embedded
     ? '`cat`, `head`, `tail`, `sed`, `awk`, or `echo`'
     : '`find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk`, or `echo`'
 
+  // multipleCommandsSubitems 命令数据 聚合成有序列表，保持后续遍历顺序稳定。
   const multipleCommandsSubitems = [
     `If the commands are independent and can run in parallel, make multiple ${BASH_TOOL_NAME} tool calls in a single message. Example: if you need to run "git status" and "git diff", send a single message with two ${BASH_TOOL_NAME} tool calls in parallel.`,
     `If the commands depend on each other and must run sequentially, use a single ${BASH_TOOL_NAME} call with '&&' to chain them together.`,
@@ -301,12 +368,14 @@ export function getSimplePrompt(): string {
     'DO NOT use newlines to separate commands (newlines are ok in quoted strings).',
   ]
 
+  // gitSubitems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const gitSubitems = [
     'Prefer to create a new commit rather than amending an existing commit.',
     'Before running destructive operations (e.g., git reset --hard, git push --force, git checkout --), consider whether there is a safer alternative that achieves the same goal. Only use destructive operations when they are truly the best approach.',
     'Never skip hooks (--no-verify) or bypass signing (--no-gpg-sign, -c commit.gpgsign=false) unless the user has explicitly asked for it. If a hook fails, investigate and fix the underlying issue.',
   ]
 
+  // sleepSubitems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const sleepSubitems = [
     'Do not sleep between commands that can run immediately — just run them.',
     ...(feature('MONITOR_TOOL')
@@ -326,8 +395,10 @@ export function getSimplePrompt(): string {
           'If you must sleep, keep the duration short (1-5 seconds) to avoid blocking the user.',
         ]),
   ]
+  // backgroundNote读取`getBackgroundUsageNote`，供工具调用后续处理使用。
   const backgroundNote = getBackgroundUsageNote()
 
+  // instructionItems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const instructionItems: Array<string | string[]> = [
     'If your command will create new directories or files, first use this tool to run `ls` to verify the parent directory exists and is the correct location.',
     'Always quote file paths that contain spaces with double quotes in your command (e.g., cd "path with spaces/file.txt")',
@@ -351,6 +422,7 @@ export function getSimplePrompt(): string {
       : []),
   ]
 
+  // 返回列表结果，保留工具调用已经排好的条目顺序。
   return [
     'Executes a given bash command and returns its output.',
     '',

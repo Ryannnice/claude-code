@@ -1,33 +1,60 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 useEffect，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect } from 'react';
+// 引入 useNotifications，将 src/context/notifications.js 中已经封装好的能力接到本文件流程里。
 import { useNotifications } from 'src/context/notifications.js';
+// 引入 useAppState、useSetAppState，将 src/state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState, useSetAppState } from 'src/state/AppState.js';
+// 复用 CooldownReason、isFastModeEnabled、onCooldownExpired、onCooldownTriggered、onFastModeOverageRejection、onOrgFastModeChanged 工具函数，把通用处理留在 src/utils/fastMode.js 中维护。
 import { type CooldownReason, isFastModeEnabled, onCooldownExpired, onCooldownTriggered, onFastModeOverageRejection, onOrgFastModeChanged } from 'src/utils/fastMode.js';
+// 复用 formatDuration 工具函数，把通用处理留在 src/utils/format.js 中维护。
 import { formatDuration } from 'src/utils/format.js';
+// 引入 getIsRemoteMode，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getIsRemoteMode } from '../../bootstrap/state.js';
+// COOLDOWN_STARTED_KEY保存`'fast-mode-cooldown-started'`，作为后续固定文本处理的输入。
 const COOLDOWN_STARTED_KEY = 'fast-mode-cooldown-started';
+// COOLDOWN_EXPIRED_KEY保存`'fast-mode-cooldown-expired'`，作为后续固定文本处理的输入。
 const COOLDOWN_EXPIRED_KEY = 'fast-mode-cooldown-expired';
+// ORG_CHANGED_KEY固定为 `'fast-mode-org-changed'`，作为React hook use Fast M...后续展示或比较的基准。
 const ORG_CHANGED_KEY = 'fast-mode-org-changed';
+// OVERAGE_REJECTED_KEY固定为 `'fast-mode-overage-rejected'`，作为React hook use Fast M...后续展示或比较的基准。
 const OVERAGE_REJECTED_KEY = 'fast-mode-overage-rejected';
+// useFastModeNotification 封装useFastModeNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useFastModeNotification() {
+  // $保存`_c`，供React hook后续处理使用。
   const $ = _c(13);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     addNotification
   } = useNotifications();
+  // isFastMode记录 `useAppState` 是否成立，React hook随后按该结果分支。
   const isFastMode = useAppState(_temp);
+  // setAppState 状态保存`useSetAppState`，供React hook后续处理使用。
   const setAppState = useSetAppState();
+  // t0 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // t1 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== addNotification || $[1] !== isFastMode || $[2] !== setAppState) {
+    // t0 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t0 = () => {
+      // 满足 `getIsRemoteMode()` 时，React hook执行该分支。
       if (getIsRemoteMode()) {
+        // React hook use Fast Mode Notificati...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `!isFastModeEnabled()` 时，React hook执行该分支。
       if (!isFastModeEnabled()) {
+        // React hook use Fast Mode Notificati...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 返回 `onOrgFastModeChanged(orgEnabled => {`，作为React hook 状态流这次计算的结果。
       return onOrgFastModeChanged(orgEnabled => {
+        // 满足 `orgEnabled` 时，React hook执行该分支。
         if (orgEnabled) {
+          // 调用 addNotification，触发React hook此处需要的副作用。
           addNotification({
             key: ORG_CHANGED_KEY,
             color: "fastMode",
@@ -35,8 +62,11 @@ export function useFastModeNotification() {
             text: "Fast mode is now available \xB7 /fast to turn on"
           });
         } else {
+          // 满足 `isFastMode` 时，React hook执行该分支。
           if (isFastMode) {
+            // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
             setAppState(_temp2);
+            // 调用 addNotification，触发React hook此处需要的副作用。
             addNotification({
               key: ORG_CHANGED_KEY,
               color: "warning",
@@ -47,29 +77,49 @@ export function useFastModeNotification() {
         }
       });
     };
+    // t1 暂存 `[addNotification, isFastMode, setAppState]` 生成的渲染片段，后续返回路径直接复用。
     t1 = [addNotification, isFastMode, setAppState];
+    // $[0] 缓存 `addNotification`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = addNotification;
+    // $[1] 缓存 `isFastMode`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = isFastMode;
+    // $[2] 缓存 `setAppState`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = setAppState;
+    // $[3] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t0;
+    // $[4] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t1;
   } else {
+    // t0 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[3];
+    // t1 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[4];
   }
+  // 调用 useEffect，触发React hook此处需要的副作用。
   useEffect(t0, t1);
+  // t2 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // t3 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== addNotification || $[6] !== setAppState) {
+    // t2 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t2 = () => {
+      // 满足 `getIsRemoteMode()` 时，React hook执行该分支。
       if (getIsRemoteMode()) {
+        // React hook use Fast Mode Notificati...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `!isFastModeEnabled()` 时，React hook执行该分支。
       if (!isFastModeEnabled()) {
+        // React hook use Fast Mode Notificati...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 返回 `onFastModeOverageRejection(message => {`，作为React hook 状态流这次计算的结果。
       return onFastModeOverageRejection(message => {
+        // setAppState 写入新的状态值，使React hook 状态流后续读取保持一致。
         setAppState(_temp3);
+        // 调用 addNotification，触发React hook此处需要的副作用。
         addNotification({
           key: OVERAGE_REJECTED_KEY,
           color: "warning",
@@ -78,31 +128,51 @@ export function useFastModeNotification() {
         });
       });
     };
+    // t3 暂存 `[addNotification, setAppState]` 生成的渲染片段，后续返回路径直接复用。
     t3 = [addNotification, setAppState];
+    // $[5] 缓存 `addNotification`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = addNotification;
+    // $[6] 缓存 `setAppState`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = setAppState;
+    // $[7] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t2;
+    // $[8] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t3;
   } else {
+    // t2 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[7];
+    // t3 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[8];
   }
+  // 调用 useEffect，触发React hook此处需要的副作用。
   useEffect(t2, t3);
+  // t4 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // t5 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== addNotification || $[10] !== isFastMode) {
+    // t4 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t4 = () => {
+      // 满足 `getIsRemoteMode()` 时，React hook执行该分支。
       if (getIsRemoteMode()) {
+        // React hook use Fast Mode Notificati...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // isFastMode缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
       if (!isFastMode) {
+        // React hook use Fast Mode Notificati...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // unsubTriggered保存`onCooldownTriggered`，供React hook后续处理使用。
       const unsubTriggered = onCooldownTriggered((resetAt, reason) => {
+        // resetIn格式化`formatDuration`，供React hook后续处理使用。
         const resetIn = formatDuration(resetAt - Date.now(), {
           hideTrailingZeros: true
         });
+        // message_0 消息数据读取`getCooldownMessage`，供React hook后续处理使用。
         const message_0 = getCooldownMessage(reason, resetIn);
+        // 调用 addNotification，触发React hook此处需要的副作用。
         addNotification({
           key: COOLDOWN_STARTED_KEY,
           invalidates: [COOLDOWN_EXPIRED_KEY],
@@ -111,7 +181,9 @@ export function useFastModeNotification() {
           priority: "immediate"
         });
       });
+      // unsubExpired保存`onCooldownExpired`，供React hook后续处理使用。
       const unsubExpired = onCooldownExpired(() => {
+        // 调用 addNotification，触发React hook此处需要的副作用。
         addNotification({
           key: COOLDOWN_EXPIRED_KEY,
           invalidates: [COOLDOWN_STARTED_KEY],
@@ -120,42 +192,63 @@ export function useFastModeNotification() {
           priority: "immediate"
         });
       });
+      // 返回 `() => {`，作为React hook 状态流这次计算的结果。
       return () => {
+        // 调用 unsubTriggered，触发React hook此处需要的副作用。
         unsubTriggered();
+        // 调用 unsubExpired，触发React hook此处需要的副作用。
         unsubExpired();
       };
     };
+    // t5 暂存 `[addNotification, isFastMode]` 生成的渲染片段，后续返回路径直接复用。
     t5 = [addNotification, isFastMode];
+    // $[9] 缓存 `addNotification`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = addNotification;
+    // $[10] 缓存 `isFastMode`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = isFastMode;
+    // $[11] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t4;
+    // $[12] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t5;
   } else {
+    // t4 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[11];
+    // t5 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[12];
   }
+  // 调用 useEffect，触发React hook此处需要的副作用。
   useEffect(t4, t5);
 }
+// _temp3 封装useFastModeNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp3(prev_0) {
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     ...prev_0,
     fastMode: false
   };
 }
+// _temp2 封装useFastModeNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(prev) {
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     ...prev,
     fastMode: false
   };
 }
+// _temp 封装useFastModeNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(s) {
+  // 返回 `s.fastMode`，作为React hook 状态流这次计算的结果。
   return s.fastMode;
 }
+// getCooldownMessage 封装useFastModeNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getCooldownMessage(reason: CooldownReason, resetIn: string): string {
+  // 按照 reason 的取值选择React hook 状态流的具体处理分支。
   switch (reason) {
     case 'overloaded':
+      // 返回 ``Fast mode overloaded and is temporarily unavailable · resets in ${rese...`，作为React hook 状态流这次计算的结果。
       return `Fast mode overloaded and is temporarily unavailable · resets in ${resetIn}`;
     case 'rate_limit':
+      // 返回 ``Fast limit reached and temporarily disabled · resets in ${resetIn}``，作为React hook 状态流这次计算的结果。
       return `Fast limit reached and temporarily disabled · resets in ${resetIn}`;
   }
 }

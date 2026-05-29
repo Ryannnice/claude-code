@@ -18,16 +18,21 @@
  * argv[0] against permission rules and flag allowlists. If no, ask the user.
  */
 
+// 引入 SHELL_KEYWORDS，将 ./bashParser.js 中已经封装好的能力接到本文件流程里。
 import { SHELL_KEYWORDS } from './bashParser.js'
+// 类型依赖 { Node } 来自 ./parser.js，用于校准共享工具的数据契约。
 import type { Node } from './parser.js'
+// 引入 PARSE_ABORTED、parseCommandRaw，将 ./parser.js 中已经封装好的能力接到本文件流程里。
 import { PARSE_ABORTED, parseCommandRaw } from './parser.js'
 
+// Redirect 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Redirect = {
   op: '>' | '>>' | '<' | '<<' | '>&' | '>|' | '<&' | '&>' | '&>>' | '<<<'
   target: string
   fd?: number
 }
 
+// SimpleCommand 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SimpleCommand = {
   /** argv[0] is the command name, rest are arguments with quotes already resolved */
   argv: string[]
@@ -39,6 +44,7 @@ export type SimpleCommand = {
   text: string
 }
 
+// ParseForSecurityResult 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ParseForSecurityResult =
   | { kind: 'simple'; commands: SimpleCommand[] }
   | { kind: 'too-complex'; reason: string; nodeType?: string }
@@ -51,6 +57,7 @@ export type ParseForSecurityResult =
  * wraps a command with its redirects. Semicolon-separated commands appear
  * as direct siblings under `program` (no wrapper node).
  */
+// STRUCTURAL_TYPES 集合保存`Set`，供共享工具后续处理使用。
 const STRUCTURAL_TYPES = new Set([
   'program',
   'list',
@@ -62,6 +69,7 @@ const STRUCTURAL_TYPES = new Set([
  * Operator tokens that separate commands. These are leaf nodes that appear
  * between commands in `list`/`pipeline`/`program` and carry no payload.
  */
+// SEPARATOR_TYPES 集合保存`Set`，供共享工具后续处理使用。
 const SEPARATOR_TYPES = new Set(['&&', '||', '|', ';', '&', '|&', '\n'])
 
 /**
@@ -71,6 +79,7 @@ const SEPARATOR_TYPES = new Set(['&&', '||', '|', ';', '&', '|&', '\n'])
  * the outer argv clean (no multi-line heredoc bodies polluting path
  * extraction or triggering newline checks).
  */
+// CMDSUB_PLACEHOLDER 命令数据固定为 `'__CMDSUB_OUTPUT__'`，作为共享工具 ast后续展示或比较的基准。
 const CMDSUB_PLACEHOLDER = '__CMDSUB_OUTPUT__'
 
 /**
@@ -79,6 +88,7 @@ const CMDSUB_PLACEHOLDER = '__CMDSUB_OUTPUT__'
  * we know the var exists and its value is either a static string or
  * __CMDSUB_OUTPUT__ (if set via $()). Either way, safe to substitute.
  */
+// VAR_PLACEHOLDER固定为 `'__TRACKED_VAR__'`，作为共享工具 ast后续展示或比较的基准。
 const VAR_PLACEHOLDER = '__TRACKED_VAR__'
 
 /**
@@ -91,7 +101,9 @@ const VAR_PLACEHOLDER = '__TRACKED_VAR__'
  * Also catches user-typed literals that collide with placeholder strings:
  * `VAR=__TRACKED_VAR__ && rm $VAR` — treated as non-literal (conservative).
  */
+// containsAnyPlaceholder 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function containsAnyPlaceholder(value: string): boolean {
+  // 返回 `value.includes(CMDSUB_PLACEHOLDER) || value.includes(VAR_PLACEHOLDER)`，作为共享工具这次计算的结果。
   return value.includes(CMDSUB_PLACEHOLDER) || value.includes(VAR_PLACEHOLDER)
 }
 
@@ -107,11 +119,15 @@ function containsAnyPlaceholder(value: string): boolean {
  * Inside double-quotes ("$VAR"), neither splitting nor globbing applies —
  * the value IS a single literal argument.
  */
+// BARE_VAR_UNSAFE_RE保存`/[ \t\n*?[]/`，供共享工具 ast后续判断或输出使用。
 const BARE_VAR_UNSAFE_RE = /[ \t\n*?[]/
 
 // stdbuf flag forms — hoisted from the wrapper-stripping while-loop
+// STDBUF_SHORT_SEP_RE读取 `/^-[ioe]$/` 对应条目，后续围绕该成员继续处理。
 const STDBUF_SHORT_SEP_RE = /^-[ioe]$/
+// STDBUF_SHORT_FUSED_RE 命名 `/^-[ioe]./`，让后续代码直接表达这个值的用途。
 const STDBUF_SHORT_FUSED_RE = /^-[ioe]./
+// STDBUF_LONG_RE保存`/^--(input|output|error)=/`，供后续判断或组装使用。
 const STDBUF_LONG_RE = /^--(input|output|error)=/
 
 /**
@@ -122,6 +138,7 @@ const STDBUF_LONG_RE = /^--(input|output|error)=/
  * Intentionally small: only vars that are always set by bash/login and whose
  * values are paths/names (not arbitrary content).
  */
+// SAFE_ENV_VARS 集合保存`Set`，供共享工具后续处理使用。
 const SAFE_ENV_VARS = new Set([
   'HOME', // user's home directory
   'PWD', // current working directory (bash maintains)
@@ -164,6 +181,7 @@ const SAFE_ENV_VARS = new Set([
  * tooComplex for `$*` / `$@`. `echo "args: $*"` becomes too-complex —
  * acceptable (rare in BashTool usage; `"$@"` even rarer).
  */
+// SPECIAL_VAR_NAMES 集合保存`Set`，供共享工具后续处理使用。
 const SPECIAL_VAR_NAMES = new Set([
   '?', // exit status of last command
   '$', // current shell PID
@@ -183,6 +201,7 @@ const SPECIAL_VAR_NAMES = new Set([
  * safety property is the allowlist in walkArgument/walkCommand: any type NOT
  * explicitly handled there also triggers too-complex.
  */
+// DANGEROUS_TYPES 集合保存`Set`，供共享工具后续处理使用。
 const DANGEROUS_TYPES = new Set([
   'command_substitution',
   'process_substitution',
@@ -209,11 +228,17 @@ const DANGEROUS_TYPES = new Set([
  * DANGEROUS_TYPES. Append new entries at the end to keep IDs stable.
  * 0 = unknown/other, -1 = ERROR (parse failure), -2 = pre-check.
  */
+// DANGEROUS_TYPE_IDS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const DANGEROUS_TYPE_IDS = [...DANGEROUS_TYPES]
+// nodeTypeId 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function nodeTypeId(nodeType: string | undefined): number {
+  // nodeType缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!nodeType) return -2
+  // 当 `nodeType` 匹配 `'ERROR'` 时，共享工具执行对应分支。
   if (nodeType === 'ERROR') return -1
+  // i保存`DANGEROUS_TYPE_IDS.indexOf`，供共享工具后续处理使用。
   const i = DANGEROUS_TYPE_IDS.indexOf(nodeType)
+  // 返回 `i >= 0 ? i + 1 : 0`，作为共享工具这次计算的结果。
   return i >= 0 ? i + 1 : 0
 }
 
@@ -221,6 +246,7 @@ export function nodeTypeId(nodeType: string | undefined): number {
  * Redirect operator tokens → canonical operator. tree-sitter produces these
  * as child nodes of `file_redirect`.
  */
+// REDIRECT_OPS 集合 集中保存共享工具 ast要一起传递的字段。
 const REDIRECT_OPS: Record<string, Redirect['op']> = {
   '>': '>',
   '>>': '>>',
@@ -242,6 +268,7 @@ const REDIRECT_OPS: Record<string, Redirect['op']> = {
  * Reject both — the escaped-brace case is rare and trivially rewritten
  * with single quotes.
  */
+// BRACE_EXPANSION_RE 命名 `/\{[^{}\s]*(,|\.\.)[^{}\s]*\}/`，让后续代码直接表达这个值的用途。
 const BRACE_EXPANSION_RE = /\{[^{}\s]*(,|\.\.)[^{}\s]*\}/
 
 /**
@@ -251,6 +278,7 @@ const BRACE_EXPANSION_RE = /\{[^{}\s]*(,|\.\.)[^{}\s]*\}/
  * word boundaries.
  */
 // eslint-disable-next-line no-control-regex
+// CONTROL_CHAR_RE保存`/[\x00-\x08\x0B-\x1F\x7F]/`，供共享工具 ast后续判断或输出使用。
 const CONTROL_CHAR_RE = /[\x00-\x08\x0B-\x1F\x7F]/
 
 /**
@@ -259,6 +287,7 @@ const CONTROL_CHAR_RE = /[\x00-\x08\x0B-\x1F\x7F]/
  * bash treats them as literal word characters. Blocks NBSP, zero-width
  * spaces, line/paragraph separators, BOM.
  */
+// UNICODE_WHITESPACE_RE 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const UNICODE_WHITESPACE_RE =
   /[\u00A0\u1680\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]/
 
@@ -276,6 +305,7 @@ const UNICODE_WHITESPACE_RE =
  * by whitespace (e.g. `foo && \<NL>bar`), there's no word to join — both
  * parsers agree, so we allow it.
  */
+// BACKSLASH_WHITESPACE_RE读取 `/\\[ \t]|[^ \t\n\\]\\\n/` 对应条目，后续围绕该成员继续处理。
 const BACKSLASH_WHITESPACE_RE = /\\[ \t]|[^ \t\n\\]\\\n/
 
 /**
@@ -284,6 +314,7 @@ const BACKSLASH_WHITESPACE_RE = /\\[ \t]|[^ \t\n\\]\\\n/
  * a literal tilde followed by a glob character class. Since BashTool runs
  * via the user's default shell (often zsh), reject conservatively.
  */
+// ZSH_TILDE_BRACKET_RE保存`/~\[/`，供共享工具 ast后续判断或输出使用。
 const ZSH_TILDE_BRACKET_RE = /~\[/
 
 /**
@@ -294,6 +325,7 @@ const ZSH_TILDE_BRACKET_RE = /~\[/
  * Only matches word-initial `=` followed by a command-name char — `VAR=val`
  * and `--flag=val` have `=` mid-word and are not expanded by zsh.
  */
+// ZSH_EQUALS_EXPANSION_RE保存`/(?:^|[\s;&|])=[a-zA-Z_]/`，供共享工具 ast后续判断或输出使用。
 const ZSH_EQUALS_EXPANSION_RE = /(?:^|[\s;&|])=[a-zA-Z_]/
 
 /**
@@ -311,6 +343,7 @@ const ZSH_EQUALS_EXPANSION_RE = /(?:^|[\s;&|])=[a-zA-Z_]/
  * pattern. The quote characters themselves stay visible so `{a'}',b}` and
  * `{@'{'0},...}` still match via the outer unquoted `{`.
  */
+// BRACE_WITH_QUOTE_RE保存`/\{[^}]*['"]/`，供共享工具 ast后续判断或输出使用。
 const BRACE_WITH_QUOTE_RE = /\{[^}]*['"]/
 
 /**
@@ -328,48 +361,75 @@ const BRACE_WITH_QUOTE_RE = /\{[^}]*['"]/
  * Brace expansion is impossible in both quote contexts, so masking `{` in
  * either is safe. Secondary defense: BRACE_EXPANSION_RE in walkArgument.
  */
+// maskBracesInQuotedContexts 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function maskBracesInQuotedContexts(cmd: string): string {
   // Fast path: no `{` → nothing to mask. Skips the char-by-char scan for
   // the >90% of commands with no braces (`ls -la`, `git status`, etc).
+  // 判断 !cmd.includes('{')，将共享工具分流到只适用于该条件的处理路径。
   if (!cmd.includes('{')) return cmd
+  // out从空数组开始收集，后续按处理顺序追加条目。
   const out: string[] = []
+  // inSingle记录当前扫描状态，共享工具 ast随后按该状态分支。
   let inSingle = false
+  // inDouble记录当前扫描状态，共享工具 ast随后按该状态分支。
   let inDouble = false
+  // i保存`0`，供共享工具 ast后续步骤使用。
   let i = 0
+  // while 使用 i < cmd.length 完成共享工具里的对应操作。
   while (i < cmd.length) {
+    // c保存`cmd[i]!`，供共享工具 ast后续步骤使用。
     const c = cmd[i]!
+    // 满足 `inSingle` 时，共享工具执行该分支。
     if (inSingle) {
       // Bash single quotes: no escapes, `'` always terminates.
+      // 判断 c === "'"，将共享工具分流到只适用于该条件的处理路径。
       if (c === "'") inSingle = false
+      // out追加新条目，保持收集顺序与输入顺序一致。
       out.push(c === '{' ? ' ' : c)
+      // 共享工具 ast处理 `i++`，完成这一小步状态转换。
       i++
+    // `inDouble` 成立时，共享工具 ast切换到这个 else-if 分支。
     } else if (inDouble) {
       // Bash double quotes: `\` escapes `"` and `\` (also `$`, backtick,
       // newline — but those don't affect quote state so we let them pass).
+      // 判断 c === '\\' && (cmd[i + 1] === '"' || cmd[i + 1] === '\\')，将共享工具分流到只适用于该条件的处理路径。
       if (c === '\\' && (cmd[i + 1] === '"' || cmd[i + 1] === '\\')) {
+        // out追加新条目，保持收集顺序与输入顺序一致。
         out.push(c, cmd[i + 1]!)
+        // 共享工具 ast处理 `i += 2`，完成这一小步状态转换。
         i += 2
       } else {
+        // 判断 c === '"'，将共享工具分流到只适用于该条件的处理路径。
         if (c === '"') inDouble = false
+        // out追加新条目，保持收集顺序与输入顺序一致。
         out.push(c === '{' ? ' ' : c)
+        // 共享工具 ast处理 `i++`，完成这一小步状态转换。
         i++
       }
     } else {
       // Unquoted: `\` escapes any next char.
+      // 组合条件 `c === '\\' && i + 1 < cmd.length` 成立时，共享工具才启用这条专门路径。
       if (c === '\\' && i + 1 < cmd.length) {
+        // out追加新条目，保持收集顺序与输入顺序一致。
         out.push(c, cmd[i + 1]!)
+        // 共享工具 ast处理 `i += 2`，完成这一小步状态转换。
         i += 2
       } else {
+        // 判断 c === "'"，将共享工具分流到只适用于该条件的处理路径。
         if (c === "'") inSingle = true
         else if (c === '"') inDouble = true
+        // out追加新条目，保持收集顺序与输入顺序一致。
         out.push(c)
+        // 共享工具 ast处理 `i++`，完成这一小步状态转换。
         i++
       }
     }
   }
+  // 返回 out.join('')，把共享工具这个分支的结果交还调用方。
   return out.join('')
 }
 
+// DOLLAR保存`String.fromCharCode`，供共享工具后续处理使用。
 const DOLLAR = String.fromCharCode(0x24)
 
 /**
@@ -378,14 +438,18 @@ const DOLLAR = String.fromCharCode(0x24)
  * statically analyze. Returns 'parse-unavailable' if tree-sitter WASM isn't
  * loaded — caller should fall back to conservative behavior.
  */
+// parseForSecurity 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 export async function parseForSecurity(
   cmd: string,
 ): Promise<ParseForSecurityResult> {
   // parseCommandRaw('') returns null (falsy check), so short-circuit here.
   // Don't use .trim() — it strips Unicode whitespace (\u00a0 etc.) which the
   // pre-checks in parseForSecurityFromAst need to see and reject.
+  // 判断 cmd === ''，将共享工具分流到只适用于该条件的处理路径。
   if (cmd === '') return { kind: 'simple', commands: [] }
+  // root解析`parseCommandRaw`，供共享工具后续处理使用。
   const root = await parseCommandRaw(cmd)
+  // 返回 root === null，把共享工具这个分支的结果交还调用方。
   return root === null
     ? { kind: 'parse-unavailable' }
     : parseForSecurityFromAst(cmd, root)
@@ -397,6 +461,7 @@ export async function parseForSecurity(
  * still run on `cmd` — they catch tree-sitter/bash differentials that a
  * successful parse doesn't.
  */
+// parseForSecurityFromAst 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 export function parseForSecurityFromAst(
   cmd: string,
   root: Node | typeof PARSE_ABORTED,
@@ -405,42 +470,58 @@ export function parseForSecurityFromAst(
   // word boundaries. These run before tree-sitter because they're the known
   // tree-sitter/bash differentials. Everything after this point trusts
   // tree-sitter's tokenization.
+  // 判断 CONTROL_CHAR_RE.test(cmd)，将共享工具分流到只适用于该条件的处理路径。
   if (CONTROL_CHAR_RE.test(cmd)) {
+    // 返回 { kind: 'too-complex', reason: 'Contains control characters' }，把共享工具这个分支的结果交还调用方。
     return { kind: 'too-complex', reason: 'Contains control characters' }
   }
+  // 判断 UNICODE_WHITESPACE_RE.test(cmd)，将共享工具分流到只适用于该条件的处理路径。
   if (UNICODE_WHITESPACE_RE.test(cmd)) {
+    // 返回 { kind: 'too-complex', reason: 'Contains Unicode whitespace' }，把共享工具这个分支的结果交还调用方。
     return { kind: 'too-complex', reason: 'Contains Unicode whitespace' }
   }
+  // 判断 BACKSLASH_WHITESPACE_RE.test(cmd)，将共享工具分流到只适用于该条件的处理路径。
   if (BACKSLASH_WHITESPACE_RE.test(cmd)) {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: 'Contains backslash-escaped whitespace',
     }
   }
+  // 判断 ZSH_TILDE_BRACKET_RE.test(cmd)，将共享工具分流到只适用于该条件的处理路径。
   if (ZSH_TILDE_BRACKET_RE.test(cmd)) {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: 'Contains zsh ~[ dynamic directory syntax',
     }
   }
+  // 判断 ZSH_EQUALS_EXPANSION_RE.test(cmd)，将共享工具分流到只适用于该条件的处理路径。
   if (ZSH_EQUALS_EXPANSION_RE.test(cmd)) {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: 'Contains zsh =cmd equals expansion',
     }
   }
+  // 判断 BRACE_WITH_QUOTE_RE.test(maskBracesInQuotedContexts(cmd))，将共享工具分流到只适用于该条件的处理路径。
   if (BRACE_WITH_QUOTE_RE.test(maskBracesInQuotedContexts(cmd))) {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: 'Contains brace with quote character (expansion obfuscation)',
     }
   }
 
+  // trimmed格式化`cmd.trim`，供共享工具后续处理使用。
   const trimmed = cmd.trim()
+  // 满足 `trimmed === ''` 时，共享工具执行该分支。
   if (trimmed === '') {
+    // 返回 { kind: 'simple', commands: [] }，把共享工具这个分支的结果交还调用方。
     return { kind: 'simple', commands: [] }
   }
 
+  // 满足 `root === PARSE_ABORTED` 时，共享工具执行该分支。
   if (root === PARSE_ABORTED) {
     // SECURITY: module loaded but parse aborted (timeout / node budget /
     // panic). Adversarially triggerable — `(( a[0][0]... ))` with ~2800
@@ -448,6 +529,7 @@ export function parseForSecurityFromAst(
     // Previously indistinguishable from module-not-loaded → routed to
     // legacy (parse-unavailable), which lacks EVAL_LIKE_BUILTINS — `trap`,
     // `enable`, `hash` leaked with Bash(*). Fail closed: too-complex → ask.
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason:
@@ -456,22 +538,29 @@ export function parseForSecurityFromAst(
     }
   }
 
+  // 返回 walkProgram(root)，把共享工具这个分支的结果交还调用方。
   return walkProgram(root)
 }
 
+// walkProgram 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function walkProgram(root: Node): ParseForSecurityResult {
   // ERROR-node check folded into collectCommands — any unhandled node type
   // (including ERROR) falls through to tooComplex() in the default branch.
   // Avoids a separate full-tree walk for error detection.
+  // commands 命令数据从空数组开始收集，后续按处理顺序追加条目。
   const commands: SimpleCommand[] = []
   // Track variables assigned earlier in the same command. When a
   // simple_expansion ($VAR) references a tracked var, we can substitute
   // a placeholder instead of returning too-complex. Enables patterns like
   // `NOW=$(date) && jq --arg now "$NOW" ...` — $NOW is known to be the
   // $(date) output (already extracted as inner command).
+  // varScope构建`new Map<string, string>()`，供共享工具 ast后续步骤使用。
   const varScope = new Map<string, string>()
+  // err保存`collectCommands`，供共享工具后续处理使用。
   const err = collectCommands(root, commands, varScope)
+  // 判断 err，将共享工具分流到只适用于该条件的处理路径。
   if (err) return err
+  // 返回 { kind: 'simple', commands }，把共享工具这个分支的结果交还调用方。
   return { kind: 'simple', commands }
 }
 
@@ -479,28 +568,39 @@ function walkProgram(root: Node): ParseForSecurityResult {
  * Recursively collect leaf `command` nodes from a structural wrapper node.
  * Returns an error result on any disallowed node type, or null on success.
  */
+// collectCommands 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function collectCommands(
   node: Node,
   commands: SimpleCommand[],
   varScope: Map<string, string>,
 ): ParseForSecurityResult | null {
+  // `node.type` 命中特定值 `'command'` 时，进入共享工具对应处理。
   if (node.type === 'command') {
     // Pass `commands` as the innerCommands accumulator — any $() extracted
     // during walkCommand gets appended alongside the outer command.
+    // 结果保存`walkCommand`，供共享工具后续处理使用。
     const result = walkCommand(node, [], commands, varScope)
+    // 判断 result.kind !== 'simple'，将共享工具分流到只适用于该条件的处理路径。
     if (result.kind !== 'simple') return result
+    // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
     commands.push(...result.commands)
+    // 返回 null，把共享工具这个分支的结果交还调用方。
     return null
   }
 
+  // `node.type` 命中特定值 `'redirected_statement'` 时，进入共享工具对应处理。
   if (node.type === 'redirected_statement') {
+    // 返回 walkRedirectedStatement(node, commands, varScope)，把共享工具这个分支的结果交还调用方。
     return walkRedirectedStatement(node, commands, varScope)
   }
 
+  // `node.type` 命中特定值 `'comment'` 时，进入共享工具对应处理。
   if (node.type === 'comment') {
+    // 返回 null，把共享工具这个分支的结果交还调用方。
     return null
   }
 
+  // 判断 STRUCTURAL_TYPES.has(node.type)，将共享工具分流到只适用于该条件的处理路径。
   if (STRUCTURAL_TYPES.has(node.type)) {
     // SECURITY: `||`, `|`, `|&`, `&` must NOT carry varScope linearly. In bash:
     //   `||` RHS runs conditionally → vars set there MAY not be set
@@ -527,24 +627,37 @@ function collectCommands(
     // Map alloc via a cheap pre-scan. For `pipeline`, node.type already tells
     // us stages are subshells — copy once at entry, no snapshot needed (each
     // reset uses the entry copy pattern via varScope, which is untouched).
+    // isPipeline标记共享工具 ast是否启用对应路径。
     const isPipeline = node.type === 'pipeline'
+    // needsSnapshot标记共享工具 ast是否启用对应路径。
     let needsSnapshot = false
+    // isPipeline缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!isPipeline) {
+      // 按顺序遍历 `node.children` 中的c，逐个交给共享工具处理。
       for (const c of node.children) {
+        // 只有 `c && (c.type === '||' || c.type === '&')` 满足时，共享工具才执行该分支。
         if (c && (c.type === '||' || c.type === '&')) {
+          // needsSnapshot更新为 `true`，确保Bash 解析工具后续读取最新状态。
           needsSnapshot = true
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         }
       }
     }
+    // snapshot保存`Map`，供共享工具后续处理使用。
     const snapshot = needsSnapshot ? new Map(varScope) : null
     // For `pipeline`, ALL stages run in subshells — start with a copy so
     // nothing mutates caller's scope. For `list`/`program`, the `&&`/`;`
     // chain mutates caller's scope (sequential); fork only on `||`/`&`.
+    // scope保存`Map`，供共享工具后续处理使用。
     let scope = isPipeline ? new Map(varScope) : varScope
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 满足 `SEPARATOR_TYPES.has(child.type)` 时，共享工具执行该分支。
       if (SEPARATOR_TYPES.has(child.type)) {
+        // 共享工具在这里按实际状态进入对应分支。
         if (
           child.type === '||' ||
           child.type === '|' ||
@@ -554,28 +667,40 @@ function collectCommands(
           // For pipeline: varScope is untouched (we started with a copy).
           // For list/program: snapshot is non-null (pre-scan set it).
           // `|`/`|&` only appear under `pipeline` nodes; `||`/`&` under list.
+          // scope更新为 `new Map(snapshot ?? varScope)`，确保Bash 解析工具后续读取最新状态。
           scope = new Map(snapshot ?? varScope)
         }
+        // 跳过当前项，继续处理共享工具中的下一轮循环。
         continue
       }
+      // err保存`collectCommands`，供共享工具后续处理使用。
       const err = collectCommands(child, commands, scope)
+      // 满足 `err` 时，共享工具执行该分支。
       if (err) return err
     }
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 当 `node.type` 匹配 `'negated_command'` 时，共享工具执行对应分支。
   if (node.type === 'negated_command') {
     // `! cmd` inverts exit code only — doesn't execute code or affect
     // argv. Recurse into the wrapped command. Common in CI: `! grep err`,
     // `! test -f lock`, `! git diff --quiet`.
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 当 `child.type` 匹配 `'!'` 时，共享工具执行对应分支。
       if (child.type === '!') continue
+      // 返回 `collectCommands(child, commands, varScope)`，作为共享工具这次计算的结果。
       return collectCommands(child, commands, varScope)
     }
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 当 `node.type` 匹配 `'declaration_command'` 时，共享工具执行对应分支。
   if (node.type === 'declaration_command') {
     // `export`/`local`/`readonly`/`declare`/`typeset`. tree-sitter emits
     // these as declaration_command, not command, so they previously fell
@@ -584,16 +709,22 @@ function collectCommands(
     // commands[], outer argv gets CMDSUB_PLACEHOLDER); other disallowed
     // expansions still reject via walkArgument. argv[0] is the builtin name so
     // `Bash(export:*)` rules match.
+    // 命令行参数 从空数组开始收集，后续循环会按处理顺序追加条目。
     const argv: string[] = []
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 按照 child.type 的取值选择共享工具的具体处理分支。
       switch (child.type) {
         case 'export':
         case 'local':
         case 'readonly':
         case 'declare':
         case 'typeset':
+          // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
           argv.push(child.text)
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         case 'word':
         case 'number':
@@ -604,7 +735,9 @@ function collectCommands(
           // (`declare -i 42`). Mirrors walkCommand's argv handling — before
           // this, `export "FOO=bar"` hit tooComplex on the `string` child.
           // walkArgument validates each (expansions still reject).
+          // 当前参数保存`walkArgument`，供共享工具后续处理使用。
           const arg = walkArgument(child, commands, varScope)
+          // `typeof arg` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
           if (typeof arg !== 'string') return arg
           // SECURITY: declare/typeset/local flags that change assignment
           // semantics break our static model. -n (nameref): `declare -n X=Y`
@@ -620,12 +753,14 @@ function collectCommands(
           // export attribute" (not nameref), and export/readonly don't
           // accept -i; readonly -a/-A rejects subscripted args as invalid
           // identifiers so subscript-arith doesn't fire.
+          // 共享工具在这里按实际状态进入对应分支。
           if (
             (argv[0] === 'declare' ||
               argv[0] === 'typeset' ||
               argv[0] === 'local') &&
             /^-[a-zA-Z]*[niaA]/.test(arg)
           ) {
+            // 返回结构化结果，集中表达共享工具已经整理出的状态。
             return {
               kind: 'too-complex',
               reason: `declare flag ${arg} changes assignment semantics (nameref/integer/array)`,
@@ -639,6 +774,7 @@ function collectCommands(
           // single-quoted form as a raw_string leaf so walkArgument sees
           // only the literal text. Scoped to declare/typeset/local:
           // export/readonly reject `[` in identifiers before eval.
+          // 共享工具在这里按实际状态进入对应分支。
           if (
             (argv[0] === 'declare' ||
               argv[0] === 'typeset' ||
@@ -646,35 +782,49 @@ function collectCommands(
             arg[0] !== '-' &&
             /^[^=]*\[/.test(arg)
           ) {
+            // 返回结构化结果，集中表达共享工具已经整理出的状态。
             return {
               kind: 'too-complex',
               reason: `declare positional '${arg}' contains array subscript — bash evaluates $(cmd) in subscripts`,
               nodeType: 'declaration_command',
             }
           }
+          // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
           argv.push(arg)
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         }
         case 'variable_assignment': {
+          // ev保存`walkVariableAssignment`，供共享工具后续处理使用。
           const ev = walkVariableAssignment(child, commands, varScope)
+          // 满足 `'kind' in ev` 时，共享工具执行该分支。
           if ('kind' in ev) return ev
           // export/declare assignments populate the scope so later $VAR refs resolve.
+          // 调用 applyVarToScope，触发共享工具此处需要的副作用。
           applyVarToScope(varScope, ev)
+          // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
           argv.push(`${ev.name}=${ev.value}`)
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         }
         case 'variable_name':
           // `export FOO` — bare name, no assignment.
+          // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
           argv.push(child.text)
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         default:
+          // 返回 `tooComplex(child)`，作为共享工具这次计算的结果。
           return tooComplex(child)
       }
     }
+    // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
     commands.push({ argv, envVars: [], redirects: [], text: node.text })
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 当 `node.type` 匹配 `'variable_assignment'` 时，共享工具执行对应分支。
   if (node.type === 'variable_assignment') {
     // Bare `VAR=value` at statement level (not a command env prefix).
     // Sets a shell variable — no code execution, no filesystem I/O.
@@ -683,13 +833,18 @@ function collectCommands(
     // inner command. Does NOT push to commands — a bare assignment needs
     // no permission rule (it's inert). Common pattern: `VAR=x && cmd`
     // where cmd references $VAR. ~35% of too-complex in top-5k ant cmds.
+    // ev保存`walkVariableAssignment`，供共享工具后续处理使用。
     const ev = walkVariableAssignment(node, commands, varScope)
+    // 满足 `'kind' in ev` 时，共享工具执行该分支。
     if ('kind' in ev) return ev
     // Populate scope so later `$VAR` references resolve.
+    // 调用 applyVarToScope，触发共享工具此处需要的副作用。
     applyVarToScope(varScope, ev)
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 当 `node.type` 匹配 `'for_statement'` 时，共享工具执行对应分支。
   if (node.type === 'for_statement') {
     // `for VAR in WORD...; do BODY; done` — iterate BODY once per word.
     // Body commands extracted once; every iteration runs the same commands.
@@ -706,24 +861,37 @@ function collectCommands(
     // string-embedding (`echo "item: $i"`) stays simple. This reverts some
     // of the too-complex→simple rescues in the original PR — each one was a
     // potential path-validation bypass.
+    // loopVar初始化为空值，后续分支会在有数据时补齐。
     let loopVar: string | null = null
+    // doGroup 命名 `null`，让后续代码直接表达这个值的用途。
     let doGroup: Node | null = null
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 当 `child.type` 匹配 `'variable_name'` 时，共享工具执行对应分支。
       if (child.type === 'variable_name') {
+        // loopVar更新为 `child.text`，确保Bash 解析工具后续读取最新状态。
         loopVar = child.text
+      // 共享工具 ast在这里处理 `} else if (child.type === 'do_group') {`，完成这一小步状态转换。
       } else if (child.type === 'do_group') {
+        // doGroup更新为 `child`，确保Bash 解析工具后续读取最新状态。
         doGroup = child
+      // 共享工具 ast在这里处理 `} else if (`，完成这一小步状态转换。
       } else if (
         child.type === 'for' ||
         child.type === 'in' ||
         child.type === 'select' ||
         child.type === ';'
       ) {
+        // 跳过当前项，继续处理共享工具中的下一轮循环。
         continue // structural tokens
+      // 共享工具 ast在这里处理 `} else if (child.type === 'command_substitution') {`，完成这一小步状态转换。
       } else if (child.type === 'command_substitution') {
         // `for i in $(seq 1 3)` — inner cmd IS extracted and rule-checked.
+        // err保存`collectCommandSubstitution`，供共享工具后续处理使用。
         const err = collectCommandSubstitution(child, commands, varScope)
+        // 满足 `err` 时，共享工具执行该分支。
         if (err) return err
       } else {
         // Iteration values — validated via walkArgument. Value discarded:
@@ -731,15 +899,20 @@ function collectCommands(
         // and bare `$i` in body → too-complex (see SECURITY comment above).
         // We still validate to reject e.g. `for i in $(cmd); do ...; done`
         // where the iteration word itself is a disallowed expansion.
+        // 当前参数保存`walkArgument`，供共享工具后续处理使用。
         const arg = walkArgument(child, commands, varScope)
+        // `typeof arg` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
         if (typeof arg !== 'string') return arg
       }
     }
+    // 只有 `loopVar === null || doGroup === null) return tooComplex(node` 满足时，共享工具才执行该分支。
     if (loopVar === null || doGroup === null) return tooComplex(node)
     // SECURITY: `for PS4 in '$(id)'; do set -x; :; done` sets PS4 directly
     // via varScope.set below — walkVariableAssignment's PS4/IFS checks never
     // fire. Trace-time RCE (PS4) or word-split bypass (IFS). No legit use.
+    // 当 `loopVar` 匹配 `'PS4' || loopVar === 'IFS'` 时，共享工具执行对应分支。
     if (loopVar === 'PS4' || loopVar === 'IFS') {
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         kind: 'too-complex',
         reason: `${loopVar} as loop variable bypasses assignment validation`,
@@ -750,17 +923,26 @@ function collectCommands(
     // body don't leak to commands after `done`. The loop var itself is
     // set in the REAL scope (bash semantics: $i still set after loop)
     // and copied into the body scope. ALWAYS VAR_PLACEHOLDER — see above.
+    // varScope.set 写入新的状态值，使共享工具后续读取保持一致。
     varScope.set(loopVar, VAR_PLACEHOLDER)
+    // bodyScope保存`Map`，供共享工具后续处理使用。
     const bodyScope = new Map(varScope)
+    // 按顺序遍历 `doGroup.children` 中的c，逐个交给共享工具处理。
     for (const c of doGroup.children) {
+      // c缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!c) continue
+      // 当 `c.type` 匹配 `'do' || c.type === 'done' |...` 时，共享工具执行对应分支。
       if (c.type === 'do' || c.type === 'done' || c.type === ';') continue
+      // err保存`collectCommands`，供共享工具后续处理使用。
       const err = collectCommands(c, commands, bodyScope)
+      // 满足 `err` 时，共享工具执行该分支。
       if (err) return err
     }
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 只有 `node.type === 'if_statement' || node.type === 'wh` 满足时，共享工具才执行该分支。
   if (node.type === 'if_statement' || node.type === 'while_statement') {
     // `if COND; then BODY; [elif...; else...;] fi`
     // `while COND; do BODY; done`
@@ -778,9 +960,13 @@ function collectCommands(
     // tree-sitter if_statement children: if, COND..., then, THEN-BODY...,
     // [elif_clause...], [else_clause], fi. We distinguish condition from
     // then-body by tracking whether we've seen the `then` token.
+    // seenThen标记共享工具 ast是否启用对应路径。
     let seenThen = false
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 共享工具在这里按实际状态进入对应分支。
       if (
         child.type === 'if' ||
         child.type === 'fi' ||
@@ -790,61 +976,92 @@ function collectCommands(
         child.type === 'until' ||
         child.type === ';'
       ) {
+        // 跳过当前项，继续处理共享工具中的下一轮循环。
         continue
       }
+      // 当 `child.type` 匹配 `'then'` 时，共享工具执行对应分支。
       if (child.type === 'then') {
+        // seenThen更新为 `true`，确保Bash 解析工具后续读取最新状态。
         seenThen = true
+        // 跳过当前项，继续处理共享工具中的下一轮循环。
         continue
       }
+      // 当 `child.type` 匹配 `'do_group'` 时，共享工具执行对应分支。
       if (child.type === 'do_group') {
         // while body: recurse with scope COPY (body assignments don't leak
         // past done). The COPY contains any `read VAR` tracking from the
         // condition (already in real varScope at this point).
+        // bodyScope保存`Map`，供共享工具后续处理使用。
         const bodyScope = new Map(varScope)
+        // 按顺序遍历 `child.children` 中的c，逐个交给共享工具处理。
         for (const c of child.children) {
+          // c缺失时直接走兜底路径，避免共享工具使用无效输入。
           if (!c) continue
+          // 当 `c.type` 匹配 `'do' || c.type === 'done' |...` 时，共享工具执行对应分支。
           if (c.type === 'do' || c.type === 'done' || c.type === ';') continue
+          // err保存`collectCommands`，供共享工具后续处理使用。
           const err = collectCommands(c, commands, bodyScope)
+          // 满足 `err` 时，共享工具执行该分支。
           if (err) return err
         }
+        // 跳过当前项，继续处理共享工具中的下一轮循环。
         continue
       }
+      // 只有 `child.type === 'elif_clause' || child.type === 'e` 满足时，共享工具才执行该分支。
       if (child.type === 'elif_clause' || child.type === 'else_clause') {
         // elif_clause: elif, cond, ;, then, body... / else_clause: else, body...
         // Scope COPY — elif/else branch assignments don't leak past fi.
+        // branchScope保存`Map`，供共享工具后续处理使用。
         const branchScope = new Map(varScope)
+        // 按顺序遍历 `child.children` 中的c，逐个交给共享工具处理。
         for (const c of child.children) {
+          // c缺失时直接走兜底路径，避免共享工具使用无效输入。
           if (!c) continue
+          // 共享工具在这里按实际状态进入对应分支。
           if (
             c.type === 'elif' ||
             c.type === 'else' ||
             c.type === 'then' ||
             c.type === ';'
           ) {
+            // 跳过当前项，继续处理共享工具中的下一轮循环。
             continue
           }
+          // err保存`collectCommands`，供共享工具后续处理使用。
           const err = collectCommands(c, commands, branchScope)
+          // 满足 `err` 时，共享工具执行该分支。
           if (err) return err
         }
+        // 跳过当前项，继续处理共享工具中的下一轮循环。
         continue
       }
       // Condition (seenThen=false) or then-body (seenThen=true).
       // Condition uses REAL varScope (always runs). Then-body uses a COPY.
       // Special-case `while read VAR`: after condition `read VAR` is
       // collected, track VAR in the REAL scope so the body COPY inherits it.
+      // targetScope保存`Map`，供共享工具后续处理使用。
       const targetScope = seenThen ? new Map(varScope) : varScope
+      // before保存 `commands.length` 的判断结果，供共享工具 ast后续分支直接复用。
       const before = commands.length
+      // err保存`collectCommands`，供共享工具后续处理使用。
       const err = collectCommands(child, commands, targetScope)
+      // 满足 `err` 时，共享工具执行该分支。
       if (err) return err
       // If condition included `read VAR...`, track vars in REAL scope.
       // read var value is UNKNOWN (stdin input) → use VAR_PLACEHOLDER
       // (unknown-value sentinel, string-only).
+      // seenThen缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!seenThen) {
+        // 循环处理 `let i = before; i < commands.length; i++`，让共享工具逐项把同类条目按顺序走完。
         for (let i = before; i < commands.length; i++) {
+          // c保存`commands[i]`，供共享工具 ast后续判断或输出使用。
           const c = commands[i]
+          // 当 `c?.argv[0]` 匹配 `'read'` 时，共享工具执行对应分支。
           if (c?.argv[0] === 'read') {
+            // 逐项读取 `c.argv.slice(1)` 中的a，按输入顺序推进共享工具。
             for (const a of c.argv.slice(1)) {
               // Skip flags (-r, -d, etc.); track bare identifier args as var names.
+              // 只有 `!a.startsWith('-') && /^[A-Za-z_][A-Za-z0-9_]*$/.test(a)` 满足时，共享工具才执行该分支。
               if (!a.startsWith('-') && /^[A-Za-z_][A-Za-z0-9_]*$/.test(a)) {
                 // SECURITY: commands[] is a flat accumulator. `true || read
                 // VAR` in the condition: the list handler correctly uses a
@@ -858,17 +1075,21 @@ function collectCommands(
                 // /tmp/__TRACKED_VAR__, bash reads /etc/passwd. Fail closed
                 // when a tracked literal would be overwritten. Safe case
                 // (no prior value or already a placeholder) → proceed.
+                // existing读取`varScope.get`，供共享工具后续处理使用。
                 const existing = varScope.get(a)
+                // 共享工具在这里按实际状态进入对应分支。
                 if (
                   existing !== undefined &&
                   !containsAnyPlaceholder(existing)
                 ) {
+                  // 返回结构化结果，集中表达共享工具已经整理出的状态。
                   return {
                     kind: 'too-complex',
                     reason: `'read ${a}' in condition may not execute (||/pipeline/subshell); cannot prove it overwrites tracked literal '${existing}'`,
                     nodeType: 'if_statement',
                   }
                 }
+                // varScope.set 写入新的状态值，使共享工具后续读取保持一致。
                 varScope.set(a, VAR_PLACEHOLDER)
               }
             }
@@ -876,24 +1097,34 @@ function collectCommands(
         }
       }
     }
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 当 `node.type` 匹配 `'subshell'` 时，共享工具执行对应分支。
   if (node.type === 'subshell') {
     // `(cmd1; cmd2)` — run commands in a subshell. Inner commands ARE
     // executed, so extract them for permission checking. Subshell has
     // isolated scope: vars set inside don't leak out. Use a COPY of
     // varScope (outer vars visible, inner changes discarded).
+    // innerScope保存`Map`，供共享工具后续处理使用。
     const innerScope = new Map(varScope)
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 当 `child.type` 匹配 `'(' || child.type === ')'` 时，共享工具执行对应分支。
       if (child.type === '(' || child.type === ')') continue
+      // err保存`collectCommands`，供共享工具后续处理使用。
       const err = collectCommands(child, commands, innerScope)
+      // 满足 `err` 时，共享工具执行该分支。
       if (err) return err
     }
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 当 `node.type` 匹配 `'test_command'` 时，共享工具执行对应分支。
   if (node.type === 'test_command') {
     // `[[ EXPR ]]` or `[ EXPR ]` — conditional test. Evaluates to true/false
     // based on file tests (-f, -d), string comparisons (==, !=), etc.
@@ -902,55 +1133,82 @@ function collectCommands(
     // Push as a synthetic command with argv[0]='[[' so permission rules
     // can match — `Bash([[ :*)` would be unusual but legal.
     // Walk arguments to validate (no cmdsub/expansion inside operands).
+    // 命令行参数 聚合成有序列表，保持后续遍历顺序稳定。
     const argv: string[] = ['[[']
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 当 `child.type` 匹配 `'[[' || child.type === ']]'` 时，共享工具执行对应分支。
       if (child.type === '[[' || child.type === ']]') continue
+      // 当 `child.type` 匹配 `'[' || child.type === ']'` 时，共享工具执行对应分支。
       if (child.type === '[' || child.type === ']') continue
       // Recurse into test expression structure: unary_expression,
       // binary_expression, parenthesized_expression, negated_expression.
       // The leaves are test_operator (-f, -d, ==) and operand words.
+      // err保存`walkTestExpr`，供共享工具后续处理使用。
       const err = walkTestExpr(child, argv, commands, varScope)
+      // 满足 `err` 时，共享工具执行该分支。
       if (err) return err
     }
+    // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
     commands.push({ argv, envVars: [], redirects: [], text: node.text })
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 当 `node.type` 匹配 `'unset_command'` 时，共享工具执行对应分支。
   if (node.type === 'unset_command') {
     // `unset FOO BAR`, `unset -f func`. Safe: only removes shell
     // variables/functions from the current shell — no code execution, no
     // filesystem I/O. tree-sitter emits a dedicated node type so it
     // previously fell through to tooComplex. Children: `unset` keyword,
     // `variable_name` for each name, `word` for flags like `-f`/`-v`.
+    // 命令行参数 从空数组开始收集，后续循环会按处理顺序追加条目。
     const argv: string[] = []
+    // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
     for (const child of node.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // 按照 child.type 的取值选择共享工具的具体处理分支。
       switch (child.type) {
         case 'unset':
+          // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
           argv.push(child.text)
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         case 'variable_name':
+          // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
           argv.push(child.text)
           // SECURITY: unset removes the var from bash's scope. Remove from
           // varScope so subsequent `$VAR` references correctly reject.
           // `VAR=safe && unset VAR && rm $VAR` must NOT resolve $VAR.
+          // 调用 varScope.delete，触发共享工具此处需要的副作用。
           varScope.delete(child.text)
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         case 'word': {
+          // 当前参数保存`walkArgument`，供共享工具后续处理使用。
           const arg = walkArgument(child, commands, varScope)
+          // `typeof arg` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
           if (typeof arg !== 'string') return arg
+          // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
           argv.push(arg)
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break
         }
         default:
+          // 返回 `tooComplex(child)`，作为共享工具这次计算的结果。
           return tooComplex(child)
       }
     }
+    // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
     commands.push({ argv, envVars: [], redirects: [], text: node.text })
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // 返回 `tooComplex(node)`，作为共享工具这次计算的结果。
   return tooComplex(node)
 }
 
@@ -959,22 +1217,29 @@ function collectCommands(
  * parenthesized expressions). Leaves are test_operator tokens and operands
  * (word/string/number/etc). Operands are validated via walkArgument.
  */
+// walkTestExpr 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkTestExpr(
   node: Node,
   argv: string[],
   innerCommands: SimpleCommand[],
   varScope: Map<string, string>,
 ): ParseForSecurityResult | null {
+  // 按照 node.type 的取值选择共享工具的具体处理分支。
   switch (node.type) {
     case 'unary_expression':
     case 'binary_expression':
     case 'negated_expression':
     case 'parenthesized_expression': {
+      // 按顺序遍历 `node.children` 中的c，逐个交给共享工具处理。
       for (const c of node.children) {
+        // c缺失时直接走兜底路径，避免共享工具使用无效输入。
         if (!c) continue
+        // err保存`walkTestExpr`，供共享工具后续处理使用。
         const err = walkTestExpr(c, argv, innerCommands, varScope)
+        // 满足 `err` 时，共享工具执行该分支。
         if (err) return err
       }
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null
     }
     case 'test_operator':
@@ -989,20 +1254,28 @@ function walkTestExpr(
     case '<':
     case '>':
     case '=~':
+      // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
       argv.push(node.text)
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null
     case 'regex':
     case 'extglob_pattern':
       // RHS of =~ or ==/!= in [[ ]]. Pattern text only — no code execution.
       // Parser emits these as leaf nodes with no children (any $(...) or ${...}
       // inside the pattern is a sibling, not a child, and is walked separately).
+      // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
       argv.push(node.text)
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null
     default: {
       // Operand — word, string, number, etc. Validate via walkArgument.
+      // 当前参数保存`walkArgument`，供共享工具后续处理使用。
       const arg = walkArgument(node, innerCommands, varScope)
+      // `typeof arg` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
       if (typeof arg !== 'string') return arg
+      // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
       argv.push(arg)
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null
     }
   }
@@ -1014,25 +1287,38 @@ function walkTestExpr(
  * inner command, attach redirects to the LAST command (the one whose output
  * is being redirected).
  */
+// walkRedirectedStatement 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkRedirectedStatement(
   node: Node,
   commands: SimpleCommand[],
   varScope: Map<string, string>,
 ): ParseForSecurityResult | null {
+  // redirects 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const redirects: Redirect[] = []
+  // innerCommand 命令数据保存`null`，作为后续空值处理的输入。
   let innerCommand: Node | null = null
 
+  // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
   for (const child of node.children) {
+    // child缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!child) continue
+    // 当 `child.type` 匹配 `'file_redirect'` 时，共享工具执行对应分支。
     if (child.type === 'file_redirect') {
       // Thread `commands` so $() in redirect targets (e.g., `> $(mktemp)`)
       // extracts the inner command for permission checking.
+      // r保存`walkFileRedirect`，供共享工具后续处理使用。
       const r = walkFileRedirect(child, commands, varScope)
+      // 满足 `'kind' in r` 时，共享工具执行该分支。
       if ('kind' in r) return r
+      // redirects 集合追加新条目，保持收集顺序与输入顺序一致。
       redirects.push(r)
+    // 共享工具 ast在这里处理 `} else if (child.type === 'heredoc_redirect') {`，完成这一小步状态转换。
     } else if (child.type === 'heredoc_redirect') {
+      // r保存`walkHeredocRedirect`，供共享工具后续处理使用。
       const r = walkHeredocRedirect(child)
+      // 满足 `r` 时，共享工具执行该分支。
       if (r) return r
+    // 共享工具 ast在这里处理 `} else if (`，完成这一小步状态转换。
     } else if (
       child.type === 'command' ||
       child.type === 'pipeline' ||
@@ -1041,26 +1327,38 @@ function walkRedirectedStatement(
       child.type === 'declaration_command' ||
       child.type === 'unset_command'
     ) {
+      // innerCommand 命令数据更新为 `child`，确保Bash 解析工具后续读取最新状态。
       innerCommand = child
     } else {
+      // 返回 `tooComplex(child)`，作为共享工具这次计算的结果。
       return tooComplex(child)
     }
   }
 
+  // innerCommand 命令数据缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!innerCommand) {
     // `> file` alone is valid bash (truncates file). Represent as a command
     // with empty argv so downstream sees the write.
+    // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
     commands.push({ argv: [], envVars: [], redirects, text: node.text })
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null
   }
 
+  // before保存 `commands.length` 的判断结果，供共享工具 ast后续分支直接复用。
   const before = commands.length
+  // err保存`collectCommands`，供共享工具后续处理使用。
   const err = collectCommands(innerCommand, commands, varScope)
+  // 满足 `err` 时，共享工具执行该分支。
   if (err) return err
+  // 只有 `commands.length > before && redirects.length > 0` 满足时，共享工具才执行该分支。
   if (commands.length > before && redirects.length > 0) {
+    // last保存 `commands[commands.length - 1]` 的判断结果，供共享工具 ast后续分支直接复用。
     const last = commands[commands.length - 1]
+    // 满足 `last) last.redirects.push(...redirects` 时，共享工具执行该分支。
     if (last) last.redirects.push(...redirects)
   }
+  // 返回 `null`，作为共享工具这次计算的结果。
   return null
 }
 
@@ -1068,62 +1366,90 @@ function walkRedirectedStatement(
  * Extract operator + target from a `file_redirect` node. The target must be
  * a static word or string.
  */
+// walkFileRedirect 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkFileRedirect(
   node: Node,
   innerCommands: SimpleCommand[],
   varScope: Map<string, string>,
 ): Redirect | ParseForSecurityResult {
+  // op 命名 `null`，让后续代码直接表达这个值的用途。
   let op: Redirect['op'] | null = null
+  // target初始化为空值，后续分支会在有数据时补齐。
   let target: string | null = null
+  // fd 先占位，稍后的条件分支会根据实际输入补齐它。
   let fd: number | undefined
 
+  // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
   for (const child of node.children) {
+    // child缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!child) continue
+    // 当 `child.type` 匹配 `'file_descriptor'` 时，共享工具执行对应分支。
     if (child.type === 'file_descriptor') {
+      // fd更新为 `Number(child.text)`，确保Bash 解析工具后续读取最新状态。
       fd = Number(child.text)
+    // 共享工具 ast在这里处理 `} else if (child.type in REDIRECT_OPS) {`，完成这一小步状态转换。
     } else if (child.type in REDIRECT_OPS) {
+      // op更新为 `REDIRECT_OPS[child.type] ?? null`，确保Bash 解析工具后续读取最新状态。
       op = REDIRECT_OPS[child.type] ?? null
+    // 共享工具 ast在这里处理 `} else if (child.type === 'word' || child.type === 'number') {`，完成这一小步状态转换。
     } else if (child.type === 'word' || child.type === 'number') {
       // SECURITY: `number` nodes can contain expansion children via the
       // `NN#<expansion>` arithmetic-base grammar quirk — same issue as
       // walkArgument's number case. `> 10#$(cmd)` runs cmd at runtime.
       // Plain word/number nodes have zero children.
+      // 满足 `child.children.length > 0) return tooComplex(child` 时，共享工具执行该分支。
       if (child.children.length > 0) return tooComplex(child)
       // Symmetry with walkArgument (~608): `echo foo > {a,b}` is an
       // ambiguous redirect in bash. tree-sitter actually emits a
       // `concatenation` node for brace targets (caught by the default
       // branch below), but check `word` text too for defense-in-depth.
+      // 满足 `BRACE_EXPANSION_RE.test(child.text)) return tooComplex(child` 时，共享工具执行该分支。
       if (BRACE_EXPANSION_RE.test(child.text)) return tooComplex(child)
       // Unescape backslash sequences — same as walkArgument. Bash quote
       // removal turns `\X` → `X`. Without this, `cat < /proc/self/\environ`
       // stores target `/proc/self/\environ` which evades PROC_ENVIRON_RE,
       // but bash reads /proc/self/environ.
+      // target更新为 `child.text.replace(/\\(.)/g, '$1')`，确保Bash 解析工具后续读取最新状态。
       target = child.text.replace(/\\(.)/g, '$1')
+    // 共享工具 ast在这里处理 `} else if (child.type === 'raw_string') {`，完成这一小步状态转换。
     } else if (child.type === 'raw_string') {
+      // target更新为 `stripRawString(child.text)`，确保Bash 解析工具后续读取最新状态。
       target = stripRawString(child.text)
+    // 共享工具 ast在这里处理 `} else if (child.type === 'string') {`，完成这一小步状态转换。
     } else if (child.type === 'string') {
+      // s 集合保存`walkString`，供共享工具后续处理使用。
       const s = walkString(child, innerCommands, varScope)
+      // `typeof s` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
       if (typeof s !== 'string') return s
+      // target更新为 `s`，确保Bash 解析工具后续读取最新状态。
       target = s
+    // 共享工具 ast在这里处理 `} else if (child.type === 'concatenation') {`，完成这一小步状态转换。
     } else if (child.type === 'concatenation') {
       // `echo > "foo"bar` — tree-sitter produces a concatenation of string +
       // word children. walkArgument already validates concatenation (rejects
       // expansions, checks brace syntax) and returns the joined text.
+      // s 集合保存`walkArgument`，供共享工具后续处理使用。
       const s = walkArgument(child, innerCommands, varScope)
+      // `typeof s` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
       if (typeof s !== 'string') return s
+      // target更新为 `s`，确保Bash 解析工具后续读取最新状态。
       target = s
     } else {
+      // 返回 `tooComplex(child)`，作为共享工具这次计算的结果。
       return tooComplex(child)
     }
   }
 
+  // 只有 `!op || target === null` 满足时，共享工具才执行该分支。
   if (!op || target === null) {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       kind: 'too-complex',
       reason: 'Unrecognized redirect shape',
       nodeType: node.type,
     }
   }
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return { op, target, fd }
 }
 
@@ -1140,12 +1466,18 @@ function walkFileRedirect(
  * substitution. Keep rejecting all unquoted heredocs. Users should use
  * <<'EOF' to get a literal body, which the model already prefers.
  */
+// walkHeredocRedirect 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkHeredocRedirect(node: Node): ParseForSecurityResult | null {
+  // startText初始化为空值，后续分支会在有数据时补齐。
   let startText: string | null = null
+  // 请求体 命名 `null`，让后续代码直接表达这个值的用途。
   let body: Node | null = null
 
+  // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
   for (const child of node.children) {
+    // child缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!child) continue
+    // 当 `child.type` 匹配 `'heredoc_start'` 时，共享工具执行对应分支。
     if (child.type === 'heredoc_start') startText = child.text
     else if (child.type === 'heredoc_body') body = child
     else if (
@@ -1163,17 +1495,21 @@ function walkHeredocRedirect(node: Node): ParseForSecurityResult | null {
       // delimiter on the same line (e.g. `ls <<'EOF' | rm x`). Previously
       // these were silently skipped, hiding the piped command from
       // permission checks. Fail closed like every other walker.
+      // 返回 `tooComplex(child)`，作为共享工具这次计算的结果。
       return tooComplex(child)
     }
   }
 
+  // isQuoted 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const isQuoted =
     startText !== null &&
     ((startText.startsWith("'") && startText.endsWith("'")) ||
       (startText.startsWith('"') && startText.endsWith('"')) ||
       startText.startsWith('\\'))
 
+  // isQuoted缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!isQuoted) {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       kind: 'too-complex',
       reason: 'Heredoc with unquoted delimiter undergoes shell expansion',
@@ -1181,14 +1517,20 @@ function walkHeredocRedirect(node: Node): ParseForSecurityResult | null {
     }
   }
 
+  // 满足 `body` 时，共享工具执行该分支。
   if (body) {
+    // 按顺序遍历 `body.children` 中的child，逐个交给共享工具处理。
     for (const child of body.children) {
+      // child缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!child) continue
+      // `child.type` 与 `'heredoc_content'` 不一致时刷新派生状态，避免使用过期结果。
       if (child.type !== 'heredoc_content') {
+        // 返回 `tooComplex(child)`，作为共享工具这次计算的结果。
         return tooComplex(child)
       }
     }
   }
+  // 返回 `null`，作为共享工具这次计算的结果。
   return null
 }
 
@@ -1208,24 +1550,32 @@ function walkHeredocRedirect(node: Node): ParseForSecurityResult | null {
  * currently rejected conservatively — walkString's solo-placeholder guard
  * fires because it has no awareness of herestring vs argv context.
  */
+// walkHerestringRedirect 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkHerestringRedirect(
   node: Node,
   innerCommands: SimpleCommand[],
   varScope: Map<string, string>,
 ): ParseForSecurityResult | null {
+  // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
   for (const child of node.children) {
+    // child缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!child) continue
+    // 当 `child.type` 匹配 `'<<<'` 时，共享工具执行对应分支。
     if (child.type === '<<<') continue
     // Content node: reuse walkArgument. It returns a string on success
     // (which we discard — content is stdin, irrelevant to permissions) or
     // a too-complex result on failure (expansion found, unresolvable var).
+    // 文本内容保存`walkArgument`，供共享工具后续处理使用。
     const content = walkArgument(child, innerCommands, varScope)
+    // `typeof content` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
     if (typeof content !== 'string') return content
     // Herestring content is discarded (not in argv/envVars/redirects) but
     // remains in .text via raw node.text. Scan it here so checkSemantics's
     // NEWLINE_HASH invariant (bashPermissions.ts relies on it) still holds.
+    // 满足 `NEWLINE_HASH_RE.test(content)) return tooComplex(child` 时，共享工具执行该分支。
     if (NEWLINE_HASH_RE.test(content)) return tooComplex(child)
   }
+  // 返回 `null`，作为共享工具这次计算的结果。
   return null
 }
 
@@ -1234,38 +1584,53 @@ function walkHerestringRedirect(
  * [variable_assignment...] command_name [argument...] [file_redirect...]
  * Any child type not explicitly handled triggers too-complex.
  */
+// walkCommand 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkCommand(
   node: Node,
   extraRedirects: Redirect[],
   innerCommands: SimpleCommand[],
   varScope: Map<string, string>,
 ): ParseForSecurityResult {
+  // 命令行参数 从空数组开始收集，后续循环会按处理顺序追加条目。
   const argv: string[] = []
+  // envVars 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const envVars: { name: string; value: string }[] = []
+  // redirects 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const redirects: Redirect[] = [...extraRedirects]
 
+  // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
   for (const child of node.children) {
+    // child缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!child) continue
 
+    // 按照 child.type 的取值选择共享工具的具体处理分支。
     switch (child.type) {
       case 'variable_assignment': {
+        // ev保存`walkVariableAssignment`，供共享工具后续处理使用。
         const ev = walkVariableAssignment(child, innerCommands, varScope)
+        // 满足 `'kind' in ev` 时，共享工具执行该分支。
         if ('kind' in ev) return ev
         // SECURITY: Env-prefix assignments (`VAR=x cmd`) are command-local in
         // bash — VAR is only visible to `cmd` as an env var, NOT to
         // subsequent commands. Do NOT add to global varScope — that would
         // let `VAR=safe cmd1 && rm $VAR` resolve $VAR when bash has unset it.
+        // envVars 集合追加新条目，保持收集顺序与输入顺序一致。
         envVars.push({ name: ev.name, value: ev.value })
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
       case 'command_name': {
+        // 当前参数保存`walkArgument`，供共享工具后续处理使用。
         const arg = walkArgument(
           child.children[0] ?? child,
           innerCommands,
           varScope,
         )
+        // `typeof arg` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
         if (typeof arg !== 'string') return arg
+        // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
         argv.push(arg)
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
       case 'word':
@@ -1274,9 +1639,13 @@ function walkCommand(
       case 'string':
       case 'concatenation':
       case 'arithmetic_expansion': {
+        // 当前参数保存`walkArgument`，供共享工具后续处理使用。
         const arg = walkArgument(child, innerCommands, varScope)
+        // `typeof arg` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
         if (typeof arg !== 'string') return arg
+        // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
         argv.push(arg)
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
       // NOTE: command_substitution as a BARE argument (not inside a string)
@@ -1290,25 +1659,37 @@ function walkCommand(
         // Bare `$VAR` as an argument. Tracked static vars return the ACTUAL
         // value (e.g. VAR=/etc → '/etc'). Values with IFS/glob chars or
         // placeholders reject. See resolveSimpleExpansion.
+        // v读取`resolveSimpleExpansion`，供共享工具后续处理使用。
         const v = resolveSimpleExpansion(child, varScope, false)
+        // `typeof v` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
         if (typeof v !== 'string') return v
+        // 命令行参数追加新条目，保持收集顺序与输入顺序一致。
         argv.push(v)
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
       case 'file_redirect': {
+        // r保存`walkFileRedirect`，供共享工具后续处理使用。
         const r = walkFileRedirect(child, innerCommands, varScope)
+        // 满足 `'kind' in r` 时，共享工具执行该分支。
         if ('kind' in r) return r
+        // redirects 集合追加新条目，保持收集顺序与输入顺序一致。
         redirects.push(r)
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
       case 'herestring_redirect': {
         // `cmd <<< "content"` — content is stdin, not argv. Validate it's
         // literal (no expansion); discard the content string.
+        // err保存`walkHerestringRedirect`，供共享工具后续处理使用。
         const err = walkHerestringRedirect(child, innerCommands, varScope)
+        // 满足 `err` 时，共享工具执行该分支。
         if (err) return err
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
       default:
+        // 返回 `tooComplex(child)`，作为共享工具这次计算的结果。
         return tooComplex(child)
     }
   }
@@ -1346,9 +1727,11 @@ function walkCommand(
   // space before \), leaving `\<LF>curl evil.com` — Bash(curl:*) deny doesn't
   // prefix-match. Rebuilt .text joins argv with ' ' → no newlines →
   // stripSafeWrappers works. Also covers heredoc-body leakage.
+  // text 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const text =
     /\$[A-Za-z_]/.test(node.text) || node.text.includes('\n')
       ? argv
+          // 链式调用 map，继续加工上一行在共享工具中产生的数据。
           .map(a =>
             a === '' || /["'\\ \t\n$`;|&<>(){}*?[\]~#]/.test(a)
               ? `'${a.replace(/'/g, "'\\''")}'`
@@ -1356,6 +1739,7 @@ function walkCommand(
           )
           .join(' ')
       : node.text
+  // 返回 {，把共享工具这个分支的结果交还调用方。
   return {
     kind: 'simple',
     commands: [{ argv, envVars, redirects, text }],
@@ -1371,6 +1755,7 @@ function walkCommand(
  * extracts BOTH `echo $(git rev-parse HEAD)` (outer) AND `git rev-parse HEAD`
  * (inner) — permission rules must match BOTH for the whole command to allow.
  */
+// collectCommandSubstitution 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function collectCommandSubstitution(
   csNode: Node,
   innerCommands: SimpleCommand[],
@@ -1379,16 +1764,24 @@ function collectCommandSubstitution(
   // Vars set BEFORE the $() are visible inside (bash subshell semantics),
   // but vars set INSIDE don't leak out. Pass a COPY of the outer scope so
   // inner assignments don't mutate the outer map.
+  // innerScope保存`Map`，供共享工具后续处理使用。
   const innerScope = new Map(varScope)
   // command_substitution children: `$(` or `` ` ``, inner statement(s), `)`
+  // 按顺序遍历 `csNode.children` 中的child，逐个交给共享工具处理。
   for (const child of csNode.children) {
+    // child缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!child) continue
+    // 当 `child.type` 匹配 `'$(' || child.type === '`' ...` 时，共享工具执行对应分支。
     if (child.type === '$(' || child.type === '`' || child.type === ')') {
+      // 跳过当前项，继续处理共享工具中的下一轮循环。
       continue
     }
+    // err保存`collectCommands`，供共享工具后续处理使用。
     const err = collectCommands(child, innerCommands, innerScope)
+    // 满足 `err` 时，共享工具执行该分支。
     if (err) return err
   }
+  // 返回 `null`，作为共享工具这次计算的结果。
   return null
 }
 
@@ -1396,15 +1789,19 @@ function collectCommandSubstitution(
  * Convert an argument node to its literal string value. Quotes are resolved.
  * This function implements the argument-position allowlist.
  */
+// walkArgument 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkArgument(
   node: Node | null,
   innerCommands: SimpleCommand[],
   varScope: Map<string, string>,
 ): string | ParseForSecurityResult {
+  // node缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!node) {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return { kind: 'too-complex', reason: 'Null argument node' }
   }
 
+  // 按照 node.type 的取值选择共享工具的具体处理分支。
   switch (node.type) {
     case 'word': {
       // Unescape backslash sequences. In unquoted context, bash's quote
@@ -1415,13 +1812,16 @@ function walkArgument(
       // `\;`. (Deny-rule matching on .text already worked via downstream
       // splitCommand_DEPRECATED unescaping — see walkCommand comment.) `\<whitespace>`
       // is already rejected by BACKSLASH_WHITESPACE_RE.
+      // 满足 `BRACE_EXPANSION_RE.test(node.text)` 时，共享工具执行该分支。
       if (BRACE_EXPANSION_RE.test(node.text)) {
+        // 返回结构化结果，集中表达共享工具已经整理出的状态。
         return {
           kind: 'too-complex',
           reason: 'Word contains brace expansion syntax',
           nodeType: 'word',
         }
       }
+      // 返回 `node.text.replace(/\\(.)/g, '$1')`，作为共享工具这次计算的结果。
       return node.text.replace(/\\(.)/g, '$1')
     }
 
@@ -1432,42 +1832,59 @@ function walkArgument(
       // command_substitution — bash runs the substitution. .text on a node
       // with children would smuggle the expansion past permission checks.
       // Plain numbers (`10`, `16#ff`) have zero children.
+      // 满足 `node.children.length > 0` 时，共享工具执行该分支。
       if (node.children.length > 0) {
+        // 返回结构化结果，集中表达共享工具已经整理出的状态。
         return {
           kind: 'too-complex',
           reason: 'Number node contains expansion (NN# arithmetic base syntax)',
           nodeType: node.children[0]?.type,
         }
       }
+      // 返回 `node.text`，作为共享工具这次计算的结果。
       return node.text
 
     case 'raw_string':
+      // 返回 `stripRawString(node.text)`，作为共享工具这次计算的结果。
       return stripRawString(node.text)
 
     case 'string':
+      // 返回 `walkString(node, innerCommands, varScope)`，作为共享工具这次计算的结果。
       return walkString(node, innerCommands, varScope)
 
     case 'concatenation': {
+      // 满足 `BRACE_EXPANSION_RE.test(node.text)` 时，共享工具执行该分支。
       if (BRACE_EXPANSION_RE.test(node.text)) {
+        // 返回结构化结果，集中表达共享工具已经整理出的状态。
         return {
           kind: 'too-complex',
           reason: 'Brace expansion',
           nodeType: 'concatenation',
         }
       }
+      // 结果 命名 `''`，让后续代码直接表达这个值的用途。
       let result = ''
+      // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
       for (const child of node.children) {
+        // child缺失时直接走兜底路径，避免共享工具使用无效输入。
         if (!child) continue
+        // part保存`walkArgument`，供共享工具后续处理使用。
         const part = walkArgument(child, innerCommands, varScope)
+        // `typeof part` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
         if (typeof part !== 'string') return part
+        // 共享工具 ast在这里处理 `result += part`，完成这一小步状态转换。
         result += part
       }
+      // 返回 `result`，作为共享工具这次计算的结果。
       return result
     }
 
     case 'arithmetic_expansion': {
+      // err保存`walkArithmetic`，供共享工具后续处理使用。
       const err = walkArithmetic(node)
+      // 满足 `err` 时，共享工具执行该分支。
       if (err) return err
+      // 返回 `node.text`，作为共享工具这次计算的结果。
       return node.text
     }
 
@@ -1475,6 +1892,7 @@ function walkArgument(
       // `$VAR` inside a concatenation (e.g., `prefix$VAR`). Same rules
       // as the bare case in walkCommand: must be tracked or SAFE_ENV_VARS.
       // inside-concatenation counts as bare arg (the whole concat IS the arg)
+      // 返回 `resolveSimpleExpansion(node, varScope, false)`，作为共享工具这次计算的结果。
       return resolveSimpleExpansion(node, varScope, false)
     }
 
@@ -1486,6 +1904,7 @@ function walkArgument(
     // in a longer string rather than BEING the argument.
 
     default:
+      // 返回 `tooComplex(node)`，作为共享工具这次计算的结果。
       return tooComplex(node)
   }
 }
@@ -1505,12 +1924,15 @@ function walkArgument(
  * between children IS the dropped newline(s). This makes the argv value
  * match what bash actually sees.
  */
+// walkString 封装Bash 解析工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function walkString(
   node: Node,
   innerCommands: SimpleCommand[],
   varScope: Map<string, string>,
 ): string | ParseForSecurityResult {
+  // 结果 命名 `''`，让后续代码直接表达这个值的用途。
   let result = ''
+  // cursor 命名 `-1`，让后续代码直接表达这个值的用途。
   let cursor = -1
   // SECURITY: Track whether the string contains a runtime-unknown
   // placeholder ($() output or unknown-value tracked var) vs any literal
@@ -1521,9 +1943,13 @@ function walkString(
   // would pass validation but runtime-cd into /etc. We reject
   // solo-placeholder strings; placeholders mixed with literal content
   // (`"prefix: $(cmd)"`) are safe — runtime value can't equal a bare path.
+  // sawDynamicPlaceholder标记共享工具 ast是否启用对应路径。
   let sawDynamicPlaceholder = false
+  // sawLiteralContent标记共享工具 ast是否启用对应路径。
   let sawLiteralContent = false
+  // 按顺序遍历 `node.children` 中的child，逐个交给共享工具处理。
   for (const child of node.children) {
+    // child缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!child) continue
     // Index gap between this child and the previous one = dropped newline(s).
     // Ignore the gap before the first non-delimiter child (cursor === -1).
@@ -1531,16 +1957,23 @@ function walkString(
     // tree-sitter whitespace-only-string quirk (space/tab, not newline) — let
     // the Fix C check below catch it as too-complex instead of mis-filling
     // with `\n` and diverging from bash.
+    // `cursor` 与 `-1 && child.startIndex > cursor...` 不一致时刷新派生状态，避免使用过期结果。
     if (cursor !== -1 && child.startIndex > cursor && child.type !== '"') {
+      // 共享工具 ast在这里处理 `result += '\n'.repeat(child.startIndex - cursor)`，完成这一小步状态转换。
       result += '\n'.repeat(child.startIndex - cursor)
+      // sawLiteralContent更新为 `true`，确保Bash 解析工具后续读取最新状态。
       sawLiteralContent = true
     }
+    // cursor更新为 `child.endIndex`，确保Bash 解析工具后续读取最新状态。
     cursor = child.endIndex
+    // 按照 child.type 的取值选择共享工具的具体处理分支。
     switch (child.type) {
       case '"':
         // Reset cursor after opening quote so the gap between `"` and the
         // first content child is captured.
+        // cursor更新为 `child.endIndex`，确保Bash 解析工具后续读取最新状态。
         cursor = child.endIndex
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       case 'string_content':
         // Bash double-quote escape rules (NOT the generic /\\(.)/g used for
@@ -1549,6 +1982,7 @@ function walkString(
         // `"fix \"bug\""` → `fix "bug"`, but `"a\nb"` → `a\nb` (backslash
         // kept). tree-sitter preserves the raw escapes in .text; we resolve
         // them here so argv matches what bash actually passes.
+        // 共享工具 ast在这里处理 `result += child.text.replace(/\\([$`"\\])/g, '$1')`，完成这一小步状态转换。
         result += child.text.replace(/\\([$`"\\])/g, '$1')
         sawLiteralContent = true
         break
@@ -1645,9 +2079,12 @@ function walkString(
   // source span is longer than bare `""`. Genuine `""` has text.length==2.
   // `"$V"` with V="" doesn't hit this — the simple_expansion child sets
   // sawLiteralContent via the `else` branch even when v is empty.
+  // 组合条件 `!sawLiteralContent && !sawDynamicPlaceholder && n` 成立时，共享工具才启用这条专门路径。
   if (!sawLiteralContent && !sawDynamicPlaceholder && node.text.length > 2) {
+    // 返回 tooComplex(node)，把共享工具这个分支的结果交还调用方。
     return tooComplex(node)
   }
+  // 返回 result，把共享工具这个分支的结果交还调用方。
   return result
 }
 
@@ -1656,6 +2093,7 @@ function walkString(
  * hex, octal, bash base#digits) and operator/paren tokens. Anything else at
  * leaf position (notably variable_name that isn't a numeric literal) rejects.
  */
+// ARITH_LEAF_RE 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const ARITH_LEAF_RE =
   /^(?:[0-9]+|0[xX][0-9a-fA-F]+|[0-9]+#[0-9a-zA-Z]+|[-+*/%^&|~!<>=?:(),]+|<<|>>|\*\*|&&|\|\||[<>=!]=|\$\(\(|\)\))$/
 
@@ -1672,32 +2110,45 @@ const ARITH_LEAF_RE =
  * string. bash will expand it to an integer at runtime; the static string
  * won't match any sensitive path/deny patterns.
  */
+// walkArithmetic 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function walkArithmetic(node: Node): ParseForSecurityResult | null {
+  // 遍历 const child of node.children，让共享工具逐项完成同一类处理。
   for (const child of node.children) {
+    // 判断 !child，将共享工具分流到只适用于该条件的处理路径。
     if (!child) continue
+    // child.children为空时立即返回或跳过，避免共享工具把空集合当成可处理内容。
     if (child.children.length === 0) {
+      // 判断 !ARITH_LEAF_RE.test(child.text)，将共享工具分流到只适用于该条件的处理路径。
       if (!ARITH_LEAF_RE.test(child.text)) {
+        // 返回 {，把共享工具这个分支的结果交还调用方。
         return {
           kind: 'too-complex',
           reason: `Arithmetic expansion references variable or non-literal: ${child.text}`,
           nodeType: 'arithmetic_expansion',
         }
       }
+      // 跳过当前项，继续处理共享工具中的下一轮循环。
       continue
     }
+    // 按照 child.type 的取值选择共享工具的具体处理分支。
     switch (child.type) {
       case 'binary_expression':
       case 'unary_expression':
       case 'ternary_expression':
       case 'parenthesized_expression': {
+        // err保存`walkArithmetic`，供共享工具后续处理使用。
         const err = walkArithmetic(child)
+        // 判断 err，将共享工具分流到只适用于该条件的处理路径。
         if (err) return err
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
       default:
+        // 返回 tooComplex(child)，把共享工具这个分支的结果交还调用方。
         return tooComplex(child)
     }
   }
+  // 返回 null，把共享工具这个分支的结果交还调用方。
   return null
 }
 
@@ -1718,46 +2169,72 @@ function walkArithmetic(node: Node): ParseForSecurityResult | null {
  *         heredoc_end
  *     )
  */
+// extractSafeCatHeredoc 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function extractSafeCatHeredoc(subNode: Node): string | 'DANGEROUS' | null {
   // Expect exactly: $( + one redirected_statement + )
+  // stmt保存`null`，供共享工具 ast后续步骤使用。
   let stmt: Node | null = null
+  // 遍历 const child of subNode.children，让共享工具逐项完成同一类处理。
   for (const child of subNode.children) {
+    // 判断 !child，将共享工具分流到只适用于该条件的处理路径。
     if (!child) continue
+    // 判断 child.type === '$(' || child.type === ')'，将共享工具分流到只适用于该条件的处理路径。
     if (child.type === '$(' || child.type === ')') continue
+    // 组合条件 `child.type === 'redirected_statement' && stmt ===` 成立时，共享工具才启用这条专门路径。
     if (child.type === 'redirected_statement' && stmt === null) {
+      // stmt更新为 `child`，确保Bash 解析后续读取最新状态。
       stmt = child
     } else {
+      // 返回 null，把共享工具这个分支的结果交还调用方。
       return null
     }
   }
+  // 判断 !stmt，将共享工具分流到只适用于该条件的处理路径。
   if (!stmt) return null
 
   // redirected_statement must be: command(cat) + heredoc_redirect (quoted)
+  // sawCat记录当前扫描状态，共享工具 ast随后按该状态分支。
   let sawCat = false
+  // body保存`null`，供共享工具 ast后续步骤使用。
   let body: string | null = null
+  // 遍历 const child of stmt.children，让共享工具逐项完成同一类处理。
   for (const child of stmt.children) {
+    // 判断 !child，将共享工具分流到只适用于该条件的处理路径。
     if (!child) continue
+    // `child.type` 命中特定值 `'command'` 时，进入共享工具对应处理。
     if (child.type === 'command') {
       // Must be bare `cat` — no args, no env vars
+      // cmdChildren 命令数据筛选`children.filter`，供共享工具后续处理使用。
       const cmdChildren = child.children.filter(c => c)
+      // 判断 cmdChildren.length !== 1，将共享工具分流到只适用于该条件的处理路径。
       if (cmdChildren.length !== 1) return null
+      // nameNode保存`cmdChildren[0]`，供共享工具 ast后续步骤使用。
       const nameNode = cmdChildren[0]
+      // `nameNode?.type` 与 `'command_name' || nameNode.tex` 不一致时刷新派生状态。
       if (nameNode?.type !== 'command_name' || nameNode.text !== 'cat') {
+        // 返回 null，把共享工具这个分支的结果交还调用方。
         return null
       }
+      // sawCat更新为 `true`，确保Bash 解析后续读取最新状态。
       sawCat = true
+    // `child.type === 'heredoc_redirect'` 成立时，共享工具 ast切换到这个 else-if 分支。
     } else if (child.type === 'heredoc_redirect') {
       // Reuse the existing validator: quoted delimiter, body is pure text.
       // walkHeredocRedirect returns null on success, non-null on rejection.
+      // 判断 walkHeredocRedirect(child) !== null，将共享工具分流到只适用于该条件的处理路径。
       if (walkHeredocRedirect(child) !== null) return null
+      // 遍历 const hc of child.children，让共享工具逐项完成同一类处理。
       for (const hc of child.children) {
+        // 判断 hc?.type === 'heredoc_body'，将共享工具分流到只适用于该条件的处理路径。
         if (hc?.type === 'heredoc_body') body = hc.text
       }
     } else {
+      // 返回 null，把共享工具这个分支的结果交还调用方。
       return null
     }
   }
 
+  // 判断 !sawCat || body === null，将共享工具分流到只适用于该条件的处理路径。
   if (!sawCat || body === null) return null
   // SECURITY: the heredoc body becomes the outer command's argv value via
   // substitution, so a body like `/proc/self/environ` is semantically
@@ -1767,41 +2244,60 @@ function extractSafeCatHeredoc(subNode: Node): string | 'DANGEROUS' | null {
   // which would extract the inner `cat` via walkHeredocRedirect (body text
   // not inspected there) — effectively bypassing this check. Return a
   // distinct sentinel so the caller can reject instead of falling through.
+  // 判断 PROC_ENVIRON_RE.test(body)，将共享工具分流到只适用于该条件的处理路径。
   if (PROC_ENVIRON_RE.test(body)) return 'DANGEROUS'
   // Same for jq system(): checkSemantics checks argv but never sees the
   // heredoc body. Check unconditionally (we don't know the outer command).
+  // 判断 /\bsystem\s*\(/.test(body)，将共享工具分流到只适用于该条件的处理路径。
   if (/\bsystem\s*\(/.test(body)) return 'DANGEROUS'
+  // 返回 body，把共享工具这个分支的结果交还调用方。
   return body
 }
 
+// walkVariableAssignment 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function walkVariableAssignment(
   node: Node,
   innerCommands: SimpleCommand[],
   varScope: Map<string, string>,
 ): { name: string; value: string; isAppend: boolean } | ParseForSecurityResult {
+  // name保存`null`，供共享工具 ast后续步骤使用。
   let name: string | null = null
+  // 取值保存`''`，供共享工具 ast后续步骤使用。
   let value = ''
+  // isAppend记录当前扫描状态，共享工具 ast随后按该状态分支。
   let isAppend = false
 
+  // 遍历 const child of node.children，让共享工具逐项完成同一类处理。
   for (const child of node.children) {
+    // 判断 !child，将共享工具分流到只适用于该条件的处理路径。
     if (!child) continue
+    // `child.type` 命中特定值 `'variable_name'` 时，进入共享工具对应处理。
     if (child.type === 'variable_name') {
+      // name更新为 `child.text`，确保Bash 解析后续读取最新状态。
       name = child.text
+    // `child.type === '=' || child.type === '+='` 成立时，共享工具 ast切换到这个 else-if 分支。
     } else if (child.type === '=' || child.type === '+=') {
       // `PATH+=":/new"` — tree-sitter emits `+=` as a distinct operator
       // node. Without this case it falls through to walkArgument below
       // → tooComplex on unknown type `+=`.
+      // isAppend更新为 `child.type === '+='`，确保Bash 解析后续读取最新状态。
       isAppend = child.type === '+='
+      // 跳过当前项，继续处理共享工具中的下一轮循环。
       continue
+    // `child.type === 'command_substitution'` 成立时，共享工具 ast切换到这个 else-if 分支。
     } else if (child.type === 'command_substitution') {
       // $() as the variable's value. The output becomes a STRING stored in
       // the variable — it's NOT a positional argument (no path/flag concern).
       // `VAR=$(date)` runs `date`, stores output. `VAR=$(rm -rf /)` runs
       // `rm` — the inner command IS checked against permission rules, so
       // `rm` must match a rule. The variable just holds whatever `rm` prints.
+      // err保存`collectCommandSubstitution`，供共享工具后续处理使用。
       const err = collectCommandSubstitution(child, innerCommands, varScope)
+      // 判断 err，将共享工具分流到只适用于该条件的处理路径。
       if (err) return err
+      // 取值更新为 `CMDSUB_PLACEHOLDER`，确保Bash 解析后续读取最新状态。
       value = CMDSUB_PLACEHOLDER
+    // `child.type === 'simple_expansion'` 成立时，共享工具 ast切换到这个 else-if 分支。
     } else if (child.type === 'simple_expansion') {
       // `VAR=$OTHER` — assignment RHS does NOT word-split or glob-expand
       // in bash (unlike command arguments). So `A="a b"; B=$A` sets B to
@@ -1809,19 +2305,27 @@ function walkVariableAssignment(
       // so BARE_VAR_UNSAFE_RE doesn't over-reject. The resulting value may
       // contain spaces/globs — if B is later used as a bare arg, THAT use
       // will correctly reject via BARE_VAR_UNSAFE_RE.
+      // v读取`resolveSimpleExpansion`，供共享工具后续处理使用。
       const v = resolveSimpleExpansion(child, varScope, true)
+      // 判断 typeof v !== 'string'，将共享工具分流到只适用于该条件的处理路径。
       if (typeof v !== 'string') return v
       // If v is VAR_PLACEHOLDER (OTHER holds unknown), store it — combined
       // with containsAnyPlaceholder in the caller to treat as unknown.
+      // 取值更新为 `v`，确保Bash 解析后续读取最新状态。
       value = v
     } else {
+      // v保存`walkArgument`，供共享工具后续处理使用。
       const v = walkArgument(child, innerCommands, varScope)
+      // 判断 typeof v !== 'string'，将共享工具分流到只适用于该条件的处理路径。
       if (typeof v !== 'string') return v
+      // 取值更新为 `v`，确保Bash 解析后续读取最新状态。
       value = v
     }
   }
 
+  // 满足 `name === null` 时，共享工具执行该分支。
   if (name === null) {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: 'Variable assignment without name',
@@ -1832,7 +2336,9 @@ function walkVariableAssignment(
   // as variable_assignment. Bash only recognizes [A-Za-z_][A-Za-z0-9_]* —
   // anything else is run as a COMMAND. `1VAR=value` → bash tries to execute
   // `1VAR=value` from PATH. We must not treat it as an inert assignment.
+  // 判断 !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)，将共享工具分流到只适用于该条件的处理路径。
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: `Invalid variable name (bash treats as command): ${name}`,
@@ -1843,7 +2349,9 @@ function walkVariableAssignment(
   // unquoted $VAR expansions. `IFS=: && VAR=a:b && rm $VAR` → bash splits
   // on `:` → `rm a b`. Our BARE_VAR_UNSAFE_RE only checks default IFS
   // chars (space/tab/NL) — we can't model custom IFS. Reject.
+  // `name` 命中特定值 `'IFS'` 时，进入共享工具对应处理。
   if (name === 'IFS') {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: 'IFS assignment changes word-splitting — cannot model statically',
@@ -1875,8 +2383,11 @@ function walkVariableAssignment(
   // `\` (blocks octal \044/\140), no backtick, no parens. Covers all known
   // encoding vectors and future ones — anything off the allowlist fails.
   // Legit `PS4='+${BASH_SOURCE}:${LINENO}: '` still passes.
+  // `name` 命中特定值 `'PS4'` 时，进入共享工具对应处理。
   if (name === 'PS4') {
+    // 满足 `isAppend` 时，共享工具执行该分支。
     if (isAppend) {
+      // 返回 {，把共享工具这个分支的结果交还调用方。
       return {
         kind: 'too-complex',
         reason:
@@ -1884,18 +2395,22 @@ function walkVariableAssignment(
         nodeType: 'variable_assignment',
       }
     }
+    // 判断 containsAnyPlaceholder(value)，将共享工具分流到只适用于该条件的处理路径。
     if (containsAnyPlaceholder(value)) {
+      // 返回 {，把共享工具这个分支的结果交还调用方。
       return {
         kind: 'too-complex',
         reason: 'PS4 value derived from cmdsub/variable — runtime unknowable',
         nodeType: 'variable_assignment',
       }
     }
+    // 共享工具在这里进入条件判断，后续代码按实际状态分流。
     if (
       !/^[A-Za-z0-9 _+:./=[\]-]*$/.test(
         value.replace(/\$\{[A-Za-z_][A-Za-z0-9_]*\}/g, ''),
       )
     ) {
+      // 返回 {，把共享工具这个分支的结果交还调用方。
       return {
         kind: 'too-complex',
         reason:
@@ -1911,13 +2426,16 @@ function walkVariableAssignment(
   // assignment values (e.g. PATH=~/bin:~/sbin). We can't model it — reject
   // any value containing `~` that isn't already quoted-literal (where bash
   // doesn't expand). Conservative: any `~` in value → reject.
+  // 判断 value.includes('~')，将共享工具分流到只适用于该条件的处理路径。
   if (value.includes('~')) {
+    // 返回 {，把共享工具这个分支的结果交还调用方。
     return {
       kind: 'too-complex',
       reason: 'Tilde in assignment value — bash may expand at assignment time',
       nodeType: 'variable_assignment',
     }
   }
+  // 返回 { name, value, isAppend }，把共享工具这个分支的结果交还调用方。
   return { name, value, isAppend }
 }
 
@@ -1934,24 +2452,36 @@ function walkVariableAssignment(
  *   STATIC strings (VAR=literal) are allowed in both positions since their
  *   value IS known.
  */
+// resolveSimpleExpansion 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function resolveSimpleExpansion(
   node: Node,
   varScope: Map<string, string>,
   insideString: boolean,
 ): string | ParseForSecurityResult {
+  // varName保存`null`，供共享工具 ast后续步骤使用。
   let varName: string | null = null
+  // isSpecial记录当前扫描状态，共享工具 ast随后按该状态分支。
   let isSpecial = false
+  // 遍历 const c of node.children，让共享工具逐项完成同一类处理。
   for (const c of node.children) {
+    // `c?.type` 命中特定值 `'variable_name'` 时，进入共享工具对应处理。
     if (c?.type === 'variable_name') {
+      // varName更新为 `c.text`，确保Bash 解析后续读取最新状态。
       varName = c.text
+      // 结束这个分支或循环，避免共享工具继续落入后续路径。
       break
     }
+    // `c?.type` 命中特定值 `'special_variable_name'` 时，进入共享工具对应处理。
     if (c?.type === 'special_variable_name') {
+      // varName更新为 `c.text`，确保Bash 解析后续读取最新状态。
       varName = c.text
+      // isSpecial更新为 `true`，确保Bash 解析后续读取最新状态。
       isSpecial = true
+      // 结束这个分支或循环，避免共享工具继续落入后续路径。
       break
     }
   }
+  // 判断 varName === null) return tooComplex(node，将共享工具分流到只适用于该条件的处理路径。
   if (varName === null) return tooComplex(node)
   // Tracked vars: check stored value. Literal strings (VAR=/tmp) are
   // returned DIRECTLY so downstream path validation sees the real path.
@@ -1963,12 +2493,17 @@ function resolveSimpleExpansion(
   // critical fix. `VAR=/etc && rm $VAR` → argv ['rm', '/etc'] → validatePath
   // correctly rejects. Previously returned a placeholder → validatePath saw
   // '__LOOP_STATIC__', resolved as cwd-relative → PASSED → bypass.
+  // trackedValue读取`varScope.get`，供共享工具后续处理使用。
   const trackedValue = varScope.get(varName)
+  // `trackedValue` 与 `undefined` 不一致时刷新派生状态。
   if (trackedValue !== undefined) {
+    // 判断 containsAnyPlaceholder(trackedValue)，将共享工具分流到只适用于该条件的处理路径。
     if (containsAnyPlaceholder(trackedValue)) {
       // Non-literal: bare → reject, inside string → VAR_PLACEHOLDER
       // (walkString's solo-placeholder gate rejects `"$VAR"` alone).
+      // 判断 !insideString) return tooComplex(node，将共享工具分流到只适用于该条件的处理路径。
       if (!insideString) return tooComplex(node)
+      // 返回 VAR_PLACEHOLDER，把共享工具这个分支的结果交还调用方。
       return VAR_PLACEHOLDER
     }
     // Pure literal (e.g. '/tmp', 'foo') — return it directly. Downstream
@@ -1986,24 +2521,33 @@ function resolveSimpleExpansion(
     // bash runs `ls /etc`, our argv has a phantom "" shifting positions.
     // Inside "...": `"$V"` → bash produces one empty-string arg → our ""
     // is correct, keep allowing.
+    // insideString缺失时提前走兜底路径，避免共享工具继续依赖无效输入。
     if (!insideString) {
+      // 判断 trackedValue === '') return tooComplex(node，将共享工具分流到只适用于该条件的处理路径。
       if (trackedValue === '') return tooComplex(node)
+      // 判断 BARE_VAR_UNSAFE_RE.test(trackedValue)) return tooComplex(node，将共享工具分流到只适用于该条件的处理路径。
       if (BARE_VAR_UNSAFE_RE.test(trackedValue)) return tooComplex(node)
     }
+    // 返回 trackedValue，把共享工具这个分支的结果交还调用方。
     return trackedValue
   }
   // SAFE_ENV_VARS + special vars ($?, $$, $@, $1, etc.): value unknown
   // (shell-controlled). Only safe when embedded in a string, NOT as a
   // bare argument to a path-sensitive command.
+  // 满足 `insideString` 时，共享工具执行该分支。
   if (insideString) {
+    // 判断 SAFE_ENV_VARS.has(varName)，将共享工具分流到只适用于该条件的处理路径。
     if (SAFE_ENV_VARS.has(varName)) return VAR_PLACEHOLDER
+    // 共享工具在这里进入条件判断，后续代码按实际状态分流。
     if (
       isSpecial &&
       (SPECIAL_VAR_NAMES.has(varName) || /^[0-9]+$/.test(varName))
     ) {
+      // 返回 VAR_PLACEHOLDER，把共享工具这个分支的结果交还调用方。
       return VAR_PLACEHOLDER
     }
   }
+  // 返回 tooComplex(node)，把共享工具这个分支的结果交还调用方。
   return tooComplex(node)
 }
 
@@ -2014,29 +2558,38 @@ function resolveSimpleExpansion(
  * $VAR correctly rejects as bare arg.
  * `VAR=/etc && VAR+=$(cmd)` must not leave VAR looking static.
  */
+// applyVarToScope 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function applyVarToScope(
   varScope: Map<string, string>,
   ev: { name: string; value: string; isAppend: boolean },
 ): void {
+  // existing读取`varScope.get`，供共享工具后续处理使用。
   const existing = varScope.get(ev.name) ?? ''
+  // combined保存`ev.isAppend ? existing + ev.value : ev.value`，供共享工具 ast后续步骤使用。
   const combined = ev.isAppend ? existing + ev.value : ev.value
+  // varScope.set写入新的状态值，使共享工具后续读取保持一致。
   varScope.set(
     ev.name,
     containsAnyPlaceholder(combined) ? VAR_PLACEHOLDER : combined,
   )
 }
 
+// stripRawString 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function stripRawString(text: string): string {
+  // 返回 text.slice(1, -1)，把共享工具这个分支的结果交还调用方。
   return text.slice(1, -1)
 }
 
+// tooComplex 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 function tooComplex(node: Node): ParseForSecurityResult {
+  // reason 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const reason =
     node.type === 'ERROR'
       ? 'Parse error'
       : DANGEROUS_TYPES.has(node.type)
         ? `Contains ${node.type}`
         : `Unhandled node type: ${node.type}`
+  // 返回 { kind: 'too-complex', reason, nodeType: node.type }，把共享工具这个分支的结果交还调用方。
   return { kind: 'too-complex', reason, nodeType: node.type }
 }
 
@@ -2057,6 +2610,7 @@ function tooComplex(node: Node): ParseForSecurityResult {
  * shell (often zsh), and these parse as plain `command` nodes with no
  * distinguishing syntax, we can only catch them by name.
  */
+// ZSH_DANGEROUS_BUILTINS 集合保存`Set`，供共享工具后续处理使用。
 const ZSH_DANGEROUS_BUILTINS = new Set([
   'zmodload',
   'emulate',
@@ -2083,6 +2637,7 @@ const ZSH_DANGEROUS_BUILTINS = new Set([
  * ['eval', 'rm -rf /'] which looks inert to flag validation but executes
  * the string. Treat these the same as command substitution.
  */
+// EVAL_LIKE_BUILTINS 集合保存`Set`，供共享工具后续处理使用。
 const EVAL_LIKE_BUILTINS = new Set([
   'eval',
   'source',
@@ -2140,6 +2695,7 @@ const EVAL_LIKE_BUILTINS = new Set([
  * `test -v 'a[$(id)]'` → tree-sitter sees an opaque leaf, bash runs id.
  * Maps: builtin name → set of flags whose next argument is a NAME.
  */
+// SUBSCRIPT_EVAL_FLAGS 集合集中保存共享工具 ast要一起传递的字段。
 const SUBSCRIPT_EVAL_FLAGS: Record<string, Set<string>> = {
   test: new Set(['-v', '-R']),
   '[': new Set(['-v', '-R']),
@@ -2166,6 +2722,7 @@ const SUBSCRIPT_EVAL_FLAGS: Record<string, Set<string>> = {
  * expected"), but the test_command handler normalizes argv[0]='[[' for
  * both forms, so they get this check too — mild over-blocking, safe side.
  */
+// TEST_ARITH_CMP_OPS 集合保存`Set`，供共享工具后续处理使用。
 const TEST_ARITH_CMP_OPS = new Set(['-eq', '-ne', '-lt', '-le', '-gt', '-ge'])
 
 /**
@@ -2179,6 +2736,7 @@ const TEST_ARITH_CMP_OPS = new Set(['-eq', '-ne', '-lt', '-le', '-gt', '-ge'])
  * values, only -v/-R take a NAME). declare/typeset/local handled in
  * declaration_command since they never reach here as plain commands.
  */
+// BARE_SUBSCRIPT_NAME_BUILTINS 集合保存`Set`，供共享工具后续处理使用。
 const BARE_SUBSCRIPT_NAME_BUILTINS = new Set(['read', 'unset'])
 
 /**
@@ -2186,6 +2744,7 @@ const BARE_SUBSCRIPT_NAME_BUILTINS = new Set(['read', 'unset'])
  * not a NAME. `read -p '[foo] ' var` must not trip on the `[` in the
  * prompt string. `-a` is intentionally absent — its operand IS a NAME.
  */
+// READ_DATA_FLAGS 集合保存`Set`，供共享工具后续处理使用。
 const READ_DATA_FLAGS = new Set(['-p', '-d', '-n', '-N', '-t', '-u', '-i'])
 
 // SHELL_KEYWORDS imported from bashParser.ts — shell reserved words can never
@@ -2194,6 +2753,7 @@ const READ_DATA_FLAGS = new Set(['-p', '-d', '-n', '-N', '-t', '-u', '-i'])
 
 // Use `.*` not `[^/]*` — Linux resolves `..` in procfs, so
 // `/proc/self/../self/environ` works and must be caught.
+// PROC_ENVIRON_RE保存`/\/proc\/.*\/environ/`，供共享工具 ast后续步骤使用。
 const PROC_ENVIRON_RE = /\/proc\/.*\/environ/
 
 /**
@@ -2201,8 +2761,10 @@ const PROC_ENVIRON_RE = /\/proc\/.*\/environ/
  * Downstream stripSafeWrappers re-tokenizes .text line-by-line and treats `#`
  * after a newline as a comment, hiding arguments that follow.
  */
+// NEWLINE_HASH_RE保存`/\n[ \t]*#/`，供共享工具 ast后续步骤使用。
 const NEWLINE_HASH_RE = /\n[ \t]*#/
 
+// SemanticCheckResult 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SemanticCheckResult = { ok: true } | { ok: false; reason: string }
 
 /**
@@ -2210,16 +2772,23 @@ export type SemanticCheckResult = { ok: true } | { ok: false; reason: string }
  * catch commands that tokenize fine but are dangerous by name or argument
  * content. Returns the first failure or {ok: true}.
  */
+// checkSemantics 承担共享工具中的独立步骤，串起共享工具 ast需要的输入整理、状态更新和结果输出。
 export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
+  // 遍历 const cmd of commands，让共享工具逐项完成同一类处理。
   for (const cmd of commands) {
     // Strip safe wrapper commands (nohup, time, timeout N, nice -n N) so
     // `nohup eval "..."` and `timeout 5 jq 'system(...)'` are checked
     // against the wrapped command, not the wrapper. Inlined here to avoid
     // circular import with bashPermissions.ts.
+    // a保存`cmd.argv`，供共享工具 ast后续步骤使用。
     let a = cmd.argv
+    // 遍历 ;;，让共享工具逐项完成同一类处理。
     for (;;) {
+      // `a[0]` 命中特定值 `'time' || a[0] === 'nohup'` 时，进入共享工具对应处理。
       if (a[0] === 'time' || a[0] === 'nohup') {
+        // a更新为 `a.slice(1)`，确保Bash 解析后续读取最新状态。
         a = a.slice(1)
+      // `a[0] === 'timeout'` 成立时，共享工具 ast切换到这个 else-if 分支。
       } else if (a[0] === 'timeout') {
         // `timeout 5`, `timeout 5s`, `timeout 5.5`, plus optional GNU flags
         // preceding the duration. Long: --foreground, --kill-after=N,
@@ -2231,53 +2800,76 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         // flags AND fail closed on any unrecognized flag — an unknown flag
         // means we can't locate the wrapped command, so we must not silently
         // fall through to name='timeout'.
+        // i保存`1`，供共享工具 ast后续步骤使用。
         let i = 1
+        // while 使用 i < a.length 完成共享工具里的对应操作。
         while (i < a.length) {
+          // arg保存`a[i]!`，供共享工具 ast后续步骤使用。
           const arg = a[i]!
+          // 共享工具在这里进入条件判断，后续代码按实际状态分流。
           if (
             arg === '--foreground' ||
             arg === '--preserve-status' ||
             arg === '--verbose'
           ) {
+            // 共享工具 ast处理 `i++ // known no-value long flags`，完成这一小步状态转换。
             i++ // known no-value long flags
+          // `/^--(?:kill-after|signal)=[A-Za-z0-9_.+-]+$/.test(arg)` 成立时，共享工具 ast切换到这个 else-if 分支。
           } else if (/^--(?:kill-after|signal)=[A-Za-z0-9_.+-]+$/.test(arg)) {
+            // 共享工具 ast处理 `i++ // --kill-after=5, --signal=TERM (value fused with =)`，完成这一小步状态转换。
             i++ // --kill-after=5, --signal=TERM (value fused with =)
+          // 共享工具 ast处理 `} else if (`，完成这一小步状态转换。
           } else if (
             (arg === '--kill-after' || arg === '--signal') &&
             a[i + 1] &&
             /^[A-Za-z0-9_.+-]+$/.test(a[i + 1]!)
           ) {
+            // 共享工具 ast处理 `i += 2 // --kill-after 5, --signal TERM (space-separated)`，完成这一小步状态转换。
             i += 2 // --kill-after 5, --signal TERM (space-separated)
+          // `arg.startsWith('--')` 成立时，共享工具 ast切换到这个 else-if 分支。
           } else if (arg.startsWith('--')) {
             // Unknown long flag, OR --kill-after/--signal with non-allowlisted
             // value (e.g. placeholder from $() substitution). Fail closed.
+            // 返回 {，把共享工具这个分支的结果交还调用方。
             return {
               ok: false,
               reason: `timeout with ${arg} flag cannot be statically analyzed`,
             }
+          // `arg === '-v'` 成立时，共享工具 ast切换到这个 else-if 分支。
           } else if (arg === '-v') {
+            // 共享工具 ast处理 `i++ // --verbose, no argument`，完成这一小步状态转换。
             i++ // --verbose, no argument
+          // 共享工具 ast处理 `} else if (`，完成这一小步状态转换。
           } else if (
             (arg === '-k' || arg === '-s') &&
             a[i + 1] &&
             /^[A-Za-z0-9_.+-]+$/.test(a[i + 1]!)
           ) {
+            // 共享工具 ast处理 `i += 2 // -k DURATION / -s SIGNAL — separate value`，完成这一小步状态转换。
             i += 2 // -k DURATION / -s SIGNAL — separate value
+          // `/^-[ks][A-Za-z0-9_.+-]+$/.test(arg)` 成立时，共享工具 ast切换到这个 else-if 分支。
           } else if (/^-[ks][A-Za-z0-9_.+-]+$/.test(arg)) {
+            // 共享工具 ast处理 `i++ // fused: -k5, -sTERM`，完成这一小步状态转换。
             i++ // fused: -k5, -sTERM
+          // `arg.startsWith('-')` 成立时，共享工具 ast切换到这个 else-if 分支。
           } else if (arg.startsWith('-')) {
             // Unknown flag OR -k/-s with non-allowlisted value — can't locate
             // wrapped cmd. Reject, don't fall through to name='timeout'.
+            // 返回 {，把共享工具这个分支的结果交还调用方。
             return {
               ok: false,
               reason: `timeout with ${arg} flag cannot be statically analyzed`,
             }
           } else {
+            // 结束这个分支或循环，避免共享工具继续落入后续路径。
             break // non-flag — should be the duration
           }
         }
+        // 判断 a[i] && /^\d+(?:\.\d+)?[smhd]?$/.test(a[i]!)，将共享工具分流到只适用于该条件的处理路径。
         if (a[i] && /^\d+(?:\.\d+)?[smhd]?$/.test(a[i]!)) {
+          // a更新为 `a.slice(i + 1)`，确保Bash 解析后续读取最新状态。
           a = a.slice(i + 1)
+        // `a[i]` 成立时，共享工具 ast切换到这个 else-if 分支。
         } else if (a[i]) {
           // SECURITY (PR #21503 round 3): a[i] exists but doesn't match our
           // duration regex. GNU timeout parses via xstrtod() (libc strtod) and
@@ -2287,20 +2879,28 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
           // (fail-OPEN) so `timeout .5 eval "id"` with `Bash(timeout:*)` left
           // name='timeout' and eval was never checked. Now fail CLOSED —
           // consistent with the unknown-FLAG handling above (lines ~1895,1912).
+          // 返回 {，把共享工具这个分支的结果交还调用方。
           return {
             ok: false,
             reason: `timeout duration '${a[i]}' cannot be statically analyzed`,
           }
         } else {
+          // 结束这个分支或循环，避免共享工具继续落入后续路径。
           break // no more args — `timeout` alone, inert
         }
+      // `a[0] === 'nice'` 成立时，共享工具 ast切换到这个 else-if 分支。
       } else if (a[0] === 'nice') {
         // `nice cmd`, `nice -n N cmd`, `nice -N cmd` (legacy). All run cmd
         // at a lower priority. argv[0] check must see the wrapped cmd.
+        // 判断 a[1] === '-n' && a[2] && /^-?\d+$/.test(a[2])，将共享工具分流到只适用于该条件的处理路径。
         if (a[1] === '-n' && a[2] && /^-?\d+$/.test(a[2])) {
+          // a更新为 `a.slice(3)`，确保Bash 解析后续读取最新状态。
           a = a.slice(3)
+        // `a[1] && /^-\d+$/.test(a[1])` 成立时，共享工具 ast切换到这个 else-if 分支。
         } else if (a[1] && /^-\d+$/.test(a[1])) {
+          // a更新为 `a.slice(2) // `nice -10 cmd``，确保Bash 解析后续读取最新状态。
           a = a.slice(2) // `nice -10 cmd`
+        // `a[1] && /[$(`]/.test(a[1])` 成立时，共享工具 ast切换到这个 else-if 分支。
         } else if (a[1] && /[$(`]/.test(a[1])) {
           // SECURITY: walkArgument returns node.text for arithmetic_expansion,
           // so `nice $((0-5)) jq ...` has a[1]='$((0-5))'. Bash expands it to

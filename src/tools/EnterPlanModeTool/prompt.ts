@@ -1,6 +1,9 @@
+// 复用 isPlanModeInterviewPhaseEnabled 工具函数，把通用处理留在 ../../utils/planModeV2.js 中维护。
 import { isPlanModeInterviewPhaseEnabled } from '../../utils/planModeV2.js'
+// 引入 ASK_USER_QUESTION_TOOL_NAME，将 ../AskUserQuestionTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { ASK_USER_QUESTION_TOOL_NAME } from '../AskUserQuestionTool/prompt.js'
 
+// WHAT_HAPPENS_SECTION 命名 ``## What Happens in Plan Mode`，让后续代码直接表达这个值的用途。
 const WHAT_HAPPENS_SECTION = `## What Happens in Plan Mode
 
 In plan mode, you'll:
@@ -13,13 +16,16 @@ In plan mode, you'll:
 
 `
 
+// getEnterPlanModeToolPromptExternal 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getEnterPlanModeToolPromptExternal(): string {
   // When interview phase is enabled, omit the "What Happens" section —
   // detailed workflow instructions arrive via the plan_mode attachment (messages.ts).
+  // whatHappens 集合保存`isPlanModeInterviewPhaseEnabled`，供工具调用后续处理使用。
   const whatHappens = isPlanModeInterviewPhaseEnabled()
     ? ''
     : WHAT_HAPPENS_SECTION
 
+  // 返回 ``Use this tool proactively when you're about to start a non-trivial imp...`，作为工具调用这次计算的结果。
   return `Use this tool proactively when you're about to start a non-trivial implementation task. Getting user sign-off on your approach before writing code prevents wasted effort and ensures alignment. This tool transitions you into plan mode where you can explore the codebase and design an implementation approach for user approval.
 
 ## When to Use This Tool
@@ -98,13 +104,16 @@ User: "What files handle routing?"
 `
 }
 
+// getEnterPlanModeToolPromptAnt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getEnterPlanModeToolPromptAnt(): string {
   // When interview phase is enabled, omit the "What Happens" section —
   // detailed workflow instructions arrive via the plan_mode attachment (messages.ts).
+  // whatHappens 集合保存`isPlanModeInterviewPhaseEnabled`，供工具调用后续处理使用。
   const whatHappens = isPlanModeInterviewPhaseEnabled()
     ? ''
     : WHAT_HAPPENS_SECTION
 
+  // 返回 ``Use this tool when a task has genuine ambiguity about the right approa...`，作为工具调用这次计算的结果。
   return `Use this tool when a task has genuine ambiguity about the right approach and getting user input before coding would prevent significant rework. This tool transitions you into plan mode where you can explore the codebase and design an implementation approach for user approval.
 
 ## When to Use This Tool
@@ -163,7 +172,9 @@ User: "Fix the typo in the README"
 `
 }
 
+// getEnterPlanModeToolPrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getEnterPlanModeToolPrompt(): string {
+  // 返回 `process.env.USER_TYPE === 'ant'`，作为工具调用这次计算的结果。
   return process.env.USER_TYPE === 'ant'
     ? getEnterPlanModeToolPromptAnt()
     : getEnterPlanModeToolPromptExternal()

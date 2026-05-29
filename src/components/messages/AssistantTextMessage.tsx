@@ -1,51 +1,89 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { TextBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准终端渲染的数据契约。
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 引入 React、useContext，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useContext } from 'react';
+// 接入 ERROR_MESSAGE_USER_ABORT 服务层能力，把外部通信或共享状态交给 src/services/compact/compact.js 处理。
 import { ERROR_MESSAGE_USER_ABORT } from 'src/services/compact/compact.js';
+// 接入 isRateLimitErrorMessage 服务层能力，把外部通信或共享状态交给 src/services/rateLimitMessages.js 处理。
 import { isRateLimitErrorMessage } from 'src/services/rateLimitMessages.js';
+// 引入 BLACK_CIRCLE，将 ../../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { BLACK_CIRCLE } from '../../constants/figures.js';
+// 引入 Box、NoSelect、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, NoSelect, Text } from '../../ink.js';
+// 接入 API_ERROR_MESSAGE_PREFIX、API_TIMEOUT_ERROR_MESSAGE、CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE、CUSTOM_OFF_SWITCH_MESSAGE、INVALID_API_KEY_ERROR_MESSAGE、INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL、ORG_DISABLED_ERROR_MESSAGE_ENV_KEY、ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH、PROMPT_TOO_LONG_ERROR_MESSAGE、startsWithApiErrorPrefix、TOKEN_REVOKED_ERROR_MESSAGE 服务层能力，把外部通信或共享状态交给 ../../services/api/errors.js 处理。
 import { API_ERROR_MESSAGE_PREFIX, API_TIMEOUT_ERROR_MESSAGE, CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE, CUSTOM_OFF_SWITCH_MESSAGE, INVALID_API_KEY_ERROR_MESSAGE, INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL, ORG_DISABLED_ERROR_MESSAGE_ENV_KEY, ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH, PROMPT_TOO_LONG_ERROR_MESSAGE, startsWithApiErrorPrefix, TOKEN_REVOKED_ERROR_MESSAGE } from '../../services/api/errors.js';
+// 复用 isEmptyMessageText、NO_RESPONSE_REQUESTED 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { isEmptyMessageText, NO_RESPONSE_REQUESTED } from '../../utils/messages.js';
+// 复用 getUpgradeMessage 工具函数，把通用处理留在 ../../utils/model/contextWindowUpgradeCheck.js 中维护。
 import { getUpgradeMessage } from '../../utils/model/contextWindowUpgradeCheck.js';
+// 复用 getDefaultSonnetModel、renderModelName 工具函数，把通用处理留在 ../../utils/model/model.js 中维护。
 import { getDefaultSonnetModel, renderModelName } from '../../utils/model/model.js';
+// 复用 isMacOsKeychainLocked 工具函数，把通用处理留在 ../../utils/secureStorage/macOsKeychainStorage.js 中维护。
 import { isMacOsKeychainLocked } from '../../utils/secureStorage/macOsKeychainStorage.js';
+// 引入 CtrlOToExpand，将 ../CtrlOToExpand.js 中已经封装好的能力接到本文件流程里。
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
+// 引入 InterruptedByUser，将 ../InterruptedByUser.js 中已经封装好的能力接到本文件流程里。
 import { InterruptedByUser } from '../InterruptedByUser.js';
+// 引入 Markdown，将 ../Markdown.js 中已经封装好的能力接到本文件流程里。
 import { Markdown } from '../Markdown.js';
+// 引入 MessageResponse，将 ../MessageResponse.js 中已经封装好的能力接到本文件流程里。
 import { MessageResponse } from '../MessageResponse.js';
+// 引入 MessageActionsSelectedContext，将 ../messageActions.js 中已经封装好的能力接到本文件流程里。
 import { MessageActionsSelectedContext } from '../messageActions.js';
+// 引入 RateLimitMessage，将 ./RateLimitMessage.js 中已经封装好的能力接到本文件流程里。
 import { RateLimitMessage } from './RateLimitMessage.js';
+// MAX_API_ERROR_CHARS 错误信息保存`1000`，供终端 UI Assistant Text Messa...后续判断或输出使用。
 const MAX_API_ERROR_CHARS = 1000;
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   param: TextBlockParam;
   addMargin: boolean;
   shouldShowDot: boolean;
   verbose: boolean;
   width?: number | string;
+  // 这个回调绑定到 onOpenRateLimitOptions?: () => void;，负责终端渲染在该局部场景下的响应。
   onOpenRateLimitOptions?: () => void;
 };
+// InvalidApiKeyMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function InvalidApiKeyMessage() {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(2);
+  // t0 暂存 `isMacOsKeychainLocked()` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t0 暂存 `isMacOsKeychainLocked()` 生成的渲染片段，后续返回路径直接复用。
     t0 = isMacOsKeychainLocked();
+    // $[0] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[0];
   }
+  // isKeychainLocked标记终端 UI Assistant Text Messa...是否启用对应路径。
   const isKeychainLocked = t0;
+  // t1 暂存 `<MessageResponse><Box flexDirection="column"><Text color=...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `<MessageResponse><Box flexDirection="column"><Text color=...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <MessageResponse><Box flexDirection="column"><Text color="error">{INVALID_API_KEY_ERROR_MESSAGE}</Text>{isKeychainLocked && <Text dimColor={true}>· Run in another terminal: security unlock-keychain</Text>}</Box></MessageResponse>;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // 返回 `t1`，作为终端渲染这次计算的结果。
   return t1;
 }
+// AssistantTextMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AssistantTextMessage(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(34);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     param: t1,
     addMargin,
@@ -53,216 +91,351 @@ export function AssistantTextMessage(t0) {
     verbose,
     onOpenRateLimitOptions
   } = t0;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     text
   } = t1;
+  // isSelected记录 `useContext` 是否成立，终端渲染随后按该结果分支。
   const isSelected = useContext(MessageActionsSelectedContext);
+  // 满足 `isEmptyMessageText(text)` 时，终端渲染执行该分支。
   if (isEmptyMessageText(text)) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 满足 `isRateLimitErrorMessage(text)` 时，终端渲染执行该分支。
   if (isRateLimitErrorMessage(text)) {
+    // t2 暂存 `<RateLimitMessage text={text} onOpenRateLimitOptions={onO...` 的派生结果，便于缓存命中时直接复用。
     let t2;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[0] !== onOpenRateLimitOptions || $[1] !== text) {
+      // t2 暂存 `<RateLimitMessage text={text} onOpenRateLimitOptions={onO...` 生成的渲染片段，后续返回路径直接复用。
       t2 = <RateLimitMessage text={text} onOpenRateLimitOptions={onOpenRateLimitOptions} />;
+      // $[0] 缓存 `onOpenRateLimitOptions`，下次依赖未变时 React 编译产物可直接复用。
       $[0] = onOpenRateLimitOptions;
+      // $[1] 缓存 `text`，下次依赖未变时 React 编译产物可直接复用。
       $[1] = text;
+      // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
       $[2] = t2;
     } else {
+      // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
       t2 = $[2];
     }
+    // 返回 `t2`，作为终端渲染这次计算的结果。
     return t2;
   }
+  // 按照 text 的取值选择终端渲染的具体处理分支。
   switch (text) {
     case NO_RESPONSE_REQUESTED:
       {
+        // 返回 `null`，作为终端渲染这次计算的结果。
         return null;
       }
     case PROMPT_TOO_LONG_ERROR_MESSAGE:
       {
+        // t2 暂存 `getUpgradeMessage("warning")` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `getUpgradeMessage("warning")` 生成的渲染片段，后续返回路径直接复用。
           t2 = getUpgradeMessage("warning");
+          // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[3] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[3];
         }
+        // upgradeHint 命名 `t2`，让后续代码直接表达这个值的用途。
         const upgradeHint = t2;
+        // t3 暂存 `<MessageResponse height={1}><Text color="error">Context l...` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+          // t3 暂存 `<MessageResponse height={1}><Text color="error">Context l...` 生成的渲染片段，后续返回路径直接复用。
           t3 = <MessageResponse height={1}><Text color="error">Context limit reached · /compact or /clear to continue{upgradeHint ? ` · ${upgradeHint}` : ""}</Text></MessageResponse>;
+          // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[4] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[4];
         }
+        // 返回 `t3`，作为终端渲染这次计算的结果。
         return t3;
       }
     case CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE:
       {
+        // t2 暂存 `<MessageResponse height={1}><Text color="error">Credit ba...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<MessageResponse height={1}><Text color="error">Credit ba...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <MessageResponse height={1}><Text color="error">Credit balance too low · Add funds: https://platform.claude.com/settings/billing</Text></MessageResponse>;
+          // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[5] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[5];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     case INVALID_API_KEY_ERROR_MESSAGE:
       {
+        // t2 暂存 `<InvalidApiKeyMessage />` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<InvalidApiKeyMessage />` 生成的渲染片段，后续返回路径直接复用。
           t2 = <InvalidApiKeyMessage />;
+          // $[6] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[6] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[6];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     case INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL:
       {
+        // t2 暂存 `<MessageResponse height={1}><Text color="error">{INVALID_...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<MessageResponse height={1}><Text color="error">{INVALID_...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <MessageResponse height={1}><Text color="error">{INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL}</Text></MessageResponse>;
+          // $[7] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[7] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[7];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     case ORG_DISABLED_ERROR_MESSAGE_ENV_KEY:
     case ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH:
       {
+        // t2 暂存 `<MessageResponse><Text color="error">{text}</Text></Messa...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[8] !== text) {
+          // t2 暂存 `<MessageResponse><Text color="error">{text}</Text></Messa...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <MessageResponse><Text color="error">{text}</Text></MessageResponse>;
+          // $[8] 缓存 `text`，下次依赖未变时 React 编译产物可直接复用。
           $[8] = text;
+          // $[9] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[9] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[9];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     case TOKEN_REVOKED_ERROR_MESSAGE:
       {
+        // t2 暂存 `<MessageResponse height={1}><Text color="error">{TOKEN_RE...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<MessageResponse height={1}><Text color="error">{TOKEN_RE...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <MessageResponse height={1}><Text color="error">{TOKEN_REVOKED_ERROR_MESSAGE}</Text></MessageResponse>;
+          // $[10] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[10] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[10];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     case API_TIMEOUT_ERROR_MESSAGE:
       {
+        // t2 暂存 `<MessageResponse height={1}><Text color="error">{API_TIME...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<MessageResponse height={1}><Text color="error">{API_TIME...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <MessageResponse height={1}><Text color="error">{API_TIMEOUT_ERROR_MESSAGE}{process.env.API_TIMEOUT_MS && <>{" "}(API_TIMEOUT_MS={process.env.API_TIMEOUT_MS}ms, try increasing it)</>}</Text></MessageResponse>;
+          // $[11] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[11] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[11];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     case CUSTOM_OFF_SWITCH_MESSAGE:
       {
+        // t2 暂存 `<Text color="error">We are experiencing high demand for O...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<Text color="error">We are experiencing high demand for O...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <Text color="error">We are experiencing high demand for Opus 4.</Text>;
+          // $[12] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[12] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[12];
         }
+        // t3 暂存 `<MessageResponse><Box flexDirection="column" gap={1}>{t2}...` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
+          // t3 暂存 `<MessageResponse><Box flexDirection="column" gap={1}>{t2}...` 生成的渲染片段，后续返回路径直接复用。
           t3 = <MessageResponse><Box flexDirection="column" gap={1}>{t2}<Text>To continue immediately, use /model to switch to{" "}{renderModelName(getDefaultSonnetModel())} and continue coding.</Text></Box></MessageResponse>;
+          // $[13] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[13] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[13];
         }
+        // 返回 `t3`，作为终端渲染这次计算的结果。
         return t3;
       }
     case ERROR_MESSAGE_USER_ABORT:
       {
+        // t2 暂存 `<MessageResponse height={1}><InterruptedByUser /></Messag...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<MessageResponse height={1}><InterruptedByUser /></Messag...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <MessageResponse height={1}><InterruptedByUser /></MessageResponse>;
+          // $[14] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[14] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[14];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     default:
       {
+        // 满足 `startsWithApiErrorPrefix(text)` 时，终端渲染执行该分支。
         if (startsWithApiErrorPrefix(text)) {
+          // truncated标记终端 UI Assistant Text Messa...是否启用对应路径。
           const truncated = !verbose && text.length > MAX_API_ERROR_CHARS;
+          // 临时值 t2格式化`text.slice`，供终端渲染后续处理使用。
           const t2 = text === API_ERROR_MESSAGE_PREFIX ? `${API_ERROR_MESSAGE_PREFIX}: Please wait a moment and try again.` : truncated ? text.slice(0, MAX_API_ERROR_CHARS) + "\u2026" : text;
+          // t3 暂存 `<Text color="error">{t2}</Text>` 的派生结果，便于缓存命中时直接复用。
           let t3;
+          // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
           if ($[15] !== t2) {
+            // t3 暂存 `<Text color="error">{t2}</Text>` 生成的渲染片段，后续返回路径直接复用。
             t3 = <Text color="error">{t2}</Text>;
+            // $[15] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
             $[15] = t2;
+            // $[16] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
             $[16] = t3;
           } else {
+            // t3 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
             t3 = $[16];
           }
+          // t4 暂存 `truncated && <CtrlOToExpand />` 的派生结果，便于缓存命中时直接复用。
           let t4;
+          // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
           if ($[17] !== truncated) {
+            // t4 暂存 `truncated && <CtrlOToExpand />` 生成的渲染片段，后续返回路径直接复用。
             t4 = truncated && <CtrlOToExpand />;
+            // $[17] 缓存 `truncated`，下次依赖未变时 React 编译产物可直接复用。
             $[17] = truncated;
+            // $[18] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
             $[18] = t4;
           } else {
+            // t4 从 React 编译缓存槽 $[18] 取回渲染片段，避免依赖未变时重建 JSX。
             t4 = $[18];
           }
+          // t5 暂存 `<MessageResponse><Box flexDirection="column">{t3}{t4}</Bo...` 的派生结果，便于缓存命中时直接复用。
           let t5;
+          // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
           if ($[19] !== t3 || $[20] !== t4) {
+            // t5 暂存 `<MessageResponse><Box flexDirection="column">{t3}{t4}</Bo...` 生成的渲染片段，后续返回路径直接复用。
             t5 = <MessageResponse><Box flexDirection="column">{t3}{t4}</Box></MessageResponse>;
+            // $[19] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
             $[19] = t3;
+            // $[20] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
             $[20] = t4;
+            // $[21] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
             $[21] = t5;
           } else {
+            // t5 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
             t5 = $[21];
           }
+          // 返回 `t5`，作为终端渲染这次计算的结果。
           return t5;
         }
+        // t2保存`addMargin ? 1 : 0`，供后续判断或组装使用。
         const t2 = addMargin ? 1 : 0;
+        // t3保存`isSelected ? "messageActionsBackground" : undefined`，供终端 UI Assistant Text Messa...后续判断或输出使用。
         const t3 = isSelected ? "messageActionsBackground" : undefined;
+        // t4 暂存 `shouldShowDot && <NoSelect fromLeftEdge={true} minWidth={...` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[22] !== isSelected || $[23] !== shouldShowDot) {
+          // t4 暂存 `shouldShowDot && <NoSelect fromLeftEdge={true} minWidth={...` 生成的渲染片段，后续返回路径直接复用。
           t4 = shouldShowDot && <NoSelect fromLeftEdge={true} minWidth={2}><Text color={isSelected ? "suggestion" : "text"}>{BLACK_CIRCLE}</Text></NoSelect>;
+          // $[22] 缓存 `isSelected`，下次依赖未变时 React 编译产物可直接复用。
           $[22] = isSelected;
+          // $[23] 缓存 `shouldShowDot`，下次依赖未变时 React 编译产物可直接复用。
           $[23] = shouldShowDot;
+          // $[24] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[24] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[24] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[24];
         }
+        // t5 暂存 `<Box flexDirection="column"><Markdown>{text}</Markdown></...` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[25] !== text) {
+          // t5 暂存 `<Box flexDirection="column"><Markdown>{text}</Markdown></...` 生成的渲染片段，后续返回路径直接复用。
           t5 = <Box flexDirection="column"><Markdown>{text}</Markdown></Box>;
+          // $[25] 缓存 `text`，下次依赖未变时 React 编译产物可直接复用。
           $[25] = text;
+          // $[26] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[26] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[26] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[26];
         }
+        // t6 暂存 `<Box flexDirection="row">{t4}{t5}</Box>` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[27] !== t4 || $[28] !== t5) {
+          // t6 暂存 `<Box flexDirection="row">{t4}{t5}</Box>` 生成的渲染片段，后续返回路径直接复用。
           t6 = <Box flexDirection="row">{t4}{t5}</Box>;
+          // $[27] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[27] = t4;
+          // $[28] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[28] = t5;
+          // $[29] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[29] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[29] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[29];
         }
+        // t7 暂存 `<Box alignItems="flex-start" flexDirection="row" justifyC...` 的派生结果，便于缓存命中时直接复用。
         let t7;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[30] !== t2 || $[31] !== t3 || $[32] !== t6) {
+          // t7 暂存 `<Box alignItems="flex-start" flexDirection="row" justifyC...` 生成的渲染片段，后续返回路径直接复用。
           t7 = <Box alignItems="flex-start" flexDirection="row" justifyContent="space-between" marginTop={t2} width="100%" backgroundColor={t3}>{t6}</Box>;
+          // $[30] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[30] = t2;
+          // $[31] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[31] = t3;
+          // $[32] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[32] = t6;
+          // $[33] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
           $[33] = t7;
         } else {
+          // t7 从 React 编译缓存槽 $[33] 取回渲染片段，避免依赖未变时重建 JSX。
           t7 = $[33];
         }
+        // 返回 `t7`，作为终端渲染这次计算的结果。
         return t7;
       }
   }

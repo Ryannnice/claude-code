@@ -1,8 +1,10 @@
+// 引入 registerBundledSkill，将 ../bundledSkills.js 中已经封装好的能力接到本文件流程里。
 import { registerBundledSkill } from '../bundledSkills.js'
 
 // Prompt text contains `ps` commands as instructions for Claude to run,
 // not commands this file executes.
 // eslint-disable-next-line custom-rules/no-direct-ps-commands
+// STUCK_PROMPT固定为 ``# /stuck — diagnose frozen/slow Claude Code sessions`，作为stuck后续展示或比较的基准。
 const STUCK_PROMPT = `# /stuck — diagnose frozen/slow Claude Code sessions
 
 The user thinks another Claude Code session on this machine is frozen, stuck, or very slow. Investigate and post a report to #claude-code-feedback.
@@ -58,21 +60,30 @@ If Slack MCP isn't available, format the report as a message the user can copy-p
 - If the user gave an argument (e.g., a specific PID or symptom), focus there first.
 `
 
+// registerStuckSkill 封装stuck的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function registerStuckSkill(): void {
+  // `process.env.USER_TYPE` 与 `'ant'` 不一致时刷新派生状态，避免使用过期结果。
   if (process.env.USER_TYPE !== 'ant') {
+    // stuck在这里结束当前路径，避免继续执行不适用的后续分支。
     return
   }
 
+  // 调用 registerBundledSkill，触发stuck此处需要的副作用。
   registerBundledSkill({
     name: 'stuck',
     description:
       '[ANT-ONLY] Investigate frozen/stuck/slow Claude Code sessions on this machine and post a diagnostic report to #claude-code-feedback.',
     userInvocable: true,
+    // getPromptForCommand 根据 args 读取或计算stuck需要的结果。
     async getPromptForCommand(args) {
+      // 提示词保存`STUCK_PROMPT`，供stuck后续判断或输出使用。
       let prompt = STUCK_PROMPT
+      // 满足 `args` 时，stuck执行该分支。
       if (args) {
+        // stuck在这里处理 `prompt += `\n## User-provided context\n\n${args}\n``，完成这一小步状态转换。
         prompt += `\n## User-provided context\n\n${args}\n`
       }
+      // 返回列表结果，保留stuck已经排好的条目顺序。
       return [{ type: 'text', text: prompt }]
     },
   })

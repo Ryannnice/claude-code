@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 // Indirection point for the package.json "browser" field. When bun builds
 // browser-sdk.js with --target browser, this file is swapped for
 // crypto.browser.ts — avoiding a ~500KB crypto-browserify polyfill that Bun
@@ -9,5 +10,7 @@
 // import but the binding doesn't link (`ReferenceError: randomUUID is not
 // defined`). The explicit import-then-export below produces a correct live
 // binding. See integration-tests-ant-native failure on PR #20957/#21178.
+// 使用 Node/Bun 的 crypto 能力处理本地运行时资源。
 import { randomUUID } from 'crypto'
+// 重新导出这一组成员，让共享工具的公共 API 保持集中入口。
 export { randomUUID }

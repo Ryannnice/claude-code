@@ -1,121 +1,198 @@
+// 引入 React、useCallback、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useState } from 'react';
+// 引入 useTerminalSize，将 src/hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js';
+// 复用 CodeSession、fetchCodeSessionsFromSessionsAPI 工具函数，把通用处理留在 src/utils/teleport/api.js 中维护。
 import { type CodeSession, fetchCodeSessionsFromSessionsAPI } from 'src/utils/teleport/api.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow list navigation
+// 引入 Box、Text、useInput，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useInput } from '../ink.js';
+// 引入 useKeybinding，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../keybindings/useKeybinding.js';
+// 引入 useShortcutDisplay，将 ../keybindings/useShortcutDisplay.js 中已经封装好的能力接到本文件流程里。
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 detectCurrentRepository 工具函数，把通用处理留在 ../utils/detectRepository.js 中维护。
 import { detectCurrentRepository } from '../utils/detectRepository.js';
+// 复用 formatRelativeTime 工具函数，把通用处理留在 ../utils/format.js 中维护。
 import { formatRelativeTime } from '../utils/format.js';
+// 引入 ConfigurableShortcutHint，将 ./ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
+// 引入 Select，将 ./CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from './CustomSelect/index.js';
+// 引入 Byline，将 ./design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from './design-system/Byline.js';
+// 引入 KeyboardShortcutHint，将 ./design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
+// 引入 Spinner，将 ./Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from './Spinner.js';
+// 引入 TeleportError，将 ./TeleportError.js 中已经封装好的能力接到本文件流程里。
 import { TeleportError } from './TeleportError.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
+  // 这个回调绑定到 onSelect: (session: CodeSession) => void;，负责终端渲染在该局部场景下的响应。
   onSelect: (session: CodeSession) => void;
+  // 这个回调绑定到 onCancel: () => void;，负责终端渲染在该局部场景下的响应。
   onCancel: () => void;
   isEmbedded?: boolean;
 };
+// LoadErrorType 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type LoadErrorType = 'network' | 'auth' | 'api' | 'other';
+// UPDATED_STRING固定为 `'Updated'`，作为终端 UI Resume Task后续展示或比较的基准。
 const UPDATED_STRING = 'Updated';
+// SPACE_BETWEEN_TABLE_COLUMNS 集合 命名 `' '`，让后续代码直接表达这个值的用途。
 const SPACE_BETWEEN_TABLE_COLUMNS = '  ';
+// ResumeTask 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function ResumeTask({
   onSelect,
   onCancel,
   isEmbedded = false
 }: Props): React.ReactNode {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     rows
   } = useTerminalSize();
+  // sessions 会话数据 由 React state 持有，setSessions 会在用户操作或异步结果返回时触发刷新。
   const [sessions, setSessions] = useState<CodeSession[]>([]);
+  // currentRepo 由 React state 持有，setCurrentRepo 会在用户操作或异步结果返回时触发刷新。
   const [currentRepo, setCurrentRepo] = useState<string | null>(null);
+  // 加载状态 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [loading, setLoading] = useState(true);
+  // loadErrorType 错误信息 由 React state 持有，setLoadErrorType 会在用户操作或异步结果返回时触发刷新。
   const [loadErrorType, setLoadErrorType] = useState<LoadErrorType | null>(null);
+  // retrying 由 React state 持有，setRetrying 会在用户操作或异步结果返回时触发刷新。
   const [retrying, setRetrying] = useState(false);
+  // hasCompletedTeleportErrorFlow 错误信息 由 React state 持有，setHasCompletedTeleportErrorFlow 会在用户操作或异步结果返回时触发刷新。
   const [hasCompletedTeleportErrorFlow, setHasCompletedTeleportErrorFlow] = useState(false);
 
   // Track focused index for scroll position display in title
+  // focusedIndex 索引 由 React state 持有，setFocusedIndex 会在用户操作或异步结果返回时触发刷新。
   const [focusedIndex, setFocusedIndex] = useState(1);
+  // escKey保存`useShortcutDisplay`，供终端渲染后续处理使用。
   const escKey = useShortcutDisplay('confirm:no', 'Confirmation', 'Esc');
+  // loadSessions 会话数据保存`useCallback`，供终端渲染后续处理使用。
   const loadSessions = useCallback(async () => {
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // setLoading 写入新的状态值，使终端渲染后续读取保持一致。
       setLoading(true);
+      // setLoadErrorType 写入新的状态值，使终端渲染后续读取保持一致。
       setLoadErrorType(null);
 
       // Detect current repository
+      // detectedRepo读取`detectCurrentRepository`，供终端渲染后续处理使用。
       const detectedRepo = await detectCurrentRepository();
+      // setCurrentRepo 写入新的状态值，使终端渲染后续读取保持一致。
       setCurrentRepo(detectedRepo);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Current repository: ${detectedRepo || 'not detected'}`);
+      // codeSessions 会话数据读取`fetchCodeSessionsFromSessionsAPI`，供终端渲染后续处理使用。
       const codeSessions = await fetchCodeSessionsFromSessionsAPI();
 
       // Filter sessions by current repository if detected
+      // filteredSessions 会话数据 命名 `codeSessions`，让后续代码直接表达这个值的用途。
       let filteredSessions = codeSessions;
+      // 满足 `detectedRepo` 时，终端渲染执行该分支。
       if (detectedRepo) {
+        // filteredSessions 会话数据更新为 `codeSessions.filter(session => {`，确保终端 UI后续读取最新状态。
         filteredSessions = codeSessions.filter(session => {
+          // session.repo 会话数据缺失时直接走兜底路径，避免终端渲染使用无效输入。
           if (!session.repo) return false;
+          // sessionRepo 会话数据固定为 ``${session.repo.owner.login}/${session.repo.name}``，作为终端 UI Resume Task后续展示或比较的基准。
           const sessionRepo = `${session.repo.owner.login}/${session.repo.name}`;
+          // 返回 `sessionRepo === detectedRepo`，作为终端渲染这次计算的结果。
           return sessionRepo === detectedRepo;
         });
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Filtered ${filteredSessions.length} sessions for repo ${detectedRepo} from ${codeSessions.length} total`);
       }
 
       // Sort by updated_at (newest first)
+      // sortedSessions 会话数据保存`sort`，供终端渲染后续处理使用。
       const sortedSessions = [...filteredSessions].sort((a, b) => {
+        // dateA记录时间`Date`，供终端渲染后续处理使用。
         const dateA = new Date(a.updated_at);
+        // dateB记录时间`Date`，供终端渲染后续处理使用。
         const dateB = new Date(b.updated_at);
+        // 返回 `dateB.getTime() - dateA.getTime()`，作为终端渲染这次计算的结果。
         return dateB.getTime() - dateA.getTime();
       });
+      // setSessions 写入新的状态值，使终端渲染后续读取保持一致。
       setSessions(sortedSessions);
     } catch (err) {
+      // errorMessage 消息数据保存`String`，供终端渲染后续处理使用。
       const errorMessage = err instanceof Error ? err.message : String(err);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Error loading code sessions: ${errorMessage}`);
+      // setLoadErrorType 写入新的状态值，使终端渲染后续读取保持一致。
       setLoadErrorType(determineErrorType(errorMessage));
     } finally {
+      // setLoading 写入新的状态值，使终端渲染后续读取保持一致。
       setLoading(false);
+      // setRetrying 写入新的状态值，使终端渲染后续读取保持一致。
       setRetrying(false);
     }
   }, []);
+  // handleRetry封装成回调，供终端 UI Resume Task在事件触发或异步步骤中调用。
   const handleRetry = () => {
+    // setRetrying 写入新的状态值，使终端渲染后续读取保持一致。
     setRetrying(true);
+    // 显式忽略 `loadSessions()` 的返回值，只保留它触发的副作用。
     void loadSessions();
   };
 
   // Handle escape via keybinding
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', onCancel, {
     context: 'Confirmation'
   });
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((input, key) => {
     // We need to handle ctrl+c in case we don't render a <Select>
+    // 当 `key.ctrl && input` 匹配 `'c'` 时，终端渲染执行对应分支。
     if (key.ctrl && input === 'c') {
+      // 调用 onCancel，触发终端渲染此处需要的副作用。
       onCancel();
+      // 终端 UI 组件 Resume Task在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Handle retry in error state with 'ctrl+r'
+    // 只有 `key.ctrl && input === 'r' && loadErrorType` 满足时，终端渲染才执行该分支。
     if (key.ctrl && input === 'r' && loadErrorType) {
+      // 调用 handleRetry，触发终端渲染此处需要的副作用。
       handleRetry();
+      // 终端 UI 组件 Resume Task在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Handle enter key for error states to allow continuation with regular teleport
+    // `loadErrorType` 与 `null && key.return` 不一致时刷新派生状态，避免使用过期结果。
     if (loadErrorType !== null && key.return) {
+      // 调用 onCancel，触发终端渲染此处需要的副作用。
       onCancel(); // This will continue with regular teleport flow
+      // 终端 UI 组件 Resume Task在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
   });
+  // handleErrorComplete 错误信息保存`useCallback`，供终端渲染后续处理使用。
   const handleErrorComplete = useCallback(() => {
+    // setHasCompletedTeleportErrorFlow 写入新的状态值，使终端渲染后续读取保持一致。
     setHasCompletedTeleportErrorFlow(true);
+    // 显式忽略 `loadSessions()` 的返回值，只保留它触发的副作用。
     void loadSessions();
   }, [setHasCompletedTeleportErrorFlow, loadSessions]);
 
   // Show error dialog if needed
+  // hasCompletedTeleportErrorFlow 错误信息缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!hasCompletedTeleportErrorFlow) {
+    // 返回 `<TeleportError onComplete={handleErrorComplete} />`，作为终端渲染这次计算的结果。
     return <TeleportError onComplete={handleErrorComplete} />;
   }
+  // 满足 `loading` 时，终端渲染执行该分支。
   if (loading) {
+    // 返回 `<Box flexDirection="column" padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" padding={1}>
         <Box flexDirection="row">
           <Spinner />
@@ -126,7 +203,9 @@ export function ResumeTask({
         </Text>
       </Box>;
   }
+  // 满足 `loadErrorType` 时，终端渲染执行该分支。
   if (loadErrorType) {
+    // 返回 `<Box flexDirection="column" padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" padding={1}>
         <Text bold color="error">
           Error loading Claude Code sessions
@@ -140,7 +219,9 @@ export function ResumeTask({
         </Text>
       </Box>;
   }
+  // sessions 会话数据为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
   if (sessions.length === 0) {
+    // 返回 `<Box flexDirection="column" padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" padding={1}>
         <Text bold>
           No Claude Code sessions found
@@ -153,19 +234,24 @@ export function ResumeTask({
         </Box>
       </Box>;
   }
+  // sessionMetadata 会话数据派生`sessions.map`，供终端渲染后续处理使用。
   const sessionMetadata = sessions.map(session_0 => ({
     ...session_0,
     timeString: formatRelativeTime(new Date(session_0.updated_at))
   }));
+  // maxTimeStringLength 数量保存`Math.max`，供终端渲染后续处理使用。
   const maxTimeStringLength = Math.max(UPDATED_STRING.length, ...sessionMetadata.map(meta => meta.timeString.length));
+  // 选项派生`sessionMetadata.map`，供终端渲染后续处理使用。
   const options = sessionMetadata.map(({
     timeString,
     title,
     id
   }) => {
+    // paddedTime保存`timeString.padEnd`，供终端渲染后续处理使用。
     const paddedTime = timeString.padEnd(maxTimeStringLength, ' ');
 
     // TODO: include branch name when API returns it
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       label: `${paddedTime}  ${title}`,
       value: id
@@ -174,12 +260,17 @@ export function ResumeTask({
 
   // Adjust layout for embedded vs full-screen rendering
   // Overhead: padding (2) + title (1) + marginY (2) + header (1) + footer (1) = 7
+  // layoutOverhead保存`7`，供终端 UI Resume Task后续判断或输出使用。
   const layoutOverhead = 7;
+  // maxVisibleOptions 集合保存`Math.max`，供终端渲染后续处理使用。
   const maxVisibleOptions = Math.max(1, isEmbedded ? Math.min(sessions.length, 5, rows - 6 - layoutOverhead) : Math.min(sessions.length, rows - 1 - layoutOverhead));
+  // maxHeight保存`maxVisibleOptions + layoutOverhead`，供后续判断或组装使用。
   const maxHeight = maxVisibleOptions + layoutOverhead;
 
   // Show scroll position in title when list needs scrolling
+  // showScrollPosition 命名 `sessions.length > maxVisibleOptions`，让后续代码直接表达这个值的用途。
   const showScrollPosition = sessions.length > maxVisibleOptions;
+  // 返回 `<Box flexDirection="column" padding={1} height={maxHeight}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" padding={1} height={maxHeight}>
       <Text bold>
         Select a session to resume
@@ -197,14 +288,22 @@ export function ResumeTask({
             {'Session Title'}
           </Text>
         </Box>
+        {/* 这个回调绑定到 <Select visibleOptionCount={maxVisibleOptions} options={options} onChange={value => {，负责终端渲染在该局部场景下的响应。 */}
         <Select visibleOptionCount={maxVisibleOptions} options={options} onChange={value => {
+        // session_1 会话数据筛选`sessions.find`，供终端渲染后续处理使用。
         const session_1 = sessions.find(s => s.id === value);
+        // 满足 `session_1` 时，终端渲染执行该分支。
         if (session_1) {
+          // 调用 onSelect，触发终端渲染此处需要的副作用。
           onSelect(session_1);
         }
+      // 这个回调绑定到 }} onFocus={value_0 => {，负责终端渲染在该局部场景下的响应。
       }} onFocus={value_0 => {
+        // index 索引筛选`options.findIndex`，供终端渲染后续处理使用。
         const index = options.findIndex(o => o.value === value_0);
+        // 满足 `index >= 0` 时，终端渲染执行该分支。
         if (index >= 0) {
+          // setFocusedIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setFocusedIndex(index + 1);
         }
       }} />
@@ -224,30 +323,43 @@ export function ResumeTask({
 /**
  * Determines the type of error based on the error message
  */
+// determineErrorType 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function determineErrorType(errorMessage: string): LoadErrorType {
+  // 消息保存`errorMessage.toLowerCase`，供终端渲染后续处理使用。
   const message = errorMessage.toLowerCase();
+  // 只有 `message.includes('fetch') || message.includes('network') || message.include...` 满足时，终端渲染才执行该分支。
   if (message.includes('fetch') || message.includes('network') || message.includes('timeout')) {
+    // 返回 `'network'`，作为终端渲染这次计算的结果。
     return 'network';
   }
+  // 只有 `message.includes('auth') || message.includes('token') || message.includes('...` 满足时，终端渲染才执行该分支。
   if (message.includes('auth') || message.includes('token') || message.includes('permission') || message.includes('oauth') || message.includes('not authenticated') || message.includes('/login') || message.includes('console account') || message.includes('403')) {
+    // 返回 `'auth'`，作为终端渲染这次计算的结果。
     return 'auth';
   }
+  // 只有 `message.includes('api') || message.includes('rate limit') || message.includ...` 满足时，终端渲染才执行该分支。
   if (message.includes('api') || message.includes('rate limit') || message.includes('500') || message.includes('529')) {
+    // 返回 `'api'`，作为终端渲染这次计算的结果。
     return 'api';
   }
+  // 返回 `'other'`，作为终端渲染这次计算的结果。
   return 'other';
 }
 
 /**
  * Renders error-specific troubleshooting guidance
  */
+// renderErrorSpecificGuidance 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function renderErrorSpecificGuidance(errorType: LoadErrorType): React.ReactNode {
+  // 按照 errorType 的取值选择终端渲染的具体处理分支。
   switch (errorType) {
     case 'network':
+      // 返回 `<Box marginY={1} flexDirection="column">`，作为终端渲染这次计算的结果。
       return <Box marginY={1} flexDirection="column">
           <Text dimColor>Check your internet connection</Text>
         </Box>;
     case 'auth':
+      // 返回 `<Box marginY={1} flexDirection="column">`，作为终端渲染这次计算的结果。
       return <Box marginY={1} flexDirection="column">
           <Text dimColor>Teleport requires a Claude account</Text>
           <Text dimColor>
@@ -256,10 +368,12 @@ function renderErrorSpecificGuidance(errorType: LoadErrorType): React.ReactNode 
           </Text>
         </Box>;
     case 'api':
+      // 返回 `<Box marginY={1} flexDirection="column">`，作为终端渲染这次计算的结果。
       return <Box marginY={1} flexDirection="column">
           <Text dimColor>Sorry, Claude encountered an error</Text>
         </Box>;
     case 'other':
+      // 返回 `<Box marginY={1} flexDirection="row">`，作为终端渲染这次计算的结果。
       return <Box marginY={1} flexDirection="row">
           <Text dimColor>Sorry, Claude Code encountered an error</Text>
         </Box>;

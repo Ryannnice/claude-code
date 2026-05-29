@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 // SDK Core Types - Common serializable types used by both SDK consumers and SDK builders.
 //
 // Types are generated from Zod schemas in coreSchemas.ts.
@@ -9,6 +10,7 @@
 // part of the public API.
 
 // Re-export sandbox types for SDK consumers
+// 导出类型定义，让其他模块沿用core Types的数据契约。
 export type {
   SandboxFilesystemConfig,
   SandboxIgnoreViolations,
@@ -16,12 +18,15 @@ export type {
   SandboxSettings,
 } from '../sandboxTypes.js'
 // Re-export all generated types
+// core Types在这里处理 `export * from './coreTypes.generated.js'`，完成这一小步状态转换。
 export * from './coreTypes.generated.js'
 
 // Re-export utility types that can't be expressed as Zod schemas
+// 导出类型定义，让其他模块沿用core Types的数据契约。
 export type { NonNullableUsage } from './sdkUtilityTypes.js'
 
 // Const arrays for runtime usage
+// HOOK_EVENTS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const HOOK_EVENTS = [
   'PreToolUse',
   'PostToolUse',
@@ -52,6 +57,7 @@ export const HOOK_EVENTS = [
   'FileChanged',
 ] as const
 
+// EXIT_REASONS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const EXIT_REASONS = [
   'clear',
   'resume',

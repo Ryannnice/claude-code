@@ -3,10 +3,14 @@
  * Extracts and parses YAML frontmatter between --- delimiters
  */
 
+// 引入 logForDebugging，将 ./debug.js 中已经封装好的能力接到本文件流程里。
 import { logForDebugging } from './debug.js'
+// 类型依赖 { HooksSettings } 来自 ./settings/types.js，用于校准共享工具的数据契约。
 import type { HooksSettings } from './settings/types.js'
+// 引入 parseYaml，将 ./yaml.js 中已经封装好的能力接到本文件流程里。
 import { parseYaml } from './yaml.js'
 
+// FrontmatterData 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type FrontmatterData = {
   // YAML can return null for keys with no value (e.g., "key:" with nothing after)
   'allowed-tools'?: string | string[] | null
@@ -58,6 +62,7 @@ export type FrontmatterData = {
   [key: string]: unknown
 }
 
+// ParsedMarkdown 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ParsedMarkdown = {
   frontmatter: FrontmatterData
   content: string
@@ -76,6 +81,7 @@ export type ParsedMarkdown = {
 // - | > are block scalar indicators (only at start)
 // - % is directive indicator (only at start)
 // - @ ` are reserved
+// YAML_SPECIAL_CHARS 集合保存`/[{}[\]*&#!|>%@`]|: /`，供共享工具 frontmatter Parser后续判断或输出使用。
 const YAML_SPECIAL_CHARS = /[{}[\]*&#!|>%@`]|: /
 
 /**

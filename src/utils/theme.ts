@@ -1,6 +1,9 @@
+// 引入 chalk、Chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk, { Chalk } from 'chalk'
+// 引入 env，将 ./env.js 中已经封装好的能力接到本文件流程里。
 import { env } from './env.js'
 
+// Theme 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Theme = {
   autoAccept: string
   bashBorder: string
@@ -88,6 +91,7 @@ export type Theme = {
   rainbow_violet_shimmer: string
 }
 
+// THEME_NAMES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const THEME_NAMES = [
   'dark',
   'light',
@@ -98,20 +102,24 @@ export const THEME_NAMES = [
 ] as const
 
 /** A renderable theme. Always resolvable to a concrete color palette. */
+// ThemeName 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ThemeName = (typeof THEME_NAMES)[number]
 
+// THEME_SETTINGS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const THEME_SETTINGS = ['auto', ...THEME_NAMES] as const
 
 /**
  * A theme preference as stored in user config. `'auto'` follows the system
  * dark/light mode and is resolved to a ThemeName at runtime.
  */
+// ThemeSetting 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ThemeSetting = (typeof THEME_SETTINGS)[number]
 
 /**
  * Light theme using explicit RGB values to avoid inconsistencies
  * from users' custom terminal ANSI color definitions
  */
+// lightTheme 集中保存共享工具 theme要一起传递的字段。
 const lightTheme: Theme = {
   autoAccept: 'rgb(135,0,255)', // Electric violet
   bashBorder: 'rgb(255,0,135)', // Vibrant pink
@@ -194,6 +202,7 @@ const lightTheme: Theme = {
  * Light ANSI theme using only the 16 standard ANSI colors
  * for terminals without true color support
  */
+// lightAnsiTheme 集中保存共享工具 theme要一起传递的字段。
 const lightAnsiTheme: Theme = {
   autoAccept: 'ansi:magenta',
   bashBorder: 'ansi:magenta',
@@ -275,6 +284,7 @@ const lightAnsiTheme: Theme = {
  * Dark ANSI theme using only the 16 standard ANSI colors
  * for terminals without true color support
  */
+// darkAnsiTheme 集中保存共享工具 theme要一起传递的字段。
 const darkAnsiTheme: Theme = {
   autoAccept: 'ansi:magentaBright',
   bashBorder: 'ansi:magentaBright',
@@ -356,6 +366,7 @@ const darkAnsiTheme: Theme = {
  * Light daltonized theme (color-blind friendly) using explicit RGB values
  * to avoid inconsistencies from users' custom terminal ANSI color definitions
  */
+// lightDaltonizedTheme 集中保存共享工具 theme要一起传递的字段。
 const lightDaltonizedTheme: Theme = {
   autoAccept: 'rgb(135,0,255)', // Electric violet
   bashBorder: 'rgb(0,102,204)', // Blue instead of pink
@@ -437,6 +448,7 @@ const lightDaltonizedTheme: Theme = {
  * Dark theme using explicit RGB values to avoid inconsistencies
  * from users' custom terminal ANSI color definitions
  */
+// darkTheme 集中保存共享工具 theme要一起传递的字段。
 const darkTheme: Theme = {
   autoAccept: 'rgb(175,135,255)', // Electric violet
   bashBorder: 'rgb(253,93,177)', // Bright pink
@@ -518,6 +530,7 @@ const darkTheme: Theme = {
  * Dark daltonized theme (color-blind friendly) using explicit RGB values
  * to avoid inconsistencies from users' custom terminal ANSI color definitions
  */
+// darkDaltonizedTheme 集中保存共享工具 theme要一起传递的字段。
 const darkDaltonizedTheme: Theme = {
   autoAccept: 'rgb(175,135,255)', // Electric violet
   bashBorder: 'rgb(51,153,255)', // Bright blue
@@ -595,25 +608,34 @@ const darkDaltonizedTheme: Theme = {
   rainbow_violet_shimmer: 'rgb(230,180,210)',
 }
 
+// getTheme 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getTheme(themeName: ThemeName): Theme {
+  // 按照 themeName 的取值选择共享工具的具体处理分支。
   switch (themeName) {
     case 'light':
+      // 返回 `lightTheme`，作为共享工具这次计算的结果。
       return lightTheme
     case 'light-ansi':
+      // 返回 `lightAnsiTheme`，作为共享工具这次计算的结果。
       return lightAnsiTheme
     case 'dark-ansi':
+      // 返回 `darkAnsiTheme`，作为共享工具这次计算的结果。
       return darkAnsiTheme
     case 'light-daltonized':
+      // 返回 `lightDaltonizedTheme`，作为共享工具这次计算的结果。
       return lightDaltonizedTheme
     case 'dark-daltonized':
+      // 返回 `darkDaltonizedTheme`，作为共享工具这次计算的结果。
       return darkDaltonizedTheme
     default:
+      // 返回 `darkTheme`，作为共享工具这次计算的结果。
       return darkTheme
   }
 }
 
 // Create a chalk instance with 256-color level for Apple Terminal
 // Apple Terminal doesn't handle 24-bit color escape sequences well
+// chalkForChart 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const chalkForChart =
   env.terminal === 'Apple_Terminal'
     ? new Chalk({ level: 2 }) // 256 colors
@@ -623,17 +645,26 @@ const chalkForChart =
  * Converts a theme color to an ANSI escape sequence for use with asciichart.
  * Uses chalk to generate the escape codes, with 256-color mode for Apple Terminal.
  */
+// themeColorToAnsi 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function themeColorToAnsi(themeColor: string): string {
+  // rgbMatch匹配`themeColor.match`，供共享工具后续处理使用。
   const rgbMatch = themeColor.match(/rgb\(\s?(\d+),\s?(\d+),\s?(\d+)\s?\)/)
+  // 满足 `rgbMatch` 时，共享工具执行该分支。
   if (rgbMatch) {
+    // r解析`parseInt`，供共享工具后续处理使用。
     const r = parseInt(rgbMatch[1]!, 10)
+    // g解析`parseInt`，供共享工具后续处理使用。
     const g = parseInt(rgbMatch[2]!, 10)
+    // b解析`parseInt`，供共享工具后续处理使用。
     const b = parseInt(rgbMatch[3]!, 10)
     // Use chalk.rgb which auto-converts to 256 colors when level is 2
     // Extract just the opening escape sequence by using a marker
+    // colored保存`chalkForChart.rgb`，供共享工具后续处理使用。
     const colored = chalkForChart.rgb(r, g, b)('X')
+    // 返回 `colored.slice(0, colored.indexOf('X'))`，作为共享工具这次计算的结果。
     return colored.slice(0, colored.indexOf('X'))
   }
   // Fallback to magenta if parsing fails
+  // 返回 `'\x1b[35m'`，作为共享工具这次计算的结果。
   return '\x1b[35m'
 }

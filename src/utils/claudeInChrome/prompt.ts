@@ -1,3 +1,4 @@
+// BASE_CHROME_PROMPT 命名 ``# Claude in Chrome browser automation`，让后续代码直接表达这个值的用途。
 export const BASE_CHROME_PROMPT = `# Claude in Chrome browser automation
 
 You have access to browser automation tools (mcp__claude-in-chrome__*) for interacting with web pages in Chrome. Follow these guidelines for effective browser automation.
@@ -50,6 +51,7 @@ Never reuse tab IDs from a previous/other session. Follow these guidelines:
  * These instruct the model to load chrome tools via ToolSearch before using them.
  * Only injected when tool search is actually enabled (not just optimistically possible).
  */
+// CHROME_TOOL_SEARCH_INSTRUCTIONS 集合 命名 ``**IMPORTANT: Before using any chrome browser tools, you ...`，让后续代码直接表达这个值的用途。
 export const CHROME_TOOL_SEARCH_INSTRUCTIONS = `**IMPORTANT: Before using any chrome browser tools, you MUST first load them using ToolSearch.**
 
 Chrome browser tools are MCP tools that require loading before use. Before calling any mcp__claude-in-chrome__* tool:
@@ -65,7 +67,9 @@ For example, to get tab context:
  * Tool search instructions are injected separately at request time in claude.ts
  * based on the actual tool search enabled state.
  */
+// getChromeSystemPrompt 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getChromeSystemPrompt(): string {
+  // 返回 `BASE_CHROME_PROMPT`，作为共享工具这次计算的结果。
   return BASE_CHROME_PROMPT
 }
 
@@ -73,6 +77,7 @@ export function getChromeSystemPrompt(): string {
  * Minimal hint about Claude in Chrome skill availability. This is injected at startup when the extension is installed
  * to guide the model to invoke the skill before using the MCP tools.
  */
+// CLAUDE_IN_CHROME_SKILL_HINT固定为 ``**Browser Automation**: Chrome browser tools are availab...`，作为共享工具 prompt后续展示或比较的基准。
 export const CLAUDE_IN_CHROME_SKILL_HINT = `**Browser Automation**: Chrome browser tools are available via the "claude-in-chrome" skill. CRITICAL: Before using any mcp__claude-in-chrome__* tools, invoke the skill by calling the Skill tool with skill: "claude-in-chrome". The skill provides browser automation instructions and enables the tools.`
 
 /**
@@ -80,4 +85,5 @@ export const CLAUDE_IN_CHROME_SKILL_HINT = `**Browser Automation**: Chrome brows
  * dev-loop tasks to WebBrowser and reserve the extension for the user's
  * authenticated Chrome (logged-in sites, OAuth, computer-use).
  */
+// CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER保存`development`，供共享工具后续处理使用。
 export const CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER = `**Browser Automation**: Use WebBrowser for development (dev servers, JS eval, console, screenshots). Use claude-in-chrome for the user's real Chrome when you need logged-in sessions, OAuth, or computer-use — invoke Skill(skill: "claude-in-chrome") before any mcp__claude-in-chrome__* tool.`

@@ -1,90 +1,149 @@
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { join } from 'path';
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 ExportDialog 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ExportDialog } from '../../components/ExportDialog.js';
+// 类型依赖 { ToolUseContext } 来自 ../../Tool.js，用于校准命令处理的数据契约。
 import type { ToolUseContext } from '../../Tool.js';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准命令处理的数据契约。
 import type { Message } from '../../types/message.js';
+// 复用 getCwd 工具函数，把通用处理留在 ../../utils/cwd.js 中维护。
 import { getCwd } from '../../utils/cwd.js';
+// 复用 renderMessagesToPlainText 工具函数，把通用处理留在 ../../utils/exportRenderer.js 中维护。
 import { renderMessagesToPlainText } from '../../utils/exportRenderer.js';
+// 复用 writeFileSync_DEPRECATED 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { writeFileSync_DEPRECATED } from '../../utils/slowOperations.js';
+// formatTimestamp 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatTimestamp(date: Date): string {
+  // year读取`date.getFullYear`，供命令处理后续处理使用。
   const year = date.getFullYear();
+  // month保存`String`，供命令处理后续处理使用。
   const month = String(date.getMonth() + 1).padStart(2, '0');
+  // day保存`String`，供命令处理后续处理使用。
   const day = String(date.getDate()).padStart(2, '0');
+  // hours 集合保存`String`，供命令处理后续处理使用。
   const hours = String(date.getHours()).padStart(2, '0');
+  // minutes 集合保存`String`，供命令处理后续处理使用。
   const minutes = String(date.getMinutes()).padStart(2, '0');
+  // seconds 集合保存`String`，供命令处理后续处理使用。
   const seconds = String(date.getSeconds()).padStart(2, '0');
+  // 返回 ``${year}-${month}-${day}-${hours}${minutes}${seconds}``，作为命令处理这次计算的结果。
   return `${year}-${month}-${day}-${hours}${minutes}${seconds}`;
 }
+// extractFirstPrompt 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function extractFirstPrompt(messages: Message[]): string {
+  // firstUserMessage 消息数据筛选`messages.find`，供命令处理后续处理使用。
   const firstUserMessage = messages.find(msg => msg.type === 'user');
+  // `!firstUserMessage || firstUserMessage.type` 与 `'u` 不一致时刷新派生状态，避免使用过期结果。
   if (!firstUserMessage || firstUserMessage.type !== 'user') {
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return '';
   }
+  // 文本内容保存`firstUserMessage.message?.content`，供后续判断或组装使用。
   const content = firstUserMessage.message?.content;
+  // 结果 命名 `''`，让后续代码直接表达这个值的用途。
   let result = '';
+  // 当 `typeof content` 匹配 `'string'` 时，命令处理执行对应分支。
   if (typeof content === 'string') {
+    // 结果更新为 `content.trim()`，确保斜杠命令后续读取最新状态。
     result = content.trim();
+  // 斜杠命令 export在这里处理 `} else if (Array.isArray(content)) {`，完成这一小步状态转换。
   } else if (Array.isArray(content)) {
+    // textContent筛选`content.find`，供命令处理后续处理使用。
     const textContent = content.find(item => item.type === 'text');
+    // 只有 `textContent && 'text' in textContent` 满足时，命令处理才执行该分支。
     if (textContent && 'text' in textContent) {
+      // 结果更新为 `textContent.text.trim()`，确保斜杠命令后续读取最新状态。
       result = textContent.text.trim();
     }
   }
 
   // Take first line only and limit length
+  // 结果更新为 `result.split('\n')[0] || ''`，确保斜杠命令后续读取最新状态。
   result = result.split('\n')[0] || '';
+  // 满足 `result.length > 50` 时，命令处理执行该分支。
   if (result.length > 50) {
+    // 结果更新为 `result.substring(0, 49) + '…'`，确保斜杠命令后续读取最新状态。
     result = result.substring(0, 49) + '…';
   }
+  // 返回 `result`，作为命令处理这次计算的结果。
   return result;
 }
+// sanitizeFilename 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function sanitizeFilename(text: string): string {
   // Replace special characters with hyphens
+  // 返回 `text.toLowerCase().replace(/[^a-z0-9\s-]/g, '') // Remove special chars`，作为命令处理这次计算的结果。
   return text.toLowerCase().replace(/[^a-z0-9\s-]/g, '') // Remove special chars
   .replace(/\s+/g, '-') // Replace spaces with hyphens
   .replace(/-+/g, '-') // Replace multiple hyphens with single
   .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 }
+// exportWithReactRenderer 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function exportWithReactRenderer(context: ToolUseContext): Promise<string> {
+  // tools 集合标记命令处理斜杠命令 export是否启用对应路径。
   const tools = context.options.tools || [];
+  // 返回 `renderMessagesToPlainText(context.messages, tools)`，作为命令处理这次计算的结果。
   return renderMessagesToPlainText(context.messages, tools);
 }
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, context: ToolUseContext, args: string): Promise<React.ReactNode> {
   // Render the conversation content
+  // 文本内容保存`exportWithReactRenderer`，供命令处理后续处理使用。
   const content = await exportWithReactRenderer(context);
 
   // If args are provided, write directly to file and skip dialog
+  // 文件名格式化`args.trim`，供命令处理后续处理使用。
   const filename = args.trim();
+  // 满足 `filename` 时，命令处理执行该分支。
   if (filename) {
+    // finalFilename 文件数据保存`filename.endsWith`，供命令处理后续处理使用。
     const finalFilename = filename.endsWith('.txt') ? filename : filename.replace(/\.[^.]+$/, '') + '.txt';
+    // filepath 路径数据格式化`join`，供命令处理后续处理使用。
     const filepath = join(getCwd(), finalFilename);
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // 调用 writeFileSync_DEPRECATED，触发命令处理此处需要的副作用。
       writeFileSync_DEPRECATED(filepath, content, {
         encoding: 'utf-8',
         flush: true
       });
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone(`Conversation exported to: ${filepath}`);
+      // 返回 `null`，作为命令处理这次计算的结果。
       return null;
     } catch (error) {
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone(`Failed to export conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // 返回 `null`，作为命令处理这次计算的结果。
       return null;
     }
   }
 
   // Generate default filename from first prompt or timestamp
+  // firstPrompt保存`extractFirstPrompt`，供命令处理后续处理使用。
   const firstPrompt = extractFirstPrompt(context.messages);
+  // timestamp格式化`formatTimestamp`，供命令处理后续处理使用。
   const timestamp = formatTimestamp(new Date());
+  // defaultFilename 文件数据 先占位，稍后的条件分支会根据实际输入补齐它。
   let defaultFilename: string;
+  // 满足 `firstPrompt` 时，命令处理执行该分支。
   if (firstPrompt) {
+    // sanitized保存`sanitizeFilename`，供命令处理后续处理使用。
     const sanitized = sanitizeFilename(firstPrompt);
+    // defaultFilename 文件数据更新为 `sanitized ? `${timestamp}-${sanitized}.txt` : `conversati...`，确保斜杠命令后续读取最新状态。
     defaultFilename = sanitized ? `${timestamp}-${sanitized}.txt` : `conversation-${timestamp}.txt`;
   } else {
+    // defaultFilename 文件数据更新为 ``conversation-${timestamp}.txt``，确保斜杠命令后续读取最新状态。
     defaultFilename = `conversation-${timestamp}.txt`;
   }
 
   // Return the dialog component when no args provided
+  // 返回 `<ExportDialog content={content} defaultFilename={defaultFilename} onDon...`，作为命令处理这次计算的结果。
   return <ExportDialog content={content} defaultFilename={defaultFilename} onDone={result => {
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(result.message);
   }} />;
 }

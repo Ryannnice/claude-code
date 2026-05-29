@@ -1,43 +1,76 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useEffect, useRef, useState } from 'react';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 类型依赖 { CommandResultDisplay } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../../commands.js';
+// 引入 getOauthConfig，将 ../../constants/oauth.js 中已经封装好的能力接到本文件流程里。
 import { getOauthConfig } from '../../constants/oauth.js';
+// 引入 useExitOnCtrlCDWithKeybindings，将 ../../hooks/useExitOnCtrlCDWithKeybindings.js 中已经封装好的能力接到本文件流程里。
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 复用 setClipboard 终端界面组件，避免在这里重复拼装显示逻辑。
 import { setClipboard } from '../../ink/termio/osc.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow menu navigation
+// 引入 Box、color、Link、Text、useInput、useTheme，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, color, Link, Text, useInput, useTheme } from '../../ink.js';
+// 引入 useKeybinding，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+// 接入 AuthenticationCancelledError、performMCPOAuthFlow、revokeServerTokens 服务层能力，把外部通信或共享状态交给 ../../services/mcp/auth.js 处理。
 import { AuthenticationCancelledError, performMCPOAuthFlow, revokeServerTokens } from '../../services/mcp/auth.js';
+// 接入 clearServerCache 服务层能力，把外部通信或共享状态交给 ../../services/mcp/client.js 处理。
 import { clearServerCache } from '../../services/mcp/client.js';
+// 接入 useMcpReconnect、useMcpToggleEnabled 服务层能力，把外部通信或共享状态交给 ../../services/mcp/MCPConnectionManager.js 处理。
 import { useMcpReconnect, useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js';
+// 接入 describeMcpConfigFilePath、excludeCommandsByServer、excludeResourcesByServer、excludeToolsByServer、filterMcpPromptsByServer 服务层能力，把外部通信或共享状态交给 ../../services/mcp/utils.js 处理。
 import { describeMcpConfigFilePath, excludeCommandsByServer, excludeResourcesByServer, excludeToolsByServer, filterMcpPromptsByServer } from '../../services/mcp/utils.js';
+// 引入 useAppState、useSetAppState，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState, useSetAppState } from '../../state/AppState.js';
+// 复用 getOauthAccountInfo 工具函数，把通用处理留在 ../../utils/auth.js 中维护。
 import { getOauthAccountInfo } from '../../utils/auth.js';
+// 复用 openBrowser 工具函数，把通用处理留在 ../../utils/browser.js 中维护。
 import { openBrowser } from '../../utils/browser.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { errorMessage } from '../../utils/errors.js';
+// 复用 logMCPDebug 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logMCPDebug } from '../../utils/log.js';
+// 复用 capitalize 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { capitalize } from '../../utils/stringUtils.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 Select，将 ../CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../CustomSelect/index.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 KeyboardShortcutHint，将 ../design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
+// 引入 Spinner，将 ../Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from '../Spinner.js';
+// 引入 TextInput，将 ../TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from '../TextInput.js';
+// 引入 CapabilitiesSection，将 ./CapabilitiesSection.js 中已经封装好的能力接到本文件流程里。
 import { CapabilitiesSection } from './CapabilitiesSection.js';
+// 类型依赖 { ClaudeAIServerInfo, HTTPServerInfo, SSEServerInfo } 来自 ./types.js，用于校准终端渲染的数据契约。
 import type { ClaudeAIServerInfo, HTTPServerInfo, SSEServerInfo } from './types.js';
+// 复用 handleReconnectError、handleReconnectResult 工具函数，把通用处理留在 ./utils/reconnectHelpers.js 中维护。
 import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   server: SSEServerInfo | HTTPServerInfo | ClaudeAIServerInfo;
   serverToolsCount: number;
+  // 这个回调绑定到 onViewTools: () => void;，负责终端渲染在该局部场景下的响应。
   onViewTools: () => void;
+  // 这个回调绑定到 onCancel: () => void;，负责终端渲染在该局部场景下的响应。
   onCancel: () => void;
   onComplete?: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
   borderless?: boolean;
 };
+// MCPRemoteServerMenu 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function MCPRemoteServerMenu({
   server,
   serverToolsCount,
@@ -46,28 +79,49 @@ export function MCPRemoteServerMenu({
   onComplete,
   borderless = false
 }: Props): React.ReactNode {
+  // 从 `useTheme()` 按位置拆出 theme，让MCP 界面组件 MCPRemote Server Menu分别处理这些返回值。
   const [theme] = useTheme();
+  // exitState 状态保存`useExitOnCtrlCDWithKeybindings`，供终端渲染后续处理使用。
   const exitState = useExitOnCtrlCDWithKeybindings();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns: terminalColumns
   } = useTerminalSize();
+  // 从 `React.useState(false)` 按位置拆出 isAuthenticating、setIsAuthenticating，让MCP 界面组件 MCPRemote Server Menu分别处理这些返回值。
   const [isAuthenticating, setIsAuthenticating] = React.useState(false);
+  // 从 `React.useState<string | null>(null)` 按位置拆出 error、setError，让MCP 界面组件 MCPRemote Server Menu分别处理这些返回值。
   const [error, setError] = React.useState<string | null>(null);
+  // mcp保存`useAppState`，供终端渲染后续处理使用。
   const mcp = useAppState(s => s.mcp);
+  // setAppState 状态保存`useSetAppState`，供终端渲染后续处理使用。
   const setAppState = useSetAppState();
+  // 从 `React.useState<string | null>(null)` 按位置拆出 authorizationUrl、setAuthorizationUrl，让MCP 界面组件 MCPRemote Server Menu分别处理这些返回值。
   const [authorizationUrl, setAuthorizationUrl] = React.useState<string | null>(null);
+  // isReconnecting 由 React state 持有，setIsReconnecting 会在用户操作或异步结果返回时触发刷新。
   const [isReconnecting, setIsReconnecting] = useState(false);
+  // authAbortControllerRef 引用保存 hook 状态，让终端渲染MCP 界面组件 MCPRemote Server Menu跨渲染复用同一个容器。
   const authAbortControllerRef = useRef<AbortController | null>(null);
+  // isClaudeAIAuthenticating 由 React state 持有，setIsClaudeAIAuthenticating 会在用户操作或异步结果返回时触发刷新。
   const [isClaudeAIAuthenticating, setIsClaudeAIAuthenticating] = useState(false);
+  // claudeAIAuthUrl 由 React state 持有，setClaudeAIAuthUrl 会在用户操作或异步结果返回时触发刷新。
   const [claudeAIAuthUrl, setClaudeAIAuthUrl] = useState<string | null>(null);
+  // isClaudeAIClearingAuth 由 React state 持有，setIsClaudeAIClearingAuth 会在用户操作或异步结果返回时触发刷新。
   const [isClaudeAIClearingAuth, setIsClaudeAIClearingAuth] = useState(false);
+  // claudeAIClearAuthUrl 由 React state 持有，setClaudeAIClearAuthUrl 会在用户操作或异步结果返回时触发刷新。
   const [claudeAIClearAuthUrl, setClaudeAIClearAuthUrl] = useState<string | null>(null);
+  // claudeAIClearAuthBrowserOpened 由 React state 持有，setClaudeAIClearAuthBrowserOpened 会在用户操作或异步结果返回时触发刷新。
   const [claudeAIClearAuthBrowserOpened, setClaudeAIClearAuthBrowserOpened] = useState(false);
+  // urlCopied 由 React state 持有，setUrlCopied 会在用户操作或异步结果返回时触发刷新。
   const [urlCopied, setUrlCopied] = useState(false);
+  // copyTimeoutRef 引用保存 hook 状态，让终端渲染MCP 界面组件 MCPRemote Server Menu跨渲染复用同一个容器。
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // unmountedRef 引用保存`useRef`，供终端渲染后续处理使用。
   const unmountedRef = useRef(false);
+  // callbackUrlInput 由 React state 持有，setCallbackUrlInput 会在用户操作或异步结果返回时触发刷新。
   const [callbackUrlInput, setCallbackUrlInput] = useState('');
+  // callbackUrlCursorOffset 由 React state 持有，setCallbackUrlCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [callbackUrlCursorOffset, setCallbackUrlCursorOffset] = useState(0);
+  // 这个回调绑定到 const [manualCallbackSubmit, setManualCallbackSubmit] = useState<((url: string) => v…，负责终端渲染在该局部场景下的响应。
   const [manualCallbackSubmit, setManualCallbackSubmit] = useState<((url: string) => void) | null>(null);
 
   // If the component unmounts mid-auth (e.g. a parent component's Esc handler
@@ -76,10 +130,15 @@ export function MCPRemoteServerMenu({
   // can outlive the terminal. Also clear the copy-feedback timer and mark
   // unmounted so the async setClipboard callback doesn't setUrlCopied /
   // schedule a new timer after unmount.
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => () => {
+    // current更新为 `true`，确保MCP 界面后续读取最新状态。
     unmountedRef.current = true;
+    // 调用 authAbortControllerRef.current?.abort();，完成这一处局部操作。
     authAbortControllerRef.current?.abort();
+    // `copyTimeoutRef.current` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (copyTimeoutRef.current !== undefined) {
+      // 调用 clearTimeout，触发终端渲染此处需要的副作用。
       clearTimeout(copyTimeoutRef.current);
     }
   }, []);
@@ -87,47 +146,73 @@ export function MCPRemoteServerMenu({
   // A server is effectively authenticated if:
   // 1. It has OAuth tokens (server.isAuthenticated), OR
   // 2. It's connected and has tools (meaning it's working via some auth mechanism)
+  // isEffectivelyAuthenticated标记终端渲染MCP 界面组件 MCPRemote Server Menu是否启用对应路径。
   const isEffectivelyAuthenticated = server.isAuthenticated || server.client.type === 'connected' && serverToolsCount > 0;
+  // reconnectMcpServer保存`useMcpReconnect`，供终端渲染后续处理使用。
   const reconnectMcpServer = useMcpReconnect();
+  // handleClaudeAIAuthComplete保存`React.useCallback`，供终端渲染后续处理使用。
   const handleClaudeAIAuthComplete = React.useCallback(async () => {
+    // setIsClaudeAIAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
     setIsClaudeAIAuthenticating(false);
+    // setClaudeAIAuthUrl 写入新的状态值，使终端渲染后续读取保持一致。
     setClaudeAIAuthUrl(null);
+    // setIsReconnecting 写入新的状态值，使终端渲染后续读取保持一致。
     setIsReconnecting(true);
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // 结果保存`reconnectMcpServer`，供终端渲染后续处理使用。
       const result = await reconnectMcpServer(server.name);
+      // success 集合标记终端渲染MCP 界面组件 MCPRemote Server Menu是否启用对应路径。
       const success = result.client.type === 'connected';
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_claudeai_mcp_auth_completed', {
         success
       });
+      // 满足 `success` 时，终端渲染执行该分支。
       if (success) {
+        // 调用 onComplete?.(`Authentication successful. Connected to ${server.name}.`);，完成这一处局部操作。
         onComplete?.(`Authentication successful. Connected to ${server.name}.`);
+      // MCP 界面组件 MCPRemote Server Menu在这里处理 `} else if (result.client.type === 'needs-auth') {`，完成这一小步状态转换。
       } else if (result.client.type === 'needs-auth') {
+        // 调用 onComplete?.('Authentication successful, but server still requires authentication. You may nee…，完成这一处局部操作。
         onComplete?.('Authentication successful, but server still requires authentication. You may need to manually restart Claude Code.');
       } else {
+        // 调用 onComplete?.('Authentication successful, but server reconnection failed. You may need to manua…，完成这一处局部操作。
         onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart Claude Code for the changes to take effect.');
       }
     } catch (err) {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_claudeai_mcp_auth_completed', {
         success: false
       });
+      // 调用 onComplete?.(handleReconnectError(err, server.name));，完成这一处局部操作。
       onComplete?.(handleReconnectError(err, server.name));
     } finally {
+      // setIsReconnecting 写入新的状态值，使终端渲染后续读取保持一致。
       setIsReconnecting(false);
     }
   }, [reconnectMcpServer, server.name, onComplete]);
+  // handleClaudeAIClearAuthComplete保存`React.useCallback`，供终端渲染后续处理使用。
   const handleClaudeAIClearAuthComplete = React.useCallback(async () => {
+    // 等待 `clearServerCache(server.name, {` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
     await clearServerCache(server.name, {
       ...server.config,
       scope: server.scope
     });
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => {
+      // newClients 集合派生`clients.map`，供终端渲染后续处理使用。
       const newClients = prev.mcp.clients.map(c => c.name === server.name ? {
         ...c,
         type: 'needs-auth' as const
       } : c);
+      // newTools 集合保存`excludeToolsByServer`，供终端渲染后续处理使用。
       const newTools = excludeToolsByServer(prev.mcp.tools, server.name);
+      // newCommands 命令数据保存`excludeCommandsByServer`，供终端渲染后续处理使用。
       const newCommands = excludeCommandsByServer(prev.mcp.commands, server.name);
+      // newResources 集合保存`excludeResourcesByServer`，供终端渲染后续处理使用。
       const newResources = excludeResourcesByServer(prev.mcp.resources, server.name);
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         ...prev,
         mcp: {
@@ -139,18 +224,28 @@ export function MCPRemoteServerMenu({
         }
       };
     });
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_claudeai_mcp_clear_auth_completed', {});
+    // 调用 onComplete?.(`Disconnected from ${server.name}.`);，完成这一处局部操作。
     onComplete?.(`Disconnected from ${server.name}.`);
+    // setIsClaudeAIClearingAuth 写入新的状态值，使终端渲染后续读取保持一致。
     setIsClaudeAIClearingAuth(false);
+    // setClaudeAIClearAuthUrl 写入新的状态值，使终端渲染后续读取保持一致。
     setClaudeAIClearAuthUrl(null);
+    // setClaudeAIClearAuthBrowserOpened 写入新的状态值，使终端渲染后续读取保持一致。
     setClaudeAIClearAuthBrowserOpened(false);
   }, [server.name, server.config, server.scope, setAppState, onComplete]);
 
   // Escape to cancel authentication flow
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', () => {
+    // 调用 authAbortControllerRef.current?.abort();，完成这一处局部操作。
     authAbortControllerRef.current?.abort();
+    // current更新为 `null`，确保MCP 界面后续读取最新状态。
     authAbortControllerRef.current = null;
+    // setIsAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
     setIsAuthenticating(false);
+    // setAuthorizationUrl 写入新的状态值，使终端渲染后续读取保持一致。
     setAuthorizationUrl(null);
   }, {
     context: 'Confirmation',
@@ -158,8 +253,11 @@ export function MCPRemoteServerMenu({
   });
 
   // Escape to cancel Claude AI authentication
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', () => {
+    // setIsClaudeAIAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
     setIsClaudeAIAuthenticating(false);
+    // setClaudeAIAuthUrl 写入新的状态值，使终端渲染后续读取保持一致。
     setClaudeAIAuthUrl(null);
   }, {
     context: 'Confirmation',
@@ -167,9 +265,13 @@ export function MCPRemoteServerMenu({
   });
 
   // Escape to cancel Claude AI clear auth
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', () => {
+    // setIsClaudeAIClearingAuth 写入新的状态值，使终端渲染后续读取保持一致。
     setIsClaudeAIClearingAuth(false);
+    // setClaudeAIClearAuthUrl 写入新的状态值，使终端渲染后续读取保持一致。
     setClaudeAIClearAuthUrl(null);
+    // setClaudeAIClearAuthBrowserOpened 写入新的状态值，使终端渲染后续读取保持一致。
     setClaudeAIClearAuthBrowserOpened(false);
   }, {
     context: 'Confirmation',
@@ -177,153 +279,242 @@ export function MCPRemoteServerMenu({
   });
 
   // Return key handling for authentication flows and 'c' to copy URL
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((input, key) => {
+    // 只有 `key.return && isClaudeAIAuthenticating` 满足时，终端渲染才执行该分支。
     if (key.return && isClaudeAIAuthenticating) {
+      // 显式忽略 `handleClaudeAIAuthComplete()` 的返回值，只保留它触发的副作用。
       void handleClaudeAIAuthComplete();
     }
+    // 只有 `key.return && isClaudeAIClearingAuth` 满足时，终端渲染才执行该分支。
     if (key.return && isClaudeAIClearingAuth) {
+      // 满足 `claudeAIClearAuthBrowserOpened` 时，终端渲染执行该分支。
       if (claudeAIClearAuthBrowserOpened) {
+        // 显式忽略 `handleClaudeAIClearAuthComplete()` 的返回值，只保留它触发的副作用。
         void handleClaudeAIClearAuthComplete();
       } else {
         // First Enter: open the browser
+        // connectorsUrl读取`getOauthConfig`，供终端渲染后续处理使用。
         const connectorsUrl = `${getOauthConfig().CLAUDE_AI_ORIGIN}/settings/connectors`;
+        // setClaudeAIClearAuthUrl 写入新的状态值，使终端渲染后续读取保持一致。
         setClaudeAIClearAuthUrl(connectorsUrl);
+        // setClaudeAIClearAuthBrowserOpened 写入新的状态值，使终端渲染后续读取保持一致。
         setClaudeAIClearAuthBrowserOpened(true);
+        // 显式忽略 `openBrowser(connectorsUrl)` 的返回值，只保留它触发的副作用。
         void openBrowser(connectorsUrl);
       }
     }
+    // 只有 `input === 'c' && !urlCopied` 满足时，终端渲染才执行该分支。
     if (input === 'c' && !urlCopied) {
+      // urlToCopy标记终端渲染MCP 界面组件 MCPRemote Server Menu是否启用对应路径。
       const urlToCopy = authorizationUrl || claudeAIAuthUrl || claudeAIClearAuthUrl;
+      // 满足 `urlToCopy` 时，终端渲染执行该分支。
       if (urlToCopy) {
+        // 这个回调绑定到 void setClipboard(urlToCopy).then(raw => {，负责终端渲染在该局部场景下的响应。
         void setClipboard(urlToCopy).then(raw => {
+          // 满足 `unmountedRef.current` 时，终端渲染执行该分支。
           if (unmountedRef.current) return;
+          // 满足 `raw) process.stdout.write(raw` 时，终端渲染执行该分支。
           if (raw) process.stdout.write(raw);
+          // setUrlCopied 写入新的状态值，使终端渲染后续读取保持一致。
           setUrlCopied(true);
+          // `copyTimeoutRef.current` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
           if (copyTimeoutRef.current !== undefined) {
+            // 调用 clearTimeout，触发终端渲染此处需要的副作用。
             clearTimeout(copyTimeoutRef.current);
           }
+          // current更新为 `setTimeout(setUrlCopied, 2000, false)`，确保MCP 界面后续读取最新状态。
           copyTimeoutRef.current = setTimeout(setUrlCopied, 2000, false);
         });
       }
     }
   });
+  // capitalizedServerName保存`capitalize`，供终端渲染后续处理使用。
   const capitalizedServerName = capitalize(String(server.name));
 
   // Count MCP prompts for this server (skills are shown in /skills, not here)
+  // serverCommandsCount 命令数据筛选`filterMcpPromptsByServer`，供终端渲染后续处理使用。
   const serverCommandsCount = filterMcpPromptsByServer(mcp.commands, server.name).length;
+  // toggleMcpServer保存`useMcpToggleEnabled`，供终端渲染后续处理使用。
   const toggleMcpServer = useMcpToggleEnabled();
+  // handleClaudeAIAuth保存`React.useCallback`，供终端渲染后续处理使用。
   const handleClaudeAIAuth = React.useCallback(async () => {
+    // claudeAiBaseUrl读取`getOauthConfig`，供终端渲染后续处理使用。
     const claudeAiBaseUrl = getOauthConfig().CLAUDE_AI_ORIGIN;
+    // accountInfo 数量读取`getOauthAccountInfo`，供终端渲染后续处理使用。
     const accountInfo = getOauthAccountInfo();
+    // orgUuid统计`accountInfo?.organizationUuid` 整理出中间结果，供终端渲染MCP 界面组件 MCPRemote Server Menu后续步骤使用。
     const orgUuid = accountInfo?.organizationUuid;
+    // authUrl 先占位，稍后的条件分支会根据实际输入补齐它。
     let authUrl: string;
+    // 只有 `orgUuid && server.config.type === 'claudeai-proxy` 满足时，终端渲染才执行该分支。
     if (orgUuid && server.config.type === 'claudeai-proxy' && server.config.id) {
       // Use the direct auth URL with org and server IDs
       // Replace 'mcprs' prefix with 'mcpsrv' if present
+      // serverId保存`id.startsWith`，供终端渲染后续处理使用。
       const serverId = server.config.id.startsWith('mcprs') ? 'mcpsrv' + server.config.id.slice(5) : server.config.id;
+      // productSurface保存`encodeURIComponent`，供终端渲染后续处理使用。
       const productSurface = encodeURIComponent(process.env.CLAUDE_CODE_ENTRYPOINT || 'cli');
+      // authUrl更新为 ``${claudeAiBaseUrl}/api/organizations/${orgUuid}/mcp/star...`，确保MCP 界面后续读取最新状态。
       authUrl = `${claudeAiBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
     } else {
       // Fall back to settings/connectors if we don't have the required IDs
+      // authUrl更新为 ``${claudeAiBaseUrl}/settings/connectors``，确保MCP 界面后续读取最新状态。
       authUrl = `${claudeAiBaseUrl}/settings/connectors`;
     }
+    // setClaudeAIAuthUrl 写入新的状态值，使终端渲染后续读取保持一致。
     setClaudeAIAuthUrl(authUrl);
+    // setIsClaudeAIAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
     setIsClaudeAIAuthenticating(true);
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_claudeai_mcp_auth_started', {});
+    // 等待 `openBrowser(authUrl)` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
     await openBrowser(authUrl);
   }, [server.config]);
+  // handleClaudeAIClearAuth保存`React.useCallback`，供终端渲染后续处理使用。
   const handleClaudeAIClearAuth = React.useCallback(() => {
+    // setIsClaudeAIClearingAuth 写入新的状态值，使终端渲染后续读取保持一致。
     setIsClaudeAIClearingAuth(true);
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_claudeai_mcp_clear_auth_started', {});
   }, []);
+  // handleToggleEnabled保存`React.useCallback`，供终端渲染后续处理使用。
   const handleToggleEnabled = React.useCallback(async () => {
+    // wasEnabled标记终端渲染MCP 界面组件 MCPRemote Server Menu是否启用对应路径。
     const wasEnabled = server.client.type !== 'disabled';
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // 等待 `toggleMcpServer(server.name)` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
       await toggleMcpServer(server.name);
+      // 当 `server.config.type` 匹配 `'claudeai-proxy'` 时，终端渲染执行对应分支。
       if (server.config.type === 'claudeai-proxy') {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_claudeai_mcp_toggle', {
           new_state: (wasEnabled ? 'disabled' : 'enabled') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
 
       // Return to the server list so user can continue managing other servers
+      // 调用 onCancel，触发终端渲染此处需要的副作用。
       onCancel();
     } catch (err_0) {
+      // action保存`wasEnabled ? 'disable' : 'enable'`，供终端渲染MCP 界面组件 MCPRemote Server Menu后续判断或输出使用。
       const action = wasEnabled ? 'disable' : 'enable';
+      // 调用 onComplete?.(`Failed to ${action} MCP server '${server.name}': ${errorMessage(err_0)}`);，完成这一处局部操作。
       onComplete?.(`Failed to ${action} MCP server '${server.name}': ${errorMessage(err_0)}`);
     }
   }, [server.client.type, server.config.type, server.name, toggleMcpServer, onCancel, onComplete]);
+  // handleAuthenticate保存`React.useCallback`，供终端渲染后续处理使用。
   const handleAuthenticate = React.useCallback(async () => {
+    // 当 `server.config.type` 匹配 `'claudeai-proxy'` 时，终端渲染执行对应分支。
     if (server.config.type === 'claudeai-proxy') return;
+    // setIsAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
     setIsAuthenticating(true);
+    // setError 写入新的状态值，使终端渲染后续读取保持一致。
     setError(null);
+    // controller保存`AbortController`，供终端渲染后续处理使用。
     const controller = new AbortController();
+    // current更新为 `controller`，确保MCP 界面后续读取最新状态。
     authAbortControllerRef.current = controller;
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // Revoke existing tokens if re-authenticating, but preserve step-up
       // auth state so the next OAuth flow can reuse cached scope/discovery.
+      // 只有 `server.isAuthenticated && server.config` 满足时，终端渲染才执行该分支。
       if (server.isAuthenticated && server.config) {
+        // 等待 `revokeServerTokens(server.name, server.config, {` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
         await revokeServerTokens(server.name, server.config, {
           preserveStepUpState: true
         });
       }
+      // 满足 `server.config` 时，终端渲染执行该分支。
       if (server.config) {
+        // 等待 `performMCPOAuthFlow(server.name, server.config, setAuthorizationUrl, co...` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
         await performMCPOAuthFlow(server.name, server.config, setAuthorizationUrl, controller.signal, {
+          // 这个回调绑定到 onWaitingForCallback: submit => {，负责终端渲染在该局部场景下的响应。
           onWaitingForCallback: submit => {
+            // setManualCallbackSubmit 写入新的状态值，使终端渲染后续读取保持一致。
             setManualCallbackSubmit(() => submit);
           }
         });
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_mcp_auth_config_authenticate', {
           wasAuthenticated: server.isAuthenticated
         });
+        // result_0保存`reconnectMcpServer`，供终端渲染后续处理使用。
         const result_0 = await reconnectMcpServer(server.name);
+        // 当 `result_0.client.type` 匹配 `'connected'` 时，终端渲染执行对应分支。
         if (result_0.client.type === 'connected') {
+          // 消息保存`isEffectivelyAuthenticated ? `Authentication successful. ...`，供后续判断或组装使用。
           const message = isEffectivelyAuthenticated ? `Authentication successful. Reconnected to ${server.name}.` : `Authentication successful. Connected to ${server.name}.`;
+          // 调用 onComplete?.(message);，完成这一处局部操作。
           onComplete?.(message);
+        // MCP 界面组件 MCPRemote Server Menu在这里处理 `} else if (result_0.client.type === 'needs-auth') {`，完成这一小步状态转换。
         } else if (result_0.client.type === 'needs-auth') {
+          // 调用 onComplete?.('Authentication successful, but server still requires authentication. You may nee…，完成这一处局部操作。
           onComplete?.('Authentication successful, but server still requires authentication. You may need to manually restart Claude Code.');
         } else {
           // result.client.type === 'failed'
+          // 调用 logMCPDebug，触发终端渲染此处需要的副作用。
           logMCPDebug(server.name, `Reconnection failed after authentication`);
+          // 调用 onComplete?.('Authentication successful, but server reconnection failed. You may need to manua…，完成这一处局部操作。
           onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart Claude Code for the changes to take effect.');
         }
       }
     } catch (err_1) {
       // Don't show error if it was a cancellation
+      // 只有 `err_1 instanceof Error && !(err_1 instanceof AuthenticationCancelledError)` 满足时，终端渲染才执行该分支。
       if (err_1 instanceof Error && !(err_1 instanceof AuthenticationCancelledError)) {
+        // setError 写入新的状态值，使终端渲染后续读取保持一致。
         setError(err_1.message);
       }
     } finally {
+      // setIsAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
       setIsAuthenticating(false);
+      // current更新为 `null`，确保MCP 界面后续读取最新状态。
       authAbortControllerRef.current = null;
+      // setManualCallbackSubmit 写入新的状态值，使终端渲染后续读取保持一致。
       setManualCallbackSubmit(null);
+      // setCallbackUrlInput 写入新的状态值，使终端渲染后续读取保持一致。
       setCallbackUrlInput('');
     }
   }, [server.isAuthenticated, server.config, server.name, onComplete, reconnectMcpServer, isEffectivelyAuthenticated]);
+  // handleClearAuth保存`async`，供终端渲染后续处理使用。
   const handleClearAuth = async () => {
+    // 当 `server.config.type` 匹配 `'claudeai-proxy'` 时，终端渲染执行对应分支。
     if (server.config.type === 'claudeai-proxy') return;
+    // 满足 `server.config` 时，终端渲染执行该分支。
     if (server.config) {
       // First revoke the authentication tokens and clear all auth state
+      // 等待 `revokeServerTokens(server.name, server.config)` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
       await revokeServerTokens(server.name, server.config);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_mcp_auth_config_clear', {});
 
       // Disconnect the client and clear the cache
+      // 等待 `clearServerCache(server.name, {` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
       await clearServerCache(server.name, {
         ...server.config,
         scope: server.scope
       });
 
       // Update app state to remove the disconnected server's tools, commands, and resources
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev_0 => {
+        // newClients_0派生`clients.map`，供终端渲染后续处理使用。
         const newClients_0 = prev_0.mcp.clients.map(c_0 =>
         // 'failed' is a misnomer here, but we don't really differentiate between "not connected" and "failed" at the moment
         c_0.name === server.name ? {
           ...c_0,
           type: 'failed' as const
         } : c_0);
+        // newTools_0保存`excludeToolsByServer`，供终端渲染后续处理使用。
         const newTools_0 = excludeToolsByServer(prev_0.mcp.tools, server.name);
+        // newCommands_0 命令数据保存`excludeCommandsByServer`，供终端渲染后续处理使用。
         const newCommands_0 = excludeCommandsByServer(prev_0.mcp.commands, server.name);
+        // newResources_0保存`excludeResourcesByServer`，供终端渲染后续处理使用。
         const newResources_0 = excludeResourcesByServer(prev_0.mcp.resources, server.name);
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...prev_0,
           mcp: {
@@ -335,14 +526,18 @@ export function MCPRemoteServerMenu({
           }
         };
       });
+      // 调用 onComplete?.(`Authentication cleared for ${server.name}.`);，完成这一处局部操作。
       onComplete?.(`Authentication cleared for ${server.name}.`);
     }
   };
+  // 满足 `isAuthenticating` 时，终端渲染执行该分支。
   if (isAuthenticating) {
     // XAA: silent exchange (cached id_token → no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
+    // authCopy标记终端渲染MCP 界面组件 MCPRemote Server Menu是否启用对应路径。
     const authCopy = server.config.type !== 'claudeai-proxy' && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
+    // 返回 `<Box flexDirection="column" gap={1} padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="claude">Authenticating with {server.name}…</Text>
         <Box>
@@ -361,6 +556,7 @@ export function MCPRemoteServerMenu({
             </Box>
             <Link url={authorizationUrl} />
           </Box>}
+        {/* MCP 界面组件 MCPRemote Server Menu处理 `{isAuthenticating && authorizationUrl && manualCallbackSubmit && <Box f...`，完成这一小步状态转换。 */}
         {isAuthenticating && authorizationUrl && manualCallbackSubmit && <Box flexDirection="column" marginTop={1}>
             <Text dimColor>
               If the redirect page shows a connection error, paste the URL from
@@ -368,8 +564,11 @@ export function MCPRemoteServerMenu({
             </Text>
             <Box>
               <Text dimColor>URL {'>'} </Text>
+              {/* 这个回调绑定到 <TextInput value={callbackUrlInput} onChange={setCallbackUrlInput} onSubmit={(value:…，负责终端渲染在该局部场景下的响应。 */}
               <TextInput value={callbackUrlInput} onChange={setCallbackUrlInput} onSubmit={(value: string) => {
+            // 调用 manualCallbackSubmit，触发终端渲染此处需要的副作用。
             manualCallbackSubmit(value.trim());
+            // setCallbackUrlInput 写入新的状态值，使终端渲染后续读取保持一致。
             setCallbackUrlInput('');
           }} cursorOffset={callbackUrlCursorOffset} onChangeCursorOffset={setCallbackUrlCursorOffset} columns={terminalColumns - 8} />
             </Box>
@@ -382,7 +581,9 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
+  // 满足 `isClaudeAIAuthenticating` 时，终端渲染执行该分支。
   if (isClaudeAIAuthenticating) {
+    // 返回 `<Box flexDirection="column" gap={1} padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="claude">Authenticating with {server.name}…</Text>
         <Box>
@@ -411,7 +612,9 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
+  // 满足 `isClaudeAIClearingAuth` 时，终端渲染执行该分支。
   if (isClaudeAIClearingAuth) {
+    // 返回 `<Box flexDirection="column" gap={1} padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="claude">Clear authentication for {server.name}</Text>
         {claudeAIClearAuthBrowserOpened ? <>
@@ -455,7 +658,9 @@ export function MCPRemoteServerMenu({
           </>}
       </Box>;
   }
+  // 满足 `isReconnecting` 时，终端渲染执行该分支。
   if (isReconnecting) {
+    // 返回 `<Box flexDirection="column" gap={1} padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="text">
           Connecting to <Text bold>{server.name}</Text>…
@@ -467,58 +672,77 @@ export function MCPRemoteServerMenu({
         <Text dimColor>This may take a few moments.</Text>
       </Box>;
   }
+  // menuOptions 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const menuOptions = [];
 
   // If server is disabled, show Enable first as the primary action
+  // 当 `server.client.type` 匹配 `'disabled'` 时，终端渲染执行对应分支。
   if (server.client.type === 'disabled') {
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: 'Enable',
       value: 'toggle-enabled'
     });
   }
+  // 只有 `server.client.type === 'connected' && serverTools` 满足时，终端渲染才执行该分支。
   if (server.client.type === 'connected' && serverToolsCount > 0) {
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: 'View tools',
       value: 'tools'
     });
   }
+  // 当 `server.config.type` 匹配 `'claudeai-proxy'` 时，终端渲染执行对应分支。
   if (server.config.type === 'claudeai-proxy') {
+    // 当 `server.client.type` 匹配 `'connected'` 时，终端渲染执行对应分支。
     if (server.client.type === 'connected') {
+      // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
       menuOptions.push({
         label: 'Clear authentication',
         value: 'claudeai-clear-auth'
       });
+    // MCP 界面组件 MCPRemote Server Menu在这里处理 `} else if (server.client.type !== 'disabled') {`，完成这一小步状态转换。
     } else if (server.client.type !== 'disabled') {
+      // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
       menuOptions.push({
         label: 'Authenticate',
         value: 'claudeai-auth'
       });
     }
   } else {
+    // 满足 `isEffectivelyAuthenticated` 时，终端渲染执行该分支。
     if (isEffectivelyAuthenticated) {
+      // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
       menuOptions.push({
         label: 'Re-authenticate',
         value: 'reauth'
       });
+      // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
       menuOptions.push({
         label: 'Clear authentication',
         value: 'clear-auth'
       });
     }
+    // isEffectivelyAuthenticated缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isEffectivelyAuthenticated) {
+      // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
       menuOptions.push({
         label: 'Authenticate',
         value: 'auth'
       });
     }
   }
+  // `server.client.type` 与 `'disabled'` 不一致时刷新派生状态，避免使用过期结果。
   if (server.client.type !== 'disabled') {
+    // `server.client.type` 与 `'needs-auth'` 不一致时刷新派生状态，避免使用过期结果。
     if (server.client.type !== 'needs-auth') {
+      // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
       menuOptions.push({
         label: 'Reconnect',
         value: 'reconnectMcpServer'
       });
     }
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: 'Disable',
       value: 'toggle-enabled'
@@ -526,12 +750,15 @@ export function MCPRemoteServerMenu({
   }
 
   // If there are no other options, add a back option so Select handles escape
+  // menuOptions 集合为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
   if (menuOptions.length === 0) {
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: 'Back',
       value: 'back'
     });
   }
+  // 返回 `<Box flexDirection="column">`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column">
       <Box flexDirection="column" paddingX={1} borderStyle={borderless ? undefined : 'round'}>
         <Box marginBottom={1}>
@@ -581,54 +808,82 @@ export function MCPRemoteServerMenu({
             <Text color="error">Error: {error}</Text>
           </Box>}
 
+        {/* MCP 界面组件 MCPRemote Server Menu处理 `{menuOptions.length > 0 && <Box marginTop={1}>`，完成这一小步状态转换。 */}
         {menuOptions.length > 0 && <Box marginTop={1}>
             <Select options={menuOptions} onChange={async value_0 => {
+          // 按照 value_0 的取值选择终端渲染的具体处理分支。
           switch (value_0) {
             case 'tools':
+              // 调用 onViewTools，触发终端渲染此处需要的副作用。
               onViewTools();
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
             case 'auth':
             case 'reauth':
+              // 等待 `handleAuthenticate()` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
               await handleAuthenticate();
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
             case 'clear-auth':
+              // 等待 `handleClearAuth()` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
               await handleClearAuth();
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
             case 'claudeai-auth':
+              // 等待 `handleClaudeAIAuth()` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
               await handleClaudeAIAuth();
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
             case 'claudeai-clear-auth':
+              // 调用 handleClaudeAIClearAuth，触发终端渲染此处需要的副作用。
               handleClaudeAIClearAuth();
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
             case 'reconnectMcpServer':
+              // setIsReconnecting 写入新的状态值，使终端渲染后续读取保持一致。
               setIsReconnecting(true);
+              // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
               try {
+                // result_1保存`reconnectMcpServer`，供终端渲染后续处理使用。
                 const result_1 = await reconnectMcpServer(server.name);
+                // 当 `server.config.type` 匹配 `'claudeai-proxy'` 时，终端渲染执行对应分支。
                 if (server.config.type === 'claudeai-proxy') {
+                  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
                   logEvent('tengu_claudeai_mcp_reconnect', {
                     success: result_1.client.type === 'connected'
                   });
                 }
+                // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
                 const {
                   message: message_0
                 } = handleReconnectResult(result_1, server.name);
+                // 调用 onComplete?.(message_0);，完成这一处局部操作。
                 onComplete?.(message_0);
               } catch (err_2) {
+                // 当 `server.config.type` 匹配 `'claudeai-proxy'` 时，终端渲染执行对应分支。
                 if (server.config.type === 'claudeai-proxy') {
+                  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
                   logEvent('tengu_claudeai_mcp_reconnect', {
                     success: false
                   });
                 }
+                // 调用 onComplete?.(handleReconnectError(err_2, server.name));，完成这一处局部操作。
                 onComplete?.(handleReconnectError(err_2, server.name));
               } finally {
+                // setIsReconnecting 写入新的状态值，使终端渲染后续读取保持一致。
                 setIsReconnecting(false);
               }
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
             case 'toggle-enabled':
+              // 等待 `handleToggleEnabled()` 完成，再继续MCP 界面组件 MCPRemote Server Menu的异步流程。
               await handleToggleEnabled();
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
             case 'back':
+              // 调用 onCancel，触发终端渲染此处需要的副作用。
               onCancel();
+              // 结束这个分支或循环，避免终端渲染继续落入后续路径。
               break;
           }
         }} onCancel={onCancel} />

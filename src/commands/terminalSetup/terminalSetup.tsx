@@ -1,28 +1,52 @@
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 使用 Node/Bun 的 crypto 能力处理本地运行时资源。
 import { randomBytes } from 'crypto';
+// 使用 Node/Bun 的 fs/promises 能力处理本地运行时资源。
 import { copyFile, mkdir, readFile, writeFile } from 'fs/promises';
+// 引入 homedir、platform，将 os 中已经封装好的能力接到本文件流程里。
 import { homedir, platform } from 'os';
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { dirname, join } from 'path';
+// 类型依赖 { ThemeName } 来自 src/utils/theme.js，用于校准命令处理的数据契约。
 import type { ThemeName } from 'src/utils/theme.js';
+// 引入 pathToFileURL，将 url 中已经封装好的能力接到本文件流程里。
 import { pathToFileURL } from 'url';
+// 复用 supportsHyperlinks 终端界面组件，避免在这里重复拼装显示逻辑。
 import { supportsHyperlinks } from '../../ink/supports-hyperlinks.js';
+// 引入 color，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { color } from '../../ink.js';
+// 引入 maybeMarkProjectOnboardingComplete，将 ../../projectOnboardingState.js 中已经封装好的能力接到本文件流程里。
 import { maybeMarkProjectOnboardingComplete } from '../../projectOnboardingState.js';
+// 类型依赖 { ToolUseContext } 来自 ../../Tool.js，用于校准命令处理的数据契约。
 import type { ToolUseContext } from '../../Tool.js';
+// 类型依赖 { LocalJSXCommandContext, LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandContext, LocalJSXCommandOnDone } from '../../types/command.js';
+// 复用 backupTerminalPreferences、checkAndRestoreTerminalBackup、getTerminalPlistPath、markTerminalSetupComplete 工具函数，把通用处理留在 ../../utils/appleTerminalBackup.js 中维护。
 import { backupTerminalPreferences, checkAndRestoreTerminalBackup, getTerminalPlistPath, markTerminalSetupComplete } from '../../utils/appleTerminalBackup.js';
+// 复用 setupShellCompletion 工具函数，把通用处理留在 ../../utils/completionCache.js 中维护。
 import { setupShellCompletion } from '../../utils/completionCache.js';
+// 复用 getGlobalConfig、saveGlobalConfig 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+// 复用 env 工具函数，把通用处理留在 ../../utils/env.js 中维护。
 import { env } from '../../utils/env.js';
+// 复用 isFsInaccessible 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { isFsInaccessible } from '../../utils/errors.js';
+// 复用 execFileNoThrow 工具函数，把通用处理留在 ../../utils/execFileNoThrow.js 中维护。
 import { execFileNoThrow } from '../../utils/execFileNoThrow.js';
+// 复用 addItemToJSONCArray、safeParseJSONC 工具函数，把通用处理留在 ../../utils/json.js 中维护。
 import { addItemToJSONCArray, safeParseJSONC } from '../../utils/json.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 getPlatform 工具函数，把通用处理留在 ../../utils/platform.js 中维护。
 import { getPlatform } from '../../utils/platform.js';
+// 复用 jsonParse、jsonStringify 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js';
+// EOL保存`'\n'`，作为后续固定文本处理的输入。
 const EOL = '\n';
 
 // Terminals that natively support CSI u / Kitty keyboard protocol
+// NATIVE_CSIU_TERMINALS 集合 集中保存斜杠命令 terminal Setup要一起传递的字段。
 const NATIVE_CSIU_TERMINALS: Record<string, string> = {
   ghostty: 'Ghostty',
   kitty: 'Kitty',
@@ -36,18 +60,26 @@ const NATIVE_CSIU_TERMINALS: Record<string, string> = {
  * In this case, keybindings need to be installed on the LOCAL machine,
  * not the remote server where Claude is running.
  */
+// isVSCodeRemoteSSH 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isVSCodeRemoteSSH(): boolean {
+  // askpassMain 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const askpassMain = process.env.VSCODE_GIT_ASKPASS_MAIN ?? '';
+  // 路径 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const path = process.env.PATH ?? '';
 
   // Check both env vars - VSCODE_GIT_ASKPASS_MAIN is more reliable when git extension
   // is active, and PATH is a fallback. Omit path separator for Windows compatibility.
+  // 返回 `askpassMain.includes('.vscode-server') || askpassMain.includes('.cursor...`，作为命令处理这次计算的结果。
   return askpassMain.includes('.vscode-server') || askpassMain.includes('.cursor-server') || askpassMain.includes('.windsurf-server') || path.includes('.vscode-server') || path.includes('.cursor-server') || path.includes('.windsurf-server');
 }
+// getNativeCSIuTerminalDisplayName 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getNativeCSIuTerminalDisplayName(): string | null {
+  // 只有 `!env.terminal || !(env.terminal in NATIVE_CSIU_TERMINALS)` 满足时，命令处理才执行该分支。
   if (!env.terminal || !(env.terminal in NATIVE_CSIU_TERMINALS)) {
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
+  // 返回 `NATIVE_CSIU_TERMINALS[env.terminal] ?? null`，作为命令处理这次计算的结果。
   return NATIVE_CSIU_TERMINALS[env.terminal] ?? null;
 }
 
@@ -62,107 +94,164 @@ export function getNativeCSIuTerminalDisplayName(): string | null {
  * Unlike createHyperlink(), this doesn't apply any color styling so the
  * path inherits the parent's styling (e.g., chalk.dim).
  */
+// formatPathLink 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatPathLink(filePath: string): string {
+  // 满足 `!supportsHyperlinks()` 时，命令处理执行该分支。
   if (!supportsHyperlinks()) {
+    // 返回 `filePath`，作为命令处理这次计算的结果。
     return filePath;
   }
+  // fileUrl 文件数据保存`pathToFileURL`，供命令处理后续处理使用。
   const fileUrl = pathToFileURL(filePath).href;
   // OSC 8 hyperlink: \e]8;;URL\a TEXT \e]8;;\a
+  // 返回 ``\x1b]8;;${fileUrl}\x07${filePath}\x1b]8;;\x07``，作为命令处理这次计算的结果。
   return `\x1b]8;;${fileUrl}\x07${filePath}\x1b]8;;\x07`;
 }
+// shouldOfferTerminalSetup 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldOfferTerminalSetup(): boolean {
   // iTerm2, WezTerm, Ghostty, Kitty, and Warp natively support CSI u / Kitty
   // keyboard protocol, which Claude Code already parses. No setup needed for
   // these terminals.
+  // 返回 `platform() === 'darwin' && env.terminal === 'Apple_Terminal' || env.ter...`，作为命令处理这次计算的结果。
   return platform() === 'darwin' && env.terminal === 'Apple_Terminal' || env.terminal === 'vscode' || env.terminal === 'cursor' || env.terminal === 'windsurf' || env.terminal === 'alacritty' || env.terminal === 'zed';
 }
+// setupTerminal 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function setupTerminal(theme: ThemeName): Promise<string> {
+  // 结果 命名 `''`，让后续代码直接表达这个值的用途。
   let result = '';
+  // 按照 env.terminal 的取值选择命令处理的具体处理分支。
   switch (env.terminal) {
     case 'Apple_Terminal':
+      // 结果更新为 `await enableOptionAsMetaForTerminal(theme)`，确保斜杠命令后续读取最新状态。
       result = await enableOptionAsMetaForTerminal(theme);
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
     case 'vscode':
+      // 结果更新为 `await installBindingsForVSCodeTerminal('VSCode', theme)`，确保斜杠命令后续读取最新状态。
       result = await installBindingsForVSCodeTerminal('VSCode', theme);
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
     case 'cursor':
+      // 结果更新为 `await installBindingsForVSCodeTerminal('Cursor', theme)`，确保斜杠命令后续读取最新状态。
       result = await installBindingsForVSCodeTerminal('Cursor', theme);
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
     case 'windsurf':
+      // 结果更新为 `await installBindingsForVSCodeTerminal('Windsurf', theme)`，确保斜杠命令后续读取最新状态。
       result = await installBindingsForVSCodeTerminal('Windsurf', theme);
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
     case 'alacritty':
+      // 结果更新为 `await installBindingsForAlacritty(theme)`，确保斜杠命令后续读取最新状态。
       result = await installBindingsForAlacritty(theme);
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
     case 'zed':
+      // 结果更新为 `await installBindingsForZed(theme)`，确保斜杠命令后续读取最新状态。
       result = await installBindingsForZed(theme);
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
     case null:
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
   }
+  // 调用 saveGlobalConfig，触发命令处理此处需要的副作用。
   saveGlobalConfig(current => {
+    // 满足 `['vscode', 'cursor', 'windsurf', 'alacritty', 'zed'].includes(env.terminal ...` 时，命令处理执行该分支。
     if (['vscode', 'cursor', 'windsurf', 'alacritty', 'zed'].includes(env.terminal ?? '')) {
+      // 满足 `current.shiftEnterKeyBindingInstalled === true` 时，命令处理执行该分支。
       if (current.shiftEnterKeyBindingInstalled === true) return current;
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         ...current,
         shiftEnterKeyBindingInstalled: true
       };
+    // 斜杠命令 terminal Setup在这里处理 `} else if (env.terminal === 'Apple_Terminal') {`，完成这一小步状态转换。
     } else if (env.terminal === 'Apple_Terminal') {
+      // 满足 `current.optionAsMetaKeyInstalled === true` 时，命令处理执行该分支。
       if (current.optionAsMetaKeyInstalled === true) return current;
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         ...current,
         optionAsMetaKeyInstalled: true
       };
     }
+    // 返回 `current`，作为命令处理这次计算的结果。
     return current;
   });
+  // 调用 maybeMarkProjectOnboardingComplete，触发命令处理此处需要的副作用。
   maybeMarkProjectOnboardingComplete();
 
   // Install shell completions (ant-only, since the completion command is ant-only)
+  // 当 `"external"` 匹配 `'ant'` 时，命令处理执行对应分支。
   if ("external" === 'ant') {
+    // 斜杠命令 terminal Setup在这里处理 `result += await setupShellCompletion(theme)`，完成这一小步状态转换。
     result += await setupShellCompletion(theme);
   }
+  // 返回 `result`，作为命令处理这次计算的结果。
   return result;
 }
+// isShiftEnterKeyBindingInstalled 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isShiftEnterKeyBindingInstalled(): boolean {
+  // 返回 `getGlobalConfig().shiftEnterKeyBindingInstalled === true`，作为命令处理这次计算的结果。
   return getGlobalConfig().shiftEnterKeyBindingInstalled === true;
 }
+// hasUsedBackslashReturn 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function hasUsedBackslashReturn(): boolean {
+  // 返回 `getGlobalConfig().hasUsedBackslashReturn === true`，作为命令处理这次计算的结果。
   return getGlobalConfig().hasUsedBackslashReturn === true;
 }
+// markBackslashReturnUsed 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function markBackslashReturnUsed(): void {
+  // 配置读取`getGlobalConfig`，供命令处理后续处理使用。
   const config = getGlobalConfig();
+  // config.hasUsedBackslashReturn 配置缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!config.hasUsedBackslashReturn) {
+    // 调用 saveGlobalConfig，触发命令处理此处需要的副作用。
     saveGlobalConfig(current => ({
       ...current,
       hasUsedBackslashReturn: true
     }));
   }
 }
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, context: ToolUseContext & LocalJSXCommandContext, _args: string): Promise<null> {
+  // 只有 `env.terminal && env.terminal in NATIVE_CSIU_TERMI` 满足时，命令处理才执行该分支。
   if (env.terminal && env.terminal in NATIVE_CSIU_TERMINALS) {
+    // 消息固定为 ``Shift+Enter is natively supported in ${NATIVE_CSIU_TERMI...`，作为命令处理斜杠命令 terminal Setup后续展示或比较的基准。
     const message = `Shift+Enter is natively supported in ${NATIVE_CSIU_TERMINALS[env.terminal]}.
 
 No configuration needed. Just use Shift+Enter to add newlines.`;
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(message);
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
 
   // Check if terminal is supported
+  // 满足 `!shouldOfferTerminalSetup()` 时，命令处理执行该分支。
   if (!shouldOfferTerminalSetup()) {
+    // terminalName标记命令处理斜杠命令 terminal Setup是否启用对应路径。
     const terminalName = env.terminal || 'your current terminal';
+    // currentPlatform读取`getPlatform`，供命令处理后续处理使用。
     const currentPlatform = getPlatform();
 
     // Build platform-specific terminal suggestions
+    // platformTerminals 集合 命名 `''`，让后续代码直接表达这个值的用途。
     let platformTerminals = '';
+    // 当 `currentPlatform` 匹配 `'macos'` 时，命令处理执行对应分支。
     if (currentPlatform === 'macos') {
+      // platformTerminals 集合更新为 `' • macOS: Apple Terminal\n'`，确保斜杠命令后续读取最新状态。
       platformTerminals = '   • macOS: Apple Terminal\n';
+    // 斜杠命令 terminal Setup在这里处理 `} else if (currentPlatform === 'windows') {`，完成这一小步状态转换。
     } else if (currentPlatform === 'windows') {
+      // platformTerminals 集合更新为 `' • Windows: Windows Terminal\n'`，确保斜杠命令后续读取最新状态。
       platformTerminals = '   • Windows: Windows Terminal\n';
     }
     // For Linux and other platforms, we don't show native terminal options
     // since they're not currently supported
 
+    // 消息固定为 ``Terminal setup cannot be run from ${terminalName}.`，作为命令处理斜杠命令 terminal Setup后续展示或比较的基准。
     const message = `Terminal setup cannot be run from ${terminalName}.
 
 This command configures a convenient Shift+Enter shortcut for multi-line prompts.
@@ -176,13 +265,19 @@ ${platformTerminals}   • IDE: VSCode, Cursor, Windsurf, Zed
 3. Return to tmux/screen - settings will persist
 
 ${chalk.dim('Note: iTerm2, WezTerm, Ghostty, Kitty, and Warp support Shift+Enter natively.')}`;
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(message);
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
+  // 结果保存`setupTerminal`，供命令处理后续处理使用。
   const result = await setupTerminal(context.options.theme);
+  // 调用 onDone，触发命令处理此处需要的副作用。
   onDone(result);
+  // 返回 `null`，作为命令处理这次计算的结果。
   return null;
 }
+// VSCodeKeybinding 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type VSCodeKeybinding = {
   key: string;
   command: string;
@@ -191,10 +286,13 @@ type VSCodeKeybinding = {
   };
   when: string;
 };
+// installBindingsForVSCodeTerminal 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function installBindingsForVSCodeTerminal(editor: 'VSCode' | 'Cursor' | 'Windsurf' = 'VSCode', theme: ThemeName): Promise<string> {
   // Check if we're running in a VSCode Remote SSH session
   // In this case, keybindings need to be installed on the LOCAL machine
+  // 满足 `isVSCodeRemoteSSH()` 时，命令处理执行该分支。
   if (isVSCodeRemoteSSH()) {
+    // 返回 ``${color('warning', theme)(`Cannot install keybindings from a remote ${...`，作为命令处理这次计算的结果。
     return `${color('warning', theme)(`Cannot install keybindings from a remote ${editor} session.`)}${EOL}${EOL}${editor} keybindings must be installed on your local machine, not the remote server.${EOL}${EOL}To install the Shift+Enter keybinding:${EOL}1. Open ${editor} on your local machine (not connected to remote)${EOL}2. Open the Command Palette (Cmd/Ctrl+Shift+P) → "Preferences: Open Keyboard Shortcuts (JSON)"${EOL}3. Add this keybinding (the file must be a JSON array):${EOL}${EOL}${chalk.dim(`[
   {
     "key": "shift+enter",
@@ -204,47 +302,70 @@ async function installBindingsForVSCodeTerminal(editor: 'VSCode' | 'Cursor' | 'W
   }
 ]`)}${EOL}`;
   }
+  // editorDir标记命令处理斜杠命令 terminal Setup是否启用对应路径。
   const editorDir = editor === 'VSCode' ? 'Code' : editor;
+  // userDirPath 路径数据格式化`join`，供命令处理后续处理使用。
   const userDirPath = join(homedir(), platform() === 'win32' ? join('AppData', 'Roaming', editorDir, 'User') : platform() === 'darwin' ? join('Library', 'Application Support', editorDir, 'User') : join('.config', editorDir, 'User'));
+  // keybindingsPath 路径数据格式化`join`，供命令处理后续处理使用。
   const keybindingsPath = join(userDirPath, 'keybindings.json');
+  // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
   try {
     // Ensure user directory exists (idempotent with recursive)
+    // 等待 `mkdir(userDirPath, {` 完成，再继续斜杠命令 terminal Setup的异步流程。
     await mkdir(userDirPath, {
       recursive: true
     });
 
     // Read existing keybindings file, or default to empty array if it doesn't exist
+    // 文本内容保存`'[]'`，作为后续固定文本处理的输入。
     let content = '[]';
+    // keybindings 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     let keybindings: VSCodeKeybinding[] = [];
+    // 文件存在标记标记命令处理斜杠命令 terminal Setup是否启用对应路径。
     let fileExists = false;
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // 文本内容更新为 `await readFile(keybindingsPath, {`，确保斜杠命令后续读取最新状态。
       content = await readFile(keybindingsPath, {
         encoding: 'utf-8'
       });
+      // 文件存在标记更新为 `true`，确保斜杠命令后续读取最新状态。
       fileExists = true;
+      // keybindings 集合更新为 `safeParseJSONC(content) as VSCodeKeybinding[] ?? []`，确保斜杠命令后续读取最新状态。
       keybindings = safeParseJSONC(content) as VSCodeKeybinding[] ?? [];
     } catch (e: unknown) {
+      // 满足 `!isFsInaccessible(e)` 时，命令处理执行该分支。
       if (!isFsInaccessible(e)) throw e;
     }
 
     // Backup the existing file before modifying it
+    // 满足 `fileExists` 时，命令处理执行该分支。
     if (fileExists) {
+      // randomSha保存`randomBytes`，供命令处理后续处理使用。
       const randomSha = randomBytes(4).toString('hex');
+      // backupPath 路径数据 命名 ``${keybindingsPath}.${randomSha}.bak``，让后续代码直接表达这个值的用途。
       const backupPath = `${keybindingsPath}.${randomSha}.bak`;
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 等待 `copyFile(keybindingsPath, backupPath)` 完成，再继续斜杠命令 terminal Setup的异步流程。
         await copyFile(keybindingsPath, backupPath);
       } catch {
+        // 返回 ``${color('warning', theme)(`Error backing up existing ${editor} termina...`，作为命令处理这次计算的结果。
         return `${color('warning', theme)(`Error backing up existing ${editor} terminal keybindings. Bailing out.`)}${EOL}${chalk.dim(`See ${formatPathLink(keybindingsPath)}`)}${EOL}${chalk.dim(`Backup path: ${formatPathLink(backupPath)}`)}${EOL}`;
       }
     }
 
     // Check if keybinding already exists
+    // existingBinding筛选`keybindings.find`，供命令处理后续处理使用。
     const existingBinding = keybindings.find(binding => binding.key === 'shift+enter' && binding.command === 'workbench.action.terminal.sendSequence' && binding.when === 'terminalFocus');
+    // 满足 `existingBinding` 时，命令处理执行该分支。
     if (existingBinding) {
+      // 返回 ``${color('warning', theme)(`Found existing ${editor} terminal Shift+Ent...`，作为命令处理这次计算的结果。
       return `${color('warning', theme)(`Found existing ${editor} terminal Shift+Enter key binding. Remove it to continue.`)}${EOL}${chalk.dim(`See ${formatPathLink(keybindingsPath)}`)}${EOL}`;
     }
 
     // Create the new keybinding
+    // newKeybinding 集中保存斜杠命令 terminal Setup要一起传递的字段。
     const newKeybinding: VSCodeKeybinding = {
       key: 'shift+enter',
       command: 'workbench.action.terminal.sendSequence',
@@ -255,262 +376,388 @@ async function installBindingsForVSCodeTerminal(editor: 'VSCode' | 'Cursor' | 'W
     };
 
     // Modify the content by adding the new keybinding while preserving comments and formatting
+    // updatedContent保存`addItemToJSONCArray`，供命令处理后续处理使用。
     const updatedContent = addItemToJSONCArray(content, newKeybinding);
 
     // Write the updated content back to the file
+    // 等待 `writeFile(keybindingsPath, updatedContent, {` 完成，再继续斜杠命令 terminal Setup的异步流程。
     await writeFile(keybindingsPath, updatedContent, {
       encoding: 'utf-8'
     });
+    // 返回 ``${color('success', theme)(`Installed ${editor} terminal Shift+Enter ke...`，作为命令处理这次计算的结果。
     return `${color('success', theme)(`Installed ${editor} terminal Shift+Enter key binding`)}${EOL}${chalk.dim(`See ${formatPathLink(keybindingsPath)}`)}${EOL}`;
   } catch (error) {
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logError(error);
+    // 抛出 new Error(`Failed to install ${editor} terminal Shift+Enter key binding`);，阻止命令处理在无效状态下继续运行。
     throw new Error(`Failed to install ${editor} terminal Shift+Enter key binding`);
   }
 }
+// enableOptionAsMetaForProfile 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function enableOptionAsMetaForProfile(profileName: string): Promise<boolean> {
   // First try to add the property (in case it doesn't exist)
   // Quote the profile name to handle names with spaces (e.g., "Man Page", "Red Sands")
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     code: addCode
   } = await execFileNoThrow('/usr/libexec/PlistBuddy', ['-c', `Add :'Window Settings':'${profileName}':useOptionAsMetaKey bool true`, getTerminalPlistPath()]);
 
   // If adding fails (likely because it already exists), try setting it instead
+  // `addCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
   if (addCode !== 0) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       code: setCode
     } = await execFileNoThrow('/usr/libexec/PlistBuddy', ['-c', `Set :'Window Settings':'${profileName}':useOptionAsMetaKey true`, getTerminalPlistPath()]);
+    // `setCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
     if (setCode !== 0) {
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logError(new Error(`Failed to enable Option as Meta key for Terminal.app profile: ${profileName}`));
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
   }
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
+// disableAudioBellForProfile 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function disableAudioBellForProfile(profileName: string): Promise<boolean> {
   // First try to add the property (in case it doesn't exist)
   // Quote the profile name to handle names with spaces (e.g., "Man Page", "Red Sands")
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     code: addCode
   } = await execFileNoThrow('/usr/libexec/PlistBuddy', ['-c', `Add :'Window Settings':'${profileName}':Bell bool false`, getTerminalPlistPath()]);
 
   // If adding fails (likely because it already exists), try setting it instead
+  // `addCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
   if (addCode !== 0) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       code: setCode
     } = await execFileNoThrow('/usr/libexec/PlistBuddy', ['-c', `Set :'Window Settings':'${profileName}':Bell false`, getTerminalPlistPath()]);
+    // `setCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
     if (setCode !== 0) {
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logError(new Error(`Failed to disable audio bell for Terminal.app profile: ${profileName}`));
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
   }
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
 
 // Enable Option as Meta key for Terminal.app
+// enableOptionAsMetaForTerminal 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function enableOptionAsMetaForTerminal(theme: ThemeName): Promise<string> {
+  // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
   try {
     // Create a backup of the current plist file
+    // backupPath 路径数据保存`backupTerminalPreferences`，供命令处理后续处理使用。
     const backupPath = await backupTerminalPreferences();
+    // backupPath 路径数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!backupPath) {
+      // 抛出 new Error('Failed to create backup of Terminal.app preferences, bailing out');，阻止命令处理在无效状态下继续运行。
       throw new Error('Failed to create backup of Terminal.app preferences, bailing out');
     }
 
     // Read the current default profile from the plist
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       stdout: defaultProfile,
       code: readCode
     } = await execFileNoThrow('defaults', ['read', 'com.apple.Terminal', 'Default Window Settings']);
+    // `readCode` 与 `0 || !defaultProfile.trim()` 不一致时刷新派生状态，避免使用过期结果。
     if (readCode !== 0 || !defaultProfile.trim()) {
+      // 抛出 new Error('Failed to read default Terminal.app profile');，阻止命令处理在无效状态下继续运行。
       throw new Error('Failed to read default Terminal.app profile');
     }
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       stdout: startupProfile,
       code: startupCode
     } = await execFileNoThrow('defaults', ['read', 'com.apple.Terminal', 'Startup Window Settings']);
+    // `startupCode` 与 `0 || !startupProfile.trim()` 不一致时刷新派生状态，避免使用过期结果。
     if (startupCode !== 0 || !startupProfile.trim()) {
+      // 抛出 new Error('Failed to read startup Terminal.app profile');，阻止命令处理在无效状态下继续运行。
       throw new Error('Failed to read startup Terminal.app profile');
     }
+    // wasAnyProfileUpdated 文件数据标记命令处理斜杠命令 terminal Setup是否启用对应路径。
     let wasAnyProfileUpdated = false;
+    // defaultProfileName 文件数据格式化`defaultProfile.trim`，供命令处理后续处理使用。
     const defaultProfileName = defaultProfile.trim();
+    // optionAsMetaEnabled保存`enableOptionAsMetaForProfile`，供命令处理后续处理使用。
     const optionAsMetaEnabled = await enableOptionAsMetaForProfile(defaultProfileName);
+    // audioBellDisabled保存`disableAudioBellForProfile`，供命令处理后续处理使用。
     const audioBellDisabled = await disableAudioBellForProfile(defaultProfileName);
+    // 只有 `optionAsMetaEnabled || audioBellDisabled` 满足时，命令处理才执行该分支。
     if (optionAsMetaEnabled || audioBellDisabled) {
+      // wasAnyProfileUpdated 文件数据更新为 `true`，确保斜杠命令后续读取最新状态。
       wasAnyProfileUpdated = true;
     }
+    // startupProfileName 文件数据格式化`startupProfile.trim`，供命令处理后续处理使用。
     const startupProfileName = startupProfile.trim();
 
     // Only proceed if the startup profile is different from the default profile
+    // `startupProfileName` 与 `defaultProfileName` 不一致时刷新派生状态，避免使用过期结果。
     if (startupProfileName !== defaultProfileName) {
+      // startupOptionAsMetaEnabled保存`enableOptionAsMetaForProfile`，供命令处理后续处理使用。
       const startupOptionAsMetaEnabled = await enableOptionAsMetaForProfile(startupProfileName);
+      // startupAudioBellDisabled保存`disableAudioBellForProfile`，供命令处理后续处理使用。
       const startupAudioBellDisabled = await disableAudioBellForProfile(startupProfileName);
+      // 只有 `startupOptionAsMetaEnabled || startupAudioBellDis` 满足时，命令处理才执行该分支。
       if (startupOptionAsMetaEnabled || startupAudioBellDisabled) {
+        // wasAnyProfileUpdated 文件数据更新为 `true`，确保斜杠命令后续读取最新状态。
         wasAnyProfileUpdated = true;
       }
     }
+    // wasAnyProfileUpdated 文件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!wasAnyProfileUpdated) {
+      // 抛出 new Error('Failed to enable Option as Meta key or disable audio bell for any Terminal.app…，阻止命令处理在无效状态下继续运行。
       throw new Error('Failed to enable Option as Meta key or disable audio bell for any Terminal.app profile');
     }
 
     // Flush the preferences cache
+    // 等待 `execFileNoThrow('killall', ['cfprefsd'])` 完成，再继续斜杠命令 terminal Setup的异步流程。
     await execFileNoThrow('killall', ['cfprefsd']);
+    // 调用 markTerminalSetupComplete，触发命令处理此处需要的副作用。
     markTerminalSetupComplete();
+    // 返回 ``${color('success', theme)(`Configured Terminal.app settings:`)}${EOL}$...`，作为命令处理这次计算的结果。
     return `${color('success', theme)(`Configured Terminal.app settings:`)}${EOL}${color('success', theme)('- Enabled "Use Option as Meta key"')}${EOL}${color('success', theme)('- Switched to visual bell')}${EOL}${chalk.dim('Option+Enter will now enter a newline.')}${EOL}${chalk.dim('You must restart Terminal.app for changes to take effect.', theme)}${EOL}`;
   } catch (error) {
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logError(error);
 
     // Attempt to restore from backup
+    // restoreResult读取`checkAndRestoreTerminalBackup`，供命令处理后续处理使用。
     const restoreResult = await checkAndRestoreTerminalBackup();
+    // errorMessage 消息数据 命名 `'Failed to enable Option as Meta key for Terminal.app.'`，让后续代码直接表达这个值的用途。
     const errorMessage = 'Failed to enable Option as Meta key for Terminal.app.';
+    // 当 `restoreResult.status` 匹配 `'restored'` 时，命令处理执行对应分支。
     if (restoreResult.status === 'restored') {
+      // 抛出 new Error(`${errorMessage} Your settings have been restored from backup.`);，阻止命令处理在无效状态下继续运行。
       throw new Error(`${errorMessage} Your settings have been restored from backup.`);
+    // 斜杠命令 terminal Setup在这里处理 `} else if (restoreResult.status === 'failed') {`，完成这一小步状态转换。
     } else if (restoreResult.status === 'failed') {
+      // 抛出 new Error(`${errorMessage} Restoring from backup failed, try manually with: defaults impo…，阻止命令处理在无效状态下继续运行。
       throw new Error(`${errorMessage} Restoring from backup failed, try manually with: defaults import com.apple.Terminal ${restoreResult.backupPath}`);
     } else {
+      // 抛出 new Error(`${errorMessage} No backup was available to restore from.`);，阻止命令处理在无效状态下继续运行。
       throw new Error(`${errorMessage} No backup was available to restore from.`);
     }
   }
 }
+// installBindingsForAlacritty 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function installBindingsForAlacritty(theme: ThemeName): Promise<string> {
+  // ALACRITTY_KEYBINDING读取 ``[[keyboard.bindings]]` 对应条目，后续围绕该成员继续处理。
   const ALACRITTY_KEYBINDING = `[[keyboard.bindings]]
 key = "Return"
 mods = "Shift"
 chars = "\\u001B\\r"`;
 
   // Get Alacritty config file paths in order of preference
+  // configPaths 路径数据 从空数组开始收集，后续循环会按处理顺序追加条目。
   const configPaths: string[] = [];
 
   // XDG config path (Linux and macOS)
+  // xdgConfigHome 配置 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const xdgConfigHome = process.env.XDG_CONFIG_HOME;
+  // 满足 `xdgConfigHome` 时，命令处理执行该分支。
   if (xdgConfigHome) {
+    // configPaths 路径数据追加新条目，保持收集顺序与输入顺序一致。
     configPaths.push(join(xdgConfigHome, 'alacritty', 'alacritty.toml'));
   } else {
+    // configPaths 路径数据追加新条目，保持收集顺序与输入顺序一致。
     configPaths.push(join(homedir(), '.config', 'alacritty', 'alacritty.toml'));
   }
 
   // Windows-specific path
+  // 当 `platform()` 匹配 `'win32'` 时，命令处理执行对应分支。
   if (platform() === 'win32') {
+    // appData 来自环境变量默认值，运行参数仍可在入口处覆盖。
     const appData = process.env.APPDATA;
+    // 满足 `appData` 时，命令处理执行该分支。
     if (appData) {
+      // configPaths 路径数据追加新条目，保持收集顺序与输入顺序一致。
       configPaths.push(join(appData, 'alacritty', 'alacritty.toml'));
     }
   }
 
   // Find existing config file by attempting to read it, or use first preferred path
+  // configPath 路径数据 命名 `null`，让后续代码直接表达这个值的用途。
   let configPath: string | null = null;
+  // configContent 配置 命名 `''`，让后续代码直接表达这个值的用途。
   let configContent = '';
+  // configExists 配置标记命令处理斜杠命令 terminal Setup是否启用对应路径。
   let configExists = false;
+  // 按顺序遍历 `configPaths` 中的路径，逐个交给命令处理处理。
   for (const path of configPaths) {
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // configContent 配置更新为 `await readFile(path, {`，确保斜杠命令后续读取最新状态。
       configContent = await readFile(path, {
         encoding: 'utf-8'
       });
+      // configPath 路径数据更新为 `path`，确保斜杠命令后续读取最新状态。
       configPath = path;
+      // configExists 配置更新为 `true`，确保斜杠命令后续读取最新状态。
       configExists = true;
+      // 结束这个分支或循环，避免命令处理继续落入后续路径。
       break;
     } catch (e: unknown) {
+      // 满足 `!isFsInaccessible(e)` 时，命令处理执行该分支。
       if (!isFsInaccessible(e)) throw e;
       // File missing or inaccessible — try next config path
     }
   }
 
   // If no config exists, use the first path (XDG/default location)
+  // configPath 路径数据缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!configPath) {
+    // configPath 路径数据更新为 `configPaths[0] ?? null`，确保斜杠命令后续读取最新状态。
     configPath = configPaths[0] ?? null;
   }
+  // configPath 路径数据缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!configPath) {
+    // 抛出 new Error('No valid config path found for Alacritty');，阻止命令处理在无效状态下继续运行。
     throw new Error('No valid config path found for Alacritty');
   }
+  // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
   try {
+    // 满足 `configExists` 时，命令处理执行该分支。
     if (configExists) {
       // Check if keybinding already exists (look for Shift+Return binding)
+      // 只有 `configContent.includes('mods = "Shift"') && configContent.includes('key = "...` 满足时，命令处理才执行该分支。
       if (configContent.includes('mods = "Shift"') && configContent.includes('key = "Return"')) {
+        // 返回 ``${color('warning', theme)('Found existing Alacritty Shift+Enter key bi...`，作为命令处理这次计算的结果。
         return `${color('warning', theme)('Found existing Alacritty Shift+Enter key binding. Remove it to continue.')}${EOL}${chalk.dim(`See ${formatPathLink(configPath)}`)}${EOL}`;
       }
 
       // Create backup
+      // randomSha保存`randomBytes`，供命令处理后续处理使用。
       const randomSha = randomBytes(4).toString('hex');
+      // backupPath 路径数据固定为 ``${configPath}.${randomSha}.bak``，作为命令处理斜杠命令 terminal Setup后续展示或比较的基准。
       const backupPath = `${configPath}.${randomSha}.bak`;
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 等待 `copyFile(configPath, backupPath)` 完成，再继续斜杠命令 terminal Setup的异步流程。
         await copyFile(configPath, backupPath);
       } catch {
+        // 返回 ``${color('warning', theme)('Error backing up existing Alacritty config....`，作为命令处理这次计算的结果。
         return `${color('warning', theme)('Error backing up existing Alacritty config. Bailing out.')}${EOL}${chalk.dim(`See ${formatPathLink(configPath)}`)}${EOL}${chalk.dim(`Backup path: ${formatPathLink(backupPath)}`)}${EOL}`;
       }
     } else {
       // Ensure config directory exists (idempotent with recursive)
+      // 等待 `mkdir(dirname(configPath), {` 完成，再继续斜杠命令 terminal Setup的异步流程。
       await mkdir(dirname(configPath), {
         recursive: true
       });
     }
 
     // Add the keybinding to the config
+    // updatedContent保存`configContent`，供命令处理斜杠命令 terminal Setup后续判断或输出使用。
     let updatedContent = configContent;
+    // 只有 `configContent && !configContent.endsWith('\n')` 满足时，命令处理才执行该分支。
     if (configContent && !configContent.endsWith('\n')) {
+      // 斜杠命令 terminal Setup在这里处理 `updatedContent += '\n'`，完成这一小步状态转换。
       updatedContent += '\n';
     }
+    // 斜杠命令 terminal Setup在这里处理 `updatedContent += '\n' + ALACRITTY_KEYBINDING + '\n'`，完成这一小步状态转换。
     updatedContent += '\n' + ALACRITTY_KEYBINDING + '\n';
 
     // Write the updated config
+    // 等待 `writeFile(configPath, updatedContent, {` 完成，再继续斜杠命令 terminal Setup的异步流程。
     await writeFile(configPath, updatedContent, {
       encoding: 'utf-8'
     });
+    // 返回 ``${color('success', theme)('Installed Alacritty Shift+Enter key binding...`，作为命令处理这次计算的结果。
     return `${color('success', theme)('Installed Alacritty Shift+Enter key binding')}${EOL}${color('success', theme)('You may need to restart Alacritty for changes to take effect')}${EOL}${chalk.dim(`See ${formatPathLink(configPath)}`)}${EOL}`;
   } catch (error) {
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logError(error);
+    // 抛出 new Error('Failed to install Alacritty Shift+Enter key binding');，阻止命令处理在无效状态下继续运行。
     throw new Error('Failed to install Alacritty Shift+Enter key binding');
   }
 }
+// installBindingsForZed 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function installBindingsForZed(theme: ThemeName): Promise<string> {
   // Zed uses JSON keybindings similar to VSCode
+  // zedDir格式化`join`，供命令处理后续处理使用。
   const zedDir = join(homedir(), '.config', 'zed');
+  // keymapPath 路径数据格式化`join`，供命令处理后续处理使用。
   const keymapPath = join(zedDir, 'keymap.json');
+  // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
   try {
     // Ensure zed directory exists (idempotent with recursive)
+    // 等待 `mkdir(zedDir, {` 完成，再继续斜杠命令 terminal Setup的异步流程。
     await mkdir(zedDir, {
       recursive: true
     });
 
     // Read existing keymap file, or default to empty array if it doesn't exist
+    // keymapContent固定为 `'[]'`，作为命令处理斜杠命令 terminal Setup后续展示或比较的基准。
     let keymapContent = '[]';
+    // 文件存在标记标记命令处理斜杠命令 terminal Setup是否启用对应路径。
     let fileExists = false;
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // keymapContent更新为 `await readFile(keymapPath, {`，确保斜杠命令后续读取最新状态。
       keymapContent = await readFile(keymapPath, {
         encoding: 'utf-8'
       });
+      // 文件存在标记更新为 `true`，确保斜杠命令后续读取最新状态。
       fileExists = true;
     } catch (e: unknown) {
+      // 满足 `!isFsInaccessible(e)` 时，命令处理执行该分支。
       if (!isFsInaccessible(e)) throw e;
     }
+    // 满足 `fileExists` 时，命令处理执行该分支。
     if (fileExists) {
       // Check if keybinding already exists
+      // 满足 `keymapContent.includes('shift-enter')` 时，命令处理执行该分支。
       if (keymapContent.includes('shift-enter')) {
+        // 返回 ``${color('warning', theme)('Found existing Zed Shift+Enter key binding....`，作为命令处理这次计算的结果。
         return `${color('warning', theme)('Found existing Zed Shift+Enter key binding. Remove it to continue.')}${EOL}${chalk.dim(`See ${formatPathLink(keymapPath)}`)}${EOL}`;
       }
 
       // Create backup
+      // randomSha保存`randomBytes`，供命令处理后续处理使用。
       const randomSha = randomBytes(4).toString('hex');
+      // backupPath 路径数据 命名 ``${keymapPath}.${randomSha}.bak``，让后续代码直接表达这个值的用途。
       const backupPath = `${keymapPath}.${randomSha}.bak`;
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 等待 `copyFile(keymapPath, backupPath)` 完成，再继续斜杠命令 terminal Setup的异步流程。
         await copyFile(keymapPath, backupPath);
       } catch {
+        // 返回 ``${color('warning', theme)('Error backing up existing Zed keymap. Baili...`，作为命令处理这次计算的结果。
         return `${color('warning', theme)('Error backing up existing Zed keymap. Bailing out.')}${EOL}${chalk.dim(`See ${formatPathLink(keymapPath)}`)}${EOL}${chalk.dim(`Backup path: ${formatPathLink(backupPath)}`)}${EOL}`;
       }
     }
 
     // Parse and modify the keymap
+    // keymap 先占位，稍后的条件分支会根据实际输入补齐它。
     let keymap: Array<{
       context?: string;
       bindings: Record<string, string | string[]>;
     }>;
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // keymap更新为 `jsonParse(keymapContent)`，确保斜杠命令后续读取最新状态。
       keymap = jsonParse(keymapContent);
+      // 满足 `!Array.isArray(keymap)` 时，命令处理执行该分支。
       if (!Array.isArray(keymap)) {
+        // keymap更新为 `[]`，确保斜杠命令后续读取最新状态。
         keymap = [];
       }
     } catch {
+      // keymap更新为 `[]`，确保斜杠命令后续读取最新状态。
       keymap = [];
     }
 
     // Add the new keybinding for terminal context
+    // keymap追加新条目，保持收集顺序与输入顺序一致。
     keymap.push({
       context: 'Terminal',
       bindings: {
@@ -519,12 +766,16 @@ async function installBindingsForZed(theme: ThemeName): Promise<string> {
     });
 
     // Write the updated keymap
+    // 等待 `writeFile(keymapPath, jsonStringify(keymap, null, 2) + '\n', {` 完成，再继续斜杠命令 terminal Setup的异步流程。
     await writeFile(keymapPath, jsonStringify(keymap, null, 2) + '\n', {
       encoding: 'utf-8'
     });
+    // 返回 ``${color('success', theme)('Installed Zed Shift+Enter key binding')}${E...`，作为命令处理这次计算的结果。
     return `${color('success', theme)('Installed Zed Shift+Enter key binding')}${EOL}${chalk.dim(`See ${formatPathLink(keymapPath)}`)}${EOL}`;
   } catch (error) {
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logError(error);
+    // 抛出 new Error('Failed to install Zed Shift+Enter key binding');，阻止命令处理在无效状态下继续运行。
     throw new Error('Failed to install Zed Shift+Enter key binding');
   }
 }

@@ -1,117 +1,186 @@
+// 引入 React、useCallback、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useRef, useState } from 'react';
+// 复用 getModeFromInput 终端界面组件，避免在这里重复拼装显示逻辑。
 import { getModeFromInput } from 'src/components/PromptInput/inputModes.js';
+// 引入 useNotifications，将 src/context/notifications.js 中已经封装好的能力接到本文件流程里。
 import { useNotifications } from 'src/context/notifications.js';
+// 复用 ConfigurableShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ConfigurableShortcutHint } from '../components/ConfigurableShortcutHint.js';
+// 复用 FOOTER_TEMPORARY_STATUS_TIMEOUT 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FOOTER_TEMPORARY_STATUS_TIMEOUT } from '../components/PromptInput/Notifications.js';
+// 引入 getHistory，将 ../history.js 中已经封装好的能力接到本文件流程里。
 import { getHistory } from '../history.js';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 类型依赖 { PromptInputMode } 来自 ../types/textInputTypes.js，用于校准React hook 状态流的数据契约。
 import type { PromptInputMode } from '../types/textInputTypes.js';
+// 类型依赖 { HistoryEntry, PastedContent } 来自 ../utils/config.js，用于校准React hook 状态流的数据契约。
 import type { HistoryEntry, PastedContent } from '../utils/config.js';
+// HistoryMode 固化React hook 状态流里传递的数据形状，帮助调用方按同一结构读写字段。
 export type HistoryMode = PromptInputMode;
 
 // Load history entries in chunks to reduce disk reads on rapid keypresses
+// HISTORY_CHUNK_SIZE保存`10`，供React hook use Arrow ...后续判断或输出使用。
 const HISTORY_CHUNK_SIZE = 10;
 
 // Shared state for batching concurrent load requests into a single disk read
 // Mode filter is included to ensure we don't mix filtered and unfiltered caches
+// pendingLoad 命名 `null`，让后续代码直接表达这个值的用途。
 let pendingLoad: Promise<HistoryEntry[]> | null = null;
+// pendingLoadTarget保存`0`，供后续判断或组装使用。
 let pendingLoadTarget = 0;
+// pendingLoadModeFilter初始化为未定义值，后续分支会在有数据时补齐。
 let pendingLoadModeFilter: HistoryMode | undefined = undefined;
+// loadHistoryEntries 封装useArrowKeyHistory的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function loadHistoryEntries(minCount: number, modeFilter?: HistoryMode): Promise<HistoryEntry[]> {
   // Round up to next chunk to avoid repeated small reads
+  // target保存`Math.ceil`，供React hook后续处理使用。
   const target = Math.ceil(minCount / HISTORY_CHUNK_SIZE) * HISTORY_CHUNK_SIZE;
 
   // If a load is already pending with the same mode filter and will satisfy our needs, wait for it
+  // 组合条件 `pendingLoad && pendingLoadTarget >= target && pen` 成立时，React hook 状态流才启用这条专门路径。
   if (pendingLoad && pendingLoadTarget >= target && pendingLoadModeFilter === modeFilter) {
+    // 返回 `pendingLoad`，作为React hook 状态流这次计算的结果。
     return pendingLoad;
   }
 
   // If a load is pending but won't satisfy our needs or has different filter, we need to wait for it
   // to complete first, then start a new one (can't interrupt an ongoing read)
+  // 满足 `pendingLoad` 时，React hook执行该分支。
   if (pendingLoad) {
+    // 等待 `pendingLoad` 完成，再继续React hook use Arrow Key History的异步流程。
     await pendingLoad;
   }
 
   // Start a new load
+  // pendingLoadTarget更新为 `target`，确保useArrowKeyHistory后续读取最新状态。
   pendingLoadTarget = target;
+  // pendingLoadModeFilter更新为 `modeFilter`，确保useArrowKeyHistory后续读取最新状态。
   pendingLoadModeFilter = modeFilter;
+  // pendingLoad更新为 `(async () => {`，确保useArrowKeyHistory后续读取最新状态。
   pendingLoad = (async () => {
+    // entries 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     const entries: HistoryEntry[] = [];
+    // loaded保存`0`，供React hook use Arrow ...后续判断或输出使用。
     let loaded = 0;
+    // 逐项读取 `getHistory()` 中的entry，按输入顺序推进React hook 状态流。
     for await (const entry of getHistory()) {
       // If mode filter is specified, only include entries that match the mode
+      // 满足 `modeFilter` 时，React hook执行该分支。
       if (modeFilter) {
+        // entryMode读取`getModeFromInput`，供React hook后续处理使用。
         const entryMode = getModeFromInput(entry.display);
+        // `entryMode` 与 `modeFilter` 不一致时刷新派生状态，避免使用过期结果。
         if (entryMode !== modeFilter) {
+          // 跳过当前项，继续处理React hook 状态流中的下一轮循环。
           continue;
         }
       }
+      // entries 集合追加新条目，保持收集顺序与输入顺序一致。
       entries.push(entry);
+      // React hook use Arrow Key History在这里处理 `loaded++`，完成这一小步状态转换。
       loaded++;
+      // 满足 `loaded >= pendingLoadTarget` 时，React hook执行该分支。
       if (loaded >= pendingLoadTarget) break;
     }
+    // 返回 `entries`，作为React hook 状态流这次计算的结果。
     return entries;
   })();
+  // 保护这一段可能失败的React hook 状态流操作，确保异常能进入相邻错误处理。
   try {
+    // 等待并返回 `pendingLoad`，调用方直接接收异步结果。
     return await pendingLoad;
   } finally {
+    // pendingLoad更新为 `null`，确保useArrowKeyHistory后续读取最新状态。
     pendingLoad = null;
+    // pendingLoadTarget更新为 `0`，确保useArrowKeyHistory后续读取最新状态。
     pendingLoadTarget = 0;
+    // pendingLoadModeFilter更新为 `undefined`，确保useArrowKeyHistory后续读取最新状态。
     pendingLoadModeFilter = undefined;
   }
 }
+// useArrowKeyHistory 封装useArrowKeyHistory的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useArrowKeyHistory(onSetInput: (value: string, mode: HistoryMode, pastedContents: Record<number, PastedContent>) => void, currentInput: string, pastedContents: Record<number, PastedContent>, setCursorOffset?: (offset: number) => void, currentMode?: HistoryMode): {
   historyIndex: number;
+  // 这个回调绑定到 setHistoryIndex: (index: number) => void;，负责React hook 状态流在该局部场景下的响应。
   setHistoryIndex: (index: number) => void;
+  // 这个回调绑定到 onHistoryUp: () => void;，负责React hook 状态流在该局部场景下的响应。
   onHistoryUp: () => void;
+  // 这个回调绑定到 onHistoryDown: () => boolean;，负责React hook 状态流在该局部场景下的响应。
   onHistoryDown: () => boolean;
+  // 这个回调绑定到 resetHistory: () => void;，负责React hook 状态流在该局部场景下的响应。
   resetHistory: () => void;
+  // 这个回调绑定到 dismissSearchHint: () => void;，负责React hook 状态流在该局部场景下的响应。
   dismissSearchHint: () => void;
 } {
+  // historyIndex 索引 由 React state 持有，setHistoryIndex 会在用户操作或异步结果返回时触发刷新。
   const [historyIndex, setHistoryIndex] = useState(0);
+  // 从 `useState<(HistoryEntry & {` 按位置拆出 lastShownHistoryEntry、setLastShownHistoryEntry，让React hook use Arrow Key History分别处理这些返回值。
   const [lastShownHistoryEntry, setLastShownHistoryEntry] = useState<(HistoryEntry & {
     mode?: HistoryMode;
   }) | undefined>(undefined);
+  // hasShownSearchHintRef 引用记录 `useRef` 是否成立，React hook随后按该结果分支。
   const hasShownSearchHintRef = useRef(false);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     addNotification,
     removeNotification
   } = useNotifications();
 
   // Cache loaded history entries
+  // historyCache 缓存读取 hook 状态，供React hook use Arrow ...本轮渲染使用。
   const historyCache = useRef<HistoryEntry[]>([]);
   // Track which mode filter the cache was loaded with
+  // historyCacheModeFilter 缓存读取 hook 状态，供React hook use Arrow ...本轮渲染使用。
   const historyCacheModeFilter = useRef<HistoryMode | undefined>(undefined);
 
   // Synchronous tracker for history index to avoid stale closure issues
   // React state updates are async, so rapid keypresses can see stale values
+  // historyIndexRef 引用保存`useRef`，供React hook后续处理使用。
   const historyIndexRef = useRef(0);
 
   // Track the mode filter that was active when history navigation started
   // This is set on the first arrow press and stays fixed until reset
+  // initialModeFilterRef 引用保存 hook 状态，让React hook use Arrow ...跨渲染复用同一个容器。
   const initialModeFilterRef = useRef<HistoryMode | undefined>(undefined);
 
   // Refs to track current input values for draft preservation
   // These ensure we capture the draft with the latest values, not stale closure values
+  // currentInputRef 引用保存`useRef`，供React hook后续处理使用。
   const currentInputRef = useRef(currentInput);
+  // pastedContentsRef 引用保存`useRef`，供React hook后续处理使用。
   const pastedContentsRef = useRef(pastedContents);
+  // currentModeRef 引用保存`useRef`，供React hook后续处理使用。
   const currentModeRef = useRef(currentMode);
 
   // Keep refs in sync with props (synchronous update on each render)
+  // current更新为 `currentInput`，确保useArrowKeyHistory后续读取最新状态。
   currentInputRef.current = currentInput;
+  // current更新为 `pastedContents`，确保useArrowKeyHistory后续读取最新状态。
   pastedContentsRef.current = pastedContents;
+  // current更新为 `currentMode`，确保useArrowKeyHistory后续读取最新状态。
   currentModeRef.current = currentMode;
+  // setInputWithCursor保存`useCallback`，供React hook后续处理使用。
   const setInputWithCursor = useCallback((value: string, mode: HistoryMode, contents: Record<number, PastedContent>, cursorToStart = false): void => {
+    // 调用 onSetInput，触发React hook此处需要的副作用。
     onSetInput(value, mode, contents);
+    // 调用 setCursorOffset?.(cursorToStart ? 0 : value.length);，完成这一处局部操作。
     setCursorOffset?.(cursorToStart ? 0 : value.length);
   }, [onSetInput, setCursorOffset]);
+  // updateInput保存`useCallback`，供React hook后续处理使用。
   const updateInput = useCallback((input: HistoryEntry | undefined, cursorToStart_0 = false): void => {
+    // 组合条件 `!input || !input.display` 成立时，React hook 状态流才启用这条专门路径。
     if (!input || !input.display) return;
+    // mode_0读取`getModeFromInput`，供React hook后续处理使用。
     const mode_0 = getModeFromInput(input.display);
+    // value_0格式化`display.slice`，供React hook后续处理使用。
     const value_0 = mode_0 === 'bash' ? input.display.slice(1) : input.display;
+    // setInputWithCursor 写入新的状态值，使React hook 状态流后续读取保持一致。
     setInputWithCursor(value_0, mode_0, input.pastedContents ?? {}, cursorToStart_0);
   }, [setInputWithCursor]);
+  // showSearchHint保存`useCallback`，供React hook后续处理使用。
   const showSearchHint = useCallback((): void => {
+    // 调用 addNotification，触发React hook此处需要的副作用。
     addNotification({
       key: 'search-history-hint',
       jsx: <Text dimColor>
@@ -121,102 +190,159 @@ export function useArrowKeyHistory(onSetInput: (value: string, mode: HistoryMode
       timeoutMs: FOOTER_TEMPORARY_STATUS_TIMEOUT
     });
   }, [addNotification]);
+  // onHistoryUp保存`useCallback`，供React hook后续处理使用。
   const onHistoryUp = useCallback((): void => {
     // Capture and increment synchronously to handle rapid keypresses
+    // targetIndex 索引 命名 `historyIndexRef.current`，让后续代码直接表达这个值的用途。
     const targetIndex = historyIndexRef.current;
+    // React hook use Arrow Key History在这里处理 `historyIndexRef.current++`，完成这一小步状态转换。
     historyIndexRef.current++;
+    // inputAtPress 集合保存`currentInputRef.current`，供React hook use Arrow ...后续判断或输出使用。
     const inputAtPress = currentInputRef.current;
+    // pastedContentsAtPress 集合 命名 `pastedContentsRef.current`，让后续代码直接表达这个值的用途。
     const pastedContentsAtPress = pastedContentsRef.current;
+    // modeAtPress 集合保存`currentModeRef.current`，供React hook use Arrow ...后续判断或输出使用。
     const modeAtPress = currentModeRef.current;
+    // 满足 `targetIndex === 0` 时，React hook执行该分支。
     if (targetIndex === 0) {
+      // current更新为 `modeAtPress === 'bash' ? modeAtPress : undefined`，确保useArrowKeyHistory后续读取最新状态。
       initialModeFilterRef.current = modeAtPress === 'bash' ? modeAtPress : undefined;
 
       // Save draft synchronously using refs for the latest values
       // This ensures we capture the draft before any async operations or re-renders
+      // hasInput记录 `inputAtPress.trim` 是否成立，React hook随后按该结果分支。
       const hasInput = inputAtPress.trim() !== '';
+      // setLastShownHistoryEntry 写入新的状态值，使React hook 状态流后续读取保持一致。
       setLastShownHistoryEntry(hasInput ? {
         display: inputAtPress,
         pastedContents: pastedContentsAtPress,
         mode: modeAtPress
       } : undefined);
     }
+    // modeFilter保存`initialModeFilterRef.current`，供后续判断或组装使用。
     const modeFilter = initialModeFilterRef.current;
+    // 调用 void，触发React hook此处需要的副作用。
     void (async () => {
+      // neededCount 数量 命名 `targetIndex + 1; // How many entries we need`，让后续代码直接表达这个值的用途。
       const neededCount = targetIndex + 1; // How many entries we need
 
       // If mode filter changed, invalidate cache
+      // `historyCacheModeFilter.current` 与 `modeFilter` 不一致时刷新派生状态，避免使用过期结果。
       if (historyCacheModeFilter.current !== modeFilter) {
+        // current更新为 `[]`，确保useArrowKeyHistory后续读取最新状态。
         historyCache.current = [];
+        // current更新为 `modeFilter`，确保useArrowKeyHistory后续读取最新状态。
         historyCacheModeFilter.current = modeFilter;
+        // current更新为 `0`，确保useArrowKeyHistory后续读取最新状态。
         historyIndexRef.current = 0;
       }
 
       // Load more entries if needed
+      // 满足 `historyCache.current.length < neededCount` 时，React hook执行该分支。
       if (historyCache.current.length < neededCount) {
         // Batches concurrent requests - rapid keypresses share a single disk read
+        // entries 集合读取`loadHistoryEntries`，供React hook后续处理使用。
         const entries = await loadHistoryEntries(neededCount, modeFilter);
         // Only update cache if we loaded more than currently cached
         // (handles race condition where multiple loads complete out of order)
+        // 满足 `entries.length > historyCache.current.length` 时，React hook执行该分支。
         if (entries.length > historyCache.current.length) {
+          // current更新为 `entries`，确保useArrowKeyHistory后续读取最新状态。
           historyCache.current = entries;
         }
       }
 
       // Check if we can navigate
+      // 满足 `targetIndex >= historyCache.current.length` 时，React hook执行该分支。
       if (targetIndex >= historyCache.current.length) {
         // Rollback the ref since we can't navigate
+        // React hook use Arrow Key History在这里处理 `historyIndexRef.current--`，完成这一小步状态转换。
         historyIndexRef.current--;
         // Keep the draft intact - user stays on their current input
+        // React hook use Arrow Key History在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // newIndex 索引 命名 `targetIndex + 1`，让后续代码直接表达这个值的用途。
       const newIndex = targetIndex + 1;
+      // setHistoryIndex 写入新的状态值，使React hook 状态流后续读取保持一致。
       setHistoryIndex(newIndex);
+      // 调用 updateInput，触发React hook此处需要的副作用。
       updateInput(historyCache.current[targetIndex], true);
 
       // Show hint once per session after navigating through 2 history entries
+      // 组合条件 `newIndex >= 2 && !hasShownSearchHintRef.current` 成立时，React hook 状态流才启用这条专门路径。
       if (newIndex >= 2 && !hasShownSearchHintRef.current) {
+        // current更新为 `true`，确保useArrowKeyHistory后续读取最新状态。
         hasShownSearchHintRef.current = true;
+        // 调用 showSearchHint，触发React hook此处需要的副作用。
         showSearchHint();
       }
     })();
   }, [updateInput, showSearchHint]);
+  // onHistoryDown保存`useCallback`，供React hook后续处理使用。
   const onHistoryDown = useCallback((): boolean => {
     // Use the ref for consistent reads
+    // currentIndex 索引保存`historyIndexRef.current`，供后续判断或组装使用。
     const currentIndex = historyIndexRef.current;
+    // 满足 `currentIndex > 1` 时，React hook执行该分支。
     if (currentIndex > 1) {
+      // React hook use Arrow Key History在这里处理 `historyIndexRef.current--`，完成这一小步状态转换。
       historyIndexRef.current--;
+      // setHistoryIndex 写入新的状态值，使React hook 状态流后续读取保持一致。
       setHistoryIndex(currentIndex - 1);
+      // 调用 updateInput，触发React hook此处需要的副作用。
       updateInput(historyCache.current[currentIndex - 2]);
+    // React hook use Arrow Key History在这里处理 `} else if (currentIndex === 1) {`，完成这一小步状态转换。
     } else if (currentIndex === 1) {
+      // current更新为 `0`，确保useArrowKeyHistory后续读取最新状态。
       historyIndexRef.current = 0;
+      // setHistoryIndex 写入新的状态值，使React hook 状态流后续读取保持一致。
       setHistoryIndex(0);
+      // 满足 `lastShownHistoryEntry` 时，React hook执行该分支。
       if (lastShownHistoryEntry) {
         // Restore the draft with its saved mode if available
+        // savedMode保存`lastShownHistoryEntry.mode`，供React hook use Arrow ...后续判断或输出使用。
         const savedMode = lastShownHistoryEntry.mode;
+        // 满足 `savedMode` 时，React hook执行该分支。
         if (savedMode) {
+          // setInputWithCursor 写入新的状态值，使React hook 状态流后续读取保持一致。
           setInputWithCursor(lastShownHistoryEntry.display, savedMode, lastShownHistoryEntry.pastedContents ?? {});
         } else {
+          // 调用 updateInput，触发React hook此处需要的副作用。
           updateInput(lastShownHistoryEntry);
         }
       } else {
         // When in filtered mode, stay in that mode when clearing input
+        // setInputWithCursor 写入新的状态值，使React hook 状态流后续读取保持一致。
         setInputWithCursor('', initialModeFilterRef.current ?? 'prompt', {});
       }
     }
+    // 返回 `currentIndex <= 0`，作为React hook 状态流这次计算的结果。
     return currentIndex <= 0;
   }, [lastShownHistoryEntry, updateInput, setInputWithCursor]);
+  // resetHistory保存`useCallback`，供React hook后续处理使用。
   const resetHistory = useCallback((): void => {
+    // setLastShownHistoryEntry 写入新的状态值，使React hook 状态流后续读取保持一致。
     setLastShownHistoryEntry(undefined);
+    // setHistoryIndex 写入新的状态值，使React hook 状态流后续读取保持一致。
     setHistoryIndex(0);
+    // current更新为 `0`，确保useArrowKeyHistory后续读取最新状态。
     historyIndexRef.current = 0;
+    // current更新为 `undefined`，确保useArrowKeyHistory后续读取最新状态。
     initialModeFilterRef.current = undefined;
+    // 调用 removeNotification，触发React hook此处需要的副作用。
     removeNotification('search-history-hint');
+    // current更新为 `[]`，确保useArrowKeyHistory后续读取最新状态。
     historyCache.current = [];
+    // current更新为 `undefined`，确保useArrowKeyHistory后续读取最新状态。
     historyCacheModeFilter.current = undefined;
   }, [removeNotification]);
+  // dismissSearchHint保存`useCallback`，供React hook后续处理使用。
   const dismissSearchHint = useCallback((): void => {
+    // 调用 removeNotification，触发React hook此处需要的副作用。
     removeNotification('search-history-hint');
   }, [removeNotification]);
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     historyIndex,
     setHistoryIndex,

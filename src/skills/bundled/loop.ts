@@ -1,13 +1,17 @@
+// 整理这一组导入，让loop后续逻辑可以直接复用这些外部能力。
 import {
   CRON_CREATE_TOOL_NAME,
   CRON_DELETE_TOOL_NAME,
   DEFAULT_MAX_AGE_DAYS,
   isKairosCronEnabled,
 } from '../../tools/ScheduleCronTool/prompt.js'
+// 引入 registerBundledSkill，将 ../bundledSkills.js 中已经封装好的能力接到本文件流程里。
 import { registerBundledSkill } from '../bundledSkills.js'
 
+// DEFAULT_INTERVAL 命名 `'10m'`，让后续代码直接表达这个值的用途。
 const DEFAULT_INTERVAL = '10m'
 
+// USAGE_MESSAGE 消息数据读取 ``Usage: /loop [interval] <prompt>` 对应条目，后续围绕该成员继续处理。
 const USAGE_MESSAGE = `Usage: /loop [interval] <prompt>
 
 Run a prompt or slash command on a recurring interval.
@@ -22,7 +26,9 @@ Examples:
   /loop check the deploy          (defaults to ${DEFAULT_INTERVAL})
   /loop check the deploy every 20m`
 
+// buildPrompt 封装loop的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildPrompt(args: string): string {
+  // 返回 ``# /loop — schedule a recurring prompt`，作为loop这次计算的结果。
   return `# /loop — schedule a recurring prompt
 
 Parse the input below into \`[interval] <prompt…>\` and schedule it with ${CRON_CREATE_TOOL_NAME}.
@@ -71,7 +77,9 @@ Supported suffixes: \`s\` (seconds, rounded up to nearest minute, min 1), \`m\` 
 ${args}`
 }
 
+// registerLoopSkill 封装loop的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function registerLoopSkill(): void {
+  // 调用 registerBundledSkill，触发loop此处需要的副作用。
   registerBundledSkill({
     name: 'loop',
     description:
@@ -81,11 +89,16 @@ export function registerLoopSkill(): void {
     argumentHint: '[interval] <prompt>',
     userInvocable: true,
     isEnabled: isKairosCronEnabled,
+    // getPromptForCommand 根据 args 读取或计算loop需要的结果。
     async getPromptForCommand(args) {
+      // trimmed格式化`args.trim`，供loop后续处理使用。
       const trimmed = args.trim()
+      // trimmed缺失时提前走兜底路径，避免loop继续依赖无效输入。
       if (!trimmed) {
+        // 返回列表结果，保留loop已经排好的条目顺序。
         return [{ type: 'text', text: USAGE_MESSAGE }]
       }
+      // 返回列表结果，保留loop已经排好的条目顺序。
       return [{ type: 'text', text: buildPrompt(trimmed) }]
     },
   })

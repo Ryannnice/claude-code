@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 /**
  * SDK Control Schemas - Zod schemas for the control protocol.
  *
@@ -7,8 +8,11 @@
  * SDK consumers should use coreSchemas.ts instead.
  */
 
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 复用 lazySchema 工具函数，把通用处理留在 ../../utils/lazySchema.js 中维护。
 import { lazySchema } from '../../utils/lazySchema.js'
+// 整理这一组导入，让control Schemas后续逻辑可以直接复用这些外部能力。
 import {
   AccountInfoSchema,
   AgentDefinitionSchema,
@@ -34,12 +38,14 @@ import {
 // ============================================================================
 
 // JSONRPCMessage from @modelcontextprotocol/sdk - treat as unknown
+// JSONRPCMessagePlaceholder 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const JSONRPCMessagePlaceholder = lazySchema(() => z.unknown())
 
 // ============================================================================
 // Hook Callback Types
 // ============================================================================
 
+// SDKHookCallbackMatcherSchema保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKHookCallbackMatcherSchema = lazySchema(() =>
   z
     .object({
@@ -54,6 +60,7 @@ export const SDKHookCallbackMatcherSchema = lazySchema(() =>
 // Control Request Types
 // ============================================================================
 
+// SDKControlInitializeRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlInitializeRequestSchema = lazySchema(() =>
   z
     .object({
@@ -74,6 +81,7 @@ export const SDKControlInitializeRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlInitializeResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlInitializeResponseSchema = lazySchema(() =>
   z
     .object({
@@ -94,6 +102,7 @@ export const SDKControlInitializeResponseSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlInterruptRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlInterruptRequestSchema = lazySchema(() =>
   z
     .object({
@@ -103,6 +112,7 @@ export const SDKControlInterruptRequestSchema = lazySchema(() =>
 )
 
 
+// SDKControlPermissionRequestSchema 权限数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlPermissionRequestSchema = lazySchema(() =>
   z
     .object({
@@ -121,6 +131,7 @@ export const SDKControlPermissionRequestSchema = lazySchema(() =>
     .describe('Requests permission to use a tool with the given input.'),
 )
 
+// SDKControlSetPermissionModeRequestSchema 权限数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlSetPermissionModeRequestSchema = lazySchema(() =>
   z
     .object({
@@ -134,6 +145,7 @@ export const SDKControlSetPermissionModeRequestSchema = lazySchema(() =>
     .describe('Sets the permission mode for tool execution handling.'),
 )
 
+// SDKControlSetModelRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlSetModelRequestSchema = lazySchema(() =>
   z
     .object({
@@ -143,6 +155,7 @@ export const SDKControlSetModelRequestSchema = lazySchema(() =>
     .describe('Sets the model to use for subsequent conversation turns.'),
 )
 
+// SDKControlSetMaxThinkingTokensRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlSetMaxThinkingTokensRequestSchema = lazySchema(() =>
   z
     .object({
@@ -154,6 +167,7 @@ export const SDKControlSetMaxThinkingTokensRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlMcpStatusRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlMcpStatusRequestSchema = lazySchema(() =>
   z
     .object({
@@ -162,6 +176,7 @@ export const SDKControlMcpStatusRequestSchema = lazySchema(() =>
     .describe('Requests the current status of all MCP server connections.'),
 )
 
+// SDKControlMcpStatusResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlMcpStatusResponseSchema = lazySchema(() =>
   z
     .object({
@@ -172,6 +187,7 @@ export const SDKControlMcpStatusResponseSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlGetContextUsageRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlGetContextUsageRequestSchema = lazySchema(() =>
   z
     .object({
@@ -182,6 +198,7 @@ export const SDKControlGetContextUsageRequestSchema = lazySchema(() =>
     ),
 )
 
+// ContextCategorySchema保存`lazySchema`，供control Schemas后续处理使用。
 const ContextCategorySchema = lazySchema(() =>
   z.object({
     name: z.string(),
@@ -191,6 +208,7 @@ const ContextCategorySchema = lazySchema(() =>
   }),
 )
 
+// ContextGridSquareSchema保存`lazySchema`，供control Schemas后续处理使用。
 const ContextGridSquareSchema = lazySchema(() =>
   z.object({
     color: z.string(),
@@ -202,6 +220,7 @@ const ContextGridSquareSchema = lazySchema(() =>
   }),
 )
 
+// SDKControlGetContextUsageResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlGetContextUsageResponseSchema = lazySchema(() =>
   z
     .object({
@@ -305,6 +324,7 @@ export const SDKControlGetContextUsageResponseSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlRewindFilesRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlRewindFilesRequestSchema = lazySchema(() =>
   z
     .object({
@@ -315,6 +335,7 @@ export const SDKControlRewindFilesRequestSchema = lazySchema(() =>
     .describe('Rewinds file changes made since a specific user message.'),
 )
 
+// SDKControlRewindFilesResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlRewindFilesResponseSchema = lazySchema(() =>
   z
     .object({
@@ -327,6 +348,7 @@ export const SDKControlRewindFilesResponseSchema = lazySchema(() =>
     .describe('Result of a rewindFiles operation.'),
 )
 
+// SDKControlCancelAsyncMessageRequestSchema 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlCancelAsyncMessageRequestSchema = lazySchema(() =>
   z
     .object({
@@ -338,6 +360,7 @@ export const SDKControlCancelAsyncMessageRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlCancelAsyncMessageResponseSchema 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlCancelAsyncMessageResponseSchema = lazySchema(() =>
   z
     .object({
@@ -348,6 +371,7 @@ export const SDKControlCancelAsyncMessageResponseSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlSeedReadStateRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlSeedReadStateRequestSchema = lazySchema(() =>
   z
     .object({
@@ -360,6 +384,7 @@ export const SDKControlSeedReadStateRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKHookCallbackRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKHookCallbackRequestSchema = lazySchema(() =>
   z
     .object({
@@ -371,6 +396,7 @@ export const SDKHookCallbackRequestSchema = lazySchema(() =>
     .describe('Delivers a hook callback with its input data.'),
 )
 
+// SDKControlMcpMessageRequestSchema 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlMcpMessageRequestSchema = lazySchema(() =>
   z
     .object({
@@ -381,6 +407,7 @@ export const SDKControlMcpMessageRequestSchema = lazySchema(() =>
     .describe('Sends a JSON-RPC message to a specific MCP server.'),
 )
 
+// SDKControlMcpSetServersRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlMcpSetServersRequestSchema = lazySchema(() =>
   z
     .object({
@@ -390,6 +417,7 @@ export const SDKControlMcpSetServersRequestSchema = lazySchema(() =>
     .describe('Replaces the set of dynamically managed MCP servers.'),
 )
 
+// SDKControlMcpSetServersResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlMcpSetServersResponseSchema = lazySchema(() =>
   z
     .object({
@@ -402,6 +430,7 @@ export const SDKControlMcpSetServersResponseSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlReloadPluginsRequestSchema 插件数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlReloadPluginsRequestSchema = lazySchema(() =>
   z
     .object({
@@ -412,6 +441,7 @@ export const SDKControlReloadPluginsRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlReloadPluginsResponseSchema 插件数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlReloadPluginsResponseSchema = lazySchema(() =>
   z
     .object({
@@ -432,6 +462,7 @@ export const SDKControlReloadPluginsResponseSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlMcpReconnectRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlMcpReconnectRequestSchema = lazySchema(() =>
   z
     .object({
@@ -441,6 +472,7 @@ export const SDKControlMcpReconnectRequestSchema = lazySchema(() =>
     .describe('Reconnects a disconnected or failed MCP server.'),
 )
 
+// SDKControlMcpToggleRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlMcpToggleRequestSchema = lazySchema(() =>
   z
     .object({
@@ -452,6 +484,7 @@ export const SDKControlMcpToggleRequestSchema = lazySchema(() =>
 )
 
 
+// SDKControlStopTaskRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlStopTaskRequestSchema = lazySchema(() =>
   z
     .object({
@@ -461,6 +494,7 @@ export const SDKControlStopTaskRequestSchema = lazySchema(() =>
     .describe('Stops a running task.'),
 )
 
+// SDKControlApplyFlagSettingsRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlApplyFlagSettingsRequestSchema = lazySchema(() =>
   z
     .object({
@@ -472,6 +506,7 @@ export const SDKControlApplyFlagSettingsRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlGetSettingsRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlGetSettingsRequestSchema = lazySchema(() =>
   z
     .object({
@@ -482,6 +517,7 @@ export const SDKControlGetSettingsRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlGetSettingsResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlGetSettingsResponseSchema = lazySchema(() =>
   z
     .object({
@@ -519,6 +555,7 @@ export const SDKControlGetSettingsResponseSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlElicitationRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlElicitationRequestSchema = lazySchema(() =>
   z
     .object({
@@ -535,6 +572,7 @@ export const SDKControlElicitationRequestSchema = lazySchema(() =>
     ),
 )
 
+// SDKControlElicitationResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlElicitationResponseSchema = lazySchema(() =>
   z
     .object({
@@ -549,6 +587,7 @@ export const SDKControlElicitationResponseSchema = lazySchema(() =>
 // Control Request/Response Wrappers
 // ============================================================================
 
+// SDKControlRequestInnerSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlRequestInnerSchema = lazySchema(() =>
   z.union([
     SDKControlInterruptRequestSchema(),
@@ -575,6 +614,7 @@ export const SDKControlRequestInnerSchema = lazySchema(() =>
   ]),
 )
 
+// SDKControlRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlRequestSchema = lazySchema(() =>
   z.object({
     type: z.literal('control_request'),
@@ -583,6 +623,7 @@ export const SDKControlRequestSchema = lazySchema(() =>
   }),
 )
 
+// ControlResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const ControlResponseSchema = lazySchema(() =>
   z.object({
     subtype: z.literal('success'),
@@ -591,17 +632,20 @@ export const ControlResponseSchema = lazySchema(() =>
   }),
 )
 
+// ControlErrorResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const ControlErrorResponseSchema = lazySchema(() =>
   z.object({
     subtype: z.literal('error'),
     request_id: z.string(),
     error: z.string(),
     pending_permission_requests: z
+      // 链式调用 array，继续加工上一行在control Schemas中产生的数据。
       .array(z.lazy(() => SDKControlRequestSchema()))
       .optional(),
   }),
 )
 
+// SDKControlResponseSchema 响应数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlResponseSchema = lazySchema(() =>
   z.object({
     type: z.literal('control_response'),
@@ -609,6 +653,7 @@ export const SDKControlResponseSchema = lazySchema(() =>
   }),
 )
 
+// SDKControlCancelRequestSchema 请求数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKControlCancelRequestSchema = lazySchema(() =>
   z
     .object({
@@ -618,6 +663,7 @@ export const SDKControlCancelRequestSchema = lazySchema(() =>
     .describe('Cancels a currently open control request.'),
 )
 
+// SDKKeepAliveMessageSchema 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKKeepAliveMessageSchema = lazySchema(() =>
   z
     .object({
@@ -626,6 +672,7 @@ export const SDKKeepAliveMessageSchema = lazySchema(() =>
     .describe('Keep-alive message to maintain WebSocket connection.'),
 )
 
+// SDKUpdateEnvironmentVariablesMessageSchema 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const SDKUpdateEnvironmentVariablesMessageSchema = lazySchema(() =>
   z
     .object({
@@ -639,6 +686,7 @@ export const SDKUpdateEnvironmentVariablesMessageSchema = lazySchema(() =>
 // Aggregate Message Types
 // ============================================================================
 
+// StdoutMessageSchema 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const StdoutMessageSchema = lazySchema(() =>
   z.union([
     SDKMessageSchema(),
@@ -652,6 +700,7 @@ export const StdoutMessageSchema = lazySchema(() =>
   ]),
 )
 
+// StdinMessageSchema 消息数据保存`lazySchema`，供control Schemas后续处理使用。
 export const StdinMessageSchema = lazySchema(() =>
   z.union([
     SDKUserMessageSchema(),

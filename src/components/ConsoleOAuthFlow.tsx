@@ -1,28 +1,49 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React、useCallback、useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 引入 installOAuthTokens，将 ../cli/handlers/auth.js 中已经封装好的能力接到本文件流程里。
 import { installOAuthTokens } from '../cli/handlers/auth.js';
+// 引入 useTerminalSize，将 ../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+// 复用 setClipboard 终端界面组件，避免在这里重复拼装显示逻辑。
 import { setClipboard } from '../ink/termio/osc.js';
+// 复用 useTerminalNotification 终端界面组件，避免在这里重复拼装显示逻辑。
 import { useTerminalNotification } from '../ink/useTerminalNotification.js';
+// 引入 Box、Link、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Link, Text } from '../ink.js';
+// 引入 useKeybinding，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../keybindings/useKeybinding.js';
+// 接入 getSSLErrorHint 服务层能力，把外部通信或共享状态交给 ../services/api/errorUtils.js 处理。
 import { getSSLErrorHint } from '../services/api/errorUtils.js';
+// 接入 sendNotification 服务层能力，把外部通信或共享状态交给 ../services/notifier.js 处理。
 import { sendNotification } from '../services/notifier.js';
+// 接入 OAuthService 服务层能力，把外部通信或共享状态交给 ../services/oauth/index.js 处理。
 import { OAuthService } from '../services/oauth/index.js';
+// 复用 getOauthAccountInfo、validateForceLoginOrg 工具函数，把通用处理留在 ../utils/auth.js 中维护。
 import { getOauthAccountInfo, validateForceLoginOrg } from '../utils/auth.js';
+// 复用 logError 工具函数，把通用处理留在 ../utils/log.js 中维护。
 import { logError } from '../utils/log.js';
+// 复用 getSettings_DEPRECATED 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getSettings_DEPRECATED } from '../utils/settings/settings.js';
+// 引入 Select，将 ./CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from './CustomSelect/select.js';
+// 引入 KeyboardShortcutHint，将 ./design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
+// 引入 Spinner，将 ./Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from './Spinner.js';
+// 引入 TextInput，将 ./TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from './TextInput.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   onDone(): void;
   startingMessage?: string;
   mode?: 'login' | 'setup-token';
   forceLoginMethod?: 'claudeai' | 'console';
 };
+// OAuthStatus 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type OAuthStatus = {
   state: 'idle';
 } // Initial state, waiting to select login method
@@ -50,69 +71,102 @@ type OAuthStatus = {
   message: string;
   toRetry?: OAuthStatus;
 };
+// PASTE_HERE_MSG固定为 `'Paste code here if prompted > '`，作为终端 UI Console OAuth Flow后续展示或比较的基准。
 const PASTE_HERE_MSG = 'Paste code here if prompted > ';
+// ConsoleOAuthFlow 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function ConsoleOAuthFlow({
   onDone,
   startingMessage,
   mode = 'login',
   forceLoginMethod: forceLoginMethodProp
 }: Props): React.ReactNode {
+  // settings 集合读取`getSettings_DEPRECATED`，供终端渲染后续处理使用。
   const settings = getSettings_DEPRECATED() || {};
+  // forceLoginMethod保存`forceLoginMethodProp ?? settings.forceLoginMethod`，供后续判断或组装使用。
   const forceLoginMethod = forceLoginMethodProp ?? settings.forceLoginMethod;
+  // orgUUID保存`settings.forceLoginOrgUUID`，供后续判断或组装使用。
   const orgUUID = settings.forceLoginOrgUUID;
+  // forcedMethodMessage 消息数据保存`Plan`，供终端渲染后续处理使用。
   const forcedMethodMessage = forceLoginMethod === 'claudeai' ? 'Login method pre-selected: Subscription Plan (Claude Pro/Max)' : forceLoginMethod === 'console' ? 'Login method pre-selected: API Usage Billing (Anthropic Console)' : null;
+  // terminal保存`useTerminalNotification`，供终端渲染后续处理使用。
   const terminal = useTerminalNotification();
+  // 这个回调绑定到 const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>(() => {，负责终端渲染在该局部场景下的响应。
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>(() => {
+    // 当 `mode` 匹配 `'setup-token'` 时，终端渲染执行对应分支。
     if (mode === 'setup-token') {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         state: 'ready_to_start'
       };
     }
+    // 只有 `forceLoginMethod === 'claudeai' || forceLoginMeth` 满足时，终端渲染才执行该分支。
     if (forceLoginMethod === 'claudeai' || forceLoginMethod === 'console') {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         state: 'ready_to_start'
       };
     }
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       state: 'idle'
     };
   });
+  // pastedCode 由 React state 持有，setPastedCode 会在用户操作或异步结果返回时触发刷新。
   const [pastedCode, setPastedCode] = useState('');
+  // 光标偏移 由 React state 持有，setCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [cursorOffset, setCursorOffset] = useState(0);
+  // 这个回调绑定到 const [oauthService] = useState(() => new OAuthService());，负责终端渲染在该局部场景下的响应。
   const [oauthService] = useState(() => new OAuthService());
+  // 这个回调绑定到 const [loginWithClaudeAi, setLoginWithClaudeAi] = useState(() => {，负责终端渲染在该局部场景下的响应。
   const [loginWithClaudeAi, setLoginWithClaudeAi] = useState(() => {
     // Use Claude AI auth for setup-token mode to support user:inference scope
+    // 返回 `mode === 'setup-token' || forceLoginMethod === 'claudeai'`，作为终端渲染这次计算的结果。
     return mode === 'setup-token' || forceLoginMethod === 'claudeai';
   });
   // After a few seconds we suggest the user to copy/paste url if the
   // browser did not open automatically. In this flow we expect the user to
   // copy the code from the browser and paste it in the terminal
+  // showPastePrompt 由 React state 持有，setShowPastePrompt 会在用户操作或异步结果返回时触发刷新。
   const [showPastePrompt, setShowPastePrompt] = useState(false);
+  // urlCopied 由 React state 持有，setUrlCopied 会在用户操作或异步结果返回时触发刷新。
   const [urlCopied, setUrlCopied] = useState(false);
+  // textInputColumns 集合保存`useTerminalSize`，供终端渲染后续处理使用。
   const textInputColumns = useTerminalSize().columns - PASTE_HERE_MSG.length - 1;
 
   // Log forced login method on mount
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 当 `forceLoginMethod` 匹配 `'claudeai'` 时，终端渲染执行对应分支。
     if (forceLoginMethod === 'claudeai') {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_oauth_claudeai_forced', {});
+    // 终端 UI 组件 Console OAuth Flow在这里处理 `} else if (forceLoginMethod === 'console') {`，完成这一小步状态转换。
     } else if (forceLoginMethod === 'console') {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_oauth_console_forced', {});
     }
   }, [forceLoginMethod]);
 
   // Retry logic
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 当 `oauthStatus.state` 匹配 `'about_to_retry'` 时，终端渲染执行对应分支。
     if (oauthStatus.state === 'about_to_retry') {
+      // timer保存`setTimeout`，供终端渲染后续处理使用。
       const timer = setTimeout(setOAuthStatus, 1000, oauthStatus.nextState);
+      // 返回 `() => clearTimeout(timer)`，作为终端渲染这次计算的结果。
       return () => clearTimeout(timer);
     }
   }, [oauthStatus]);
 
   // Handle Enter to continue on success state
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:yes', () => {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_oauth_success', {
       loginWithClaudeAi
     });
+    // 调用 onDone，触发终端渲染此处需要的副作用。
     onDone();
   }, {
     context: 'Confirmation',
@@ -120,7 +174,9 @@ export function ConsoleOAuthFlow({
   });
 
   // Handle Enter to continue from platform setup
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:yes', () => {
+    // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
     setOAuthStatus({
       state: 'idle'
     });
@@ -130,9 +186,13 @@ export function ConsoleOAuthFlow({
   });
 
   // Handle Enter to retry on error state
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:yes', () => {
+    // 只有 `oauthStatus.state === 'error' && oauthStatus.toRe` 满足时，终端渲染才执行该分支。
     if (oauthStatus.state === 'error' && oauthStatus.toRetry) {
+      // setPastedCode 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedCode('');
+      // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setOAuthStatus({
         state: 'about_to_retry',
         nextState: oauthStatus.toRetry
@@ -142,21 +202,33 @@ export function ConsoleOAuthFlow({
     context: 'Confirmation',
     isActive: oauthStatus.state === 'error' && !!oauthStatus.toRetry
   });
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `pastedCode === 'c' && oauthStatus.state === 'wait` 满足时，终端渲染才执行该分支。
     if (pastedCode === 'c' && oauthStatus.state === 'waiting_for_login' && showPastePrompt && !urlCopied) {
+      // 这个回调绑定到 void setClipboard(oauthStatus.url).then(raw => {，负责终端渲染在该局部场景下的响应。
       void setClipboard(oauthStatus.url).then(raw => {
+        // 满足 `raw) process.stdout.write(raw` 时，终端渲染执行该分支。
         if (raw) process.stdout.write(raw);
+        // setUrlCopied 写入新的状态值，使终端渲染后续读取保持一致。
         setUrlCopied(true);
+        // setTimeout 写入新的状态值，使终端渲染后续读取保持一致。
         setTimeout(setUrlCopied, 2000, false);
       });
+      // setPastedCode 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedCode('');
     }
   }, [pastedCode, oauthStatus, showPastePrompt, urlCopied]);
+  // handleSubmitCode 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   async function handleSubmitCode(value: string, url: string) {
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // Expecting format "authorizationCode#state" from the authorization callback URL
+      // 从 `value.split('#')` 按位置拆出 authorizationCode、state，让终端 UI 组件 Console OAuth Flow分别处理这些返回值。
       const [authorizationCode, state] = value.split('#');
+      // 只有 `!authorizationCode || !state` 满足时，终端渲染才执行该分支。
       if (!authorizationCode || !state) {
+        // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
         setOAuthStatus({
           state: 'error',
           message: 'Invalid code. Please make sure the full code was copied',
@@ -165,17 +237,22 @@ export function ConsoleOAuthFlow({
             url
           }
         });
+        // 终端 UI 组件 Console OAuth Flow在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Track which path the user is taking (manual code entry)
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_oauth_manual_entry', {});
+      // 调用 oauthService.handleManualAuthCodeInput，触发终端渲染此处需要的副作用。
       oauthService.handleManualAuthCodeInput({
         authorizationCode,
         state
       });
     } catch (err: unknown) {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logError(err);
+      // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setOAuthStatus({
         state: 'error',
         message: (err as Error).message,
@@ -186,16 +263,22 @@ export function ConsoleOAuthFlow({
       });
     }
   }
+  // startOAuth保存`useCallback`，供终端渲染后续处理使用。
   const startOAuth = useCallback(async () => {
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_oauth_flow_start', {
         loginWithClaudeAi
       });
+      // 结果保存`oauthService.startOAuthFlow`，供终端渲染后续处理使用。
       const result = await oauthService.startOAuthFlow(async url_0 => {
+        // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
         setOAuthStatus({
           state: 'waiting_for_login',
           url: url_0
         });
+        // setTimeout 写入新的状态值，使终端渲染后续读取保持一致。
         setTimeout(setShowPastePrompt, 3000, true);
       }, {
         loginWithClaudeAi,
@@ -203,12 +286,16 @@ export function ConsoleOAuthFlow({
         expiresIn: mode === 'setup-token' ? 365 * 24 * 60 * 60 : undefined,
         // 1 year for setup-token
         orgUUID
+      // 这个回调绑定到 }).catch(err_1 => {，负责终端渲染在该局部场景下的响应。
       }).catch(err_1 => {
+        // isTokenExchangeError 错误信息记录 `message.includes` 是否成立，终端渲染随后按该结果分支。
         const isTokenExchangeError = err_1.message.includes('Token exchange failed');
         // Enterprise TLS proxies (Zscaler et al.) intercept the token
         // exchange POST and cause cryptic SSL errors. Surface an
         // actionable hint so the user isn't stuck in a login loop.
+        // sslHint_0读取`getSSLErrorHint`，供终端渲染后续处理使用。
         const sslHint_0 = getSSLErrorHint(err_1);
+        // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
         setOAuthStatus({
           state: 'error',
           message: sslHint_0 ?? (isTokenExchangeError ? 'Failed to exchange authorization code for access token. Please try again.' : err_1.message),
@@ -218,36 +305,49 @@ export function ConsoleOAuthFlow({
             state: 'idle'
           }
         });
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_oauth_token_exchange_error', {
           error: err_1.message,
           ssl_error: sslHint_0 !== null
         });
+        // 抛出 err_1;，阻止终端渲染在无效状态下继续运行。
         throw err_1;
       });
+      // 当 `mode` 匹配 `'setup-token'` 时，终端渲染执行对应分支。
       if (mode === 'setup-token') {
         // For setup-token mode, return the OAuth access token directly (it can be used as an API key)
         // Don't save to keychain - the token is displayed for manual use with CLAUDE_CODE_OAUTH_TOKEN
+        // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
         setOAuthStatus({
           state: 'success',
           token: result.accessToken
         });
       } else {
+        // 等待 `installOAuthTokens(result)` 完成，再继续终端 UI 组件 Console OAuth Flow的异步流程。
         await installOAuthTokens(result);
+        // orgResult读取`validateForceLoginOrg`，供终端渲染后续处理使用。
         const orgResult = await validateForceLoginOrg();
+        // orgResult.valid缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!orgResult.valid) {
+          // 抛出 new Error(orgResult.message);，阻止终端渲染在无效状态下继续运行。
           throw new Error(orgResult.message);
         }
+        // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
         setOAuthStatus({
           state: 'success'
         });
+        // 显式忽略 `sendNotification({` 的返回值，只保留它触发的副作用。
         void sendNotification({
           message: 'Claude Code login successful',
           notificationType: 'auth_success'
         }, terminal);
       }
     } catch (err_0) {
+      // errorMessage 消息数据 命名 `(err_0 as Error).message`，让后续代码直接表达这个值的用途。
       const errorMessage = (err_0 as Error).message;
+      // sslHint读取`getSSLErrorHint`，供终端渲染后续处理使用。
       const sslHint = getSSLErrorHint(err_0);
+      // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setOAuthStatus({
         state: 'error',
         message: sslHint ?? errorMessage,
@@ -255,44 +355,62 @@ export function ConsoleOAuthFlow({
           state: mode === 'setup-token' ? 'ready_to_start' : 'idle'
         }
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_oauth_error', {
         error: errorMessage as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ssl_error: sslHint !== null
       });
     }
   }, [oauthService, setShowPastePrompt, loginWithClaudeAi, mode, orgUUID]);
+  // pendingOAuthStartRef 引用保存`useRef`，供终端渲染后续处理使用。
   const pendingOAuthStartRef = useRef(false);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `oauthStatus.state === 'ready_to_start' && !pendin` 满足时，终端渲染才执行该分支。
     if (oauthStatus.state === 'ready_to_start' && !pendingOAuthStartRef.current) {
+      // current更新为 `true`，确保终端 UI后续读取最新状态。
       pendingOAuthStartRef.current = true;
+      // 调用 process.nextTick，触发终端渲染此处需要的副作用。
       process.nextTick((startOAuth_0: () => Promise<void>, pendingOAuthStartRef_0: React.MutableRefObject<boolean>) => {
+        // 显式忽略 `startOAuth_0()` 的返回值，只保留它触发的副作用。
         void startOAuth_0();
+        // current更新为 `false`，确保终端 UI后续读取最新状态。
         pendingOAuthStartRef_0.current = false;
       }, startOAuth, pendingOAuthStartRef);
     }
   }, [oauthStatus.state, startOAuth]);
 
   // Auto-exit for setup-token mode
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 当 `mode` 匹配 `'setup-token' && oauthStatu...` 时，终端渲染执行对应分支。
     if (mode === 'setup-token' && oauthStatus.state === 'success') {
       // Delay to ensure static content is fully rendered before exiting
+      // timer_0保存`setTimeout`，供终端渲染后续处理使用。
       const timer_0 = setTimeout((loginWithClaudeAi_0, onDone_0) => {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_oauth_success', {
           loginWithClaudeAi: loginWithClaudeAi_0
         });
         // Don't clear terminal so the token remains visible
+        // 调用 onDone_0，触发终端渲染此处需要的副作用。
         onDone_0();
       }, 500, loginWithClaudeAi, onDone);
+      // 返回 `() => clearTimeout(timer_0)`，作为终端渲染这次计算的结果。
       return () => clearTimeout(timer_0);
     }
   }, [mode, oauthStatus, loginWithClaudeAi, onDone]);
 
   // Cleanup OAuth service when component unmounts
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 返回 `() => {`，作为终端渲染这次计算的结果。
     return () => {
+      // 调用 oauthService.cleanup，触发终端渲染此处需要的副作用。
       oauthService.cleanup();
     };
   }, [oauthService]);
+  // 返回 `<Box flexDirection="column" gap={1}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" gap={1}>
       {oauthStatus.state === 'waiting_for_login' && showPastePrompt && <Box flexDirection="column" key="urlToCopy" gap={1} paddingBottom={1}>
           <Box paddingX={1}>
@@ -329,6 +447,7 @@ export function ConsoleOAuthFlow({
       </Box>
     </Box>;
 }
+// OAuthStatusMessageProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type OAuthStatusMessageProps = {
   oauthStatus: OAuthStatus;
   mode: 'login' | 'setup-token';
@@ -336,16 +455,24 @@ type OAuthStatusMessageProps = {
   forcedMethodMessage: string | null;
   showPastePrompt: boolean;
   pastedCode: string;
+  // 这个回调绑定到 setPastedCode: (value: string) => void;，负责终端渲染在该局部场景下的响应。
   setPastedCode: (value: string) => void;
   cursorOffset: number;
+  // 这个回调绑定到 setCursorOffset: (offset: number) => void;，负责终端渲染在该局部场景下的响应。
   setCursorOffset: (offset: number) => void;
   textInputColumns: number;
+  // 这个回调绑定到 handleSubmitCode: (value: string, url: string) => void;，负责终端渲染在该局部场景下的响应。
   handleSubmitCode: (value: string, url: string) => void;
+  // 这个回调绑定到 setOAuthStatus: (status: OAuthStatus) => void;，负责终端渲染在该局部场景下的响应。
   setOAuthStatus: (status: OAuthStatus) => void;
+  // 这个回调绑定到 setLoginWithClaudeAi: (value: boolean) => void;，负责终端渲染在该局部场景下的响应。
   setLoginWithClaudeAi: (value: boolean) => void;
 };
+// OAuthStatusMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function OAuthStatusMessage(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(51);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     oauthStatus,
     mode,
@@ -361,269 +488,442 @@ function OAuthStatusMessage(t0) {
     setOAuthStatus,
     setLoginWithClaudeAi
   } = t0;
+  // 按照 oauthStatus.state 的取值选择终端渲染的具体处理分支。
   switch (oauthStatus.state) {
     case "idle":
       {
+        // 临时值 t1 命名 `startingMessage ? startingMessage : "Claude Code can be u...`，让后续代码直接表达这个值的用途。
         const t1 = startingMessage ? startingMessage : "Claude Code can be used with your Claude subscription or billed based on API usage through your Console account.";
+        // t2 暂存 `<Text bold={true}>{t1}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[0] !== t1) {
+          // t2 暂存 `<Text bold={true}>{t1}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t2 = <Text bold={true}>{t1}</Text>;
+          // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[0] = t1;
+          // $[1] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[1] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[1];
         }
+        // t3 暂存 `<Text>Select login method:</Text>` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+          // t3 暂存 `<Text>Select login method:</Text>` 生成的渲染片段，后续返回路径直接复用。
           t3 = <Text>Select login method:</Text>;
+          // $[2] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[2] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[2];
         }
+        // t4 暂存 `{` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+          // t4 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
           t4 = {
             label: <Text>Claude account with subscription ·{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[ANT-ONLY]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
             value: "claudeai"
           };
+          // $[3] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[3] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[3];
         }
+        // t5 暂存 `{` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+          // t5 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
           t5 = {
             label: <Text>Anthropic Console account ·{" "}<Text dimColor={true}>API usage billing</Text>{"\n"}</Text>,
             value: "console"
           };
+          // $[4] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[4] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[4];
         }
+        // t6 暂存 `[t4, t5, {` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+          // t6 暂存 `[t4, t5, {` 生成的渲染片段，后续返回路径直接复用。
           t6 = [t4, t5, {
             label: <Text>3rd-party platform ·{" "}<Text dimColor={true}>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>{"\n"}</Text>,
             value: "platform"
           }];
+          // $[5] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[5] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[5];
         }
+        // t7 暂存 `<Box><Select options={t6} onChange={value_0 => {` 的派生结果，便于缓存命中时直接复用。
         let t7;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[6] !== setLoginWithClaudeAi || $[7] !== setOAuthStatus) {
+          // t7 暂存 `<Box><Select options={t6} onChange={value_0 => {` 生成的渲染片段，后续返回路径直接复用。
           t7 = <Box><Select options={t6} onChange={value_0 => {
+              // 当 `value_0` 匹配 `"platform"` 时，终端渲染执行对应分支。
               if (value_0 === "platform") {
+                // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
                 logEvent("tengu_oauth_platform_selected", {});
+                // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
                 setOAuthStatus({
                   state: "platform_setup"
                 });
               } else {
+                // setOAuthStatus 写入新的状态值，使终端渲染后续读取保持一致。
                 setOAuthStatus({
                   state: "ready_to_start"
                 });
+                // 当 `value_0` 匹配 `"claudeai"` 时，终端渲染执行对应分支。
                 if (value_0 === "claudeai") {
+                  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
                   logEvent("tengu_oauth_claudeai_selected", {});
+                  // setLoginWithClaudeAi 写入新的状态值，使终端渲染后续读取保持一致。
                   setLoginWithClaudeAi(true);
                 } else {
+                  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
                   logEvent("tengu_oauth_console_selected", {});
+                  // setLoginWithClaudeAi 写入新的状态值，使终端渲染后续读取保持一致。
                   setLoginWithClaudeAi(false);
                 }
               }
             }} /></Box>;
+          // $[6] 缓存 `setLoginWithClaudeAi`，下次依赖未变时 React 编译产物可直接复用。
           $[6] = setLoginWithClaudeAi;
+          // $[7] 缓存 `setOAuthStatus`，下次依赖未变时 React 编译产物可直接复用。
           $[7] = setOAuthStatus;
+          // $[8] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
           $[8] = t7;
         } else {
+          // t7 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
           t7 = $[8];
         }
+        // t8 暂存 `<Box flexDirection="column" gap={1} marginTop={1}>{t2}{t3...` 的派生结果，便于缓存命中时直接复用。
         let t8;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[9] !== t2 || $[10] !== t7) {
+          // t8 暂存 `<Box flexDirection="column" gap={1} marginTop={1}>{t2}{t3...` 生成的渲染片段，后续返回路径直接复用。
           t8 = <Box flexDirection="column" gap={1} marginTop={1}>{t2}{t3}{t7}</Box>;
+          // $[9] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[9] = t2;
+          // $[10] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
           $[10] = t7;
+          // $[11] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
           $[11] = t8;
         } else {
+          // t8 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
           t8 = $[11];
         }
+        // 返回 `t8`，作为终端渲染这次计算的结果。
         return t8;
       }
     case "platform_setup":
       {
+        // t1 暂存 `<Text bold={true}>Using 3rd-party platforms</Text>` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Text bold={true}>Using 3rd-party platforms</Text>` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Text bold={true}>Using 3rd-party platforms</Text>;
+          // $[12] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[12] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[12];
         }
+        // t2 暂存 `<Text>Claude Code supports Amazon Bedrock, Microsoft Foun...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // t3 暂存 `<Text>If you are part of an enterprise organization, cont...` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
+          // t2 暂存 `<Text>Claude Code supports Amazon Bedrock, Microsoft Foun...` 生成的渲染片段，后续返回路径直接复用。
           t2 = <Text>Claude Code supports Amazon Bedrock, Microsoft Foundry, and Vertex AI. Set the required environment variables, then restart Claude Code.</Text>;
+          // t3 暂存 `<Text>If you are part of an enterprise organization, cont...` 生成的渲染片段，后续返回路径直接复用。
           t3 = <Text>If you are part of an enterprise organization, contact your administrator for setup instructions.</Text>;
+          // $[13] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[13] = t2;
+          // $[14] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[14] = t3;
         } else {
+          // t2 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[13];
+          // t3 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[14];
         }
+        // t4 暂存 `<Text bold={true}>Documentation:</Text>` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
+          // t4 暂存 `<Text bold={true}>Documentation:</Text>` 生成的渲染片段，后续返回路径直接复用。
           t4 = <Text bold={true}>Documentation:</Text>;
+          // $[15] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[15] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[15];
         }
+        // t5 暂存 `<Text>· Amazon Bedrock:{" "}<Link url="https://code.claud...` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
+          // t5 暂存 `<Text>· Amazon Bedrock:{" "}<Link url="https://code.claud...` 生成的渲染片段，后续返回路径直接复用。
           t5 = <Text>· Amazon Bedrock:{" "}<Link url="https://code.claude.com/docs/en/amazon-bedrock">https://code.claude.com/docs/en/amazon-bedrock</Link></Text>;
+          // $[16] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[16] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[16];
         }
+        // t6 暂存 `<Text>· Microsoft Foundry:{" "}<Link url="https://code.cl...` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
+          // t6 暂存 `<Text>· Microsoft Foundry:{" "}<Link url="https://code.cl...` 生成的渲染片段，后续返回路径直接复用。
           t6 = <Text>· Microsoft Foundry:{" "}<Link url="https://code.claude.com/docs/en/microsoft-foundry">https://code.claude.com/docs/en/microsoft-foundry</Link></Text>;
+          // $[17] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[17] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[17];
         }
+        // t7 暂存 `<Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Te...` 的派生结果，便于缓存命中时直接复用。
         let t7;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
+          // t7 暂存 `<Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Te...` 生成的渲染片段，后续返回路径直接复用。
           t7 = <Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Text>· Vertex AI:{" "}<Link url="https://code.claude.com/docs/en/google-vertex-ai">https://code.claude.com/docs/en/google-vertex-ai</Link></Text></Box>;
+          // $[18] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
           $[18] = t7;
         } else {
+          // t7 从 React 编译缓存槽 $[18] 取回渲染片段，避免依赖未变时重建 JSX。
           t7 = $[18];
         }
+        // t8 暂存 `<Box flexDirection="column" gap={1} marginTop={1}>{t1}<Bo...` 的派生结果，便于缓存命中时直接复用。
         let t8;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[19] === Symbol.for("react.memo_cache_sentinel")) {
+          // t8 暂存 `<Box flexDirection="column" gap={1} marginTop={1}>{t1}<Bo...` 生成的渲染片段，后续返回路径直接复用。
           t8 = <Box flexDirection="column" gap={1} marginTop={1}>{t1}<Box flexDirection="column" gap={1}>{t2}{t3}{t7}<Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to go back to login options.</Text></Box></Box></Box>;
+          // $[19] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
           $[19] = t8;
         } else {
+          // t8 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
           t8 = $[19];
         }
+        // 返回 `t8`，作为终端渲染这次计算的结果。
         return t8;
       }
     case "waiting_for_login":
       {
+        // t1 暂存 `forcedMethodMessage && <Box><Text dimColor={true}>{forced...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[20] !== forcedMethodMessage) {
+          // t1 暂存 `forcedMethodMessage && <Box><Text dimColor={true}>{forced...` 生成的渲染片段，后续返回路径直接复用。
           t1 = forcedMethodMessage && <Box><Text dimColor={true}>{forcedMethodMessage}</Text></Box>;
+          // $[20] 缓存 `forcedMethodMessage`，下次依赖未变时 React 编译产物可直接复用。
           $[20] = forcedMethodMessage;
+          // $[21] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[21] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[21];
         }
+        // t2 暂存 `!showPastePrompt && <Box><Spinner /><Text>Opening browser...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[22] !== showPastePrompt) {
+          // t2 暂存 `!showPastePrompt && <Box><Spinner /><Text>Opening browser...` 生成的渲染片段，后续返回路径直接复用。
           t2 = !showPastePrompt && <Box><Spinner /><Text>Opening browser to sign in…</Text></Box>;
+          // $[22] 缓存 `showPastePrompt`，下次依赖未变时 React 编译产物可直接复用。
           $[22] = showPastePrompt;
+          // $[23] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[23] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[23] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[23];
         }
+        // t3 暂存 `showPastePrompt && <Box><Text>{PASTE_HERE_MSG}</Text><Tex...` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[24] !== cursorOffset || $[25] !== handleSubmitCode || $[26] !== oauthStatus.url || $[27] !== pastedCode || $[28] !== setCursorOffset || $[29] !== setPastedCode || $[30] !== showPastePrompt || $[31] !== textInputColumns) {
+          // t3 暂存 `showPastePrompt && <Box><Text>{PASTE_HERE_MSG}</Text><Tex...` 生成的渲染片段，后续返回路径直接复用。
           t3 = showPastePrompt && <Box><Text>{PASTE_HERE_MSG}</Text><TextInput value={pastedCode} onChange={setPastedCode} onSubmit={value => handleSubmitCode(value, oauthStatus.url)} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} columns={textInputColumns} mask="*" /></Box>;
+          // $[24] 缓存 `cursorOffset`，下次依赖未变时 React 编译产物可直接复用。
           $[24] = cursorOffset;
+          // $[25] 缓存 `handleSubmitCode`，下次依赖未变时 React 编译产物可直接复用。
           $[25] = handleSubmitCode;
+          // $[26] 缓存 `oauthStatus.url`，下次依赖未变时 React 编译产物可直接复用。
           $[26] = oauthStatus.url;
+          // $[27] 缓存 `pastedCode`，下次依赖未变时 React 编译产物可直接复用。
           $[27] = pastedCode;
+          // $[28] 缓存 `setCursorOffset`，下次依赖未变时 React 编译产物可直接复用。
           $[28] = setCursorOffset;
+          // $[29] 缓存 `setPastedCode`，下次依赖未变时 React 编译产物可直接复用。
           $[29] = setPastedCode;
+          // $[30] 缓存 `showPastePrompt`，下次依赖未变时 React 编译产物可直接复用。
           $[30] = showPastePrompt;
+          // $[31] 缓存 `textInputColumns`，下次依赖未变时 React 编译产物可直接复用。
           $[31] = textInputColumns;
+          // $[32] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[32] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[32] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[32];
         }
+        // t4 暂存 `<Box flexDirection="column" gap={1}>{t1}{t2}{t3}</Box>` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[33] !== t1 || $[34] !== t2 || $[35] !== t3) {
+          // t4 暂存 `<Box flexDirection="column" gap={1}>{t1}{t2}{t3}</Box>` 生成的渲染片段，后续返回路径直接复用。
           t4 = <Box flexDirection="column" gap={1}>{t1}{t2}{t3}</Box>;
+          // $[33] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[33] = t1;
+          // $[34] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[34] = t2;
+          // $[35] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[35] = t3;
+          // $[36] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[36] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[36] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[36];
         }
+        // 返回 `t4`，作为终端渲染这次计算的结果。
         return t4;
       }
     case "creating_api_key":
       {
+        // t1 暂存 `<Box flexDirection="column" gap={1}><Box><Spinner /><Text...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[37] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Box flexDirection="column" gap={1}><Box><Spinner /><Text...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Box flexDirection="column" gap={1}><Box><Spinner /><Text>Creating API key for Claude Code…</Text></Box></Box>;
+          // $[37] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[37] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[37] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[37];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
     case "about_to_retry":
       {
+        // t1 暂存 `<Box flexDirection="column" gap={1}><Text color="permissi...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[38] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Box flexDirection="column" gap={1}><Text color="permissi...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Box flexDirection="column" gap={1}><Text color="permission">Retrying…</Text></Box>;
+          // $[38] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[38] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[38] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[38];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
     case "success":
       {
+        // t1 暂存 `mode === "setup-token" && oauthStatus.token ? null : <>{g...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[39] !== mode || $[40] !== oauthStatus.token) {
+          // t1 暂存 `mode === "setup-token" && oauthStatus.token ? null : <>{g...` 生成的渲染片段，后续返回路径直接复用。
           t1 = mode === "setup-token" && oauthStatus.token ? null : <>{getOauthAccountInfo()?.emailAddress ? <Text dimColor={true}>Logged in as{" "}<Text>{getOauthAccountInfo()?.emailAddress}</Text></Text> : null}<Text color="success">Login successful. Press <Text bold={true}>Enter</Text> to continue…</Text></>;
+          // $[39] 缓存 `mode`，下次依赖未变时 React 编译产物可直接复用。
           $[39] = mode;
+          // $[40] 缓存 `oauthStatus.token`，下次依赖未变时 React 编译产物可直接复用。
           $[40] = oauthStatus.token;
+          // $[41] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[41] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[41];
         }
+        // t2 暂存 `<Box flexDirection="column">{t1}</Box>` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[42] !== t1) {
+          // t2 暂存 `<Box flexDirection="column">{t1}</Box>` 生成的渲染片段，后续返回路径直接复用。
           t2 = <Box flexDirection="column">{t1}</Box>;
+          // $[42] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[42] = t1;
+          // $[43] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[43] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[43] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[43];
         }
+        // 返回 `t2`，作为终端渲染这次计算的结果。
         return t2;
       }
     case "error":
       {
+        // t1 暂存 `<Text color="error">OAuth error: {oauthStatus.message}</T...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[44] !== oauthStatus.message) {
+          // t1 暂存 `<Text color="error">OAuth error: {oauthStatus.message}</T...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Text color="error">OAuth error: {oauthStatus.message}</Text>;
+          // $[44] 缓存 `oauthStatus.message`，下次依赖未变时 React 编译产物可直接复用。
           $[44] = oauthStatus.message;
+          // $[45] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[45] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[45] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[45];
         }
+        // t2 暂存 `oauthStatus.toRetry && <Box marginTop={1}><Text color="pe...` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[46] !== oauthStatus.toRetry) {
+          // t2 暂存 `oauthStatus.toRetry && <Box marginTop={1}><Text color="pe...` 生成的渲染片段，后续返回路径直接复用。
           t2 = oauthStatus.toRetry && <Box marginTop={1}><Text color="permission">Press <Text bold={true}>Enter</Text> to retry.</Text></Box>;
+          // $[46] 缓存 `oauthStatus.toRetry`，下次依赖未变时 React 编译产物可直接复用。
           $[46] = oauthStatus.toRetry;
+          // $[47] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[47] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[47];
         }
+        // t3 暂存 `<Box flexDirection="column" gap={1}>{t1}{t2}</Box>` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[48] !== t1 || $[49] !== t2) {
+          // t3 暂存 `<Box flexDirection="column" gap={1}>{t1}{t2}</Box>` 生成的渲染片段，后续返回路径直接复用。
           t3 = <Box flexDirection="column" gap={1}>{t1}{t2}</Box>;
+          // $[48] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[48] = t1;
+          // $[49] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[49] = t2;
+          // $[50] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[50] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[50] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[50];
         }
+        // 返回 `t3`，作为终端渲染这次计算的结果。
         return t3;
       }
     default:
       {
+        // 返回 `null`，作为终端渲染这次计算的结果。
         return null;
       }
   }

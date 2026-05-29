@@ -1,17 +1,20 @@
 // Extracted from dream.ts so auto-dream ships independently of KAIROS
 // feature flags (dream.ts is behind a feature()-gated require).
 
+// 整理这一组导入，让服务层 consolidation Prompt后续逻辑可以直接复用这些外部能力。
 import {
   DIR_EXISTS_GUIDANCE,
   ENTRYPOINT_NAME,
   MAX_ENTRYPOINT_LINES,
 } from '../../memdir/memdir.js'
 
+// buildConsolidationPrompt 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildConsolidationPrompt(
   memoryRoot: string,
   transcriptDir: string,
   extra: string,
 ): string {
+  // 返回 ``# Dream: Memory Consolidation`，作为服务层 consolidation Prompt这次计算的结果。
   return `# Dream: Memory Consolidation
 
 You are performing a dream — a reflective pass over your memory files. Synthesize what you've learned recently into durable, well-organized memories so that future sessions can orient quickly.

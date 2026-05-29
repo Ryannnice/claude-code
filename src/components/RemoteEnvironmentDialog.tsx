@@ -1,264 +1,461 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useState } from 'react';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 引入 useKeybinding，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../keybindings/useKeybinding.js';
+// 复用 toError 工具函数，把通用处理留在 ../utils/errors.js 中维护。
 import { toError } from '../utils/errors.js';
+// 复用 logError 工具函数，把通用处理留在 ../utils/log.js 中维护。
 import { logError } from '../utils/log.js';
+// 复用 getSettingSourceName、SettingSource 工具函数，把通用处理留在 ../utils/settings/constants.js 中维护。
 import { getSettingSourceName, type SettingSource } from '../utils/settings/constants.js';
+// 复用 updateSettingsForSource 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { updateSettingsForSource } from '../utils/settings/settings.js';
+// 复用 getEnvironmentSelectionInfo 工具函数，把通用处理留在 ../utils/teleport/environmentSelection.js 中维护。
 import { getEnvironmentSelectionInfo } from '../utils/teleport/environmentSelection.js';
+// 类型依赖 { EnvironmentResource } 来自 ../utils/teleport/environments.js，用于校准终端渲染的数据契约。
 import type { EnvironmentResource } from '../utils/teleport/environments.js';
+// 引入 ConfigurableShortcutHint，将 ./ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
+// 引入 Select，将 ./CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from './CustomSelect/select.js';
+// 引入 Byline，将 ./design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from './design-system/Byline.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// 引入 KeyboardShortcutHint，将 ./design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
+// 引入 LoadingState，将 ./design-system/LoadingState.js 中已经封装好的能力接到本文件流程里。
 import { LoadingState } from './design-system/LoadingState.js';
+// DIALOG_TITLE 标题固定为 `'Select Remote Environment'`，作为终端 UI Remote Environment D...后续展示或比较的基准。
 const DIALOG_TITLE = 'Select Remote Environment';
+// SETUP_HINT固定为 ``Configure environments at: https://claude.ai/code``，作为终端 UI Remote Environment D...后续展示或比较的基准。
 const SETUP_HINT = `Configure environments at: https://claude.ai/code`;
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
+  // 这个回调绑定到 onDone: (message?: string) => void;，负责终端渲染在该局部场景下的响应。
   onDone: (message?: string) => void;
 };
+// LoadingState 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type LoadingState = 'loading' | 'updating' | null;
+// RemoteEnvironmentDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function RemoteEnvironmentDialog(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(27);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onDone
   } = t0;
+  // loadingState 状态 由 React state 持有，setLoadingState 会在用户操作或异步结果返回时触发刷新。
   const [loadingState, setLoadingState] = useState("loading");
+  // t1 暂存 `[]` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `[]` 生成的渲染片段，后续返回路径直接复用。
     t1 = [];
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // environments 集合 由 React state 持有，setEnvironments 会在用户操作或异步结果返回时触发刷新。
   const [environments, setEnvironments] = useState(t1);
+  // selectedEnvironment 由 React state 持有，setSelectedEnvironment 会在用户操作或异步结果返回时触发刷新。
   const [selectedEnvironment, setSelectedEnvironment] = useState(null);
+  // selectedEnvironmentSource 由 React state 持有，setSelectedEnvironmentSource 会在用户操作或异步结果返回时触发刷新。
   const [selectedEnvironmentSource, setSelectedEnvironmentSource] = useState(null);
+  // 错误 由 React state 持有，setError 会在用户操作或异步结果返回时触发刷新。
   const [error, setError] = useState(null);
+  // t2 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // t3 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t3;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+    // t2 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t2 = () => {
+      // cancelled标记终端 UI Remote Environment D...是否启用对应路径。
       let cancelled = false;
+      // fetchInfo读取`fetchInfo`，供终端渲染后续处理使用。
       const fetchInfo = async function fetchInfo() {
+        // 终端 UI 组件 Remote Environment Dialog在这里处理 ``，完成这一小步状态转换。
         ;
+        // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
         try {
+          // 结果读取`getEnvironmentSelectionInfo`，供终端渲染后续处理使用。
           const result = await getEnvironmentSelectionInfo();
+          // 满足 `cancelled` 时，终端渲染执行该分支。
           if (cancelled) {
+            // 终端 UI 组件 Remote Environment Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
+          // setEnvironments 写入新的状态值，使终端渲染后续读取保持一致。
           setEnvironments(result.availableEnvironments);
+          // setSelectedEnvironment 写入新的状态值，使终端渲染后续读取保持一致。
           setSelectedEnvironment(result.selectedEnvironment);
+          // setSelectedEnvironmentSource 写入新的状态值，使终端渲染后续读取保持一致。
           setSelectedEnvironmentSource(result.selectedEnvironmentSource);
+          // setLoadingState 写入新的状态值，使终端渲染后续读取保持一致。
           setLoadingState(null);
         } catch (t4) {
+          // err 命名 `t4`，让后续代码直接表达这个值的用途。
           const err = t4;
+          // 满足 `cancelled` 时，终端渲染执行该分支。
           if (cancelled) {
+            // 终端 UI 组件 Remote Environment Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
+          // fetchError 错误信息保存`toError`，供终端渲染后续处理使用。
           const fetchError = toError(err);
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logError(fetchError);
+          // setError 写入新的状态值，使终端渲染后续读取保持一致。
           setError(fetchError.message);
+          // setLoadingState 写入新的状态值，使终端渲染后续读取保持一致。
           setLoadingState(null);
         }
       };
+      // 调用 fetchInfo，触发终端渲染此处需要的副作用。
       fetchInfo();
+      // 返回 `() => {`，作为终端渲染这次计算的结果。
       return () => {
+        // cancelled更新为 `true`，确保终端 UI后续读取最新状态。
         cancelled = true;
       };
     };
+    // t3 暂存 `[]` 生成的渲染片段，后续返回路径直接复用。
     t3 = [];
+    // $[1] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t2;
+    // $[2] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t3;
   } else {
+    // t2 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[1];
+    // t3 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[2];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t2, t3);
+  // t4 暂存 `function handleSelect(value) {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== environments || $[4] !== onDone) {
+    // t4 暂存 `function handleSelect(value) {` 生成的渲染片段，后续返回路径直接复用。
     t4 = function handleSelect(value) {
+      // 当 `value` 匹配 `"cancel"` 时，终端渲染执行对应分支。
       if (value === "cancel") {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone();
+        // 终端 UI 组件 Remote Environment Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // setLoadingState 写入新的状态值，使终端渲染后续读取保持一致。
       setLoadingState("updating");
+      // selectedEnv筛选`environments.find`，供终端渲染后续处理使用。
       const selectedEnv = environments.find(env => env.environment_id === value);
+      // selectedEnv缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!selectedEnv) {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone("Error: Selected environment not found");
+        // 终端 UI 组件 Remote Environment Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource("localSettings", {
         remote: {
           defaultEnvironmentId: selectedEnv.environment_id
         }
       });
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone(`Set default remote environment to ${chalk.bold(selectedEnv.name)} (${selectedEnv.environment_id})`);
     };
+    // $[3] 缓存 `environments`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = environments;
+    // $[4] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = onDone;
+    // $[5] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[5];
   }
+  // handleSelect沿用 `t4` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const handleSelect = t4;
+  // 当 `loadingState` 匹配 `"loading"` 时，终端渲染执行对应分支。
   if (loadingState === "loading") {
+    // t5 暂存 `<LoadingState message={"Loading environments\u2026"} />` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+      // t5 暂存 `<LoadingState message={"Loading environments\u2026"} />` 生成的渲染片段，后续返回路径直接复用。
       t5 = <LoadingState message={"Loading environments\u2026"} />;
+      // $[6] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[6] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[6];
     }
+    // t6 暂存 `<Dialog title={DIALOG_TITLE} onCancel={onDone} hideInputG...` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[7] !== onDone) {
+      // t6 暂存 `<Dialog title={DIALOG_TITLE} onCancel={onDone} hideInputG...` 生成的渲染片段，后续返回路径直接复用。
       t6 = <Dialog title={DIALOG_TITLE} onCancel={onDone} hideInputGuide={true}>{t5}</Dialog>;
+      // $[7] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
       $[7] = onDone;
+      // $[8] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[8] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[8];
     }
+    // 返回 `t6`，作为终端渲染这次计算的结果。
     return t6;
   }
+  // 满足 `error` 时，终端渲染执行该分支。
   if (error) {
+    // t5 暂存 `<Text color="error">Error: {error}</Text>` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[9] !== error) {
+      // t5 暂存 `<Text color="error">Error: {error}</Text>` 生成的渲染片段，后续返回路径直接复用。
       t5 = <Text color="error">Error: {error}</Text>;
+      // $[9] 缓存 `error`，下次依赖未变时 React 编译产物可直接复用。
       $[9] = error;
+      // $[10] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[10] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[10];
     }
+    // t6 暂存 `<Dialog title={DIALOG_TITLE} onCancel={onDone}>{t5}</Dial...` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[11] !== onDone || $[12] !== t5) {
+      // t6 暂存 `<Dialog title={DIALOG_TITLE} onCancel={onDone}>{t5}</Dial...` 生成的渲染片段，后续返回路径直接复用。
       t6 = <Dialog title={DIALOG_TITLE} onCancel={onDone}>{t5}</Dialog>;
+      // $[11] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
       $[11] = onDone;
+      // $[12] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[12] = t5;
+      // $[13] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[13] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[13];
     }
+    // 返回 `t6`，作为终端渲染这次计算的结果。
     return t6;
   }
+  // selectedEnvironment缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!selectedEnvironment) {
+    // t5 暂存 `<Text>No remote environments available.</Text>` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
+      // t5 暂存 `<Text>No remote environments available.</Text>` 生成的渲染片段，后续返回路径直接复用。
       t5 = <Text>No remote environments available.</Text>;
+      // $[14] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[14] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[14];
     }
+    // t6 暂存 `<Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCanc...` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[15] !== onDone) {
+      // t6 暂存 `<Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCanc...` 生成的渲染片段，后续返回路径直接复用。
       t6 = <Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCancel={onDone}>{t5}</Dialog>;
+      // $[15] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
       $[15] = onDone;
+      // $[16] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[16] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[16];
     }
+    // 返回 `t6`，作为终端渲染这次计算的结果。
     return t6;
   }
+  // 满足 `environments.length === 1` 时，终端渲染执行该分支。
   if (environments.length === 1) {
+    // t5 暂存 `<SingleEnvironmentContent environment={selectedEnvironmen...` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[17] !== onDone || $[18] !== selectedEnvironment) {
+      // t5 暂存 `<SingleEnvironmentContent environment={selectedEnvironmen...` 生成的渲染片段，后续返回路径直接复用。
       t5 = <SingleEnvironmentContent environment={selectedEnvironment} onDone={onDone} />;
+      // $[17] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
       $[17] = onDone;
+      // $[18] 缓存 `selectedEnvironment`，下次依赖未变时 React 编译产物可直接复用。
       $[18] = selectedEnvironment;
+      // $[19] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[19] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[19];
     }
+    // 返回 `t5`，作为终端渲染这次计算的结果。
     return t5;
   }
+  // t5 暂存 `<MultipleEnvironmentsContent environments={environments} ...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[20] !== environments || $[21] !== handleSelect || $[22] !== loadingState || $[23] !== onDone || $[24] !== selectedEnvironment || $[25] !== selectedEnvironmentSource) {
+    // t5 暂存 `<MultipleEnvironmentsContent environments={environments} ...` 生成的渲染片段，后续返回路径直接复用。
     t5 = <MultipleEnvironmentsContent environments={environments} selectedEnvironment={selectedEnvironment} selectedEnvironmentSource={selectedEnvironmentSource} loadingState={loadingState} onSelect={handleSelect} onCancel={onDone} />;
+    // $[20] 缓存 `environments`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = environments;
+    // $[21] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = handleSelect;
+    // $[22] 缓存 `loadingState`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = loadingState;
+    // $[23] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = onDone;
+    // $[24] 缓存 `selectedEnvironment`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = selectedEnvironment;
+    // $[25] 缓存 `selectedEnvironmentSource`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = selectedEnvironmentSource;
+    // $[26] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[26] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[26];
   }
+  // 返回 `t5`，作为终端渲染这次计算的结果。
   return t5;
 }
+// EnvironmentLabel 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function EnvironmentLabel(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(7);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     environment
   } = t0;
+  // t1 暂存 `<Text bold={true}>{environment.name}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== environment.name) {
+    // t1 暂存 `<Text bold={true}>{environment.name}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t1 = <Text bold={true}>{environment.name}</Text>;
+    // $[0] 缓存 `environment.name`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = environment.name;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // t2 暂存 `<Text dimColor={true}>({environment.environment_id})</Tex...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== environment.environment_id) {
+    // t2 暂存 `<Text dimColor={true}>({environment.environment_id})</Tex...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Text dimColor={true}>({environment.environment_id})</Text>;
+    // $[2] 缓存 `environment.environment_id`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = environment.environment_id;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[3];
   }
+  // t3 暂存 `<Text>{figures.tick} Using {t1}{" "}{t2}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== t1 || $[5] !== t2) {
+    // t3 暂存 `<Text>{figures.tick} Using {t1}{" "}{t2}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text>{figures.tick} Using {t1}{" "}{t2}</Text>;
+    // $[4] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t1;
+    // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t2;
+    // $[6] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[6];
   }
+  // 返回 `t3`，作为终端渲染这次计算的结果。
   return t3;
 }
+// SingleEnvironmentContent 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function SingleEnvironmentContent(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(6);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     environment,
     onDone
   } = t0;
+  // t1 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t1 = {
       context: "Confirmation"
     };
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding("confirm:yes", onDone, t1);
+  // t2 暂存 `<EnvironmentLabel environment={environment} />` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== environment) {
+    // t2 暂存 `<EnvironmentLabel environment={environment} />` 生成的渲染片段，后续返回路径直接复用。
     t2 = <EnvironmentLabel environment={environment} />;
+    // $[1] 缓存 `environment`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = environment;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // t3 暂存 `<Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCanc...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== onDone || $[4] !== t2) {
+    // t3 暂存 `<Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCanc...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCancel={onDone}>{t2}</Dialog>;
+    // $[3] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = onDone;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
+    // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[5];
   }
+  // 返回 `t3`，作为终端渲染这次计算的结果。
   return t3;
 }
+// MultipleEnvironmentsContent 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function MultipleEnvironmentsContent(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(18);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     environments,
     selectedEnvironment,
@@ -267,71 +464,122 @@ function MultipleEnvironmentsContent(t0) {
     onSelect,
     onCancel
   } = t0;
+  // t1 暂存 `selectedEnvironmentSource && selectedEnvironmentSource !=...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== selectedEnvironmentSource) {
+    // t1 暂存 `selectedEnvironmentSource && selectedEnvironmentSource !=...` 生成的渲染片段，后续返回路径直接复用。
     t1 = selectedEnvironmentSource && selectedEnvironmentSource !== "localSettings" ? ` (from ${getSettingSourceName(selectedEnvironmentSource)} settings)` : "";
+    // $[0] 缓存 `selectedEnvironmentSource`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = selectedEnvironmentSource;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // sourceSuffix沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const sourceSuffix = t1;
+  // t2 暂存 `<Text bold={true}>{selectedEnvironment.name}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== selectedEnvironment.name) {
+    // t2 暂存 `<Text bold={true}>{selectedEnvironment.name}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Text bold={true}>{selectedEnvironment.name}</Text>;
+    // $[2] 缓存 `selectedEnvironment.name`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = selectedEnvironment.name;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[3];
   }
+  // t3 暂存 `<Text>Currently using: {t2}{sourceSuffix}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== sourceSuffix || $[5] !== t2) {
+    // t3 暂存 `<Text>Currently using: {t2}{sourceSuffix}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text>Currently using: {t2}{sourceSuffix}</Text>;
+    // $[4] 缓存 `sourceSuffix`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = sourceSuffix;
+    // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t2;
+    // $[6] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[6];
   }
+  // subtitle 标题 命名 `t3`，让后续代码直接表达这个值的用途。
   const subtitle = t3;
+  // t4 暂存 `<Text dimColor={true}>{SETUP_HINT}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+    // t4 暂存 `<Text dimColor={true}>{SETUP_HINT}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t4 = <Text dimColor={true}>{SETUP_HINT}</Text>;
+    // $[7] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[7];
   }
+  // t5 暂存 `loadingState === "updating" ? <LoadingState message={"Upd...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[8] !== environments || $[9] !== loadingState || $[10] !== onSelect || $[11] !== selectedEnvironment.environment_id) {
+    // t5 暂存 `loadingState === "updating" ? <LoadingState message={"Upd...` 生成的渲染片段，后续返回路径直接复用。
     t5 = loadingState === "updating" ? <LoadingState message={"Updating\u2026"} /> : <Select options={environments.map(_temp)} defaultValue={selectedEnvironment.environment_id} onChange={onSelect} onCancel={() => onSelect("cancel")} layout="compact-vertical" />;
+    // $[8] 缓存 `environments`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = environments;
+    // $[9] 缓存 `loadingState`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = loadingState;
+    // $[10] 缓存 `onSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = onSelect;
+    // $[11] 缓存 `selectedEnvironment.environment_id`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = selectedEnvironment.environment_id;
+    // $[12] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[12];
   }
+  // t6 暂存 `<Text dimColor={true}><Byline><KeyboardShortcutHint short...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
+    // t6 暂存 `<Text dimColor={true}><Byline><KeyboardShortcutHint short...` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text>;
+    // $[13] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[13];
   }
+  // t7 暂存 `<Dialog title={DIALOG_TITLE} subtitle={subtitle} onCancel...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[14] !== onCancel || $[15] !== subtitle || $[16] !== t5) {
+    // t7 暂存 `<Dialog title={DIALOG_TITLE} subtitle={subtitle} onCancel...` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Dialog title={DIALOG_TITLE} subtitle={subtitle} onCancel={onCancel} hideInputGuide={true}>{t4}{t5}{t6}</Dialog>;
+    // $[14] 缓存 `onCancel`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = onCancel;
+    // $[15] 缓存 `subtitle`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = subtitle;
+    // $[16] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t5;
+    // $[17] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[17];
   }
+  // 返回 `t7`，作为终端渲染这次计算的结果。
   return t7;
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(env) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     label: <Text>{env.name} <Text dimColor={true}>({env.environment_id})</Text></Text>,
     value: env.environment_id

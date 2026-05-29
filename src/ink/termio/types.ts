@@ -10,6 +10,7 @@
 // =============================================================================
 
 /** Named colors from the 16-color palette */
+// NamedColor 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type NamedColor =
   | 'black'
   | 'red'
@@ -29,6 +30,7 @@ export type NamedColor =
   | 'brightWhite'
 
 /** Color specification - can be named, indexed (256), or RGB */
+// Color 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Color =
   | { type: 'named'; name: NamedColor }
   | { type: 'indexed'; index: number } // 0-255
@@ -40,6 +42,7 @@ export type Color =
 // =============================================================================
 
 /** Underline style variants */
+// UnderlineStyle 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type UnderlineStyle =
   | 'none'
   | 'single'
@@ -49,6 +52,7 @@ export type UnderlineStyle =
   | 'dashed'
 
 /** Text style attributes - represents current styling state */
+// TextStyle 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TextStyle = {
   bold: boolean
   dim: boolean
@@ -65,7 +69,9 @@ export type TextStyle = {
 }
 
 /** Create a default (reset) text style */
+// defaultStyle 封装Ink 渲染层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function defaultStyle(): TextStyle {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     bold: false,
     dim: false,
@@ -83,7 +89,9 @@ export function defaultStyle(): TextStyle {
 }
 
 /** Check if two styles are equal */
+// stylesEqual 封装Ink 渲染层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function stylesEqual(a: TextStyle, b: TextStyle): boolean {
+  // 返回 `(`，作为终端渲染这次计算的结果。
   return (
     a.bold === b.bold &&
     a.dim === b.dim &&
@@ -101,20 +109,27 @@ export function stylesEqual(a: TextStyle, b: TextStyle): boolean {
 }
 
 /** Check if two colors are equal */
+// colorsEqual 封装Ink 渲染层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function colorsEqual(a: Color, b: Color): boolean {
+  // `a.type` 与 `b.type` 不一致时刷新派生状态，避免使用过期结果。
   if (a.type !== b.type) return false
+  // 按照 a.type 的取值选择终端渲染的具体处理分支。
   switch (a.type) {
     case 'named':
+      // 返回 `a.name === (b as typeof a).name`，作为终端渲染这次计算的结果。
       return a.name === (b as typeof a).name
     case 'indexed':
+      // 返回 `a.index === (b as typeof a).index`，作为终端渲染这次计算的结果。
       return a.index === (b as typeof a).index
     case 'rgb':
+      // 返回 `(`，作为终端渲染这次计算的结果。
       return (
         a.r === (b as typeof a).r &&
         a.g === (b as typeof a).g &&
         a.b === (b as typeof a).b
       )
     case 'default':
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
   }
 }
@@ -123,8 +138,10 @@ export function colorsEqual(a: Color, b: Color): boolean {
 // Cursor Actions
 // =============================================================================
 
+// CursorDirection 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CursorDirection = 'up' | 'down' | 'forward' | 'back'
 
+// CursorAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CursorAction =
   | { type: 'move'; direction: CursorDirection; count: number }
   | { type: 'position'; row: number; col: number }
@@ -146,6 +163,7 @@ export type CursorAction =
 // Erase Actions
 // =============================================================================
 
+// EraseAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type EraseAction =
   | { type: 'display'; region: 'toEnd' | 'toStart' | 'all' | 'scrollback' }
   | { type: 'line'; region: 'toEnd' | 'toStart' | 'all' }
@@ -155,6 +173,7 @@ export type EraseAction =
 // Scroll Actions
 // =============================================================================
 
+// ScrollAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ScrollAction =
   | { type: 'up'; count: number }
   | { type: 'down'; count: number }
@@ -164,6 +183,7 @@ export type ScrollAction =
 // Mode Actions
 // =============================================================================
 
+// ModeAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ModeAction =
   | { type: 'alternateScreen'; enabled: boolean }
   | { type: 'bracketedPaste'; enabled: boolean }
@@ -174,6 +194,7 @@ export type ModeAction =
 // Link Actions (OSC 8)
 // =============================================================================
 
+// LinkAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LinkAction =
   | { type: 'start'; url: string; params?: Record<string, string> }
   | { type: 'end' }
@@ -182,6 +203,7 @@ export type LinkAction =
 // Title Actions (OSC 0/1/2)
 // =============================================================================
 
+// TitleAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TitleAction =
   | { type: 'windowTitle'; title: string }
   | { type: 'iconName'; name: string }
@@ -197,6 +219,7 @@ export type TitleAction =
  *  - null → explicitly cleared (bare key or key= with empty value)
  *  - value → set to this
  */
+// TabStatusAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TabStatusAction = {
   indicator?: Color | null
   status?: string | null
@@ -208,6 +231,7 @@ export type TabStatusAction = {
 // =============================================================================
 
 /** A segment of styled text */
+// TextSegment 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TextSegment = {
   type: 'text'
   text: string
@@ -215,12 +239,14 @@ export type TextSegment = {
 }
 
 /** A grapheme (visual character unit) with width info */
+// Grapheme 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Grapheme = {
   value: string
   width: 1 | 2 // Display width in columns
 }
 
 /** All possible parsed actions */
+// Action 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Action =
   | { type: 'text'; graphemes: Grapheme[]; style: TextStyle }
   | { type: 'cursor'; action: CursorAction }

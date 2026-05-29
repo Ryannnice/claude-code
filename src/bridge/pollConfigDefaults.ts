@@ -10,6 +10,7 @@
  * Governs user-visible "connecting…" latency on initial work pickup and
  * recovery speed after the server re-dispatches a work item.
  */
+// POLL_INTERVAL_MS_NOT_AT_CAPACITY保存`2000`，供后续判断或组装使用。
 const POLL_INTERVAL_MS_NOT_AT_CAPACITY = 2000
 
 /**
@@ -27,6 +28,7 @@ const POLL_INTERVAL_MS_NOT_AT_CAPACITY = 2000
  * failures, so poll is not the recovery path — it's strictly a liveness
  * signal plus a backstop for permanent close.
  */
+// POLL_INTERVAL_MS_AT_CAPACITY保存`600_000`，供后续判断或组装使用。
 const POLL_INTERVAL_MS_AT_CAPACITY = 600_000
 
 /**
@@ -35,12 +37,16 @@ const POLL_INTERVAL_MS_AT_CAPACITY = 600_000
  * preserve current behavior. Ops can tune these independently via the
  * tengu_bridge_poll_interval_config GB flag.
  */
+// MULTISESSION_POLL_INTERVAL_MS_NOT_AT_CAPACITY 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const MULTISESSION_POLL_INTERVAL_MS_NOT_AT_CAPACITY =
   POLL_INTERVAL_MS_NOT_AT_CAPACITY
+// MULTISESSION_POLL_INTERVAL_MS_PARTIAL_CAPACITY 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const MULTISESSION_POLL_INTERVAL_MS_PARTIAL_CAPACITY =
   POLL_INTERVAL_MS_NOT_AT_CAPACITY
+// MULTISESSION_POLL_INTERVAL_MS_AT_CAPACITY 会话数据保存`POLL_INTERVAL_MS_AT_CAPACITY`，供远程桥接会话远程桥接 poll Config Defaults后续判断或输出使用。
 const MULTISESSION_POLL_INTERVAL_MS_AT_CAPACITY = POLL_INTERVAL_MS_AT_CAPACITY
 
+// PollIntervalConfig 固化远程桥接会话里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PollIntervalConfig = {
   poll_interval_ms_not_at_capacity: number
   poll_interval_ms_at_capacity: number
@@ -52,6 +58,7 @@ export type PollIntervalConfig = {
   session_keepalive_interval_v2_ms: number
 }
 
+// DEFAULT_POLL_CONFIG 配置 集中保存远程桥接 poll Config Defaults要一起传递的字段。
 export const DEFAULT_POLL_CONFIG: PollIntervalConfig = {
   poll_interval_ms_not_at_capacity: POLL_INTERVAL_MS_NOT_AT_CAPACITY,
   poll_interval_ms_at_capacity: POLL_INTERVAL_MS_AT_CAPACITY,

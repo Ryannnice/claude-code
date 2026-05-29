@@ -1,12 +1,20 @@
+// 引入 React、ReactNode，将 react 中已经封装好的能力接到本文件流程里。
 import React, { type ReactNode } from 'react';
+// 引入 useExitOnCtrlCDWithKeybindings，将 ../../hooks/useExitOnCtrlCDWithKeybindings.js 中已经封装好的能力接到本文件流程里。
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 KeyboardShortcutHint，将 ../design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   instructions?: ReactNode;
 };
+// WizardNavigationFooter 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function WizardNavigationFooter({
   instructions = <Byline>
       <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
@@ -14,7 +22,9 @@ export function WizardNavigationFooter({
       <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
     </Byline>
 }: Props): ReactNode {
+  // exitState 状态保存`useExitOnCtrlCDWithKeybindings`，供终端渲染后续处理使用。
   const exitState = useExitOnCtrlCDWithKeybindings();
+  // 返回 `<Box marginLeft={3} marginTop={1}>`，作为终端渲染这次计算的结果。
   return <Box marginLeft={3} marginTop={1}>
       <Text dimColor>
         {exitState.pending ? `Press ${exitState.keyName} again to exit` : instructions}

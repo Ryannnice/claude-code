@@ -1,14 +1,22 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 引入 Select，将 ../CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../CustomSelect/select.js';
+// 引入 PermissionDialog，将 ../permissions/PermissionDialog.js 中已经封装好的能力接到本文件流程里。
 import { PermissionDialog } from '../permissions/PermissionDialog.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   pluginName: string;
   pluginDescription?: string;
   fileExtension: string;
+  // 这个回调绑定到 onResponse: (response: 'yes' | 'no' | 'never' | 'disable') => void;，负责终端渲染在该局部场景下的响应。
   onResponse: (response: 'yes' | 'no' | 'never' | 'disable') => void;
 };
+// AUTO_DISMISS_MS 集合保存`30_000`，供后续判断或组装使用。
 const AUTO_DISMISS_MS = 30_000;
+// LspRecommendationMenu 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function LspRecommendationMenu({
   pluginName,
   pluginDescription,
@@ -16,30 +24,46 @@ export function LspRecommendationMenu({
   onResponse
 }: Props): React.ReactNode {
   // Use ref to avoid timer reset when onResponse changes
+  // onResponseRef 引用保存`React.useRef`，供终端渲染后续处理使用。
   const onResponseRef = React.useRef(onResponse);
+  // current更新为 `onResponse`，确保终端 UI后续读取最新状态。
   onResponseRef.current = onResponse;
 
   // 30-second auto-dismiss timer - counts as ignored (no)
+  // 调用 React.useEffect，触发终端渲染此处需要的副作用。
   React.useEffect(() => {
+    // timeoutId保存`setTimeout`，供终端渲染后续处理使用。
     const timeoutId = setTimeout(ref => ref.current('no'), AUTO_DISMISS_MS, onResponseRef);
+    // 返回 `() => clearTimeout(timeoutId)`，作为终端渲染这次计算的结果。
     return () => clearTimeout(timeoutId);
   }, []);
+  // onSelect 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function onSelect(value: string): void {
+    // 按照 value 的取值选择终端渲染的具体处理分支。
     switch (value) {
       case 'yes':
+        // 调用 onResponse，触发终端渲染此处需要的副作用。
         onResponse('yes');
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'no':
+        // 调用 onResponse，触发终端渲染此处需要的副作用。
         onResponse('no');
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'never':
+        // 调用 onResponse，触发终端渲染此处需要的副作用。
         onResponse('never');
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'disable':
+        // 调用 onResponse，触发终端渲染此处需要的副作用。
         onResponse('disable');
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
     }
   }
+  // 选项 聚合成有序列表，保持后续遍历顺序稳定。
   const options = [{
     label: <Text>
           Yes, install <Text bold>{pluginName}</Text>
@@ -57,6 +81,7 @@ export function LspRecommendationMenu({
     label: 'Disable all LSP recommendations',
     value: 'disable'
   }];
+  // 返回 `<PermissionDialog title="LSP Plugin Recommendation">`，作为终端渲染这次计算的结果。
   return <PermissionDialog title="LSP Plugin Recommendation">
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Box marginBottom={1}>
@@ -80,6 +105,7 @@ export function LspRecommendationMenu({
           <Text>Would you like to install this LSP plugin?</Text>
         </Box>
         <Box>
+          {/* 这个回调绑定到 <Select options={options} onChange={onSelect} onCancel={() => onResponse('no')} />，负责终端渲染在该局部场景下的响应。 */}
           <Select options={options} onChange={onSelect} onCancel={() => onResponse('no')} />
         </Box>
       </Box>

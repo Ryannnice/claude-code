@@ -1,15 +1,28 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 类型依赖 { TextBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准终端渲染的数据契约。
 import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 引入 React、useContext、useMemo，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useContext, useMemo } from 'react';
+// 引入 getKairosActive、getUserMsgOptIn，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/state.js';
+// 引入 Box，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box } from '../../ink.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+// 引入 useAppState，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../state/AppState.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 countCharInString 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { countCharInString } from '../../utils/stringUtils.js';
+// 引入 MessageActionsSelectedContext，将 ../messageActions.js 中已经封装好的能力接到本文件流程里。
 import { MessageActionsSelectedContext } from '../messageActions.js';
+// 引入 HighlightedThinkingText，将 ./HighlightedThinkingText.js 中已经封装好的能力接到本文件流程里。
 import { HighlightedThinkingText } from './HighlightedThinkingText.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   addMargin: boolean;
   param: TextBlockParam;
@@ -25,9 +38,13 @@ type Props = {
 // avoids this via <Static> (print-and-forget to terminal scrollback).
 // Head+tail because `{ cat file; echo prompt; } | claude` puts the user's
 // actual question at the end.
+// MAX_DISPLAY_CHARS 集合保存`10_000`，供后续判断或组装使用。
 const MAX_DISPLAY_CHARS = 10_000;
+// TRUNCATE_HEAD_CHARS 集合保存`2_500`，供后续判断或组装使用。
 const TRUNCATE_HEAD_CHARS = 2_500;
+// TRUNCATE_TAIL_CHARS 集合保存`2_500`，供后续判断或组装使用。
 const TRUNCATE_TAIL_CHARS = 2_500;
+// UserPromptMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function UserPromptMessage({
   addMargin,
   param: {
@@ -48,31 +65,49 @@ export function UserPromptMessage({
   // bypasses React.memo). Runtime-gated like isBriefEnabled() but inlined
   // to avoid pulling BriefTool.ts → prompt.ts tool-name strings into
   // external builds.
+  // isBriefOnly记录 `feature` 是否成立，终端渲染随后按该结果分支。
   const isBriefOnly = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s => s.isBriefOnly 完成终端渲染里的对应操作。
   useAppState(s => s.isBriefOnly) : false;
+  // viewingAgentTaskId保存`feature`，供终端渲染后续处理使用。
   const viewingAgentTaskId = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s_0 => s_0.viewingAgentTaskId 完成终端渲染里的对应操作。
   useAppState(s_0 => s_0.viewingAgentTaskId) : null;
   // Hoisted to mount-time — per-message component, re-renders on every scroll.
+  // briefEnvEnabled保存`feature`，供终端渲染后续处理使用。
   const briefEnvEnabled = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // 调用 useMemo，触发终端渲染此处需要的副作用。
   useMemo(() => isEnvTruthy(process.env.CLAUDE_CODE_BRIEF), []) : false;
+  // useBriefLayout保存`feature`，供终端渲染后续处理使用。
   const useBriefLayout = feature('KAIROS') || feature('KAIROS_BRIEF') ? (getKairosActive() || getUserMsgOptIn() && (briefEnvEnabled || getFeatureValue_CACHED_MAY_BE_STALE('tengu_kairos_brief', false))) && isBriefOnly && !isTranscriptMode && !viewingAgentTaskId : false;
 
   // Truncate before the early return so the hook order is stable.
+  // displayText保存`useMemo`，供终端渲染后续处理使用。
   const displayText = useMemo(() => {
+    // 满足 `text.length <= MAX_DISPLAY_CHARS` 时，终端渲染执行该分支。
     if (text.length <= MAX_DISPLAY_CHARS) return text;
+    // head格式化`text.slice`，供终端渲染后续处理使用。
     const head = text.slice(0, TRUNCATE_HEAD_CHARS);
+    // tail格式化`text.slice`，供终端渲染后续处理使用。
     const tail = text.slice(-TRUNCATE_TAIL_CHARS);
+    // hiddenLines 集合统计`countCharInString`，供终端渲染后续处理使用。
     const hiddenLines = countCharInString(text, '\n', TRUNCATE_HEAD_CHARS) - countCharInString(tail, '\n');
+    // 返回 ``${head}\n… +${hiddenLines} lines …\n${tail}``，作为终端渲染这次计算的结果。
     return `${head}\n… +${hiddenLines} lines …\n${tail}`;
   }, [text]);
+  // isSelected记录 `useContext` 是否成立，终端渲染随后按该结果分支。
   const isSelected = useContext(MessageActionsSelectedContext);
+  // 文本缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!text) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(new Error('No content found in user prompt message'));
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 返回 `<Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundCol...`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" marginTop={addMargin ? 1 : 0} backgroundColor={isSelected ? 'messageActionsBackground' : useBriefLayout ? undefined : 'userMessageBackground'} paddingRight={useBriefLayout ? 0 : 1}>
       <HighlightedThinkingText text={displayText} useBriefLayout={useBriefLayout} timestamp={useBriefLayout ? timestamp : undefined} />
     </Box>;

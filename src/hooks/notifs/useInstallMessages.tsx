@@ -1,21 +1,35 @@
+// 复用 checkInstall 工具函数，把通用处理留在 src/utils/nativeInstaller/index.js 中维护。
 import { checkInstall } from 'src/utils/nativeInstaller/index.js';
+// 引入 useStartupNotification，将 ./useStartupNotification.js 中已经封装好的能力接到本文件流程里。
 import { useStartupNotification } from './useStartupNotification.js';
+// useInstallMessages 封装useInstallMessages的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useInstallMessages() {
+  // 调用 useStartupNotification，触发React hook此处需要的副作用。
   useStartupNotification(_temp2);
 }
+// _temp2 封装useInstallMessages的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function _temp2() {
+  // 对话消息读取`checkInstall`，供React hook后续处理使用。
   const messages = await checkInstall();
+  // 返回 `messages.map(_temp)`，作为React hook 状态流这次计算的结果。
   return messages.map(_temp);
 }
+// _temp 封装useInstallMessages的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(message, index) {
+  // priority 命名 `"low"`，让后续代码直接表达这个值的用途。
   let priority = "low";
+  // 组合条件 `message.type === "error" || message.userActionReq` 成立时，React hook 状态流才启用这条专门路径。
   if (message.type === "error" || message.userActionRequired) {
+    // priority更新为 `"high"`，确保useInstallMessages后续读取最新状态。
     priority = "high";
   } else {
+    // 组合条件 `message.type === "path" || message.type === "alia` 成立时，React hook 状态流才启用这条专门路径。
     if (message.type === "path" || message.type === "alias") {
+      // priority更新为 `"medium"`，确保useInstallMessages后续读取最新状态。
       priority = "medium";
     }
   }
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     key: `install-message-${index}-${message.type}`,
     text: message.message,

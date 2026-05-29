@@ -1,5 +1,7 @@
+// 类型依赖 { Command } 来自 ../commands.js，用于校准命令处理的数据契约。
 import type { Command } from '../commands.js'
 
+// 命令 集中保存命令处理斜杠命令 init verifiers要一起传递的字段。
 const command = {
   type: 'prompt',
   name: 'init-verifiers',
@@ -8,7 +10,9 @@ const command = {
   contentLength: 0, // Dynamic content
   progressMessage: 'analyzing your project and creating verifier skills',
   source: 'builtin',
+  // getPromptForCommand不依赖额外参数，直接计算命令处理需要的结果。
   async getPromptForCommand() {
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [
       {
         type: 'text',

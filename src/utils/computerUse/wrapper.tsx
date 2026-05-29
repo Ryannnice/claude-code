@@ -16,20 +16,34 @@
  * GrowthBook gate `tengu_malort_pedway` (see gates.ts).
  */
 
+// 引入 bindSessionContext、ComputerUseSessionContext、CuCallToolResult、CuPermissionRequest、CuPermissionResponse、DEFAULT_GRANT_FLAGS、ScreenshotDims，将 @ant/computer-use-mcp 中已经封装好的能力接到本文件流程里。
 import { bindSessionContext, type ComputerUseSessionContext, type CuCallToolResult, type CuPermissionRequest, type CuPermissionResponse, DEFAULT_GRANT_FLAGS, type ScreenshotDims } from '@ant/computer-use-mcp';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 getSessionId，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getSessionId } from '../../bootstrap/state.js';
+// 复用 ComputerUseApproval 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ComputerUseApproval } from '../../components/permissions/ComputerUseApproval/ComputerUseApproval.js';
+// 类型依赖 { Tool, ToolUseContext } 来自 ../../Tool.js，用于校准共享工具的数据契约。
 import type { Tool, ToolUseContext } from '../../Tool.js';
+// 引入 logForDebugging，将 ../debug.js 中已经封装好的能力接到本文件流程里。
 import { logForDebugging } from '../debug.js';
+// 引入 checkComputerUseLock、tryAcquireComputerUseLock，将 ./computerUseLock.js 中已经封装好的能力接到本文件流程里。
 import { checkComputerUseLock, tryAcquireComputerUseLock } from './computerUseLock.js';
+// 引入 registerEscHotkey，将 ./escHotkey.js 中已经封装好的能力接到本文件流程里。
 import { registerEscHotkey } from './escHotkey.js';
+// 引入 getChicagoCoordinateMode，将 ./gates.js 中已经封装好的能力接到本文件流程里。
 import { getChicagoCoordinateMode } from './gates.js';
+// 引入 getComputerUseHostAdapter，将 ./hostAdapter.js 中已经封装好的能力接到本文件流程里。
 import { getComputerUseHostAdapter } from './hostAdapter.js';
+// 引入 getComputerUseMCPRenderingOverrides，将 ./toolRendering.js 中已经封装好的能力接到本文件流程里。
 import { getComputerUseMCPRenderingOverrides } from './toolRendering.js';
+// CallOverride 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type CallOverride = Pick<Tool, 'call'>['call'];
+// Binding 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type Binding = {
   ctx: ComputerUseSessionContext;
+  // 这个回调绑定到 dispatch: (name: string, args: unknown) => Promise<CuCallToolResult>;，负责共享工具在该局部场景下的响应。
   dispatch: (name: string, args: unknown) => Promise<CuCallToolResult>;
 };
 
@@ -46,28 +60,44 @@ type Binding = {
  * its internal screenshot blob survives, but `ToolUseContext` is per-call.
  * Tests will need to either inject the cache or run serially.
  */
+// binding 先占位，稍后的条件分支会根据实际输入补齐它。
 let binding: Binding | undefined;
+// currentToolUseContext 先占位，稍后的条件分支会根据实际输入补齐它。
 let currentToolUseContext: ToolUseContext | undefined;
+// tuc 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function tuc(): ToolUseContext {
   // Safe: `binding` is only populated when `currentToolUseContext` is set.
   // Called only from within `ctx` callbacks, which only fire during dispatch.
+  // 返回 `currentToolUseContext!`，作为共享工具这次计算的结果。
   return currentToolUseContext!;
 }
+// formatLockHeld 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatLockHeld(holder: string): string {
+  // 返回 ``Computer use is in use by another Claude session (${holder.slice(0, 8)...`，作为共享工具这次计算的结果。
   return `Computer use is in use by another Claude session (${holder.slice(0, 8)}…). Wait for that session to finish or run /exit there.`;
 }
+// buildSessionContext 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildSessionContext(): ComputerUseSessionContext {
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     // ── Read state fresh via the per-call ref ─────────────────────────────
+    // 这个回调绑定到 getAllowedApps: () => tuc().getAppState().computerUseMcpState?.allowedApps ?? [],，负责共享工具在该局部场景下的响应。
     getAllowedApps: () => tuc().getAppState().computerUseMcpState?.allowedApps ?? [],
+    // 这个回调绑定到 getGrantFlags: () => tuc().getAppState().computerUseMcpState?.grantFlags ?? DEFAULT_…，负责共享工具在该局部场景下的响应。
     getGrantFlags: () => tuc().getAppState().computerUseMcpState?.grantFlags ?? DEFAULT_GRANT_FLAGS,
     // cc-2 has no Settings page for user-denied apps yet.
+    // 这个回调绑定到 getUserDeniedBundleIds: () => [],，负责共享工具在该局部场景下的响应。
     getUserDeniedBundleIds: () => [],
+    // 这个回调绑定到 getSelectedDisplayId: () => tuc().getAppState().computerUseMcpState?.selectedDisplay…，负责共享工具在该局部场景下的响应。
     getSelectedDisplayId: () => tuc().getAppState().computerUseMcpState?.selectedDisplayId,
+    // 这个回调绑定到 getDisplayPinnedByModel: () => tuc().getAppState().computerUseMcpState?.displayPinne…，负责共享工具在该局部场景下的响应。
     getDisplayPinnedByModel: () => tuc().getAppState().computerUseMcpState?.displayPinnedByModel ?? false,
+    // 这个回调绑定到 getDisplayResolvedForApps: () => tuc().getAppState().computerUseMcpState?.displayRes…，负责共享工具在该局部场景下的响应。
     getDisplayResolvedForApps: () => tuc().getAppState().computerUseMcpState?.displayResolvedForApps,
     getLastScreenshotDims: (): ScreenshotDims | undefined => {
+      // d保存`tuc`，供共享工具后续处理使用。
       const d = tuc().getAppState().computerUseMcpState?.lastScreenshotDims;
+      // 返回 `d ? {`，作为共享工具这次计算的结果。
       return d ? {
         ...d,
         displayId: d.displayId ?? 0,
@@ -81,14 +111,22 @@ export function buildSessionContext(): ComputerUseSessionContext {
     // dismissal) is irrelevant here: `setToolJSX` blocks the tool call, so
     // the dialog can't outlive it. Ctrl+C is what matters, and
     // `runPermissionDialog` wires that from the per-call ref's abortController.
+    // 这个回调绑定到 onPermissionRequest: (req, _dialogSignal) => runPermissionDialog(req),，负责共享工具在该局部场景下的响应。
     onPermissionRequest: (req, _dialogSignal) => runPermissionDialog(req),
     // Package does the merge (dedupe + truthy-only flags). We just persist.
+    // 这个回调绑定到 onAllowedAppsChanged: (apps, flags) => tuc().setAppState(prev => {，负责共享工具在该局部场景下的响应。
     onAllowedAppsChanged: (apps, flags) => tuc().setAppState(prev => {
+      // cu保存`prev.computerUseMcpState`，供共享工具 wrapper后续判断或输出使用。
       const cu = prev.computerUseMcpState;
+      // prevApps 集合 命名 `cu?.allowedApps`，让后续代码直接表达这个值的用途。
       const prevApps = cu?.allowedApps;
+      // prevFlags 集合保存`cu?.grantFlags`，供共享工具 wrapper后续判断或输出使用。
       const prevFlags = cu?.grantFlags;
+      // sameApps 集合筛选`apps.every`，供共享工具后续处理使用。
       const sameApps = prevApps?.length === apps.length && apps.every((a, i) => prevApps[i]?.bundleId === a.bundleId);
+      // sameFlags 集合标记共享工具 wrapper是否启用对应路径。
       const sameFlags = prevFlags?.clipboardRead === flags.clipboardRead && prevFlags?.clipboardWrite === flags.clipboardWrite && prevFlags?.systemKeyCombos === flags.systemKeyCombos;
+      // 返回 `sameApps && sameFlags ? prev : {`，作为共享工具这次计算的结果。
       return sameApps && sameFlags ? prev : {
         ...prev,
         computerUseMcpState: {
@@ -98,12 +136,19 @@ export function buildSessionContext(): ComputerUseSessionContext {
         }
       };
     }),
+    // 这个回调绑定到 onAppsHidden: ids => {，负责共享工具在该局部场景下的响应。
     onAppsHidden: ids => {
+      // ids 集合为空时立即返回或跳过，避免共享工具把空集合当成可处理内容。
       if (ids.length === 0) return;
+      // 调用 tuc，触发共享工具此处需要的副作用。
       tuc().setAppState(prev => {
+        // cu保存`prev.computerUseMcpState`，供共享工具 wrapper后续判断或输出使用。
         const cu = prev.computerUseMcpState;
+        // existing 命名 `cu?.hiddenDuringTurn`，让后续代码直接表达这个值的用途。
         const existing = cu?.hiddenDuringTurn;
+        // 只有 `existing && ids.every(id => existing.has(id))` 满足时，共享工具才执行该分支。
         if (existing && ids.every(id => existing.has(id))) return prev;
+        // 返回结构化结果，集中表达共享工具已经整理出的状态。
         return {
           ...prev,
           computerUseMcpState: {
@@ -117,11 +162,16 @@ export function buildSessionContext(): ComputerUseSessionContext {
     // (pinned display unplugged) — the pin is semantically dead, so clear it
     // and the app-set key so the chase chain runs next time. When autoResolve
     // was true, onDisplayResolvedForApps re-sets the key in the same tick.
+    // 这个回调绑定到 onResolvedDisplayUpdated: id => tuc().setAppState(prev => {，负责共享工具在该局部场景下的响应。
     onResolvedDisplayUpdated: id => tuc().setAppState(prev => {
+      // cu保存`prev.computerUseMcpState`，供共享工具 wrapper后续判断或输出使用。
       const cu = prev.computerUseMcpState;
+      // 只有 `cu?.selectedDisplayId === id && !cu.displayPinned` 满足时，共享工具才执行该分支。
       if (cu?.selectedDisplayId === id && !cu.displayPinnedByModel && cu.displayResolvedForApps === undefined) {
+        // 返回 `prev`，作为共享工具这次计算的结果。
         return prev;
       }
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         ...prev,
         computerUseMcpState: {
@@ -134,13 +184,20 @@ export function buildSessionContext(): ComputerUseSessionContext {
     }),
     // switch_display(name) pins; switch_display("auto") unpins and clears the
     // app-set key so the next screenshot auto-resolves fresh.
+    // 这个回调绑定到 onDisplayPinned: id => tuc().setAppState(prev => {，负责共享工具在该局部场景下的响应。
     onDisplayPinned: id => tuc().setAppState(prev => {
+      // cu保存`prev.computerUseMcpState`，供共享工具 wrapper后续判断或输出使用。
       const cu = prev.computerUseMcpState;
+      // pinned标记共享工具 wrapper是否启用对应路径。
       const pinned = id !== undefined;
+      // nextResolvedFor保存`pinned ? cu?.displayResolvedForApps : undefined`，供共享工具 wrapper后续判断或输出使用。
       const nextResolvedFor = pinned ? cu?.displayResolvedForApps : undefined;
+      // 只有 `cu?.selectedDisplayId === id && cu?.displayPinned` 满足时，共享工具才执行该分支。
       if (cu?.selectedDisplayId === id && cu?.displayPinnedByModel === pinned && cu?.displayResolvedForApps === nextResolvedFor) {
+        // 返回 `prev`，作为共享工具这次计算的结果。
         return prev;
       }
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         ...prev,
         computerUseMcpState: {
@@ -151,9 +208,13 @@ export function buildSessionContext(): ComputerUseSessionContext {
         }
       };
     }),
+    // 这个回调绑定到 onDisplayResolvedForApps: key => tuc().setAppState(prev => {，负责共享工具在该局部场景下的响应。
     onDisplayResolvedForApps: key => tuc().setAppState(prev => {
+      // cu保存`prev.computerUseMcpState`，供共享工具 wrapper后续判断或输出使用。
       const cu = prev.computerUseMcpState;
+      // 满足 `cu?.displayResolvedForApps === key` 时，共享工具执行该分支。
       if (cu?.displayResolvedForApps === key) return prev;
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         ...prev,
         computerUseMcpState: {
@@ -162,9 +223,13 @@ export function buildSessionContext(): ComputerUseSessionContext {
         }
       };
     }),
+    // 这个回调绑定到 onScreenshotCaptured: dims => tuc().setAppState(prev => {，负责共享工具在该局部场景下的响应。
     onScreenshotCaptured: dims => tuc().setAppState(prev => {
+      // cu保存`prev.computerUseMcpState`，供共享工具 wrapper后续判断或输出使用。
       const cu = prev.computerUseMcpState;
+      // p保存`cu?.lastScreenshotDims`，供后续判断或组装使用。
       const p = cu?.lastScreenshotDims;
+      // 返回 `p?.width === dims.width && p?.height === dims.height && p?.displayWidth...`，作为共享工具这次计算的结果。
       return p?.width === dims.width && p?.height === dims.height && p?.displayWidth === dims.displayWidth && p?.displayHeight === dims.displayHeight && p?.displayId === dims.displayId && p?.originX === dims.originX && p?.originY === dims.originY ? prev : {
         ...prev,
         computerUseMcpState: {
@@ -178,20 +243,26 @@ export function buildSessionContext(): ComputerUseSessionContext {
     // awaits `checkCuLock`, and on `holder: undefined` + non-deferring tool
     // awaits `acquireCuLock`. `defersLockAcquire` is the PACKAGE's set —
     // the local copy is gone.
+    // 这个回调绑定到 checkCuLock: async () => {，负责共享工具在该局部场景下的响应。
     checkCuLock: async () => {
+      // c读取`checkComputerUseLock`，供共享工具后续处理使用。
       const c = await checkComputerUseLock();
+      // 按照 c.kind 的取值选择共享工具的具体处理分支。
       switch (c.kind) {
         case 'free':
+          // 返回结构化结果，集中表达共享工具已经整理出的状态。
           return {
             holder: undefined,
             isSelf: false
           };
         case 'held_by_self':
+          // 返回结构化结果，集中表达共享工具已经整理出的状态。
           return {
             holder: getSessionId(),
             isSelf: true
           };
         case 'blocked':
+          // 返回结构化结果，集中表达共享工具已经整理出的状态。
           return {
             holder: c.by,
             isSelf: false
@@ -204,20 +275,29 @@ export function buildSessionContext(): ComputerUseSessionContext {
     // `fresh: false` (re-entrant) shouldn't happen given check said free,
     // but is possible under parallel tool-use interleaving — don't spam the
     // notification in that case.
+    // 这个回调绑定到 acquireCuLock: async () => {，负责共享工具在该局部场景下的响应。
     acquireCuLock: async () => {
+      // r保存`tryAcquireComputerUseLock`，供共享工具后续处理使用。
       const r = await tryAcquireComputerUseLock();
+      // 当 `r.kind` 匹配 `'blocked'` 时，共享工具执行对应分支。
       if (r.kind === 'blocked') {
+        // 抛出 new Error(formatLockHeld(r.by));，阻止共享工具在无效状态下继续运行。
         throw new Error(formatLockHeld(r.by));
       }
+      // 满足 `r.fresh` 时，共享工具执行该分支。
       if (r.fresh) {
         // Global Escape → abort. Consumes the event (PI defense — prompt
         // injection can't dismiss dialogs with Escape). The CGEventTap's
         // CFRunLoopSource is processed by the drainRunLoop pump, so this
         // holds a pump retain until unregisterEscHotkey() in cleanup.ts.
+        // escRegistered保存`registerEscHotkey`，供共享工具后续处理使用。
         const escRegistered = registerEscHotkey(() => {
+          // 记录共享工具运行诊断，方便排查异常路径或性能问题。
           logForDebugging('[cu-esc] user escape, aborting turn');
+          // 调用 tuc，触发共享工具此处需要的副作用。
           tuc().abortController.abort();
         });
+        // 调用 tuc，触发共享工具此处需要的副作用。
         tuc().sendOSNotification?.({
           message: escRegistered ? 'Claude is using your computer · press Esc to stop' : 'Claude is using your computer · press Ctrl+C to stop',
           notificationType: 'computer_use_enter'
@@ -227,13 +307,18 @@ export function buildSessionContext(): ComputerUseSessionContext {
     formatLockHeldMessage: formatLockHeld
   };
 }
+// getOrBind 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getOrBind(): Binding {
+  // 满足 `binding` 时，共享工具执行该分支。
   if (binding) return binding;
+  // ctx构建`buildSessionContext`，供共享工具后续处理使用。
   const ctx = buildSessionContext();
+  // binding更新为 `{`，确保共享工具后续读取最新状态。
   binding = {
     ctx,
     dispatch: bindSessionContext(getComputerUseHostAdapter(), getChicagoCoordinateMode(), ctx)
   };
+  // 返回 `binding`，作为共享工具这次计算的结果。
   return binding;
 }
 
@@ -242,20 +327,28 @@ function getOrBind(): Binding {
  * tool: rendering overrides from `toolRendering.tsx` plus a `.call()` that
  * dispatches through the cached binder.
  */
+// ComputerUseMCPToolOverrides 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type ComputerUseMCPToolOverrides = ReturnType<typeof getComputerUseMCPRenderingOverrides> & {
   call: CallOverride;
 };
+// getComputerUseMCPToolOverrides 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCPToolOverrides {
+  // 这个回调绑定到 const call: CallOverride = async (args, context: ToolUseContext) => {，负责共享工具在该局部场景下的响应。
   const call: CallOverride = async (args, context: ToolUseContext) => {
+    // currentToolUseContext更新为 `context`，确保共享工具后续读取最新状态。
     currentToolUseContext = context;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       dispatch
     } = getOrBind();
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       telemetry,
       ...result
     } = await dispatch(toolName, args);
+    // 满足 `telemetry?.error_kind` 时，共享工具执行该分支。
     if (telemetry?.error_kind) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[Computer Use MCP] ${toolName} error_kind=${telemetry.error_kind}`);
     }
 
@@ -265,6 +358,7 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
     // shape just maps to the API's base64-source shape. The package's result
     // type admits audio/resource too, but CU's handleToolCall never emits
     // those; the fallthrough coerces them to empty text.
+    // data保存`Array.isArray`，供共享工具后续处理使用。
     const data = Array.isArray(result.content) ? result.content.map(item => item.type === 'image' ? {
       type: 'image' as const,
       source: {
@@ -276,10 +370,12 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
       type: 'text' as const,
       text: item.type === 'text' ? item.text : ''
     }) : result.content;
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       data
     };
   };
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     ...getComputerUseMCPRenderingOverrides(toolName),
     call
@@ -293,36 +389,55 @@ export function getComputerUseMCPToolOverrides(toolName: string): ComputerUseMCP
  * The merge-into-AppState that used to live here (dedupe + truthy-only flags)
  * is now in the package's `bindSessionContext` → `onAllowedAppsChanged`.
  */
+// runPermissionDialog 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function runPermissionDialog(req: CuPermissionRequest): Promise<CuPermissionResponse> {
+  // 上下文保存`tuc`，供共享工具后续处理使用。
   const context = tuc();
+  // setToolJSX 命名 `context.setToolJSX`，让后续代码直接表达这个值的用途。
   const setToolJSX = context.setToolJSX;
+  // setToolJSX缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!setToolJSX) {
     // Shouldn't happen — main.tsx gate excludes non-interactive. Fail safe.
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       granted: [],
       denied: [],
       flags: DEFAULT_GRANT_FLAGS
     };
   }
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // 等待并返回 `new Promise<CuPermissionResponse>((resolve, reject) => {`，调用方直接接收异步结果。
     return await new Promise<CuPermissionResponse>((resolve, reject) => {
+      // signal保存`context.abortController.signal`，供后续判断或组装使用。
       const signal = context.abortController.signal;
       // If already aborted, addEventListener won't fire — reject now so the
       // promise doesn't hang waiting for a user who Ctrl+C'd.
+      // 满足 `signal.aborted` 时，共享工具执行该分支。
       if (signal.aborted) {
+        // reject 结算当前 Promise，唤醒等待这个异步结果的调用方。
         reject(new Error('Computer Use permission dialog aborted'));
+        // 共享工具 wrapper在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // onAbort封装成回调，供共享工具 wrapper在事件触发或异步步骤中调用。
       const onAbort = (): void => {
+        // 调用 signal.removeEventListener，触发共享工具此处需要的副作用。
         signal.removeEventListener('abort', onAbort);
+        // reject 结算当前 Promise，唤醒等待这个异步结果的调用方。
         reject(new Error('Computer Use permission dialog aborted'));
       };
+      // 调用 signal.addEventListener，触发共享工具此处需要的副作用。
       signal.addEventListener('abort', onAbort);
+      // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
       setToolJSX({
         jsx: React.createElement(ComputerUseApproval, {
           request: req,
+          // 这个回调绑定到 onDone: (resp: CuPermissionResponse) => {，负责共享工具在该局部场景下的响应。
           onDone: (resp: CuPermissionResponse) => {
+            // 调用 signal.removeEventListener，触发共享工具此处需要的副作用。
             signal.removeEventListener('abort', onAbort);
+            // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
             resolve(resp);
           }
         }),
@@ -330,6 +445,7 @@ async function runPermissionDialog(req: CuPermissionRequest): Promise<CuPermissi
       });
     });
   } finally {
+    // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
     setToolJSX(null);
   }
 }

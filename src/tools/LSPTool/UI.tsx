@@ -1,16 +1,28 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { ToolResultBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准工具调用的数据契约。
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 CtrlOToExpand 终端界面组件，避免在这里重复拼装显示逻辑。
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
+// 复用 FallbackToolUseErrorMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 复用 getDisplayPath 工具函数，把通用处理留在 ../../utils/file.js 中维护。
 import { getDisplayPath } from '../../utils/file.js';
+// 复用 extractTag 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { extractTag } from '../../utils/messages.js';
+// 类型依赖 { Input, Output } 来自 ./LSPTool.js，用于校准工具调用的数据契约。
 import type { Input, Output } from './LSPTool.js';
+// 引入 getSymbolAtPosition，将 ./symbolContext.js 中已经封装好的能力接到本文件流程里。
 import { getSymbolAtPosition } from './symbolContext.js';
 
 // Lookup map for operation-specific labels
+// OPERATION_LABELS 集合 先占位，稍后的条件分支会根据实际输入补齐它。
 const OPERATION_LABELS: Record<Input['operation'], {
   singular: string;
   plural: string;
@@ -58,8 +70,11 @@ const OPERATION_LABELS: Record<Input['operation'], {
 /**
  * Reusable component for LSP result summaries with collapsed/expanded views
  */
+// LSPResultSummary 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function LSPResultSummary(t0) {
+  // $保存`_c`，供工具调用后续处理使用。
   const $ = _c(24);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     operation,
     resultCount,
@@ -67,160 +82,257 @@ function LSPResultSummary(t0) {
     content,
     verbose
   } = t0;
+  // t1 暂存 `OPERATION_LABELS[operation] || {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== operation) {
+    // t1 暂存 `OPERATION_LABELS[operation] || {` 生成的渲染片段，后续返回路径直接复用。
     t1 = OPERATION_LABELS[operation] || {
       singular: "result",
       plural: "results"
     };
+    // $[0] 缓存 `operation`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = operation;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // labelConfig 配置保存`t1`，作为后续临时缓存值处理的输入。
   const labelConfig = t1;
+  // countLabel 数量标记工具实现 UI是否启用对应路径。
   const countLabel = resultCount === 1 ? labelConfig.singular : labelConfig.plural;
+  // t2 暂存 `operation === "hover" && resultCount > 0 && labelConfig.s...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== countLabel || $[3] !== labelConfig.special || $[4] !== operation || $[5] !== resultCount) {
+    // t2 暂存 `operation === "hover" && resultCount > 0 && labelConfig.s...` 生成的渲染片段，后续返回路径直接复用。
     t2 = operation === "hover" && resultCount > 0 && labelConfig.special ? <Text>Hover info {labelConfig.special}</Text> : <Text>Found <Text bold={true}>{resultCount} </Text>{countLabel}</Text>;
+    // $[2] 缓存 `countLabel`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = countLabel;
+    // $[3] 缓存 `labelConfig.special`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = labelConfig.special;
+    // $[4] 缓存 `operation`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = operation;
+    // $[5] 缓存 `resultCount`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = resultCount;
+    // $[6] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[6];
   }
+  // primaryText保存`t2`，作为后续临时缓存值处理的输入。
   const primaryText = t2;
+  // t3 暂存 `fileCount > 1 ? <Text>{" "}across <Text bold={true}>{file...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== fileCount) {
+    // t3 暂存 `fileCount > 1 ? <Text>{" "}across <Text bold={true}>{file...` 生成的渲染片段，后续返回路径直接复用。
     t3 = fileCount > 1 ? <Text>{" "}across <Text bold={true}>{fileCount} </Text>files</Text> : null;
+    // $[7] 缓存 `fileCount`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = fileCount;
+    // $[8] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[8];
   }
+  // secondaryText保存`t3`，作为后续临时缓存值处理的输入。
   const secondaryText = t3;
+  // 满足 `verbose` 时，工具调用执行该分支。
   if (verbose) {
+    // t4 暂存 `<Text dimColor={true}> ⎿ </Text>` 的派生结果，便于缓存命中时直接复用。
     let t4;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
+      // t4 暂存 `<Text dimColor={true}> ⎿ </Text>` 生成的渲染片段，后续返回路径直接复用。
       t4 = <Text dimColor={true}>  ⎿  </Text>;
+      // $[9] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[9] = t4;
     } else {
+      // t4 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
       t4 = $[9];
     }
+    // t5 暂存 `<Box flexDirection="row"><Text>{t4}{primaryText}{secondar...` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[10] !== primaryText || $[11] !== secondaryText) {
+      // t5 暂存 `<Box flexDirection="row"><Text>{t4}{primaryText}{secondar...` 生成的渲染片段，后续返回路径直接复用。
       t5 = <Box flexDirection="row"><Text>{t4}{primaryText}{secondaryText}</Text></Box>;
+      // $[10] 缓存 `primaryText`，下次依赖未变时 React 编译产物可直接复用。
       $[10] = primaryText;
+      // $[11] 缓存 `secondaryText`，下次依赖未变时 React 编译产物可直接复用。
       $[11] = secondaryText;
+      // $[12] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[12] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[12];
     }
+    // t6 暂存 `<Box marginLeft={5}><Text>{content}</Text></Box>` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[13] !== content) {
+      // t6 暂存 `<Box marginLeft={5}><Text>{content}</Text></Box>` 生成的渲染片段，后续返回路径直接复用。
       t6 = <Box marginLeft={5}><Text>{content}</Text></Box>;
+      // $[13] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
       $[13] = content;
+      // $[14] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[14] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[14];
     }
+    // t7 暂存 `<Box flexDirection="column">{t5}{t6}</Box>` 的派生结果，便于缓存命中时直接复用。
     let t7;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[15] !== t5 || $[16] !== t6) {
+      // t7 暂存 `<Box flexDirection="column">{t5}{t6}</Box>` 生成的渲染片段，后续返回路径直接复用。
       t7 = <Box flexDirection="column">{t5}{t6}</Box>;
+      // $[15] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[15] = t5;
+      // $[16] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[16] = t6;
+      // $[17] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
       $[17] = t7;
     } else {
+      // t7 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
       t7 = $[17];
     }
+    // 返回 `t7`，作为工具调用这次计算的结果。
     return t7;
   }
+  // t4 暂存 `resultCount > 0 && <CtrlOToExpand />` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[18] !== resultCount) {
+    // t4 暂存 `resultCount > 0 && <CtrlOToExpand />` 生成的渲染片段，后续返回路径直接复用。
     t4 = resultCount > 0 && <CtrlOToExpand />;
+    // $[18] 缓存 `resultCount`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = resultCount;
+    // $[19] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[19];
   }
+  // t5 暂存 `<MessageResponse height={1}><Text>{primaryText}{secondary...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[20] !== primaryText || $[21] !== secondaryText || $[22] !== t4) {
+    // t5 暂存 `<MessageResponse height={1}><Text>{primaryText}{secondary...` 生成的渲染片段，后续返回路径直接复用。
     t5 = <MessageResponse height={1}><Text>{primaryText}{secondaryText} {t4}</Text></MessageResponse>;
+    // $[20] 缓存 `primaryText`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = primaryText;
+    // $[21] 缓存 `secondaryText`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = secondaryText;
+    // $[22] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t4;
+    // $[23] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[23] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[23];
   }
+  // 返回 `t5`，作为工具调用这次计算的结果。
   return t5;
 }
+// userFacingName 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function userFacingName(): string {
+  // 返回 `'LSP'`，作为工具调用这次计算的结果。
   return 'LSP';
 }
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(input: Partial<Input>, {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // input.operation缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!input.operation) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 片段列表 从空数组开始收集，后续循环会按处理顺序追加条目。
   const parts: string[] = [];
 
   // For position-based operations (goToDefinition, findReferences, hover, goToImplementation),
   // show the symbol at the position for better context
+  // 只有 `(input.operation === 'goToDefinition' || input.operation === 'findReference...` 满足时，工具调用才执行该分支。
   if ((input.operation === 'goToDefinition' || input.operation === 'findReferences' || input.operation === 'hover' || input.operation === 'goToImplementation') && input.filePath && input.line !== undefined && input.character !== undefined) {
     // Convert from 1-based (user input) to 0-based (internal file reading)
+    // symbol读取`getSymbolAtPosition`，供工具调用后续处理使用。
     const symbol = getSymbolAtPosition(input.filePath, input.line - 1, input.character - 1);
+    // displayPath 路径数据读取`getDisplayPath`，供工具调用后续处理使用。
     const displayPath = verbose ? input.filePath : getDisplayPath(input.filePath);
+    // 满足 `symbol` 时，工具调用执行该分支。
     if (symbol) {
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`operation: "${input.operation}"`);
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`symbol: "${symbol}"`);
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`in: "${displayPath}"`);
     } else {
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`operation: "${input.operation}"`);
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`file: "${displayPath}"`);
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`position: ${input.line}:${input.character}`);
     }
+    // 返回 `parts.join(', ')`，作为工具调用这次计算的结果。
     return parts.join(', ');
   }
 
   // For other operations (documentSymbol, workspaceSymbol),
   // show operation and file without position details
+  // 片段列表追加新条目，保持收集顺序与输入顺序一致。
   parts.push(`operation: "${input.operation}"`);
+  // 满足 `input.filePath` 时，工具调用执行该分支。
   if (input.filePath) {
+    // displayPath 路径数据读取`getDisplayPath`，供工具调用后续处理使用。
     const displayPath = verbose ? input.filePath : getDisplayPath(input.filePath);
+    // 片段列表追加新条目，保持收集顺序与输入顺序一致。
     parts.push(`file: "${displayPath}"`);
   }
+  // 返回 `parts.join(', ')`，作为工具调用这次计算的结果。
   return parts.join(', ');
 }
+// renderToolUseErrorMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // 只有 `!verbose && typeof result === 'string' && extractTag(result, 'tool_use_erro...` 满足时，工具调用才执行该分支。
   if (!verbose && typeof result === 'string' && extractTag(result, 'tool_use_error')) {
+    // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
     return <MessageResponse>
         <Text color="error">LSP operation failed</Text>
       </MessageResponse>;
   }
+  // 返回 `<FallbackToolUseErrorMessage result={result} verbose={verbose} />`，作为工具调用这次计算的结果。
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: Output, _progressMessages: unknown[], {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
   // Use collapsed/expanded view if we have count information
+  // `output.resultCount` 与 `undefined && output.fileCo` 不一致时刷新派生状态，避免使用过期结果。
   if (output.resultCount !== undefined && output.fileCount !== undefined) {
+    // 返回 `<LSPResultSummary operation={output.operation} resultCount={output.resu...`，作为工具调用这次计算的结果。
     return <LSPResultSummary operation={output.operation} resultCount={output.resultCount} fileCount={output.fileCount} content={output.result} verbose={verbose} />;
   }
 
   // Fallback for error cases where counts aren't available
   // (e.g., LSP server initialization failures, request errors)
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Text>{output.result}</Text>
     </MessageResponse>;

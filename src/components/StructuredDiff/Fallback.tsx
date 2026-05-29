@@ -1,9 +1,16 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 diffWordsWithSpace、StructuredPatchHunk，将 diff 中已经封装好的能力接到本文件流程里。
 import { diffWordsWithSpace, type StructuredPatchHunk } from 'diff';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useMemo，将 react 中已经封装好的能力接到本文件流程里。
 import { useMemo } from 'react';
+// 类型依赖 { ThemeName } 来自 src/utils/theme.js，用于校准终端渲染的数据契约。
 import type { ThemeName } from 'src/utils/theme.js';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../ink/stringWidth.js';
+// 引入 Box、NoSelect、Text、useTheme、wrapText，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, NoSelect, Text, useTheme, wrapText } from '../../ink.js';
 
 /*
@@ -45,6 +52,7 @@ import { Box, NoSelect, Text, useTheme, wrapText } from '../../ink.js';
  */
 
 // Define DiffLine interface to be used throughout the file
+// DiffLine 描述终端渲染需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface DiffLine {
   code: string;
   type: 'add' | 'remove' | 'nochange';
@@ -55,6 +63,7 @@ interface DiffLine {
 }
 
 // Line object type for internal functions
+// LineObject 描述终端渲染需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface LineObject {
   code: string;
   i: number;
@@ -65,11 +74,13 @@ export interface LineObject {
 }
 
 // Type for word-level diff parts
+// DiffPart 描述终端渲染需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface DiffPart {
   added?: boolean;
   removed?: boolean;
   value: string;
 }
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   patch: StructuredPatchHunk;
   dim: boolean;
@@ -77,54 +88,89 @@ type Props = {
 };
 
 // Threshold for when we show a full-line diff instead of word-level diffing
+// CHANGE_THRESHOLD保存`0.4`，供后续判断或组装使用。
 const CHANGE_THRESHOLD = 0.4;
+// StructuredDiffFallback 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function StructuredDiffFallback(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(10);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     patch,
     dim,
     width
   } = t0;
+  // 从 `useTheme()` 按位置拆出 theme，让终端 UI 组件 Fallback分别处理这些返回值。
   const [theme] = useTheme();
+  // t1 暂存 `formatDiff(patch.lines, patch.oldStart, width, dim, theme)` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== dim || $[1] !== patch.lines || $[2] !== patch.oldStart || $[3] !== theme || $[4] !== width) {
+    // t1 暂存 `formatDiff(patch.lines, patch.oldStart, width, dim, theme)` 生成的渲染片段，后续返回路径直接复用。
     t1 = formatDiff(patch.lines, patch.oldStart, width, dim, theme);
+    // $[0] 缓存 `dim`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = dim;
+    // $[1] 缓存 `patch.lines`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = patch.lines;
+    // $[2] 缓存 `patch.oldStart`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = patch.oldStart;
+    // $[3] 缓存 `theme`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = theme;
+    // $[4] 缓存 `width`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = width;
+    // $[5] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[5];
   }
+  // diff沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const diff = t1;
+  // t2 暂存 `diff.map(_temp)` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[6] !== diff) {
+    // t2 暂存 `diff.map(_temp)` 生成的渲染片段，后续返回路径直接复用。
     t2 = diff.map(_temp);
+    // $[6] 缓存 `diff`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = diff;
+    // $[7] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[7];
   }
+  // t3 暂存 `<Box flexDirection="column" flexGrow={1}>{t2}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[8] !== t2) {
+    // t3 暂存 `<Box flexDirection="column" flexGrow={1}>{t2}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Box flexDirection="column" flexGrow={1}>{t2}</Box>;
+    // $[8] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t2;
+    // $[9] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[9];
   }
+  // 返回 `t3`，作为终端渲染这次计算的结果。
   return t3;
 }
 
 // Transform lines to line objects with type information
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(node, i) {
+  // 返回 `<Box key={i}>{node}</Box>`，作为终端渲染这次计算的结果。
   return <Box key={i}>{node}</Box>;
 }
+// transformLinesToObjects 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function transformLinesToObjects(lines: string[]): LineObject[] {
+  // 返回 `lines.map(code => {`，作为终端渲染这次计算的结果。
   return lines.map(code => {
+    // 满足 `code.startsWith('+')` 时，终端渲染执行该分支。
     if (code.startsWith('+')) {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         code: code.slice(1),
         i: 0,
@@ -132,7 +178,9 @@ export function transformLinesToObjects(lines: string[]): LineObject[] {
         originalCode: code.slice(1)
       };
     }
+    // 满足 `code.startsWith('-')` 时，终端渲染执行该分支。
     if (code.startsWith('-')) {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         code: code.slice(1),
         i: 0,
@@ -140,6 +188,7 @@ export function transformLinesToObjects(lines: string[]): LineObject[] {
         originalCode: code.slice(1)
       };
     }
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       code: code.slice(1),
       i: 0,
@@ -150,91 +199,136 @@ export function transformLinesToObjects(lines: string[]): LineObject[] {
 }
 
 // Group adjacent add/remove lines for word-level diffing
+// processAdjacentLines 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function processAdjacentLines(lineObjects: LineObject[]): LineObject[] {
+  // processedLines 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const processedLines: LineObject[] = [];
+  // i保存`0`，供后续判断或组装使用。
   let i = 0;
+  // while 使用 i < lineObjects.length 完成终端渲染里的对应操作。
   while (i < lineObjects.length) {
+    // current保存`lineObjects[i]`，供终端 UI Fallback后续判断或输出使用。
     const current = lineObjects[i];
+    // current缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!current) {
+      // 终端 UI 组件 Fallback在这里处理 `i++`，完成这一小步状态转换。
       i++;
+      // 跳过当前项，继续处理终端渲染中的下一轮循环。
       continue;
     }
 
     // Find a sequence of remove followed by add (possible word-level diff candidates)
+    // 当 `current.type` 匹配 `'remove'` 时，终端渲染执行对应分支。
     if (current.type === 'remove') {
+      // removeLines 集合 聚合成有序列表，保持后续遍历顺序稳定。
       const removeLines: LineObject[] = [current];
+      // j保存`i + 1`，供终端 UI Fallback后续判断或输出使用。
       let j = i + 1;
 
       // Collect consecutive remove lines
+      // while 使用 j < lineObjects.length && lineObjects[j]?.type ==… 完成终端渲染里的对应操作。
       while (j < lineObjects.length && lineObjects[j]?.type === 'remove') {
+        // line读取 `lineObjects[j]` 对应条目，后续围绕该成员继续处理。
         const line = lineObjects[j];
+        // 满足 `line` 时，终端渲染执行该分支。
         if (line) {
+          // removeLines 集合追加新条目，保持收集顺序与输入顺序一致。
           removeLines.push(line);
         }
+        // 终端 UI 组件 Fallback在这里处理 `j++`，完成这一小步状态转换。
         j++;
       }
 
       // Check if there are add lines following the remove lines
+      // addLines 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
       const addLines: LineObject[] = [];
+      // while 使用 j < lineObjects.length && lineObjects[j]?.type ==… 完成终端渲染里的对应操作。
       while (j < lineObjects.length && lineObjects[j]?.type === 'add') {
+        // line读取 `lineObjects[j]` 对应条目，后续围绕该成员继续处理。
         const line = lineObjects[j];
+        // 满足 `line` 时，终端渲染执行该分支。
         if (line) {
+          // addLines 集合追加新条目，保持收集顺序与输入顺序一致。
           addLines.push(line);
         }
+        // 终端 UI 组件 Fallback在这里处理 `j++`，完成这一小步状态转换。
         j++;
       }
 
       // If we have both remove and add lines, perform word-level diffing
+      // 只有 `removeLines.length > 0 && addLines.length > 0` 满足时，终端渲染才执行该分支。
       if (removeLines.length > 0 && addLines.length > 0) {
         // For word diffing, we'll compare each pair of lines or the closest available match
+        // pairCount 数量保存`Math.min`，供终端渲染后续处理使用。
         const pairCount = Math.min(removeLines.length, addLines.length);
 
         // Add paired lines with word diff info
+        // 按索引扫描 `pairCount`，需要消费相邻参数时可以精确移动游标。
         for (let k = 0; k < pairCount; k++) {
+          // removeLine 命名 `removeLines[k]`，让后续代码直接表达这个值的用途。
           const removeLine = removeLines[k];
+          // addLine保存`addLines[k]`，供终端 UI Fallback后续判断或输出使用。
           const addLine = addLines[k];
+          // 只有 `removeLine && addLine` 满足时，终端渲染才执行该分支。
           if (removeLine && addLine) {
+            // wordDiff更新为 `true`，确保终端 UI后续读取最新状态。
             removeLine.wordDiff = true;
+            // wordDiff更新为 `true`，确保终端 UI后续读取最新状态。
             addLine.wordDiff = true;
 
             // Store the matched pair for later word diffing
+            // matchedLine更新为 `addLine`，确保终端 UI后续读取最新状态。
             removeLine.matchedLine = addLine;
+            // matchedLine更新为 `removeLine`，确保终端 UI后续读取最新状态。
             addLine.matchedLine = removeLine;
           }
         }
 
         // Add all remove lines (both paired and unpaired)
+        // processedLines 集合追加新条目，保持收集顺序与输入顺序一致。
         processedLines.push(...removeLines.filter(Boolean));
 
         // Then add all add lines (both paired and unpaired)
+        // processedLines 集合追加新条目，保持收集顺序与输入顺序一致。
         processedLines.push(...addLines.filter(Boolean));
+        // i更新为 `j; // Skip all the lines we've processed`，确保终端 UI后续读取最新状态。
         i = j; // Skip all the lines we've processed
       } else {
         // No matching add lines, just add the current remove line
+        // processedLines 集合追加新条目，保持收集顺序与输入顺序一致。
         processedLines.push(current);
+        // 终端 UI 组件 Fallback在这里处理 `i++`，完成这一小步状态转换。
         i++;
       }
     } else {
       // Not a remove line, just add it
+      // processedLines 集合追加新条目，保持收集顺序与输入顺序一致。
       processedLines.push(current);
+      // 终端 UI 组件 Fallback在这里处理 `i++`，完成这一小步状态转换。
       i++;
     }
   }
+  // 返回 `processedLines`，作为终端渲染这次计算的结果。
   return processedLines;
 }
 
 // Calculate word-level diffs between two text strings
+// calculateWordDiffs 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function calculateWordDiffs(oldText: string, newText: string): DiffPart[] {
   // Use diffWordsWithSpace instead of diffWords to preserve whitespace
   // This ensures spaces between tokens like > and { are preserved
+  // 结果保存`diffWordsWithSpace`，供终端渲染后续处理使用。
   const result = diffWordsWithSpace(oldText, newText, {
     ignoreCase: false
   });
+  // 返回 `result`，作为终端渲染这次计算的结果。
   return result;
 }
 
 // Process word-level diffs with manual wrapping support
+// generateWordDiffElements 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function generateWordDiffElements(item: DiffLine, width: number, maxWidth: number, dim: boolean, overrideTheme?: ThemeName): React.ReactNode[] | null {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     type,
     i,
@@ -242,78 +336,123 @@ function generateWordDiffElements(item: DiffLine, width: number, maxWidth: numbe
     matchedLine,
     originalCode
   } = item;
+  // 只有 `!wordDiff || !matchedLine` 满足时，终端渲染才执行该分支。
   if (!wordDiff || !matchedLine) {
+    // 返回 `null; // This function only handles word-level diff rendering`，作为终端渲染这次计算的结果。
     return null; // This function only handles word-level diff rendering
   }
+  // removedLineText标记终端 UI Fallback是否启用对应路径。
   const removedLineText = type === 'remove' ? originalCode : matchedLine.originalCode;
+  // addedLineText标记终端 UI Fallback是否启用对应路径。
   const addedLineText = type === 'remove' ? matchedLine.originalCode : originalCode;
+  // wordDiffs 集合保存`calculateWordDiffs`，供终端渲染后续处理使用。
   const wordDiffs = calculateWordDiffs(removedLineText, addedLineText);
 
   // Check if we should use word-level diffing
+  // totalLength 数量保存 `removedLineText.length + addedLineText.length` 的判断结果，供终端 UI Fallback后续分支直接复用。
   const totalLength = removedLineText.length + addedLineText.length;
+  // changedLength 数量筛选`wordDiffs.filter`，供终端渲染后续处理使用。
   const changedLength = wordDiffs.filter(part => part.added || part.removed).reduce((sum, part) => sum + part.value.length, 0);
+  // changeRatio保存`changedLength / totalLength`，供后续判断或组装使用。
   const changeRatio = changedLength / totalLength;
+  // 只有 `changeRatio > CHANGE_THRESHOLD || dim` 满足时，终端渲染才执行该分支。
   if (changeRatio > CHANGE_THRESHOLD || dim) {
+    // 返回 `null; // Fall back to standard rendering for major changes`，作为终端渲染这次计算的结果。
     return null; // Fall back to standard rendering for major changes
   }
 
   // Calculate available width for content
+  // diffPrefix标记终端 UI Fallback是否启用对应路径。
   const diffPrefix = type === 'add' ? '+' : '-';
+  // diffPrefixWidth记录 `diffPrefix.length` 是否成立，下一步按该结果分支。
   const diffPrefixWidth = diffPrefix.length;
+  // availableContentWidth保存`Math.max`，供终端渲染后续处理使用。
   const availableContentWidth = Math.max(1, width - maxWidth - 1 - diffPrefixWidth);
 
   // Manually wrap the word diff parts with better space efficiency
+  // wrappedLines 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   const wrappedLines: {
     content: React.ReactNode[];
     contentWidth: number;
   }[] = [];
+  // currentLine 从空数组开始收集，后续循环会按处理顺序追加条目。
   let currentLine: React.ReactNode[] = [];
+  // currentLineWidth保存`0`，供终端 UI Fallback后续判断或输出使用。
   let currentLineWidth = 0;
+  // 调用 wordDiffs.forEach，触发终端渲染此处需要的副作用。
   wordDiffs.forEach((part, partIndex) => {
     // Determine if this part should be shown for this line type
+    // shouldShow标记终端 UI Fallback是否启用对应路径。
     let shouldShow = false;
+    // partBgColor 先占位，稍后的条件分支会根据实际输入补齐它。
     let partBgColor: 'diffAddedWord' | 'diffRemovedWord' | undefined;
+    // 当 `type` 匹配 `'add'` 时，终端渲染执行对应分支。
     if (type === 'add') {
+      // 满足 `part.added` 时，终端渲染执行该分支。
       if (part.added) {
+        // shouldShow更新为 `true`，确保终端 UI后续读取最新状态。
         shouldShow = true;
+        // partBgColor更新为 `'diffAddedWord'`，确保终端 UI后续读取最新状态。
         partBgColor = 'diffAddedWord';
+      // 终端 UI 组件 Fallback在这里处理 `} else if (!part.removed) {`，完成这一小步状态转换。
       } else if (!part.removed) {
+        // shouldShow更新为 `true`，确保终端 UI后续读取最新状态。
         shouldShow = true;
       }
+    // 终端 UI 组件 Fallback在这里处理 `} else if (type === 'remove') {`，完成这一小步状态转换。
     } else if (type === 'remove') {
+      // 满足 `part.removed` 时，终端渲染执行该分支。
       if (part.removed) {
+        // shouldShow更新为 `true`，确保终端 UI后续读取最新状态。
         shouldShow = true;
+        // partBgColor更新为 `'diffRemovedWord'`，确保终端 UI后续读取最新状态。
         partBgColor = 'diffRemovedWord';
+      // 终端 UI 组件 Fallback在这里处理 `} else if (!part.added) {`，完成这一小步状态转换。
       } else if (!part.added) {
+        // shouldShow更新为 `true`，确保终端 UI后续读取最新状态。
         shouldShow = true;
       }
     }
+    // shouldShow缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!shouldShow) return;
 
     // Use wrapText to wrap this individual part if it's long
+    // partWrapped保存`wrapText`，供终端渲染后续处理使用。
     const partWrapped = wrapText(part.value, availableContentWidth, 'wrap');
+    // partLines 集合格式化`partWrapped.split`，供终端渲染后续处理使用。
     const partLines = partWrapped.split('\n');
+    // 调用 partLines.forEach，触发终端渲染此处需要的副作用。
     partLines.forEach((partLine, lineIdx) => {
+      // partLine缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!partLine) return;
 
       // Check if we need to start a new line
+      // 只有 `lineIdx > 0 || currentLineWidth + stringWidth(partLine) > availableContentW...` 满足时，终端渲染才执行该分支。
       if (lineIdx > 0 || currentLineWidth + stringWidth(partLine) > availableContentWidth) {
+        // 满足 `currentLine.length > 0` 时，终端渲染执行该分支。
         if (currentLine.length > 0) {
+          // wrappedLines 集合追加新条目，保持收集顺序与输入顺序一致。
           wrappedLines.push({
             content: [...currentLine],
             contentWidth: currentLineWidth
           });
+          // currentLine更新为 `[]`，确保终端 UI后续读取最新状态。
           currentLine = [];
+          // currentLineWidth更新为 `0`，确保终端 UI后续读取最新状态。
           currentLineWidth = 0;
         }
       }
+      // currentLine追加新条目，保持收集顺序与输入顺序一致。
       currentLine.push(<Text key={`part-${partIndex}-${lineIdx}`} backgroundColor={partBgColor}>
           {partLine}
         </Text>);
+      // 终端 UI 组件 Fallback在这里处理 `currentLineWidth += stringWidth(partLine)`，完成这一小步状态转换。
       currentLineWidth += stringWidth(partLine);
     });
   });
+  // 满足 `currentLine.length > 0` 时，终端渲染执行该分支。
   if (currentLine.length > 0) {
+    // wrappedLines 集合追加新条目，保持收集顺序与输入顺序一致。
     wrappedLines.push({
       content: currentLine,
       contentWidth: currentLineWidth
@@ -321,17 +460,25 @@ function generateWordDiffElements(item: DiffLine, width: number, maxWidth: numbe
   }
 
   // Render each wrapped line as a separate Text element
+  // 返回 `wrappedLines.map(({`，作为终端渲染这次计算的结果。
   return wrappedLines.map(({
     content,
     contentWidth
   }, lineIndex) => {
+    // key 命名 ``${type}-${i}-${lineIndex}``，让后续代码直接表达这个值的用途。
     const key = `${type}-${i}-${lineIndex}`;
+    // lineBgColor标记终端 UI Fallback是否启用对应路径。
     const lineBgColor = type === 'add' ? dim ? 'diffAddedDimmed' : 'diffAdded' : dim ? 'diffRemovedDimmed' : 'diffRemoved';
+    // lineNum标记终端 UI Fallback是否启用对应路径。
     const lineNum = lineIndex === 0 ? i : undefined;
+    // lineNumStr格式化`lineNum.toString`，供终端渲染后续处理使用。
     const lineNumStr = (lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)) + ' ';
     // Calculate padding to fill the entire terminal width
+    // usedWidth 命名 `lineNumStr.length + diffPrefixWidth + contentWidth`，让后续代码直接表达这个值的用途。
     const usedWidth = lineNumStr.length + diffPrefixWidth + contentWidth;
+    // padding保存`Math.max`，供终端渲染后续处理使用。
     const padding = Math.max(0, width - usedWidth);
+    // 返回 `<Box key={key} flexDirection="row">`，作为终端渲染这次计算的结果。
     return <Box key={key} flexDirection="row">
         <NoSelect fromLeftEdge>
           <Text color={overrideTheme ? 'text' : undefined} backgroundColor={lineBgColor} dimColor={dim}>
@@ -346,27 +493,36 @@ function generateWordDiffElements(item: DiffLine, width: number, maxWidth: numbe
       </Box>;
   });
 }
+// formatDiff 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatDiff(lines: string[], startingLineNumber: number, width: number, dim: boolean, overrideTheme?: ThemeName): React.ReactNode[] {
   // Ensure width is at least 1 to prevent rendering issues with very narrow terminals
+  // safeWidth保存`Math.max`，供终端渲染后续处理使用。
   const safeWidth = Math.max(1, Math.floor(width));
 
   // Step 1: Transform lines to line objects with type information
+  // lineObjects 集合保存`transformLinesToObjects`，供终端渲染后续处理使用。
   const lineObjects = transformLinesToObjects(lines);
 
   // Step 2: Group adjacent add/remove lines for word-level diffing
+  // processedLines 集合保存`processAdjacentLines`，供终端渲染后续处理使用。
   const processedLines = processAdjacentLines(lineObjects);
 
   // Step 3: Number the diff lines
+  // ls 集合保存`numberDiffLines`，供终端渲染后续处理使用。
   const ls = numberDiffLines(processedLines, startingLineNumber);
 
   // Find max line number width for alignment
+  // maxLineNumber保存`Math.max`，供终端渲染后续处理使用。
   const maxLineNumber = Math.max(...ls.map(({
     i
   }) => i), 0);
+  // maxWidth保存`Math.max`，供终端渲染后续处理使用。
   const maxWidth = Math.max(maxLineNumber.toString().length + 1, 0);
 
   // Step 4: Render formatting
+  // 返回 `ls.flatMap((item): React.ReactNode[] => {`，作为终端渲染这次计算的结果。
   return ls.flatMap((item): React.ReactNode[] => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       type,
       code,
@@ -376,35 +532,52 @@ function formatDiff(lines: string[], startingLineNumber: number, width: number, 
     } = item;
 
     // Handle word-level diffing for add/remove pairs
+    // 只有 `wordDiff && matchedLine` 满足时，终端渲染才执行该分支。
     if (wordDiff && matchedLine) {
+      // wordDiffElements 集合保存`generateWordDiffElements`，供终端渲染后续处理使用。
       const wordDiffElements = generateWordDiffElements(item, safeWidth, maxWidth, dim, overrideTheme);
 
       // word-diff might refuse (e.g. due to lines being substantially different) in which
       // case we'll fall through to normal renderin gbelow
+      // `wordDiffElements` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (wordDiffElements !== null) {
+        // 返回 `wordDiffElements`，作为终端渲染这次计算的结果。
         return wordDiffElements;
       }
     }
 
     // Standard rendering for lines without word diffing or as fallback
     // Calculate available width accounting for line number + space + diff prefix
+    // diffPrefixWidth保存`2; // " " for unchanged, "+ " or "- " for changes`，供后续判断或组装使用。
     const diffPrefixWidth = 2; // "  " for unchanged, "+ " or "- " for changes
+    // availableContentWidth保存`Math.max`，供终端渲染后续处理使用。
     const availableContentWidth = Math.max(1, safeWidth - maxWidth - 1 - diffPrefixWidth); // -1 for space after line number
+    // wrappedText保存`wrapText`，供终端渲染后续处理使用。
     const wrappedText = wrapText(code, availableContentWidth, 'wrap');
+    // wrappedLines 集合格式化`wrappedText.split`，供终端渲染后续处理使用。
     const wrappedLines = wrappedText.split('\n');
+    // 返回 `wrappedLines.map((line, lineIndex) => {`，作为终端渲染这次计算的结果。
     return wrappedLines.map((line, lineIndex) => {
+      // key 命名 ``${type}-${i}-${lineIndex}``，让后续代码直接表达这个值的用途。
       const key = `${type}-${i}-${lineIndex}`;
+      // lineNum标记终端 UI Fallback是否启用对应路径。
       const lineNum = lineIndex === 0 ? i : undefined;
+      // lineNumStr格式化`lineNum.toString`，供终端渲染后续处理使用。
       const lineNumStr = (lineNum !== undefined ? lineNum.toString().padStart(maxWidth) : ' '.repeat(maxWidth)) + ' ';
+      // sigil标记终端 UI Fallback是否启用对应路径。
       const sigil = type === 'add' ? '+' : type === 'remove' ? '-' : ' ';
       // Calculate padding to fill the entire terminal width
+      // contentWidth保存`stringWidth`，供终端渲染后续处理使用。
       const contentWidth = lineNumStr.length + 1 + stringWidth(line); // lineNum + sigil + code
+      // padding保存`Math.max`，供终端渲染后续处理使用。
       const padding = Math.max(0, safeWidth - contentWidth);
+      // bgColor标记终端 UI Fallback是否启用对应路径。
       const bgColor = type === 'add' ? dim ? 'diffAddedDimmed' : 'diffAdded' : type === 'remove' ? dim ? 'diffRemovedDimmed' : 'diffRemoved' : undefined;
 
       // Gutter (line number + sigil) is wrapped in <NoSelect> so fullscreen
       // text selection yields clean code. bgColor carries across both boxes
       // so the visual continuity (solid red/green bar) is unchanged.
+      // 返回 `<Box key={key} flexDirection="row">`，作为终端渲染这次计算的结果。
       return <Box key={key} flexDirection="row">
           <NoSelect fromLeftEdge>
             <Text color={overrideTheme ? 'text' : undefined} backgroundColor={bgColor} dimColor={dim || type === 'nochange'}>
@@ -420,12 +593,19 @@ function formatDiff(lines: string[], startingLineNumber: number, width: number, 
     });
   });
 }
+// numberDiffLines 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function numberDiffLines(diff: LineObject[], startLine: number): DiffLine[] {
+  // i保存`startLine`，供终端 UI Fallback后续判断或输出使用。
   let i = startLine;
+  // 结果 从空数组开始收集，后续循环会按处理顺序追加条目。
   const result: DiffLine[] = [];
+  // queue 聚合成有序列表，保持后续遍历顺序稳定。
   const queue = [...diff];
+  // while 使用 queue.length > 0 完成终端渲染里的对应操作。
   while (queue.length > 0) {
+    // current保存`queue.shift`，供终端渲染后续处理使用。
     const current = queue.shift()!;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       code,
       type,
@@ -433,6 +613,7 @@ export function numberDiffLines(diff: LineObject[], startLine: number): DiffLine
       wordDiff,
       matchedLine
     } = current;
+    // line集中保存终端 UI Fallback要一起传递的字段。
     const line = {
       code,
       type,
@@ -443,22 +624,35 @@ export function numberDiffLines(diff: LineObject[], startLine: number): DiffLine
     };
 
     // Update counters based on change type
+    // 按照 type 的取值选择终端渲染的具体处理分支。
     switch (type) {
       case 'nochange':
+        // 终端 UI 组件 Fallback在这里处理 `i++`，完成这一小步状态转换。
         i++;
+        // 结果追加新条目，保持收集顺序与输入顺序一致。
         result.push(line);
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'add':
+        // 终端 UI 组件 Fallback在这里处理 `i++`，完成这一小步状态转换。
         i++;
+        // 结果追加新条目，保持收集顺序与输入顺序一致。
         result.push(line);
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'remove':
         {
+          // 结果追加新条目，保持收集顺序与输入顺序一致。
           result.push(line);
+          // numRemoved保存`0`，供终端 UI Fallback后续判断或输出使用。
           let numRemoved = 0;
+          // while 使用 queue[0]?.type === 'remove' 完成终端渲染里的对应操作。
           while (queue[0]?.type === 'remove') {
+            // 终端 UI 组件 Fallback在这里处理 `i++`，完成这一小步状态转换。
             i++;
+            // current保存`queue.shift`，供终端渲染后续处理使用。
             const current = queue.shift()!;
+            // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
             const {
               code,
               type,
@@ -466,6 +660,7 @@ export function numberDiffLines(diff: LineObject[], startLine: number): DiffLine
               wordDiff,
               matchedLine
             } = current;
+            // line集中保存终端 UI Fallback要一起传递的字段。
             const line = {
               code,
               type,
@@ -474,14 +669,19 @@ export function numberDiffLines(diff: LineObject[], startLine: number): DiffLine
               wordDiff,
               matchedLine
             };
+            // 结果追加新条目，保持收集顺序与输入顺序一致。
             result.push(line);
+            // 终端 UI 组件 Fallback在这里处理 `numRemoved++`，完成这一小步状态转换。
             numRemoved++;
           }
+          // 终端 UI 组件 Fallback在这里处理 `i -= numRemoved`，完成这一小步状态转换。
           i -= numRemoved;
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         }
     }
   }
+  // 返回 `result`，作为终端渲染这次计算的结果。
   return result;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJkaWZmV29yZHNXaXRoU3BhY2UiLCJTdHJ1Y3R1cmVkUGF0Y2hIdW5rIiwiUmVhY3QiLCJ1c2VNZW1vIiwiVGhlbWVOYW1lIiwic3RyaW5nV2lkdGgiLCJCb3giLCJOb1NlbGVjdCIsIlRleHQiLCJ1c2VUaGVtZSIsIndyYXBUZXh0IiwiRGlmZkxpbmUiLCJjb2RlIiwidHlwZSIsImkiLCJvcmlnaW5hbENvZGUiLCJ3b3JkRGlmZiIsIm1hdGNoZWRMaW5lIiwiTGluZU9iamVjdCIsIkRpZmZQYXJ0IiwiYWRkZWQiLCJyZW1vdmVkIiwidmFsdWUiLCJQcm9wcyIsInBhdGNoIiwiZGltIiwid2lkdGgiLCJDSEFOR0VfVEhSRVNIT0xEIiwiU3RydWN0dXJlZERpZmZGYWxsYmFjayIsInQwIiwiJCIsIl9jIiwidGhlbWUiLCJ0MSIsImxpbmVzIiwib2xkU3RhcnQiLCJmb3JtYXREaWZmIiwiZGlmZiIsInQyIiwibWFwIiwiX3RlbXAiLCJ0MyIsIm5vZGUiLCJ0cmFuc2Zvcm1MaW5lc1RvT2JqZWN0cyIsInN0YXJ0c1dpdGgiLCJzbGljZSIsInByb2Nlc3NBZGphY2VudExpbmVzIiwibGluZU9iamVjdHMiLCJwcm9jZXNzZWRMaW5lcyIsImxlbmd0aCIsImN1cnJlbnQiLCJyZW1vdmVMaW5lcyIsImoiLCJsaW5lIiwicHVzaCIsImFkZExpbmVzIiwicGFpckNvdW50IiwiTWF0aCIsIm1pbiIsImsiLCJyZW1vdmVMaW5lIiwiYWRkTGluZSIsImZpbHRlciIsIkJvb2xlYW4iLCJjYWxjdWxhdGVXb3JkRGlmZnMiLCJvbGRUZXh0IiwibmV3VGV4dCIsInJlc3VsdCIsImlnbm9yZUNhc2UiLCJnZW5lcmF0ZVdvcmREaWZmRWxlbWVudHMiLCJpdGVtIiwibWF4V2lkdGgiLCJvdmVycmlkZVRoZW1lIiwiUmVhY3ROb2RlIiwicmVtb3ZlZExpbmVUZXh0IiwiYWRkZWRMaW5lVGV4dCIsIndvcmREaWZmcyIsInRvdGFsTGVuZ3RoIiwiY2hhbmdlZExlbmd0aCIsInBhcnQiLCJyZWR1Y2UiLCJzdW0iLCJjaGFuZ2VSYXRpbyIsImRpZmZQcmVmaXgiLCJkaWZmUHJlZml4V2lkdGgiLCJhdmFpbGFibGVDb250ZW50V2lkdGgiLCJtYXgiLCJ3cmFwcGVkTGluZXMiLCJjb250ZW50IiwiY29udGVudFdpZHRoIiwiY3VycmVudExpbmUiLCJjdXJyZW50TGluZVdpZHRoIiwiZm9yRWFjaCIsInBhcnRJbmRleCIsInNob3VsZFNob3ciLCJwYXJ0QmdDb2xvciIsInBhcnRXcmFwcGVkIiwicGFydExpbmVzIiwic3BsaXQiLCJwYXJ0TGluZSIsImxpbmVJZHgiLCJsaW5lSW5kZXgiLCJrZXkiLCJsaW5lQmdDb2xvciIsImxpbmVOdW0iLCJ1bmRlZmluZWQiLCJsaW5lTnVtU3RyIiwidG9TdHJpbmciLCJwYWRTdGFydCIsInJlcGVhdCIsInVzZWRXaWR0aCIsInBhZGRpbmciLCJzdGFydGluZ0xpbmVOdW1iZXIiLCJzYWZlV2lkdGgiLCJmbG9vciIsImxzIiwibnVtYmVyRGlmZkxpbmVzIiwibWF4TGluZU51bWJlciIsImZsYXRNYXAiLCJ3b3JkRGlmZkVsZW1lbnRzIiwid3JhcHBlZFRleHQiLCJzaWdpbCIsImJnQ29sb3IiLCJzdGFydExpbmUiLCJxdWV1ZSIsInNoaWZ0IiwibnVtUmVtb3ZlZCJdLCJzb3VyY2VzIjpbIkZhbGxiYWNrLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBkaWZmV29yZHNXaXRoU3BhY2UsIHR5cGUgU3RydWN0dXJlZFBhdGNoSHVuayB9IGZyb20gJ2RpZmYnXG5pbXBvcnQgKiBhcyBSZWFjdCBmcm9tICdyZWFjdCdcbmltcG9ydCB7IHVzZU1lbW8gfSBmcm9tICdyZWFjdCdcbmltcG9ydCB0eXBlIHsgVGhlbWVOYW1lIH0gZnJvbSAnc3JjL3V0aWxzL3RoZW1lLmpzJ1xuaW1wb3J0IHsgc3RyaW5nV2lkdGggfSBmcm9tICcuLi8uLi9pbmsvc3RyaW5nV2lkdGguanMnXG5pbXBvcnQgeyBCb3gsIE5vU2VsZWN0LCBUZXh0LCB1c2VUaGVtZSwgd3JhcFRleHQgfSBmcm9tICcuLi8uLi9pbmsuanMnXG5cbi8qXG4gKiBTdHJ1Y3R1cmVkRGlmZkZhbGxiYWNrIENvbXBvbmVudDogV29yZC1MZXZlbCBEaWZmIEhpZ2hsaWdodGluZyBFeGFtcGxlXG4gKlxuICogVGhpcyBjb21wb25lbnQgc2hvd3MgZGlmZiBjaGFuZ2VzIHdpdGggd29yZC1sZXZlbCBoaWdobGlnaHRpbmcuIEhlcmUncyBhIHdhbGt0aHJvdWdoOlxuICpcbiAqIEV4YW1wbGU6XG4gKiBgYGBcbiAqIC8vIE9yaWdpbmFsIGNvZGVcbiAqIGZ1bmN0aW9uIG9sZE5hbWUocGFyYW0pIHtcbiAqICAgcmV0dXJuIHBhcmFtLm9sZFByb3BlcnR5O1xuICogfVxuICpcbiAqIC8vIENoYW5nZWQgY29kZVxuICogZnVuY3Rpb24gbmV3TmFtZShwYXJhbSkge1xuICogICByZXR1cm4gcGFyYW0ubmV3UHJvcGVydHk7XG4gKiB9XG4gKiBgYGBcbiAqXG4gKiBQcm9jZXNzaW5nIGZsb3c6XG4gKiAxLiBDb21wb25lbnQgcmVjZWl2ZXMgYSBwYXRjaCB3aXRoIGxpbmVzIGluY2x1ZGluZyAnKycgYW5kICctJyBwcmVmaXhlc1xuICogMi4gTGluZXMgYXJlIHRyYW5zZm9ybWVkIGludG8gb2JqZWN0cyB3aXRoIHR5cGUgKGFkZC9yZW1vdmUvbm9jaGFuZ2UpXG4gKiAzLiBSZWxhdGVkIGFkZC9yZW1vdmUgbGluZXMgYXJlIHBhaXJlZCAoZS5nLiwgb2xkTmFtZSB3aXRoIG5ld05hbWUpXG4gKiA0LiBXb3JkLWxldmVsIGRpZmZpbmcgaWRlbnRpZmllcyBzcGVjaWZpYyBjaGFuZ2VkIHBhcnRzOlxuICogICAgW1xuICogICAgICB7IHZhbHVlOiAnZnVuY3Rpb24gJywgYWRkZWQ6IHVuZGVmaW5lZCwgcmVtb3ZlZDogdW5kZWZpbmVkIH0sICAvLyBDb21tb25cbiAqICAgICAgeyB2YWx1ZTogJ29sZE5hbWUnLCByZW1vdmVkOiB0cnVlIH0sICAgICAgICAgICAgICAgICAgICAgICAgICAgLy8gUmVtb3ZlZFxuICogICAgICB7IHZhbHVlOiAnbmV3TmFtZScsIGFkZGVkOiB0cnVlIH0sICAgICAgICAgICAgICAgICAgICAgICAgICAgICAvLyBBZGRlZFxuICogICAgICB7IHZhbHVlOiAnKHBhcmFtKSB7JywgYWRkZWQ6IHVuZGVmaW5lZCwgcmVtb3ZlZDogdW5kZWZpbmVkIH0gICAvLyBDb21tb25cbiAqICAgIF1cbiAqIDUuIFJlbmRlcnMgd2l0aCBlbmhhbmNlZCBoaWdobGlnaHRpbmc6XG4gKiAgICAtIENvbW1vbiBwYXJ0cyBhcmUgc2hvd24gbm9ybWFsbHlcbiAqICAgIC0gUmVtb3ZlZCB3b3JkcyBnZXQgYSBkYXJrZXIgcmVkIGJhY2tncm91bmRcbiAqICAgIC0gQWRkZWQgd29yZHMgZ2V0IGEgZGFya2VyIGdyZWVuIGJhY2tncm91bmRcbiAqXG4gKiBUaGlzIHByb2R1Y2VzIGEgdmlzdWFsbHkgY2xlYXIgZGlmZiB3aGVyZSB1c2VycyBjYW4gc2VlIGV4YWN0bHkgd2hpY2ggd29yZHNcbiAqIGNoYW5nZWQgcmF0aGVyIHRoYW4ganVzdCB3aGljaCBsaW5lcyB3ZXJlIG1vZGlmaWVkLlxuICovXG5cbi8vIERlZmluZSBEaWZmTGluZSBpbnRlcmZhY2UgdG8gYmUgdXNlZCB0aHJvdWdob3V0IHRoZSBmaWxlXG5pbnRlcmZhY2UgRGlmZkxpbmUge1xuICBjb2RlOiBzdHJpbmdcbiAgdHlwZTogJ2FkZCcgfCAncmVtb3ZlJyB8ICdub2NoYW5nZSdcbiAgaTogbnVtYmVyXG4gIG9yaWdpbmFsQ29kZTogc3RyaW5nXG4gIHdvcmREaWZmPzogYm9vbGVhbiAvLyBGbGFnIGZvciB3b3JkLWxldmVsIGRpZmZpbmdcbiAgbWF0Y2hlZExpbmU/OiBEaWZmTGluZVxufVxuXG4vLyBMaW5lIG9iamVjdCB0eXBlIGZvciBpbnRlcm5hbCBmdW5jdGlvbnNcbmV4cG9ydCBpbnRlcmZhY2UgTGluZU9iamVjdCB7XG4gIGNvZGU6IHN0cmluZ1xuICBpOiBudW1iZXJcbiAgdHlwZTogJ2FkZCcgfCAncmVtb3ZlJyB8ICdub2NoYW5nZSdcbiAgb3JpZ2luYWxDb2RlOiBzdHJpbmdcbiAgd29yZERpZmY/OiBib29sZWFuXG4gIG1hdGNoZWRMaW5lPzogTGluZU9iamVjdFxufVxuXG4vLyBUeXBlIGZvciB3b3JkLWxldmVsIGRpZmYgcGFydHNcbmludGVyZmFjZSBEaWZmUGFydCB7XG4gIGFkZGVkPzogYm9vbGVhblxuICByZW1vdmVkPzogYm9vbGVhblxuICB2YWx1ZTogc3RyaW5nXG59XG5cbnR5cGUgUHJvcHMgPSB7XG4gIHBhdGNoOiBTdHJ1Y3R1cmVkUGF0Y2hIdW5rXG4gIGRpbTogYm9vbGVhblxuICB3aWR0aDogbnVtYmVyXG59XG5cbi8vIFRocmVzaG9sZCBmb3Igd2hlbiB3ZSBzaG93IGEgZnVsbC1saW5lIGRpZmYgaW5zdGVhZCBvZiB3b3JkLWxldmVsIGRpZmZpbmdcbmNvbnN0IENIQU5HRV9USFJFU0hPTEQgPSAwLjRcblxuZXhwb3J0IGZ1bmN0aW9uIFN0cnVjdHVyZWREaWZmRmFsbGJhY2soe1xuICBwYXRjaCxcbiAgZGltLFxuICB3aWR0aCxcbn06IFByb3BzKTogUmVhY3QuUmVhY3ROb2RlIHtcbiAgY29uc3QgW3RoZW1lXSA9IHVzZVRoZW1lKClcbiAgY29uc3QgZGlmZiA9IHVzZU1lbW8oXG4gICAgKCkgPT4gZm9ybWF0RGlmZihwYXRjaC5saW5lcywgcGF0Y2gub2xkU3RhcnQsIHdpZHRoLCBkaW0sIHRoZW1lKSxcbiAgICBbcGF0Y2gubGluZXMsIHBhdGNoLm9sZFN0YXJ0LCB3aWR0aCwgZGltLCB0aGVtZV0sXG4gIClcblxuICByZXR1cm4gKFxuICAgIDxCb3ggZmxleERpcmVjdGlvbj1cImNvbHVtblwiIGZsZXhHcm93PXsxfT5cbiAgICAgIHtkaWZmLm1hcCgobm9kZSwgaSkgPT4gKFxuICAgICAgICA8Qm94IGtleT17aX0+e25vZGV9PC9Cb3g+XG4gICAgICApKX1cbiAgICA8L0JveD5cbiAgKVxufVxuXG4vLyBUcmFuc2Zvcm0gbGluZXMgdG8gbGluZSBvYmplY3RzIHdpdGggdHlwZSBpbmZvcm1hdGlvblxuZXhwb3J0IGZ1bmN0aW9uIHRyYW5zZm9ybUxpbmVzVG9PYmplY3RzKGxpbmVzOiBzdHJpbmdbXSk6IExpbmVPYmplY3RbXSB7XG4gIHJldHVybiBsaW5lcy5tYXAoY29kZSA9PiB7XG4gICAgaWYgKGNvZGUuc3RhcnRzV2l0aCgnKycpKSB7XG4gICAgICByZXR1cm4ge1xuICAgICAgICBjb2RlOiBjb2RlLnNsaWNlKDEpLFxuICAgICAgICBpOiAwLFxuICAgICAgICB0eXBlOiAnYWRkJyxcbiAgICAgICAgb3JpZ2luYWxDb2RlOiBjb2RlLnNsaWNlKDEpLFxuICAgICAgfVxuICAgIH1cbiAgICBpZiAoY29kZS5zdGFydHNXaXRoKCctJykpIHtcbiAgICAgIHJldHVybiB7XG4gICAgICAgIGNvZGU6IGNvZGUuc2xpY2UoMSksXG4gICAgICAgIGk6IDAsXG4gICAgICAgIHR5cGU6ICdyZW1vdmUnLFxuICAgICAgICBvcmlnaW5hbENvZGU6IGNvZGUuc2xpY2UoMSksXG4gICAgICB9XG4gICAgfVxuICAgIHJldHVybiB7XG4gICAgICBjb2RlOiBjb2RlLnNsaWNlKDEpLFxuICAgICAgaTogMCxcbiAgICAgIHR5cGU6ICdub2NoYW5nZScsXG4gICAgICBvcmlnaW5hbENvZGU6IGNvZGUuc2xpY2UoMSksXG4gICAgfVxuICB9KVxufVxuXG4vLyBHcm91cCBhZGphY2VudCBhZGQvcmVtb3ZlIGxpbmVzIGZvciB3b3JkLWxldmVsIGRpZmZpbmdcbmV4cG9ydCBmdW5jdGlvbiBwcm9jZXNzQWRqYWNlbnRMaW5lcyhsaW5lT2JqZWN0czogTGluZU9iamVjdFtdKTogTGluZU9iamVjdFtdIHtcbiAgY29uc3QgcHJvY2Vzc2VkTGluZXM6IExpbmVPYmplY3RbXSA9IFtdXG4gIGxldCBpID0gMFxuXG4gIHdoaWxlIChpIDwgbGluZU9iamVjdHMubGVuZ3RoKSB7XG4gICAgY29uc3QgY3VycmVudCA9IGxpbmVPYmplY3RzW2ldXG4gICAgaWYgKCFjdXJyZW50KSB7XG4gICAgICBpKytcbiAgICAgIGNvbnRpbnVlXG4gICAgfVxuXG4gICAgLy8gRmluZCBhIHNlcXVlbmNlIG9mIHJlbW92ZSBmb2xsb3dlZCBieSBhZGQgKHBvc3NpYmxlIHdvcmQtbGV2ZWwgZGlmZiBjYW5kaWRhdGVzKVxuICAgIGlmIChjdXJyZW50LnR5cGUgPT09ICdyZW1vdmUnKSB7XG4gICAgICBjb25zdCByZW1vdmVMaW5lczogTGluZU9iamVjdFtdID0gW2N1cnJlbnRdXG4gICAgICBsZXQgaiA9IGkgKyAxXG5cbiAgICAgIC8vIENvbGxlY3QgY29uc2VjdXRpdmUgcmVtb3ZlIGxpbmVzXG4gICAgICB3aGlsZSAoaiA8IGxpbmVPYmplY3RzLmxlbmd0aCAmJiBsaW5lT2JqZWN0c1tqXT8udHlwZSA9PT0gJ3JlbW92ZScpIHtcbiAgICAgICAgY29uc3QgbGluZSA9IGxpbmVPYmplY3RzW2pdXG4gICAgICAgIGlmIChsaW5lKSB7XG4gICAgICAgICAgcmVtb3ZlTGluZXMucHVzaChsaW5lKVxuICAgICAgICB9XG4gICAgICAgIGorK1xuICAgICAgfVxuXG4gICAgICAvLyBDaGVjayBpZiB0aGVyZSBhcmUgYWRkIGxpbmVzIGZvbGxvd2luZyB0aGUgcmVtb3ZlIGxpbmVzXG4gICAgICBjb25zdCBhZGRMaW5lczogTGluZU9iamVjdFtdID0gW11cbiAgICAgIHdoaWxlIChqIDwgbGluZU9iamVjdHMubGVuZ3RoICYmIGxpbmVPYmplY3RzW2pdPy50eXBlID09PSAnYWRkJykge1xuICAgICAgICBjb25zdCBsaW5lID0gbGluZU9iamVjdHNbal1cbiAgICAgICAgaWYgKGxpbmUpIHtcbiAgICAgICAgICBhZGRMaW5lcy5wdXNoKGxpbmUpXG4gICAgICAgIH1cbiAgICAgICAgaisrXG4gICAgICB9XG5cbiAgICAgIC8vIElmIHdlIGhhdmUgYm90aCByZW1vdmUgYW5kIGFkZCBsaW5lcywgcGVyZm9ybSB3b3JkLWxldmVsIGRpZmZpbmdcbiAgICAgIGlmIChyZW1vdmVMaW5lcy5sZW5ndGggPiAwICYmIGFkZExpbmVzLmxlbmd0aCA+IDApIHtcbiAgICAgICAgLy8gRm9yIHdvcmQgZGlmZmluZywgd2UnbGwgY29tcGFyZSBlYWNoIHBhaXIgb2YgbGluZXMgb3IgdGhlIGNsb3Nlc3QgYXZhaWxhYmxlIG1hdGNoXG4gICAgICAgIGNvbnN0IHBhaXJDb3VudCA9IE1hdGgubWluKHJlbW92ZUxpbmVzLmxlbmd0aCwgYWRkTGluZXMubGVuZ3RoKVxuXG4gICAgICAgIC8vIEFkZCBwYWlyZWQgbGluZXMgd2l0aCB3b3JkIGRpZmYgaW5mb1xuICAgICAgICBmb3IgKGxldCBrID0gMDsgayA8IHBhaXJDb3VudDsgaysrKSB7XG4gICAgICAgICAgY29uc3QgcmVtb3ZlTGluZSA9IHJlbW92ZUxpbmVzW2tdXG4gICAgICAgICAgY29uc3QgYWRkTGluZSA9IGFkZExpbmVzW2tdXG5cbiAgICAgICAgICBpZiAocmVtb3ZlTGluZSAmJiBhZGRMaW5lKSB7XG4gICAgICAgICAgICByZW1vdmVMaW5lLndvcmREaWZmID0gdHJ1ZVxuICAgICAgICAgICAgYWRkTGluZS53b3JkRGlmZiA9IHRydWVcblxuICAgICAgICAgICAgLy8gU3RvcmUgdGhlIG1hdGNoZWQgcGFpciBmb3IgbGF0ZXIgd29yZCBkaWZmaW5nXG4gICAgICAgICAgICByZW1vdmVMaW5lLm1hdGNoZWRMaW5lID0gYWRkTGluZVxuICAgICAgICAgICAgYWRkTGluZS5tYXRjaGVkTGluZSA9IHJlbW92ZUxpbmVcbiAgICAgICAgICB9XG4gICAgICAgIH1cblxuICAgICAgICAvLyBBZGQgYWxsIHJlbW92ZSBsaW5lcyAoYm90aCBwYWlyZWQgYW5kIHVucGFpcmVkKVxuICAgICAgICBwcm9jZXNzZWRMaW5lcy5wdXNoKC4uLnJlbW92ZUxpbmVzLmZpbHRlcihCb29sZWFuKSlcblxuICAgICAgICAvLyBUaGVuIGFkZCBhbGwgYWRkIGxpbmVzIChib3RoIHBhaXJlZCBhbmQgdW5wYWlyZWQpXG4gICAgICAgIHByb2Nlc3NlZExpbmVzLnB1c2goLi4uYWRkTGluZXMuZmlsdGVyKEJvb2xlYW4pKVxuXG4gICAgICAgIGkgPSBqIC8vIFNraXAgYWxsIHRoZSBsaW5lcyB3ZSd2ZSBwcm9jZXNzZWRcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIC8vIE5vIG1hdGNoaW5nIGFkZCBsaW5lcywganVzdCBhZGQgdGhlIGN1cnJlbnQgcmVtb3ZlIGxpbmVcbiAgICAgICAgcHJvY2Vzc2VkTGluZXMucHVzaChjdXJyZW50KVxuICAgICAgICBpKytcbiAgICAgIH1cbiAgICB9IGVsc2Uge1xuICAgICAgLy8gTm90IGEgcmVtb3ZlIGxpbmUsIGp1c3QgYWRkIGl0XG4gICAgICBwcm9jZXNzZWRMaW5lcy5wdXNoKGN1cnJlbnQpXG4gICAgICBpKytcbiAgICB9XG4gIH1cblxuICByZXR1cm4gcHJvY2Vzc2VkTGluZXNcbn1cblxuLy8gQ2FsY3VsYXRlIHdvcmQtbGV2ZWwgZGlmZnMgYmV0d2VlbiB0d28gdGV4dCBzdHJpbmdzXG5leHBvcnQgZnVuY3Rpb24gY2FsY3VsYXRlV29yZERpZmZzKFxuICBvbGRUZXh0OiBzdHJpbmcsXG4gIG5ld1RleHQ6IHN0cmluZyxcbik6IERpZmZQYXJ0W10ge1xuICAvLyBVc2UgZGlmZldvcmRzV2l0aFNwYWNlIGluc3RlYWQgb2YgZGlmZldvcmRzIHRvIHByZXNlcnZlIHdoaXRlc3BhY2VcbiAgLy8gVGhpcyBlbnN1cmVzIHNwYWNlcyBiZXR3ZWVuIHRva2VucyBsaWtlID4gYW5kIHsgYXJlIHByZXNlcnZlZFxuICBjb25zdCByZXN1bHQgPSBkaWZmV29yZHNXaXRoU3BhY2Uob2xkVGV4dCwgbmV3VGV4dCwgeyBpZ25vcmVDYXNlOiBmYWxzZSB9KVxuXG4gIHJldHVybiByZXN1bHRcbn1cblxuLy8gUHJvY2VzcyB3b3JkLWxldmVsIGRpZmZzIHdpdGggbWFudWFsIHdyYXBwaW5nIHN1cHBvcnRcbmZ1bmN0aW9uIGdlbmVyYXRlV29yZERpZmZFbGVtZW50cyhcbiAgaXRlbTogRGlmZkxpbmUsXG4gIHdpZHRoOiBudW1iZXIsXG4gIG1heFdpZHRoOiBudW1iZXIsXG4gIGRpbTogYm9vbGVhbixcbiAgb3ZlcnJpZGVUaGVtZT86IFRoZW1lTmFtZSxcbik6IFJlYWN0LlJlYWN0Tm9kZVtdIHwgbnVsbCB7XG4gIGNvbnN0IHsgdHlwZSwgaSwgd29yZERpZmYsIG1hdGNoZWRMaW5lLCBvcmlnaW5hbENvZGUgfSA9IGl0ZW1cblxuICBpZiAoIXdvcmREaWZmIHx8ICFtYXRjaGVkTGluZSkge1xuICAgIHJldHVybiBudWxsIC8vIFRoaXMgZnVuY3Rpb24gb25seSBoYW5kbGVzIHdvcmQtbGV2ZWwgZGlmZiByZW5kZXJpbmdcbiAgfVxuXG4gIGNvbnN0IHJlbW92ZWRMaW5lVGV4dCA9XG4gICAgdHlwZSA9PT0gJ3JlbW92ZScgPyBvcmlnaW5hbENvZGUgOiBtYXRjaGVkTGluZS5vcmlnaW5hbENvZGVcbiAgY29uc3QgYWRkZWRMaW5lVGV4dCA9XG4gICAgdHlwZSA9PT0gJ3JlbW92ZScgPyBtYXRjaGVkTGluZS5vcmlnaW5hbENvZGUgOiBvcmlnaW5hbENvZGVcblxuICBjb25zdCB3b3JkRGlmZnMgPSBjYWxjdWxhdGVXb3JkRGlmZnMocmVtb3ZlZExpbmVUZXh0LCBhZGRlZExpbmVUZXh0KVxuXG4gIC8vIENoZWNrIGlmIHdlIHNob3VsZCB1c2Ugd29yZC1sZXZlbCBkaWZmaW5nXG4gIGNvbnN0IHRvdGFsTGVuZ3RoID0gcmVtb3ZlZExpbmVUZXh0Lmxlbmd0aCArIGFkZGVkTGluZVRleHQubGVuZ3RoXG4gIGNvbnN0IGNoYW5nZWRMZW5ndGggPSB3b3JkRGlmZnNcbiAgICAuZmlsdGVyKHBhcnQgPT4gcGFydC5hZGRlZCB8fCBwYXJ0LnJlbW92ZWQpXG4gICAgLnJlZHVjZSgoc3VtLCBwYXJ0KSA9PiBzdW0gKyBwYXJ0LnZhbHVlLmxlbmd0aCwgMClcbiAgY29uc3QgY2hhbmdlUmF0aW8gPSBjaGFuZ2VkTGVuZ3RoIC8gdG90YWxMZW5ndGhcblxuICBpZiAoY2hhbmdlUmF0aW8gPiBDSEFOR0VfVEhSRVNIT0xEIHx8IGRpbSkge1xuICAgIHJldHVybiBudWxsIC8vIEZhbGwgYmFjayB0byBzdGFuZGFyZCByZW5kZXJpbmcgZm9yIG1ham9yIGNoYW5nZXNcbiAgfVxuXG4gIC8vIENhbGN1bGF0ZSBhdmFpbGFibGUgd2lkdGggZm9yIGNvbnRlbnRcbiAgY29uc3QgZGlmZlByZWZpeCA9IHR5cGUgPT09ICdhZGQnID8gJysnIDogJy0nXG4gIGNvbnN0IGRpZmZQcmVmaXhXaWR0aCA9IGRpZmZQcmVmaXgubGVuZ3RoXG4gIGNvbnN0IGF2YWlsYWJsZUNvbnRlbnRXaWR0aCA9IE1hdGgubWF4KFxuICAgIDEsXG4gICAgd2lkdGggLSBtYXhXaWR0aCAtIDEgLSBkaWZmUHJlZml4V2lkdGgsXG4gIClcblxuICAvLyBNYW51YWxseSB3cmFwIHRoZSB3b3JkIGRpZmYgcGFydHMgd2l0aCBiZXR0ZXIgc3BhY2UgZWZmaWNpZW5jeVxuICBjb25zdCB3cmFwcGVkTGluZXM6IHsgY29udGVudDogUmVhY3QuUmVhY3ROb2RlW107IGNvbnRlbnRXaWR0aDogbnVtYmVyIH1bXSA9XG4gICAgW11cbiAgbGV0IGN1cnJlbnRMaW5lOiBSZWFjdC5SZWFjdE5vZGVbXSA9IFtdXG4gIGxldCBjdXJyZW50TGluZVdpZHRoID0gMFxuXG4gIHdvcmREaWZmcy5mb3JFYWNoKChwYXJ0LCBwYXJ0SW5kZXgpID0+IHtcbiAgICAvLyBEZXRlcm1pbmUgaWYgdGhpcyBwYXJ0IHNob3VsZCBiZSBzaG93biBmb3IgdGhpcyBsaW5lIHR5cGVcbiAgICBsZXQgc2hvdWxkU2hvdyA9IGZhbHNlXG4gICAgbGV0IHBhcnRCZ0NvbG9yOiAnZGlmZkFkZGVkV29yZCcgfCAnZGlmZlJlbW92ZWRXb3JkJyB8IHVuZGVmaW5lZFxuXG4gICAgaWYgKHR5cGUgPT09ICdhZGQnKSB7XG4gICAgICBpZiAocGFydC5hZGRlZCkge1xuICAgICAgICBzaG91bGRTaG93ID0gdHJ1ZVxuICAgICAgICBwYXJ0QmdDb2xvciA9ICdkaWZmQWRkZWRXb3JkJ1xuICAgICAgfSBlbHNlIGlmICghcGFydC5yZW1vdmVkKSB7XG4gICAgICAgIHNob3VsZFNob3cgPSB0cnVlXG4gICAgICB9XG4gICAgfSBlbHNlIGlmICh0eXBlID09PSAncmVtb3ZlJykge1xuICAgICAgaWYgKHBhcnQucmVtb3ZlZCkge1xuICAgICAgICBzaG91bGRTaG93ID0gdHJ1ZVxuICAgICAgICBwYXJ0QmdDb2xvciA9ICdkaWZmUmVtb3ZlZFdvcmQnXG4gICAgICB9IGVsc2UgaWYgKCFwYXJ0LmFkZGVkKSB7XG4gICAgICAgIHNob3VsZFNob3cgPSB0cnVlXG4gICAgICB9XG4gICAgfVxuXG4gICAgaWYgKCFzaG91bGRTaG93KSByZXR1cm5cblxuICAgIC8vIFVzZSB3cmFwVGV4dCB0byB3cmFwIHRoaXMgaW5kaXZpZHVhbCBwYXJ0IGlmIGl0J3MgbG9uZ1xuICAgIGNvbnN0IHBhcnRXcmFwcGVkID0gd3JhcFRleHQocGFydC52YWx1ZSwgYXZhaWxhYmxlQ29udGVudFdpZHRoLCAnd3JhcCcpXG4gICAgY29uc3QgcGFydExpbmVzID0gcGFydFdyYXBwZWQuc3BsaXQoJ1xcbicpXG5cbiAgICBwYXJ0TGluZXMuZm9yRWFjaCgocGFydExpbmUsIGxpbmVJZHgpID0+IHtcbiAgICAgIGlmICghcGFydExpbmUpIHJldHVyblxuXG4gICAgICAvLyBDaGVjayBpZiB3ZSBuZWVkIHRvIHN0YXJ0IGEgbmV3IGxpbmVcbiAgICAgIGlmIChcbiAgICAgICAgbGluZUlkeCA+IDAgfHxcbiAgICAgICAgY3VycmVudExpbmVXaWR0aCArIHN0cmluZ1dpZHRoKHBhcnRMaW5lKSA+IGF2YWlsYWJsZUNvbnRlbnRXaWR0aFxuICAgICAgKSB7XG4gICAgICAgIGlmIChjdXJyZW50TGluZS5sZW5ndGggPiAwKSB7XG4gICAgICAgICAgd3JhcHBlZExpbmVzLnB1c2goe1xuICAgICAgICAgICAgY29udGVudDogWy4uLmN1cnJlbnRMaW5lXSxcbiAgICAgICAgICAgIGNvbnRlbnRXaWR0aDogY3VycmVudExpbmVXaWR0aCxcbiAgICAgICAgICB9KVxuICAgICAgICAgIGN1cnJlbnRMaW5lID0gW11cbiAgICAgICAgICBjdXJyZW50TGluZVdpZHRoID0gMFxuICAgICAgICB9XG4gICAgICB9XG5cbiAgICAgIGN1cnJlbnRMaW5lLnB1c2goXG4gICAgICAgIDxUZXh0XG4gICAgICAgICAga2V5PXtgcGFydC0ke3BhcnRJbmRleH0tJHtsaW5lSWR4fWB9XG4gICAgICAgICAgYmFja2dyb3VuZENvbG9yPXtwYXJ0QmdDb2xvcn1cbiAgICAgICAgPlxuICAgICAgICAgIHtwYXJ0TGluZX1cbiAgICAgICAgPC9UZXh0PixcbiAgICAgIClcblxuICAgICAgY3VycmVudExpbmVXaWR0aCArPSBzdHJpbmdXaWR0aChwYXJ0TGluZSlcbiAgICB9KVxuICB9KVxuXG4gIGlmIChjdXJyZW50TGluZS5sZW5ndGggPiAwKSB7XG4gICAgd3JhcHBlZExpbmVzLnB1c2goeyBjb250ZW50OiBjdXJyZW50TGluZSwgY29udGVudFdpZHRoOiBjdXJyZW50TGluZVdpZHRoIH0pXG4gIH1cblxuICAvLyBSZW5kZXIgZWFjaCB3cmFwcGVkIGxpbmUgYXMgYSBzZXBhcmF0ZSBUZXh0IGVsZW1lbnRcbiAgcmV0dXJuIHdyYXBwZWRMaW5lcy5tYXAoKHsgY29udGVudCwgY29udGVudFdpZHRoIH0sIGxpbmVJbmRleCkgPT4ge1xuICAgIGNvbnN0IGtleSA9IGAke3R5cGV9LSR7aX0tJHtsaW5lSW5kZXh9YFxuICAgIGNvbnN0IGxpbmVCZ0NvbG9yID1cbiAgICAgIHR5cGUgPT09ICdhZGQnXG4gICAgICAgID8gZGltXG4gICAgICAgICAgPyAnZGlmZkFkZGVkRGltbWVkJ1xuICAgICAgICAgIDogJ2RpZmZBZGRlZCdcbiAgICAgICAgOiBkaW1cbiAgICAgICAgICA/ICdkaWZmUmVtb3ZlZERpbW1lZCdcbiAgICAgICAgICA6ICdkaWZmUmVtb3ZlZCdcbiAgICBjb25zdCBsaW5lTnVtID0gbGluZUluZGV4ID09PSAwID8gaSA6IHVuZGVmaW5lZFxuICAgIGNvbnN0IGxpbmVOdW1TdHIgPVxuICAgICAgKGxpbmVOdW0gIT09IHVuZGVmaW5lZFxuICAgICAgICA/IGxpbmVOdW0udG9TdHJpbmcoKS5wYWRTdGFydChtYXhXaWR0aClcbiAgICAgICAgOiAnICcucmVwZWF0KG1heFdpZHRoKSkgKyAnICdcbiAgICAvLyBDYWxjdWxhdGUgcGFkZGluZyB0byBmaWxsIHRoZSBlbnRpcmUgdGVybWluYWwgd2lkdGhcbiAgICBjb25zdCB1c2VkV2lkdGggPSBsaW5lTnVtU3RyLmxlbmd0aCArIGRpZmZQcmVmaXhXaWR0aCArIGNvbnRlbnRXaWR0aFxuICAgIGNvbnN0IHBhZGRpbmcgPSBNYXRoLm1heCgwLCB3aWR0aCAtIHVzZWRXaWR0aClcblxuICAgIHJldHVybiAoXG4gICAgICA8Qm94IGtleT17a2V5fSBmbGV4RGlyZWN0aW9uPVwicm93XCI+XG4gICAgICAgIDxOb1NlbGVjdCBmcm9tTGVmdEVkZ2U+XG4gICAgICAgICAgPFRleHRcbiAgICAgICAgICAgIGNvbG9yPXtvdmVycmlkZVRoZW1lID8gJ3RleHQnIDogdW5kZWZpbmVkfVxuICAgICAgICAgICAgYmFja2dyb3VuZENvbG9yPXtsaW5lQmdDb2xvcn1cbiAgICAgICAgICAgIGRpbUNvbG9yPXtkaW19XG4gICAgICAgICAgPlxuICAgICAgICAgICAge2xpbmVOdW1TdHJ9XG4gICAgICAgICAgICB7ZGlmZlByZWZpeH1cbiAgICAgICAgICA8L1RleHQ+XG4gICAgICAgIDwvTm9TZWxlY3Q+XG4gICAgICAgIDxUZXh0XG4gICAgICAgICAgY29sb3I9e292ZXJyaWRlVGhlbWUgPyAndGV4dCcgOiB1bmRlZmluZWR9XG4gICAgICAgICAgYmFja2dyb3VuZENvbG9yPXtsaW5lQmdDb2xvcn1cbiAgICAgICAgICBkaW1Db2xvcj17ZGltfVxuICAgICAgICA+XG4gICAgICAgICAge2NvbnRlbnR9XG4gICAgICAgICAgeycgJy5yZXBlYXQocGFkZGluZyl9XG4gICAgICAgIDwvVGV4dD5cbiAgICAgIDwvQm94PlxuICAgIClcbiAgfSlcbn1cblxuZnVuY3Rpb24gZm9ybWF0RGlmZihcbiAgbGluZXM6IHN0cmluZ1tdLFxuICBzdGFydGluZ0xpbmVOdW1iZXI6IG51bWJlcixcbiAgd2lkdGg6IG51bWJlcixcbiAgZGltOiBib29sZWFuLFxuICBvdmVycmlkZVRoZW1lPzogVGhlbWVOYW1lLFxuKTogUmVhY3QuUmVhY3ROb2RlW10ge1xuICAvLyBFbnN1cmUgd2lkdGggaXMgYXQgbGVhc3QgMSB0byBwcmV2ZW50IHJlbmRlcmluZyBpc3N1ZXMgd2l0aCB2ZXJ5IG5hcnJvdyB0ZXJtaW5hbHNcbiAgY29uc3Qgc2FmZVdpZHRoID0gTWF0aC5tYXgoMSwgTWF0aC5mbG9vcih3aWR0aCkpXG5cbiAgLy8gU3RlcCAxOiBUcmFuc2Zvcm0gbGluZXMgdG8gbGluZSBvYmplY3RzIHdpdGggdHlwZSBpbmZvcm1hdGlvblxuICBjb25zdCBsaW5lT2JqZWN0cyA9IHRyYW5zZm9ybUxpbmVzVG9PYmplY3RzKGxpbmVzKVxuXG4gIC8vIFN0ZXAgMjogR3JvdXAgYWRqYWNlbnQgYWRkL3JlbW92ZSBsaW5lcyBmb3Igd29yZC1sZXZlbCBkaWZmaW5nXG4gIGNvbnN0IHByb2Nlc3NlZExpbmVzID0gcHJvY2Vzc0FkamFjZW50TGluZXMobGluZU9iamVjdHMpXG5cbiAgLy8gU3RlcCAzOiBOdW1iZXIgdGhlIGRpZmYgbGluZXNcbiAgY29uc3QgbHMgPSBudW1iZXJEaWZmTGluZXMocHJvY2Vzc2VkTGluZXMsIHN0YXJ0aW5nTGluZU51bWJlcilcblxuICAvLyBGaW5kIG1heCBsaW5lIG51bWJlciB3aWR0aCBmb3IgYWxpZ25tZW50XG4gIGNvbnN0IG1heExpbmVOdW1iZXIgPSBNYXRoLm1heCguLi5scy5tYXAoKHsgaSB9KSA9PiBpKSwgMClcbiAgY29uc3QgbWF4V2lkdGggPSBNYXRoLm1heChtYXhMaW5lTnVtYmVyLnRvU3RyaW5nKCkubGVuZ3RoICsgMSwgMClcblxuICAvLyBTdGVwIDQ6IFJlbmRlciBmb3JtYXR0aW5nXG4gIHJldHVybiBscy5mbGF0TWFwKChpdGVtKTogUmVhY3QuUmVhY3ROb2RlW10gPT4ge1xuICAgIGNvbnN0IHsgdHlwZSwgY29kZSwgaSwgd29yZERpZmYsIG1hdGNoZWRMaW5lIH0gPSBpdGVtXG5cbiAgICAvLyBIYW5kbGUgd29yZC1sZXZlbCBkaWZmaW5nIGZvciBhZGQvcmVtb3ZlIHBhaXJzXG4gICAgaWYgKHdvcmREaWZmICYmIG1hdGNoZWRMaW5lKSB7XG4gICAgICBjb25zdCB3b3JkRGlmZkVsZW1lbnRzID0gZ2VuZXJhdGVXb3JkRGlmZkVsZW1lbnRzKFxuICAgICAgICBpdGVtLFxuICAgICAgICBzYWZlV2lkdGgsXG4gICAgICAgIG1heFdpZHRoLFxuICAgICAgICBkaW0sXG4gICAgICAgIG92ZXJyaWRlVGhlbWUsXG4gICAgICApXG5cbiAgICAgIC8vIHdvcmQtZGlmZiBtaWdodCByZWZ1c2UgKGUuZy4gZHVlIHRvIGxpbmVzIGJlaW5nIHN1YnN0YW50aWFsbHkgZGlmZmVyZW50KSBpbiB3aGljaFxuICAgICAgLy8gY2FzZSB3ZSdsbCBmYWxsIHRocm91Z2ggdG8gbm9ybWFsIHJlbmRlcmluIGdiZWxvd1xuICAgICAgaWYgKHdvcmREaWZmRWxlbWVudHMgIT09IG51bGwpIHtcbiAgICAgICAgcmV0dXJuIHdvcmREaWZmRWxlbWVudHNcbiAgICAgIH1cbiAgICB9XG5cbiAgICAvLyBTdGFuZGFyZCByZW5kZXJpbmcgZm9yIGxpbmVzIHdpdGhvdXQgd29yZCBkaWZmaW5nIG9yIGFzIGZhbGxiYWNrXG4gICAgLy8gQ2FsY3VsYXRlIGF2YWlsYWJsZSB3aWR0aCBhY2NvdW50aW5nIGZvciBsaW5lIG51bWJlciArIHNwYWNlICsgZGlmZiBwcmVmaXhcbiAgICBjb25zdCBkaWZmUHJlZml4V2lkdGggPSAyIC8vIFwiICBcIiBmb3IgdW5jaGFuZ2VkLCBcIisgXCIgb3IgXCItIFwiIGZvciBjaGFuZ2VzXG4gICAgY29uc3QgYXZhaWxhYmxlQ29udGVudFdpZHRoID0gTWF0aC5tYXgoXG4gICAgICAxLFxuICAgICAgc2FmZVdpZHRoIC0gbWF4V2lkdGggLSAxIC0gZGlmZlByZWZpeFdpZHRoLFxuICAgICkgLy8gLTEgZm9yIHNwYWNlIGFmdGVyIGxpbmUgbnVtYmVyXG4gICAgY29uc3Qgd3JhcHBlZFRleHQgPSB3cmFwVGV4dChjb2RlLCBhdmFpbGFibGVDb250ZW50V2lkdGgsICd3cmFwJylcbiAgICBjb25zdCB3cmFwcGVkTGluZXMgPSB3cmFwcGVkVGV4dC5zcGxpdCgnXFxuJylcblxuICAgIHJldHVybiB3cmFwcGVkTGluZXMubWFwKChsaW5lLCBsaW5lSW5kZXgpID0+IHtcbiAgICAgIGNvbnN0IGtleSA9IGAke3R5cGV9LSR7aX0tJHtsaW5lSW5kZXh9YFxuICAgICAgY29uc3QgbGluZU51bSA9IGxpbmVJbmRleCA9PT0gMCA/IGkgOiB1bmRlZmluZWRcbiAgICAgIGNvbnN0IGxpbmVOdW1TdHIgPVxuICAgICAgICAobGluZU51bSAhPT0gdW5kZWZpbmVkXG4gICAgICAgICAgPyBsaW5lTnVtLnRvU3RyaW5nKCkucGFkU3RhcnQobWF4V2lkdGgpXG4gICAgICAgICAgOiAnICcucmVwZWF0KG1heFdpZHRoKSkgKyAnICdcbiAgICAgIGNvbnN0IHNpZ2lsID0gdHlwZSA9PT0gJ2FkZCcgPyAnKycgOiB0eXBlID09PSAncmVtb3ZlJyA/ICctJyA6ICcgJ1xuICAgICAgLy8gQ2FsY3VsYXRlIHBhZGRpbmcgdG8gZmlsbCB0aGUgZW50aXJlIHRlcm1pbmFsIHdpZHRoXG4gICAgICBjb25zdCBjb250ZW50V2lkdGggPSBsaW5lTnVtU3RyLmxlbmd0aCArIDEgKyBzdHJpbmdXaWR0aChsaW5lKSAvLyBsaW5lTnVtICsgc2lnaWwgKyBjb2RlXG4gICAgICBjb25zdCBwYWRkaW5nID0gTWF0aC5tYXgoMCwgc2FmZVdpZHRoIC0gY29udGVudFdpZHRoKVxuXG4gICAgICBjb25zdCBiZ0NvbG9yID1cbiAgICAgICAgdHlwZSA9PT0gJ2FkZCdcbiAgICAgICAgICA/IGRpbVxuICAgICAgICAgICAgPyAnZGlmZkFkZGVkRGltbWVkJ1xuICAgICAgICAgICAgOiAnZGlmZkFkZGVkJ1xuICAgICAgICAgIDogdHlwZSA9PT0gJ3JlbW92ZSdcbiAgICAgICAgICAgID8gZGltXG4gICAgICAgICAgICAgID8gJ2RpZmZSZW1vdmVkRGltbWVkJ1xuICAgICAgICAgICAgICA6ICdkaWZmUmVtb3ZlZCdcbiAgICAgICAgICAgIDogdW5kZWZpbmVkXG5cbiAgICAgIC8vIEd1dHRlciAobGluZSBudW1iZXIgKyBzaWdpbCkgaXMgd3JhcHBlZCBpbiA8Tm9TZWxlY3Q+IHNvIGZ1bGxzY3JlZW5cbiAgICAgIC8vIHRleHQgc2VsZWN0aW9uIHlpZWxkcyBjbGVhbiBjb2RlLiBiZ0NvbG9yIGNhcnJpZXMgYWNyb3NzIGJvdGggYm94ZXNcbiAgICAgIC8vIHNvIHRoZSB2aXN1YWwgY29udGludWl0eSAoc29saWQgcmVkL2dyZWVuIGJhcikgaXMgdW5jaGFuZ2VkLlxuICAgICAgcmV0dXJuIChcbiAgICAgICAgPEJveCBrZXk9e2tleX0gZmxleERpcmVjdGlvbj1cInJvd1wiPlxuICAgICAgICAgIDxOb1NlbGVjdCBmcm9tTGVmdEVkZ2U+XG4gICAgICAgICAgICA8VGV4dFxuICAgICAgICAgICAgICBjb2xvcj17b3ZlcnJpZGVUaGVtZSA/ICd0ZXh0JyA6IHVuZGVmaW5lZH1cbiAgICAgICAgICAgICAgYmFja2dyb3VuZENvbG9yPXtiZ0NvbG9yfVxuICAgICAgICAgICAgICBkaW1Db2xvcj17ZGltIHx8IHR5cGUgPT09ICdub2NoYW5nZSd9XG4gICAgICAgICAgICA+XG4gICAgICAgICAgICAgIHtsaW5lTnVtU3RyfVxuICAgICAgICAgICAgICB7c2lnaWx9XG4gICAgICAgICAgICA8L1RleHQ+XG4gICAgICAgICAgPC9Ob1NlbGVjdD5cbiAgICAgICAgICA8VGV4dFxuICAgICAgICAgICAgY29sb3I9e292ZXJyaWRlVGhlbWUgPyAndGV4dCcgOiB1bmRlZmluZWR9XG4gICAgICAgICAgICBiYWNrZ3JvdW5kQ29sb3I9e2JnQ29sb3J9XG4gICAgICAgICAgICBkaW1Db2xvcj17ZGltfVxuICAgICAgICAgID5cbiAgICAgICAgICAgIHtsaW5lfVxuICAgICAgICAgICAgeycgJy5yZXBlYXQocGFkZGluZyl9XG4gICAgICAgICAgPC9UZXh0PlxuICAgICAgICA8L0JveD5cbiAgICAgIClcbiAgICB9KVxuICB9KVxufVxuXG5leHBvcnQgZnVuY3Rpb24gbnVtYmVyRGlmZkxpbmVzKFxuICBkaWZmOiBMaW5lT2JqZWN0W10sXG4gIHN0YXJ0TGluZTogbnVtYmVyLFxuKTogRGlmZkxpbmVbXSB7XG4gIGxldCBpID0gc3RhcnRMaW5lXG4gIGNvbnN0IHJlc3VsdDogRGlmZkxpbmVbXSA9IFtdXG4gIGNvbnN0IHF1ZXVlID0gWy4uLmRpZmZdXG5cbiAgd2hpbGUgKHF1ZXVlLmxlbmd0aCA+IDApIHtcbiAgICBjb25zdCBjdXJyZW50ID0gcXVldWUuc2hpZnQoKSFcbiAgICBjb25zdCB7IGNvZGUsIHR5cGUsIG9yaWdpbmFsQ29kZSwgd29yZERpZmYsIG1hdGNoZWRMaW5lIH0gPSBjdXJyZW50XG4gICAgY29uc3QgbGluZSA9IHtcbiAgICAgIGNvZGUsXG4gICAgICB0eXBlLFxuICAgICAgaSxcbiAgICAgIG9yaWdpbmFsQ29kZSxcbiAgICAgIHdvcmREaWZmLFxuICAgICAgbWF0Y2hlZExpbmUsXG4gICAgfVxuXG4gICAgLy8gVXBkYXRlIGNvdW50ZXJzIGJhc2VkIG9uIGNoYW5nZSB0eXBlXG4gICAgc3dpdGNoICh0eXBlKSB7XG4gICAgICBjYXNlICdub2NoYW5nZSc6XG4gICAgICAgIGkrK1xuICAgICAgICByZXN1bHQucHVzaChsaW5lKVxuICAgICAgICBicmVha1xuICAgICAgY2FzZSAnYWRkJzpcbiAgICAgICAgaSsrXG4gICAgICAgIHJlc3VsdC5wdXNoKGxpbmUpXG4gICAgICAgIGJyZWFrXG4gICAgICBjYXNlICdyZW1vdmUnOiB7XG4gICAgICAgIHJlc3VsdC5wdXNoKGxpbmUpXG4gICAgICAgIGxldCBudW1SZW1vdmVkID0gMFxuICAgICAgICB3aGlsZSAocXVldWVbMF0/LnR5cGUgPT09ICdyZW1vdmUnKSB7XG4gICAgICAgICAgaSsrXG4gICAgICAgICAgY29uc3QgY3VycmVudCA9IHF1ZXVlLnNoaWZ0KCkhXG4gICAgICAgICAgY29uc3QgeyBjb2RlLCB0eXBlLCBvcmlnaW5hbENvZGUsIHdvcmREaWZmLCBtYXRjaGVkTGluZSB9ID0gY3VycmVudFxuICAgICAgICAgIGNvbnN0IGxpbmUgPSB7XG4gICAgICAgICAgICBjb2RlLFxuICAgICAgICAgICAgdHlwZSxcbiAgICAgICAgICAgIGksXG4gICAgICAgICAgICBvcmlnaW5hbENvZGUsXG4gICAgICAgICAgICB3b3JkRGlmZixcbiAgICAgICAgICAgIG1hdGNoZWRMaW5lLFxuICAgICAgICAgIH1cbiAgICAgICAgICByZXN1bHQucHVzaChsaW5lKVxuICAgICAgICAgIG51bVJlbW92ZWQrK1xuICAgICAgICB9XG4gICAgICAgIGkgLT0gbnVtUmVtb3ZlZFxuICAgICAgICBicmVha1xuICAgICAgfVxuICAgIH1cbiAgfVxuXG4gIHJldHVybiByZXN1bHRcbn1cbiJdLCJtYXBwaW5ncyI6IjtBQUFBLFNBQVNBLGtCQUFrQixFQUFFLEtBQUtDLG1CQUFtQixRQUFRLE1BQU07QUFDbkUsT0FBTyxLQUFLQyxLQUFLLE1BQU0sT0FBTztBQUM5QixTQUFTQyxPQUFPLFFBQVEsT0FBTztBQUMvQixjQUFjQyxTQUFTLFFBQVEsb0JBQW9CO0FBQ25ELFNBQVNDLFdBQVcsUUFBUSwwQkFBMEI7QUFDdEQsU0FBU0MsR0FBRyxFQUFFQyxRQUFRLEVBQUVDLElBQUksRUFBRUMsUUFBUSxFQUFFQyxRQUFRLFFBQVEsY0FBYzs7QUFFdEU7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBRUE7QUFDQSxVQUFVQyxRQUFRLENBQUM7RUFD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

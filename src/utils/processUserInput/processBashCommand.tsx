@@ -1,19 +1,36 @@
+// 类型依赖 { ContentBlockParam } 来自 @anthropic-ai/sdk/resources，用于校准共享工具的数据契约。
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources';
+// 使用 Node/Bun 的 crypto 能力处理本地运行时资源。
 import { randomUUID } from 'crypto';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 BashModeProgress 终端界面组件，避免在这里重复拼装显示逻辑。
 import { BashModeProgress } from 'src/components/BashModeProgress.js';
+// 类型依赖 { SetToolJSXFn } 来自 src/Tool.js，用于校准共享工具的数据契约。
 import type { SetToolJSXFn } from 'src/Tool.js';
+// 接入 BashTool 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { BashTool } from 'src/tools/BashTool/BashTool.js';
+// 类型依赖 { AttachmentMessage, SystemMessage, UserMessage } 来自 src/types/message.js，用于校准共享工具的数据契约。
 import type { AttachmentMessage, SystemMessage, UserMessage } from 'src/types/message.js';
+// 类型依赖 { ShellProgress } 来自 src/types/tools.js，用于校准共享工具的数据契约。
 import type { ShellProgress } from 'src/types/tools.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { logEvent } from '../../services/analytics/index.js';
+// 引入 errorMessage、ShellError，将 ../errors.js 中已经封装好的能力接到本文件流程里。
 import { errorMessage, ShellError } from '../errors.js';
+// 引入 createSyntheticUserCaveatMessage、createUserInterruptionMessage、createUserMessage、prepareUserContent，将 ../messages.js 中已经封装好的能力接到本文件流程里。
 import { createSyntheticUserCaveatMessage, createUserInterruptionMessage, createUserMessage, prepareUserContent } from '../messages.js';
+// 引入 resolveDefaultShell，将 ../shell/resolveDefaultShell.js 中已经封装好的能力接到本文件流程里。
 import { resolveDefaultShell } from '../shell/resolveDefaultShell.js';
+// 引入 isPowerShellToolEnabled，将 ../shell/shellToolUtils.js 中已经封装好的能力接到本文件流程里。
 import { isPowerShellToolEnabled } from '../shell/shellToolUtils.js';
+// 引入 processToolResultBlock，将 ../toolResultStorage.js 中已经封装好的能力接到本文件流程里。
 import { processToolResultBlock } from '../toolResultStorage.js';
+// 引入 escapeXml，将 ../xml.js 中已经封装好的能力接到本文件流程里。
 import { escapeXml } from '../xml.js';
+// 类型依赖 { ProcessUserInputContext } 来自 ./processUserInput.js，用于校准共享工具的数据契约。
 import type { ProcessUserInputContext } from './processUserInput.js';
+// processBashCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function processBashCommand(inputString: string, precedingInputBlocks: ContentBlockParam[], attachmentMessages: AttachmentMessage[], context: ProcessUserInputContext, setToolJSX: SetToolJSXFn): Promise<{
   messages: (UserMessage | AttachmentMessage | SystemMessage)[];
   shouldQuery: boolean;
@@ -23,10 +40,13 @@ export async function processBashCommand(inputString: string, precedingInputBloc
   // same platform + env-var gate as tools.ts so input-box routing matches
   // tool-list visibility. Computed up front so telemetry records the
   // actual shell, not the raw setting.
+  // usePowerShell保存`isPowerShellToolEnabled`，供共享工具后续处理使用。
   const usePowerShell = isPowerShellToolEnabled() && resolveDefaultShell() === 'powershell';
+  // 记录共享工具运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_input_bash', {
     powershell: usePowerShell
   });
+  // userMessage 消息数据构建`createUserMessage`，供共享工具后续处理使用。
   const userMessage = createUserMessage({
     content: prepareUserContent({
       inputString: `<bash-input>${inputString}</bash-input>`,
@@ -35,26 +55,34 @@ export async function processBashCommand(inputString: string, precedingInputBloc
   });
 
   // ctrl+b to background indicator
+  // jsx 先占位，稍后的条件分支会根据实际输入补齐它。
   let jsx: React.ReactNode;
 
   // Just show initial UI
+  // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
   setToolJSX({
     jsx: <BashModeProgress input={inputString} progress={null} verbose={context.options.verbose} />,
     shouldHidePromptInput: false
   });
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // bashModeContext 集中保存共享工具 process Bash Command要一起传递的字段。
     const bashModeContext: ProcessUserInputContext = {
       ...context,
       // TODO: Clean up this hack
+      // 这个回调绑定到 setToolJSX: _ => {，负责共享工具在该局部场景下的响应。
       setToolJSX: _ => {
+        // jsx更新为 `_?.jsx`，确保共享工具后续读取最新状态。
         jsx = _?.jsx;
       }
     };
 
     // Progress UI — shared across both shell backends (both emit ShellProgress)
+    // onProgress 集合保存`(progress: {`，供共享工具 process Bash Command后续判断或输出使用。
     const onProgress = (progress: {
       data: ShellProgress;
     }) => {
+      // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
       setToolJSX({
         jsx: <>
             <BashModeProgress input={inputString!} progress={progress.data} verbose={context.options.verbose} />
@@ -71,14 +99,20 @@ export async function processBashCommand(inputString: string, precedingInputBloc
     // native, shouldUseSandbox() returns false regardless (unsupported platform).
     // Lazy-require PowerShellTool so its ~300KB chunk only loads when the
     // user has actually selected the powershell default shell.
+    // PSMod 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
     type PSMod = typeof import('src/tools/PowerShellTool/PowerShellTool.js');
+    // PowerShellTool保存`null`，作为后续空值处理的输入。
     let PowerShellTool: PSMod['PowerShellTool'] | null = null;
+    // 满足 `usePowerShell` 时，共享工具执行该分支。
     if (usePowerShell) {
       /* eslint-disable @typescript-eslint/no-require-imports */
+      // PowerShellTool更新为 `(require('src/tools/PowerShellTool/PowerShellTool.js') as...`，确保共享工具后续读取最新状态。
       PowerShellTool = (require('src/tools/PowerShellTool/PowerShellTool.js') as PSMod).PowerShellTool;
       /* eslint-enable @typescript-eslint/no-require-imports */
     }
+    // shellTool保存`PowerShellTool ?? BashTool`，供共享工具 process Bash Command后续判断或输出使用。
     const shellTool = PowerShellTool ?? BashTool;
+    // 接口响应保存`PowerShellTool.call`，供共享工具后续处理使用。
     const response = PowerShellTool ? await PowerShellTool.call({
       command: inputString,
       dangerouslyDisableSandbox: true
@@ -86,15 +120,20 @@ export async function processBashCommand(inputString: string, precedingInputBloc
       command: inputString,
       dangerouslyDisableSandbox: true
     }, bashModeContext, undefined, undefined, onProgress);
+    // data 命名 `response.data`，让后续代码直接表达这个值的用途。
     const data = response.data;
+    // data缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!data) {
+      // 抛出 new Error('No result received from shell command');，阻止共享工具在无效状态下继续运行。
       throw new Error('No result received from shell command');
     }
+    // stderr保存`data.stderr`，供后续判断或组装使用。
     const stderr = data.stderr;
     // Reuse the same formatting pipeline as inline !`cmd` bash (promptShellExecution)
     // and model-initiated Bash. When BashTool.call() persists large output to disk,
     // data.persistedOutputPath is set and the formatter wraps in <persisted-output>.
     // Pass stderr:'' to keep it separate for the <bash-stderr> UI tag.
+    // mapped保存`processToolResultBlock`，供共享工具后续处理使用。
     const mapped = await processToolResultBlock(shellTool, {
       ...data,
       stderr: ''
@@ -103,7 +142,9 @@ export async function processBashCommand(inputString: string, precedingInputBloc
     // XML from buildLargeToolResultMessage). Escaping it would turn structural
     // tags into &lt;persisted-output&gt;, breaking the model's parse and
     // UserBashOutputMessage's extractTag. Escape the raw fallback only.
+    // stdout保存`escapeXml`，供共享工具后续处理使用。
     const stdout = typeof mapped.content === 'string' ? mapped.content : escapeXml(data.stdout);
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [createSyntheticUserCaveatMessage(), userMessage, ...attachmentMessages, createUserMessage({
         content: `<bash-stdout>${stdout}</bash-stdout><bash-stderr>${escapeXml(stderr)}</bash-stderr>`
@@ -111,8 +152,11 @@ export async function processBashCommand(inputString: string, precedingInputBloc
       shouldQuery: false
     };
   } catch (e) {
+    // 满足 `e instanceof ShellError` 时，共享工具执行该分支。
     if (e instanceof ShellError) {
+      // 满足 `e.interrupted` 时，共享工具执行该分支。
       if (e.interrupted) {
+        // 返回结构化结果，集中表达共享工具已经整理出的状态。
         return {
           messages: [createSyntheticUserCaveatMessage(), userMessage, createUserInterruptionMessage({
             toolUse: false
@@ -120,6 +164,7 @@ export async function processBashCommand(inputString: string, precedingInputBloc
           shouldQuery: false
         };
       }
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         messages: [createSyntheticUserCaveatMessage(), userMessage, ...attachmentMessages, createUserMessage({
           content: `<bash-stdout>${escapeXml(e.stdout)}</bash-stdout><bash-stderr>${escapeXml(e.stderr)}</bash-stderr>`
@@ -127,6 +172,7 @@ export async function processBashCommand(inputString: string, precedingInputBloc
         shouldQuery: false
       };
     }
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [createSyntheticUserCaveatMessage(), userMessage, ...attachmentMessages, createUserMessage({
         content: `<bash-stderr>Command failed: ${escapeXml(errorMessage(e))}</bash-stderr>`
@@ -134,6 +180,7 @@ export async function processBashCommand(inputString: string, precedingInputBloc
       shouldQuery: false
     };
   } finally {
+    // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
     setToolJSX(null);
   }
 }

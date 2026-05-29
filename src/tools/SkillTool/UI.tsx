@@ -1,49 +1,79 @@
+// 类型依赖 { ToolResultBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准工具调用的数据契约。
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 SubAgentProvider 终端界面组件，避免在这里重复拼装显示逻辑。
 import { SubAgentProvider } from 'src/components/CtrlOToExpand.js';
+// 复用 FallbackToolUseErrorMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FallbackToolUseErrorMessage } from 'src/components/FallbackToolUseErrorMessage.js';
+// 复用 FallbackToolUseRejectedMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FallbackToolUseRejectedMessage } from 'src/components/FallbackToolUseRejectedMessage.js';
+// 类型依赖 { z } 来自 zod/v4，用于校准工具调用的数据契约。
 import type { z } from 'zod/v4';
+// 类型依赖 { Command } 来自 ../../commands.js，用于校准工具调用的数据契约。
 import type { Command } from '../../commands.js';
+// 复用 Byline 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Byline } from '../../components/design-system/Byline.js';
+// 复用 Message as MessageComponent 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Message as MessageComponent } from '../../components/Message.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { Tools } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { Tools } from '../../Tool.js';
+// 类型依赖 { ProgressMessage } 来自 ../../types/message.js，用于校准工具调用的数据契约。
 import type { ProgressMessage } from '../../types/message.js';
+// 复用 buildSubagentLookups、EMPTY_LOOKUPS 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { buildSubagentLookups, EMPTY_LOOKUPS } from '../../utils/messages.js';
+// 复用 plural 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { plural } from '../../utils/stringUtils.js';
+// 类型依赖 { inputSchema, Output, Progress } 来自 ./SkillTool.js，用于校准工具调用的数据契约。
 import type { inputSchema, Output, Progress } from './SkillTool.js';
+// Input 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type Input = z.infer<ReturnType<typeof inputSchema>>;
+// MAX_PROGRESS_MESSAGES_TO_SHOW 消息数据 命名 `3`，让后续代码直接表达这个值的用途。
 const MAX_PROGRESS_MESSAGES_TO_SHOW = 3;
+// INITIALIZING_TEXT保存`'Initializing…'`，作为后续固定文本处理的输入。
 const INITIALIZING_TEXT = 'Initializing…';
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: Output): React.ReactNode {
   // Handle forked skill result
+  // 当 `'status' in output && output.status` 匹配 `'forked'` 时，工具调用执行对应分支。
   if ('status' in output && output.status === 'forked') {
+    // 返回 `<MessageResponse height={1}>`，作为工具调用这次计算的结果。
     return <MessageResponse height={1}>
         <Text>
           <Byline>{['Done']}</Byline>
         </Text>
       </MessageResponse>;
   }
+  // 片段列表 聚合成有序列表，保持后续遍历顺序稳定。
   const parts: string[] = ['Successfully loaded skill'];
 
   // Show tools count (only for inline skills)
+  // 只有 `'allowedTools' in output && output.allowedTools &` 满足时，工具调用才执行该分支。
   if ('allowedTools' in output && output.allowedTools && output.allowedTools.length > 0) {
+    // count 数量 命名 `output.allowedTools.length`，让后续代码直接表达这个值的用途。
     const count = output.allowedTools.length;
+    // 片段列表追加新条目，保持收集顺序与输入顺序一致。
     parts.push(`${count} ${plural(count, 'tool')} allowed`);
   }
 
   // Show model if non-default (only for inline skills)
+  // 只有 `'model' in output && output.model` 满足时，工具调用才执行该分支。
   if ('model' in output && output.model) {
+    // 片段列表追加新条目，保持收集顺序与输入顺序一致。
     parts.push(output.model);
   }
+  // 返回 `<MessageResponse height={1}>`，作为工具调用这次计算的结果。
   return <MessageResponse height={1}>
       <Text>
         <Byline>{parts}</Byline>
       </Text>
     </MessageResponse>;
 }
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage({
   skill
 }: Partial<Input>, {
@@ -51,14 +81,20 @@ export function renderToolUseMessage({
 }: {
   commands?: Command[];
 }): React.ReactNode {
+  // skill缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!skill) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
   // Look up the command to check if it came from the legacy /commands folder
+  // 命令筛选`find`，供工具调用后续处理使用。
   const command = commands?.find(c => c.name === skill);
+  // displayName标记工具实现 UI是否启用对应路径。
   const displayName = command?.loadedFrom === 'commands_DEPRECATED' ? `/${skill}` : skill;
+  // 返回 `displayName`，作为工具调用这次计算的结果。
   return displayName;
 }
+// renderToolUseProgressMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseProgressMessage(progressMessages: ProgressMessage<Progress>[], {
   tools,
   verbose
@@ -66,18 +102,25 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
   tools: Tools;
   verbose: boolean;
 }): React.ReactNode {
+  // progressMessages.length 消息数据缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!progressMessages.length) {
+    // 返回 `<MessageResponse height={1}>`，作为工具调用这次计算的结果。
     return <MessageResponse height={1}>
         <Text dimColor>{INITIALIZING_TEXT}</Text>
       </MessageResponse>;
   }
 
   // Take only the last few messages for display in non-verbose mode
+  // displayedMessages 消息数据格式化`progressMessages.slice`，供工具调用后续处理使用。
   const displayedMessages = verbose ? progressMessages : progressMessages.slice(-MAX_PROGRESS_MESSAGES_TO_SHOW);
+  // hiddenCount 数量保存 `progressMessages.length - displayedMessages.length` 的判断结果，供工具实现 UI后续分支直接复用。
   const hiddenCount = progressMessages.length - displayedMessages.length;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     inProgressToolUseIDs
+  // 这个回调绑定到 } = buildSubagentLookups(progressMessages.map(pm => pm.data));，负责工具调用在该局部场景下的响应。
   } = buildSubagentLookups(progressMessages.map(pm => pm.data));
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Box flexDirection="column">
         <SubAgentProvider>
@@ -91,6 +134,7 @@ export function renderToolUseProgressMessage(progressMessages: ProgressMessage<P
       </Box>
     </MessageResponse>;
 }
+// renderToolUseRejectedMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseRejectedMessage(_input: Input, {
   progressMessagesForMessage,
   tools,
@@ -100,6 +144,7 @@ export function renderToolUseRejectedMessage(_input: Input, {
   tools: Tools;
   verbose: boolean;
 }): React.ReactNode {
+  // 返回 `<>`，作为工具调用这次计算的结果。
   return <>
       {renderToolUseProgressMessage(progressMessagesForMessage, {
       tools,
@@ -108,6 +153,7 @@ export function renderToolUseRejectedMessage(_input: Input, {
       <FallbackToolUseRejectedMessage />
     </>;
 }
+// renderToolUseErrorMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
   progressMessagesForMessage,
   tools,
@@ -117,6 +163,7 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
   tools: Tools;
   verbose: boolean;
 }): React.ReactNode {
+  // 返回 `<>`，作为工具调用这次计算的结果。
   return <>
       {renderToolUseProgressMessage(progressMessagesForMessage, {
       tools,

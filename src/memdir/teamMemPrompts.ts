@@ -1,9 +1,11 @@
+// 整理这一组导入，让team Mem Prompts后续逻辑可以直接复用这些外部能力。
 import {
   buildSearchingPastContextSection,
   DIRS_EXIST_GUIDANCE,
   ENTRYPOINT_NAME,
   MAX_ENTRYPOINT_LINES,
 } from './memdir.js'
+// 整理这一组导入，让team Mem Prompts后续逻辑可以直接复用这些外部能力。
 import {
   MEMORY_DRIFT_CAVEAT,
   MEMORY_FRONTMATTER_EXAMPLE,
@@ -11,7 +13,9 @@ import {
   TYPES_SECTION_COMBINED,
   WHAT_NOT_TO_SAVE_SECTION,
 } from './memoryTypes.js'
+// 引入 getAutoMemPath，将 ./paths.js 中已经封装好的能力接到本文件流程里。
 import { getAutoMemPath } from './paths.js'
+// 引入 getTeamMemPath，将 ./teamMemPaths.js 中已经封装好的能力接到本文件流程里。
 import { getTeamMemPath } from './teamMemPaths.js'
 
 /**
@@ -19,13 +23,17 @@ import { getTeamMemPath } from './teamMemPaths.js'
  * Closed four-type taxonomy (user / feedback / project / reference) with
  * per-type <scope> guidance embedded in XML-style <type> blocks.
  */
+// buildCombinedMemoryPrompt 封装teamMemPrompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildCombinedMemoryPrompt(
   extraGuidelines?: string[],
   skipIndex = false,
 ): string {
+  // autoDir读取`getAutoMemPath`，供team Mem Prompts后续处理使用。
   const autoDir = getAutoMemPath()
+  // teamDir读取`getTeamMemPath`，供team Mem Prompts后续处理使用。
   const teamDir = getTeamMemPath()
 
+  // howToSave 命名 `skipIndex`，让后续代码直接表达这个值的用途。
   const howToSave = skipIndex
     ? [
         '## How to save memories',
@@ -57,6 +65,7 @@ export function buildCombinedMemoryPrompt(
         '- Do not write duplicate memories. First check if there is an existing memory you can update before writing a new one.',
       ]
 
+  // 文本行 聚合成有序列表，保持后续遍历顺序稳定。
   const lines = [
     '# Memory',
     '',
@@ -96,5 +105,6 @@ export function buildCombinedMemoryPrompt(
     ...buildSearchingPastContextSection(autoDir),
   ]
 
+  // 返回 `lines.join('\n')`，作为team Mem Prompts这次计算的结果。
   return lines.join('\n')
 }

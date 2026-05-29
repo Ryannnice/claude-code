@@ -1,16 +1,25 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useRef, useState } from 'react';
+// 引入 Box，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box } from '../../ink.js';
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../../utils/settings/settings.js';
+// 引入 Clawd、ClawdPose，将 ./Clawd.js 中已经封装好的能力接到本文件流程里。
 import { Clawd, type ClawdPose } from './Clawd.js';
+// Frame 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Frame = {
   pose: ClawdPose;
   offset: number;
 };
 
 /** Hold a pose for n frames (60ms each). */
+// hold 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function hold(pose: ClawdPose, offset: number, frames: number): Frame[] {
+  // 返回 `Array.from({`，作为终端渲染这次计算的结果。
   return Array.from({
     length: frames
   }, () => ({
@@ -25,6 +34,7 @@ function hold(pose: ClawdPose, offset: number, frames: number): Frame[] {
 // clipped — reads as "ducking below the frame" before springing back up.
 
 // Click animation: crouch, then spring up with both arms raised. Twice.
+// JUMP_WAVE 聚合成有序列表，保持后续遍历顺序稳定。
 const JUMP_WAVE: readonly Frame[] = [...hold('default', 1, 2),
 // crouch
 ...hold('arms-up', 0, 3),
@@ -36,14 +46,20 @@ const JUMP_WAVE: readonly Frame[] = [...hold('default', 1, 2),
 ...hold('default', 0, 1)];
 
 // Click animation: glance right, then left, then back.
+// LOOK_AROUND 聚合成有序列表，保持后续遍历顺序稳定。
 const LOOK_AROUND: readonly Frame[] = [...hold('look-right', 0, 5), ...hold('look-left', 0, 5), ...hold('default', 0, 1)];
+// CLICK_ANIMATIONS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const CLICK_ANIMATIONS: readonly (readonly Frame[])[] = [JUMP_WAVE, LOOK_AROUND];
+// IDLE 集中保存终端 UI 组件 Animated Clawd要一起传递的字段。
 const IDLE: Frame = {
   pose: 'default',
   offset: 0
 };
+// FRAME_MS 集合 命名 `60`，让后续代码直接表达这个值的用途。
 const FRAME_MS = 60;
+// incrementFrame封装成回调，供终端 UI Animated Clawd在事件触发或异步步骤中调用。
 const incrementFrame = (i: number) => i + 1;
+// CLAWD_HEIGHT保存`3`，供终端 UI Animated Clawd后续判断或输出使用。
 const CLAWD_HEIGHT = 3;
 
 /**
@@ -54,67 +70,110 @@ const CLAWD_HEIGHT = 3;
  * mouse tracking is enabled (i.e. inside `<AlternateScreen>` / fullscreen);
  * elsewhere this renders and behaves identically to plain `<Clawd />`.
  */
+// AnimatedClawd 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AnimatedClawd() {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(8);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     pose,
     bounceOffset,
     onClick
   } = useClawdAnimation();
+  // t0 暂存 `<Clawd pose={pose} />` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== pose) {
+    // t0 暂存 `<Clawd pose={pose} />` 生成的渲染片段，后续返回路径直接复用。
     t0 = <Clawd pose={pose} />;
+    // $[0] 缓存 `pose`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = pose;
+    // $[1] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[1];
   }
+  // t1 暂存 `<Box marginTop={bounceOffset} flexShrink={0}>{t0}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== bounceOffset || $[3] !== t0) {
+    // t1 暂存 `<Box marginTop={bounceOffset} flexShrink={0}>{t0}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t1 = <Box marginTop={bounceOffset} flexShrink={0}>{t0}</Box>;
+    // $[2] 缓存 `bounceOffset`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = bounceOffset;
+    // $[3] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t0;
+    // $[4] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[4];
   }
+  // t2 暂存 `<Box height={CLAWD_HEIGHT} flexDirection="column" onClick...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== onClick || $[6] !== t1) {
+    // t2 暂存 `<Box height={CLAWD_HEIGHT} flexDirection="column" onClick...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Box height={CLAWD_HEIGHT} flexDirection="column" onClick={onClick}>{t1}</Box>;
+    // $[5] 缓存 `onClick`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = onClick;
+    // $[6] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t1;
+    // $[7] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[7];
   }
+  // 返回 `t2`，作为终端渲染这次计算的结果。
   return t2;
 }
+// useClawdAnimation 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function useClawdAnimation(): {
   pose: ClawdPose;
   bounceOffset: number;
+  // 这个回调绑定到 onClick: () => void;，负责终端渲染在该局部场景下的响应。
   onClick: () => void;
 } {
   // Read once at mount — no useSettings() subscription, since that would
   // re-render on any settings change.
+  // 这个回调绑定到 const [reducedMotion] = useState(() => getInitialSettings().prefersReducedMotion ?? …，负责终端渲染在该局部场景下的响应。
   const [reducedMotion] = useState(() => getInitialSettings().prefersReducedMotion ?? false);
+  // frameIndex 索引 由 React state 持有，setFrameIndex 会在用户操作或异步结果返回时触发刷新。
   const [frameIndex, setFrameIndex] = useState(-1);
+  // sequenceRef 引用保存 hook 状态，让终端 UI Animated Clawd跨渲染复用同一个容器。
   const sequenceRef = useRef<readonly Frame[]>(JUMP_WAVE);
+  // onClick封装成回调，供终端 UI Animated Clawd在事件触发或异步步骤中调用。
   const onClick = () => {
+    // `reducedMotion || frameIndex` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
     if (reducedMotion || frameIndex !== -1) return;
+    // current更新为 `CLICK_ANIMATIONS[Math.floor(Math.random() * CLICK_ANIMATI...`，确保终端 UI后续读取最新状态。
     sequenceRef.current = CLICK_ANIMATIONS[Math.floor(Math.random() * CLICK_ANIMATIONS.length)]!;
+    // setFrameIndex 写入新的状态值，使终端渲染后续读取保持一致。
     setFrameIndex(0);
   };
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 满足 `frameIndex === -1` 时，终端渲染执行该分支。
     if (frameIndex === -1) return;
+    // 满足 `frameIndex >= sequenceRef.current.length` 时，终端渲染执行该分支。
     if (frameIndex >= sequenceRef.current.length) {
+      // setFrameIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setFrameIndex(-1);
+      // 终端 UI 组件 Animated Clawd在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // timer保存`setTimeout`，供终端渲染后续处理使用。
     const timer = setTimeout(setFrameIndex, FRAME_MS, incrementFrame);
+    // 返回 `() => clearTimeout(timer)`，作为终端渲染这次计算的结果。
     return () => clearTimeout(timer);
   }, [frameIndex]);
+  // seq保存`sequenceRef.current`，供后续判断或组装使用。
   const seq = sequenceRef.current;
+  // current标记终端 UI Animated Clawd是否启用对应路径。
   const current = frameIndex >= 0 && frameIndex < seq.length ? seq[frameIndex]! : IDLE;
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     pose: current.pose,
     bounceOffset: current.offset,

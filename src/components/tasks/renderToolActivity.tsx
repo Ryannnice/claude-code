@@ -1,32 +1,53 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 引入 Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../../ink.js';
+// 类型依赖 { Tools } 来自 ../../Tool.js，用于校准终端渲染的数据契约。
 import type { Tools } from '../../Tool.js';
+// 引入 findToolByName，将 ../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { findToolByName } from '../../Tool.js';
+// 类型依赖 { ToolActivity } 来自 ../../tasks/LocalAgentTask/LocalAgentTask.js，用于校准终端渲染的数据契约。
 import type { ToolActivity } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
+// 类型依赖 { ThemeName } 来自 ../../utils/theme.js，用于校准终端渲染的数据契约。
 import type { ThemeName } from '../../utils/theme.js';
+// renderToolActivity 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolActivity(activity: ToolActivity, tools: Tools, theme: ThemeName): React.ReactNode {
+  // 工具筛选`findToolByName`，供终端渲染后续处理使用。
   const tool = findToolByName(tools, activity.toolName);
+  // 工具缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!tool) {
+    // 返回 `activity.toolName`，作为终端渲染这次计算的结果。
     return activity.toolName;
   }
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // 解析结果保存`inputSchema.safeParse`，供终端渲染后续处理使用。
     const parsed = tool.inputSchema.safeParse(activity.input);
+    // parsedInput 命名 `parsed.success ? parsed.data : {}`，让后续代码直接表达这个值的用途。
     const parsedInput = parsed.success ? parsed.data : {};
+    // userFacingName保存`tool.userFacingName`，供终端渲染后续处理使用。
     const userFacingName = tool.userFacingName(parsedInput);
+    // userFacingName缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!userFacingName) {
+      // 返回 `activity.toolName`，作为终端渲染这次计算的结果。
       return activity.toolName;
     }
+    // toolArgs 集合保存`tool.renderToolUseMessage`，供终端渲染后续处理使用。
     const toolArgs = tool.renderToolUseMessage(parsedInput, {
       theme,
       verbose: false
     });
+    // 满足 `toolArgs` 时，终端渲染执行该分支。
     if (toolArgs) {
+      // 返回 `<Text>`，作为终端渲染这次计算的结果。
       return <Text>
           {userFacingName}({toolArgs})
         </Text>;
     }
+    // 返回 `userFacingName`，作为终端渲染这次计算的结果。
     return userFacingName;
   } catch {
+    // 返回 `activity.toolName`，作为终端渲染这次计算的结果。
     return activity.toolName;
   }
 }

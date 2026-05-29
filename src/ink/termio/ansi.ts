@@ -7,6 +7,7 @@
 /**
  * C0 (7-bit) control characters
  */
+// C0 集中保存Ink 渲染层 ansi要一起传递的字段。
 export const C0 = {
   NUL: 0x00,
   SOH: 0x01,
@@ -44,13 +45,17 @@ export const C0 = {
 } as const
 
 // String constants for output generation
+// ESC固定为 `'\x1b'`，作为Ink 渲染层 ansi后续展示或比较的基准。
 export const ESC = '\x1b'
+// BEL 命名 `'\x07'`，让后续代码直接表达这个值的用途。
 export const BEL = '\x07'
+// SEP固定为 `';'`，作为Ink 渲染层 ansi后续展示或比较的基准。
 export const SEP = ';'
 
 /**
  * Escape sequence type introducers (byte after ESC)
  */
+// ESC_TYPE 集中保存Ink 渲染层 ansi要一起传递的字段。
 export const ESC_TYPE = {
   CSI: 0x5b, // [ - Control Sequence Introducer
   OSC: 0x5d, // ] - Operating System Command
@@ -62,7 +67,9 @@ export const ESC_TYPE = {
 } as const
 
 /** Check if a byte is a C0 control character */
+// isC0 封装Ink 渲染层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isC0(byte: number): boolean {
+  // 返回 `byte < 0x20 || byte === 0x7f`，作为终端渲染这次计算的结果。
   return byte < 0x20 || byte === 0x7f
 }
 
@@ -70,6 +77,8 @@ export function isC0(byte: number): boolean {
  * Check if a byte is an ESC sequence final byte (0-9, :, ;, <, =, >, ?, @ through ~)
  * ESC sequences have a wider final byte range than CSI
  */
+// isEscFinal 封装Ink 渲染层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isEscFinal(byte: number): boolean {
+  // 返回 `byte >= 0x30 && byte <= 0x7e`，作为终端渲染这次计算的结果。
   return byte >= 0x30 && byte <= 0x7e
 }

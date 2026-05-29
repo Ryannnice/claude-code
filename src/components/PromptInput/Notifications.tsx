@@ -1,43 +1,80 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 ReactNode、useEffect、useMemo、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
+// 引入 Notification、useNotifications，将 src/context/notifications.js 中已经封装好的能力接到本文件流程里。
 import { type Notification, useNotifications } from 'src/context/notifications.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
+// 引入 useAppState，将 src/state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from 'src/state/AppState.js';
+// 引入 useVoiceState，将 ../../context/voice.js 中已经封装好的能力接到本文件流程里。
 import { useVoiceState } from '../../context/voice.js';
+// 类型依赖 { VerificationStatus } 来自 ../../hooks/useApiKeyVerification.js，用于校准终端渲染的数据契约。
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js';
+// 引入 useIdeConnectionStatus，将 ../../hooks/useIdeConnectionStatus.js 中已经封装好的能力接到本文件流程里。
 import { useIdeConnectionStatus } from '../../hooks/useIdeConnectionStatus.js';
+// 类型依赖 { IDESelection } 来自 ../../hooks/useIdeSelection.js，用于校准终端渲染的数据契约。
 import type { IDESelection } from '../../hooks/useIdeSelection.js';
+// 引入 useMainLoopModel，将 ../../hooks/useMainLoopModel.js 中已经封装好的能力接到本文件流程里。
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
+// 引入 useVoiceEnabled，将 ../../hooks/useVoiceEnabled.js 中已经封装好的能力接到本文件流程里。
 import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 接入 useClaudeAiLimits 服务层能力，把外部通信或共享状态交给 ../../services/claudeAiLimitsHook.js 处理。
 import { useClaudeAiLimits } from '../../services/claudeAiLimitsHook.js';
+// 接入 calculateTokenWarningState 服务层能力，把外部通信或共享状态交给 ../../services/compact/autoCompact.js 处理。
 import { calculateTokenWarningState } from '../../services/compact/autoCompact.js';
+// 类型依赖 { MCPServerConnection } 来自 ../../services/mcp/types.js，用于校准终端渲染的数据契约。
 import type { MCPServerConnection } from '../../services/mcp/types.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../../types/message.js';
+// 复用 getApiKeyHelperElapsedMs、getConfiguredApiKeyHelper、getSubscriptionType 工具函数，把通用处理留在 ../../utils/auth.js 中维护。
 import { getApiKeyHelperElapsedMs, getConfiguredApiKeyHelper, getSubscriptionType } from '../../utils/auth.js';
+// 类型依赖 { AutoUpdaterResult } 来自 ../../utils/autoUpdater.js，用于校准终端渲染的数据契约。
 import type { AutoUpdaterResult } from '../../utils/autoUpdater.js';
+// 复用 getExternalEditor 工具函数，把通用处理留在 ../../utils/editor.js 中维护。
 import { getExternalEditor } from '../../utils/editor.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js';
+// 复用 formatDuration 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { formatDuration } from '../../utils/format.js';
+// 复用 setEnvHookNotifier 工具函数，把通用处理留在 ../../utils/hooks/fileChangedWatcher.js 中维护。
 import { setEnvHookNotifier } from '../../utils/hooks/fileChangedWatcher.js';
+// 复用 toIDEDisplayName 工具函数，把通用处理留在 ../../utils/ide.js 中维护。
 import { toIDEDisplayName } from '../../utils/ide.js';
+// 复用 getMessagesAfterCompactBoundary 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js';
+// 复用 tokenCountFromLastAPIResponse 工具函数，把通用处理留在 ../../utils/tokens.js 中维护。
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js';
+// 引入 AutoUpdaterWrapper，将 ../AutoUpdaterWrapper.js 中已经封装好的能力接到本文件流程里。
 import { AutoUpdaterWrapper } from '../AutoUpdaterWrapper.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 IdeStatusIndicator，将 ../IdeStatusIndicator.js 中已经封装好的能力接到本文件流程里。
 import { IdeStatusIndicator } from '../IdeStatusIndicator.js';
+// 引入 MemoryUsageIndicator，将 ../MemoryUsageIndicator.js 中已经封装好的能力接到本文件流程里。
 import { MemoryUsageIndicator } from '../MemoryUsageIndicator.js';
+// 引入 SentryErrorBoundary，将 ../SentryErrorBoundary.js 中已经封装好的能力接到本文件流程里。
 import { SentryErrorBoundary } from '../SentryErrorBoundary.js';
+// 引入 TokenWarning，将 ../TokenWarning.js 中已经封装好的能力接到本文件流程里。
 import { TokenWarning } from '../TokenWarning.js';
+// 引入 SandboxPromptFooterHint，将 ./SandboxPromptFooterHint.js 中已经封装好的能力接到本文件流程里。
 import { SandboxPromptFooterHint } from './SandboxPromptFooterHint.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
+// 这个回调绑定到 const VoiceIndicator: typeof import('./VoiceIndicator.js').VoiceIndicator = feature(…，负责终端渲染在该局部场景下的响应。
 const VoiceIndicator: typeof import('./VoiceIndicator.js').VoiceIndicator = feature('VOICE_MODE') ? require('./VoiceIndicator.js').VoiceIndicator : () => null;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
+// FOOTER_TEMPORARY_STATUS_TIMEOUT保存`5000`，供终端渲染提示输入组件 Notifications后续判断或输出使用。
 export const FOOTER_TEMPORARY_STATUS_TIMEOUT = 5000;
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   apiKeyStatus: VerificationStatus;
   autoUpdaterResult: AutoUpdaterResult | null;
@@ -45,15 +82,20 @@ type Props = {
   debug: boolean;
   verbose: boolean;
   messages: Message[];
+  // 这个回调绑定到 onAutoUpdaterResult: (result: AutoUpdaterResult) => void;，负责终端渲染在该局部场景下的响应。
   onAutoUpdaterResult: (result: AutoUpdaterResult) => void;
+  // 这个回调绑定到 onChangeIsUpdating: (isUpdating: boolean) => void;，负责终端渲染在该局部场景下的响应。
   onChangeIsUpdating: (isUpdating: boolean) => void;
   ideSelection: IDESelection | undefined;
   mcpClients?: MCPServerConnection[];
   isInputWrapped?: boolean;
   isNarrow?: boolean;
 };
+// Notifications 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function Notifications(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(34);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     apiKeyStatus,
     autoUpdaterResult,
@@ -68,43 +110,72 @@ export function Notifications(t0) {
     isInputWrapped: t1,
     isNarrow: t2
   } = t0;
+  // isInputWrapped标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const isInputWrapped = t1 === undefined ? false : t1;
+  // isNarrow标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const isNarrow = t2 === undefined ? false : t2;
+  // t3 暂存 `tokenCountFromLastAPIResponse(messagesForTokenCount)` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== messages) {
+    // messagesForTokenCount 消息数据读取`getMessagesAfterCompactBoundary`，供终端渲染后续处理使用。
     const messagesForTokenCount = getMessagesAfterCompactBoundary(messages);
+    // t3 暂存 `tokenCountFromLastAPIResponse(messagesForTokenCount)` 生成的渲染片段，后续返回路径直接复用。
     t3 = tokenCountFromLastAPIResponse(messagesForTokenCount);
+    // $[0] 缓存 `messages`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = messages;
+    // $[1] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[1];
   }
+  // tokenUsage保存`t3`，作为后续临时缓存值处理的输入。
   const tokenUsage = t3;
+  // mainLoopModel保存`useMainLoopModel`，供终端渲染后续处理使用。
   const mainLoopModel = useMainLoopModel();
+  // t4 暂存 `calculateTokenWarningState(tokenUsage, mainLoopModel)` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== mainLoopModel || $[3] !== tokenUsage) {
+    // t4 暂存 `calculateTokenWarningState(tokenUsage, mainLoopModel)` 生成的渲染片段，后续返回路径直接复用。
     t4 = calculateTokenWarningState(tokenUsage, mainLoopModel);
+    // $[2] 缓存 `mainLoopModel`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = mainLoopModel;
+    // $[3] 缓存 `tokenUsage`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = tokenUsage;
+    // $[4] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[4];
   }
+  // isShowingCompactMessage 消息数据标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const isShowingCompactMessage = t4.isAboveWarningThreshold;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     status: ideStatus
   } = useIdeConnectionStatus(mcpClients);
+  // notifications 集合保存`useAppState`，供终端渲染后续处理使用。
   const notifications = useAppState(_temp);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     addNotification,
     removeNotification
   } = useNotifications();
+  // claudeAiLimits 集合保存`useClaudeAiLimits`，供终端渲染后续处理使用。
   const claudeAiLimits = useClaudeAiLimits();
+  // t5 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // t6 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== addNotification) {
+    // t5 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t5 = () => {
+      // setEnvHookNotifier 写入新的状态值，使终端渲染后续读取保持一致。
       setEnvHookNotifier((text, isError) => {
+        // 调用 addNotification，触发终端渲染此处需要的副作用。
         addNotification({
           key: "env-hook",
           text,
@@ -113,44 +184,76 @@ export function Notifications(t0) {
           timeoutMs: isError ? 8000 : 5000
         });
       });
+      // 返回 `_temp2`，作为终端渲染这次计算的结果。
       return _temp2;
     };
+    // t6 暂存 `[addNotification]` 生成的渲染片段，后续返回路径直接复用。
     t6 = [addNotification];
+    // $[5] 缓存 `addNotification`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = addNotification;
+    // $[6] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t5;
+    // $[7] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t6;
   } else {
+    // t5 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[6];
+    // t6 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[7];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t5, t6);
+  // shouldShowIdeSelection标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const shouldShowIdeSelection = ideStatus === "connected" && (ideSelection?.filePath || ideSelection?.text && ideSelection.lineCount > 0);
+  // shouldShowAutoUpdater标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const shouldShowAutoUpdater = !shouldShowIdeSelection || isAutoUpdating || autoUpdaterResult?.status !== "success";
+  // isInOverageMode标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const isInOverageMode = claudeAiLimits.isUsingOverage;
+  // t7 暂存 `getSubscriptionType()` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
+    // t7 暂存 `getSubscriptionType()` 生成的渲染片段，后续返回路径直接复用。
     t7 = getSubscriptionType();
+    // $[8] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[8];
   }
+  // subscriptionType保存`t7`，作为后续临时缓存值处理的输入。
   const subscriptionType = t7;
+  // isTeamOrEnterprise标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const isTeamOrEnterprise = subscriptionType === "team" || subscriptionType === "enterprise";
+  // t8 暂存 `getExternalEditor()` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
+    // t8 暂存 `getExternalEditor()` 生成的渲染片段，后续返回路径直接复用。
     t8 = getExternalEditor();
+    // $[9] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[9];
   }
+  // editor 命名 `t8`，让后续代码直接表达这个值的用途。
   const editor = t8;
+  // shouldShowExternalEditorHint标记终端渲染提示输入组件 Notifications是否启用对应路径。
   const shouldShowExternalEditorHint = isInputWrapped && !isShowingCompactMessage && apiKeyStatus !== "invalid" && apiKeyStatus !== "missing" && editor !== undefined;
+  // t10 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t10;
+  // t9 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[10] !== addNotification || $[11] !== removeNotification || $[12] !== shouldShowExternalEditorHint) {
+    // t9 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t9 = () => {
+      // 只有 `shouldShowExternalEditorHint && editor` 满足时，终端渲染才执行该分支。
       if (shouldShowExternalEditorHint && editor) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent("tengu_external_editor_hint_shown", {});
+        // 调用 addNotification，触发终端渲染此处需要的副作用。
         addNotification({
           key: "external-editor-hint",
           jsx: <Text dimColor={true}><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description={`edit in ${toIDEDisplayName(editor)}`} /></Text>,
@@ -158,61 +261,106 @@ export function Notifications(t0) {
           timeoutMs: 5000
         });
       } else {
+        // 调用 removeNotification，触发终端渲染此处需要的副作用。
         removeNotification("external-editor-hint");
       }
     };
+    // t10 暂存 `[shouldShowExternalEditorHint, editor, addNotification, r...` 生成的渲染片段，后续返回路径直接复用。
     t10 = [shouldShowExternalEditorHint, editor, addNotification, removeNotification];
+    // $[10] 缓存 `addNotification`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = addNotification;
+    // $[11] 缓存 `removeNotification`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = removeNotification;
+    // $[12] 缓存 `shouldShowExternalEditorHint`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = shouldShowExternalEditorHint;
+    // $[13] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t10;
+    // $[14] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t9;
   } else {
+    // t10 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[13];
+    // t9 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[14];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t9, t10);
+  // 临时值 t11 命名 `isNarrow ? "flex-start" : "flex-end"`，让后续代码直接表达这个值的用途。
   const t11 = isNarrow ? "flex-start" : "flex-end";
+  // 临时值 t12 命名 `isInOverageMode ?? false`，让后续代码直接表达这个值的用途。
   const t12 = isInOverageMode ?? false;
+  // t13 暂存 `<NotificationContent ideSelection={ideSelection} mcpClien...` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[15] !== apiKeyStatus || $[16] !== autoUpdaterResult || $[17] !== debug || $[18] !== ideSelection || $[19] !== isAutoUpdating || $[20] !== isShowingCompactMessage || $[21] !== mainLoopModel || $[22] !== mcpClients || $[23] !== notifications || $[24] !== onAutoUpdaterResult || $[25] !== onChangeIsUpdating || $[26] !== shouldShowAutoUpdater || $[27] !== t12 || $[28] !== tokenUsage || $[29] !== verbose) {
+    // t13 暂存 `<NotificationContent ideSelection={ideSelection} mcpClien...` 生成的渲染片段，后续返回路径直接复用。
     t13 = <NotificationContent ideSelection={ideSelection} mcpClients={mcpClients} notifications={notifications} isInOverageMode={t12} isTeamOrEnterprise={isTeamOrEnterprise} apiKeyStatus={apiKeyStatus} debug={debug} verbose={verbose} tokenUsage={tokenUsage} mainLoopModel={mainLoopModel} shouldShowAutoUpdater={shouldShowAutoUpdater} autoUpdaterResult={autoUpdaterResult} isAutoUpdating={isAutoUpdating} isShowingCompactMessage={isShowingCompactMessage} onAutoUpdaterResult={onAutoUpdaterResult} onChangeIsUpdating={onChangeIsUpdating} />;
+    // $[15] 缓存 `apiKeyStatus`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = apiKeyStatus;
+    // $[16] 缓存 `autoUpdaterResult`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = autoUpdaterResult;
+    // $[17] 缓存 `debug`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = debug;
+    // $[18] 缓存 `ideSelection`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = ideSelection;
+    // $[19] 缓存 `isAutoUpdating`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = isAutoUpdating;
+    // $[20] 缓存 `isShowingCompactMessage`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = isShowingCompactMessage;
+    // $[21] 缓存 `mainLoopModel`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = mainLoopModel;
+    // $[22] 缓存 `mcpClients`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = mcpClients;
+    // $[23] 缓存 `notifications`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = notifications;
+    // $[24] 缓存 `onAutoUpdaterResult`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = onAutoUpdaterResult;
+    // $[25] 缓存 `onChangeIsUpdating`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = onChangeIsUpdating;
+    // $[26] 缓存 `shouldShowAutoUpdater`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = shouldShowAutoUpdater;
+    // $[27] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = t12;
+    // $[28] 缓存 `tokenUsage`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = tokenUsage;
+    // $[29] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = verbose;
+    // $[30] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = t13;
   } else {
+    // t13 从 React 编译缓存槽 $[30] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[30];
   }
+  // t14 暂存 `<SentryErrorBoundary><Box flexDirection="column" alignIte...` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[31] !== t11 || $[32] !== t13) {
+    // t14 暂存 `<SentryErrorBoundary><Box flexDirection="column" alignIte...` 生成的渲染片段，后续返回路径直接复用。
     t14 = <SentryErrorBoundary><Box flexDirection="column" alignItems={t11} flexShrink={0} overflowX="hidden">{t13}</Box></SentryErrorBoundary>;
+    // $[31] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = t11;
+    // $[32] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = t13;
+    // $[33] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = t14;
   } else {
+    // t14 从 React 编译缓存槽 $[33] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[33];
   }
+  // 返回 `t14`，作为终端渲染这次计算的结果。
   return t14;
 }
+// _temp2 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2() {
+  // 返回 `setEnvHookNotifier(null)`，作为终端渲染这次计算的结果。
   return setEnvHookNotifier(null);
 }
+// _temp 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(s) {
+  // 返回 `s.notifications`，作为终端渲染这次计算的结果。
   return s.notifications;
 }
+// NotificationContent 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function NotificationContent({
   ideSelection,
   mcpClients,
@@ -248,41 +396,61 @@ function NotificationContent({
   autoUpdaterResult: AutoUpdaterResult | null;
   isAutoUpdating: boolean;
   isShowingCompactMessage: boolean;
+  // 这个回调绑定到 onAutoUpdaterResult: (result: AutoUpdaterResult) => void;，负责终端渲染在该局部场景下的响应。
   onAutoUpdaterResult: (result: AutoUpdaterResult) => void;
+  // 这个回调绑定到 onChangeIsUpdating: (isUpdating: boolean) => void;，负责终端渲染在该局部场景下的响应。
   onChangeIsUpdating: (isUpdating: boolean) => void;
 }): ReactNode {
   // Poll apiKeyHelper inflight state to show slow-helper notice.
   // Gated on configuration — most users never set apiKeyHelper, so the
   // effect is a no-op for them (no interval allocated).
+  // apiKeyHelperSlow 由 React state 持有，setApiKeyHelperSlow 会在用户操作或异步结果返回时触发刷新。
   const [apiKeyHelperSlow, setApiKeyHelperSlow] = useState<string | null>(null);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 满足 `!getConfiguredApiKeyHelper()` 时，终端渲染执行该分支。
     if (!getConfiguredApiKeyHelper()) return;
+    // interval保存`setInterval`，供终端渲染后续处理使用。
     const interval = setInterval((setSlow: React.Dispatch<React.SetStateAction<string | null>>) => {
+      // ms 集合读取`getApiKeyHelperElapsedMs`，供终端渲染后续处理使用。
       const ms = getApiKeyHelperElapsedMs();
+      // next格式化`formatDuration`，供终端渲染后续处理使用。
       const next = ms >= 10_000 ? formatDuration(ms) : null;
+      // setSlow 写入新的状态值，使终端渲染后续读取保持一致。
       setSlow(prev => next === prev ? prev : next);
     }, 1000, setApiKeyHelperSlow);
+    // 返回 `() => clearInterval(interval)`，作为终端渲染这次计算的结果。
     return () => clearInterval(interval);
   }, []);
 
   // Voice state (VOICE_MODE builds only, runtime-gated by GrowthBook)
+  // voiceState 状态保存`feature`，供终端渲染后续处理使用。
   const voiceState = feature('VOICE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useVoiceState 使用 s => s.voiceState 完成终端渲染里的对应操作。
   useVoiceState(s => s.voiceState) : 'idle' as const;
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // voiceEnabled保存`feature`，供终端渲染后续处理使用。
   const voiceEnabled = feature('VOICE_MODE') ? useVoiceEnabled() : false;
+  // voiceError 错误信息保存`feature`，供终端渲染后续处理使用。
   const voiceError = feature('VOICE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useVoiceState 使用 s_0 => s_0.voiceError 完成终端渲染里的对应操作。
   useVoiceState(s_0 => s_0.voiceError) : null;
+  // isBriefOnly记录 `feature` 是否成立，终端渲染随后按该结果分支。
   const isBriefOnly = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s_1 => s_1.isBriefOnly 完成终端渲染里的对应操作。
   useAppState(s_1 => s_1.isBriefOnly) : false;
 
   // When voice is actively recording or processing, replace all
   // notifications with just the voice indicator.
+  // 只有 `feature('VOICE_MODE') && voiceEnabled && (voiceState === 'recording' || voi...` 满足时，终端渲染才执行该分支。
   if (feature('VOICE_MODE') && voiceEnabled && (voiceState === 'recording' || voiceState === 'processing')) {
+    // 返回 `<VoiceIndicator voiceState={voiceState} />`，作为终端渲染这次计算的结果。
     return <VoiceIndicator voiceState={voiceState} />;
   }
+  // 返回 `<>`，作为终端渲染这次计算的结果。
   return <>
       <IdeStatusIndicator ideSelection={ideSelection} mcpClients={mcpClients} />
       {notifications.current && ('jsx' in notifications.current ? <Text wrap="truncate" key={notifications.current.key}>

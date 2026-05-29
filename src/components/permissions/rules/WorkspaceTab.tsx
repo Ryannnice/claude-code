@@ -1,29 +1,46 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect } from 'react';
+// 引入 getOriginalCwd，将 ../../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getOriginalCwd } from '../../../bootstrap/state.js';
+// 类型依赖 { CommandResultDisplay } 来自 ../../../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../../../commands.js';
+// 复用 Select 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Select } from '../../../components/CustomSelect/select.js';
+// 引入 Box、Text，将 ../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../../ink.js';
+// 类型依赖 { ToolPermissionContext } 来自 ../../../Tool.js，用于校准终端渲染的数据契约。
 import type { ToolPermissionContext } from '../../../Tool.js';
+// 引入 useTabHeaderFocus，将 ../../design-system/Tabs.js 中已经封装好的能力接到本文件流程里。
 import { useTabHeaderFocus } from '../../design-system/Tabs.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   onExit: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
   toolPermissionContext: ToolPermissionContext;
+  // 这个回调绑定到 onRequestAddDirectory: () => void;，负责终端渲染在该局部场景下的响应。
   onRequestAddDirectory: () => void;
+  // 这个回调绑定到 onRequestRemoveDirectory: (path: string) => void;，负责终端渲染在该局部场景下的响应。
   onRequestRemoveDirectory: (path: string) => void;
   onHeaderFocusChange?: (focused: boolean) => void;
 };
+// DirectoryItem 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type DirectoryItem = {
   path: string;
   isCurrent: boolean;
   isDeletable: boolean;
 };
+// WorkspaceTab 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function WorkspaceTab(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(23);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onExit,
     toolPermissionContext,
@@ -31,116 +48,194 @@ export function WorkspaceTab(t0) {
     onRequestRemoveDirectory,
     onHeaderFocusChange
   } = t0;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     headerFocused,
     focusHeader
   } = useTabHeaderFocus();
+  // t1 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // t2 暂存 `[headerFocused, onHeaderFocusChange]` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== headerFocused || $[1] !== onHeaderFocusChange) {
+    // t1 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t1 = () => {
+      // 调用 onHeaderFocusChange?.(headerFocused);，完成这一处局部操作。
       onHeaderFocusChange?.(headerFocused);
     };
+    // t2 暂存 `[headerFocused, onHeaderFocusChange]` 生成的渲染片段，后续返回路径直接复用。
     t2 = [headerFocused, onHeaderFocusChange];
+    // $[0] 缓存 `headerFocused`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = headerFocused;
+    // $[1] 缓存 `onHeaderFocusChange`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = onHeaderFocusChange;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
+    // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[3];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t1, t2);
+  // t3 暂存 `Array.from(toolPermissionContext.additionalWorkingDirecto...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== toolPermissionContext.additionalWorkingDirectories) {
+    // t3 暂存 `Array.from(toolPermissionContext.additionalWorkingDirecto...` 生成的渲染片段，后续返回路径直接复用。
     t3 = Array.from(toolPermissionContext.additionalWorkingDirectories.keys()).map(_temp);
+    // $[4] 缓存 `toolPermissionContext.additionalWorkingDirectories`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = toolPermissionContext.additionalWorkingDirectories;
+    // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[5];
   }
+  // additionalDirectories 集合保存`t3`，作为后续临时缓存值处理的输入。
   const additionalDirectories = t3;
+  // t4 暂存 `selectedValue => {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[6] !== additionalDirectories || $[7] !== onRequestAddDirectory || $[8] !== onRequestRemoveDirectory) {
+    // t4 暂存 `selectedValue => {` 生成的渲染片段，后续返回路径直接复用。
     t4 = selectedValue => {
+      // 当 `selectedValue` 匹配 `"add-directory"` 时，终端渲染执行对应分支。
       if (selectedValue === "add-directory") {
+        // 调用 onRequestAddDirectory，触发终端渲染此处需要的副作用。
         onRequestAddDirectory();
+        // 权限确认界面 Workspace Tab在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // directory筛选`additionalDirectories.find`，供终端渲染后续处理使用。
       const directory = additionalDirectories.find(d => d.path === selectedValue);
+      // 只有 `directory && directory.isDeletable` 满足时，终端渲染才执行该分支。
       if (directory && directory.isDeletable) {
+        // 调用 onRequestRemoveDirectory，触发终端渲染此处需要的副作用。
         onRequestRemoveDirectory(directory.path);
       }
     };
+    // $[6] 缓存 `additionalDirectories`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = additionalDirectories;
+    // $[7] 缓存 `onRequestAddDirectory`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = onRequestAddDirectory;
+    // $[8] 缓存 `onRequestRemoveDirectory`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = onRequestRemoveDirectory;
+    // $[9] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[9];
   }
+  // handleDirectorySelect沿用 `t4` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const handleDirectorySelect = t4;
+  // t5 暂存 `() => onExit("Workspace dialog dismissed", {` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[10] !== onExit) {
+    // t5 暂存 `() => onExit("Workspace dialog dismissed", {` 生成的渲染片段，后续返回路径直接复用。
     t5 = () => onExit("Workspace dialog dismissed", {
       display: "system"
     });
+    // $[10] 缓存 `onExit`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = onExit;
+    // $[11] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[11];
   }
+  // handleCancel保存`t5`，作为后续临时缓存值处理的输入。
   const handleCancel = t5;
+  // opts 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   let opts;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[12] !== additionalDirectories) {
+    // opts 集合更新为 `additionalDirectories.map(_temp2)`，确保权限确认界面后续读取最新状态。
     opts = additionalDirectories.map(_temp2);
+    // t6 暂存 `{` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
+      // t6 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
       t6 = {
         label: `Add directory${figures.ellipsis}`,
         value: "add-directory"
       };
+      // $[14] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[14] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[14];
     }
+    // opts 集合追加新条目，保持收集顺序与输入顺序一致。
     opts.push(t6);
+    // $[12] 缓存 `additionalDirectories`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = additionalDirectories;
+    // $[13] 缓存 `opts`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = opts;
   } else {
+    // opts 集合更新为 `$[13]`，确保权限确认界面后续读取最新状态。
     opts = $[13];
   }
+  // 选项 命名 `opts`，让后续代码直接表达这个值的用途。
   const options = opts;
+  // t6 暂存 `<Box flexDirection="row" marginTop={1} marginLeft={2} gap...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
+    // t6 暂存 `<Box flexDirection="row" marginTop={1} marginLeft={2} gap...` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Box flexDirection="row" marginTop={1} marginLeft={2} gap={1}><Text>{`-  ${getOriginalCwd()}`}</Text><Text dimColor={true}>(Original working directory)</Text></Box>;
+    // $[15] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[15];
   }
+  // 临时值 t7保存`Math.min`，供终端渲染后续处理使用。
   const t7 = Math.min(10, options.length);
+  // t8 暂存 `<Box flexDirection="column" marginBottom={1}>{t6}<Select ...` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[16] !== focusHeader || $[17] !== handleCancel || $[18] !== handleDirectorySelect || $[19] !== headerFocused || $[20] !== options || $[21] !== t7) {
+    // t8 暂存 `<Box flexDirection="column" marginBottom={1}>{t6}<Select ...` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Box flexDirection="column" marginBottom={1}>{t6}<Select options={options} onChange={handleDirectorySelect} onCancel={handleCancel} visibleOptionCount={t7} onUpFromFirstItem={focusHeader} isDisabled={headerFocused} /></Box>;
+    // $[16] 缓存 `focusHeader`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = focusHeader;
+    // $[17] 缓存 `handleCancel`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = handleCancel;
+    // $[18] 缓存 `handleDirectorySelect`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = handleDirectorySelect;
+    // $[19] 缓存 `headerFocused`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = headerFocused;
+    // $[20] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = options;
+    // $[21] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t7;
+    // $[22] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[22] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[22];
   }
+  // 返回 `t8`，作为终端渲染这次计算的结果。
   return t8;
 }
+// _temp2 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(dir) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     label: dir.path,
     value: dir.path
   };
 }
+// _temp 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(path) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     path,
     isCurrent: false,

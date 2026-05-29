@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 /**
  * Constants related to tool result size limits
  */
@@ -10,6 +11,7 @@
  * Individual tools may declare a lower maxResultSizeChars, but this constant
  * acts as a system-wide cap regardless of what tools declare.
  */
+// DEFAULT_MAX_RESULT_SIZE_CHARS 集合保存`50_000`，供后续判断或组装使用。
 export const DEFAULT_MAX_RESULT_SIZE_CHARS = 50_000
 
 /**
@@ -19,17 +21,20 @@ export const DEFAULT_MAX_RESULT_SIZE_CHARS = 50_000
  *
  * This is approximately 400KB of text (assuming ~4 bytes per token).
  */
+// MAX_TOOL_RESULT_TOKENS 集合保存`100_000`，供后续判断或组装使用。
 export const MAX_TOOL_RESULT_TOKENS = 100_000
 
 /**
  * Bytes per token estimate for calculating token count from byte size.
  * This is a conservative estimate - actual token count may vary.
  */
+// BYTES_PER_TOKEN 命名 `4`，让后续代码直接表达这个值的用途。
 export const BYTES_PER_TOKEN = 4
 
 /**
  * Maximum size for tool results in bytes (derived from token limit).
  */
+// MAX_TOOL_RESULT_BYTES 集合保存`MAX_TOOL_RESULT_TOKENS * BYTES_PER_TOKEN`，供tool Limits后续判断或输出使用。
 export const MAX_TOOL_RESULT_BYTES = MAX_TOOL_RESULT_TOKENS * BYTES_PER_TOKEN
 
 /**
@@ -46,6 +51,7 @@ export const MAX_TOOL_RESULT_BYTES = MAX_TOOL_RESULT_TOKENS * BYTES_PER_TOKEN
  * Overridable at runtime via GrowthBook flag tengu_hawthorn_window — see
  * getPerMessageBudgetLimit() in toolResultStorage.ts.
  */
+// MAX_TOOL_RESULTS_PER_MESSAGE_CHARS 消息数据 命名 `200_000`，让后续代码直接表达这个值的用途。
 export const MAX_TOOL_RESULTS_PER_MESSAGE_CHARS = 200_000
 
 /**
@@ -53,4 +59,5 @@ export const MAX_TOOL_RESULTS_PER_MESSAGE_CHARS = 200_000
  * Used by getToolUseSummary() implementations to truncate long inputs
  * for display in grouped agent rendering.
  */
+// TOOL_SUMMARY_MAX_LENGTH 数量 命名 `50`，让后续代码直接表达这个值的用途。
 export const TOOL_SUMMARY_MAX_LENGTH = 50

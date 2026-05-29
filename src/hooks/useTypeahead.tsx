@@ -1,83 +1,135 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 引入 useNotifications，将 src/context/notifications.js 中已经封装好的能力接到本文件流程里。
 import { useNotifications } from 'src/context/notifications.js';
+// 引入 Text，将 src/ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from 'src/ink.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
+// 引入 useDebounceCallback，将 usehooks-ts 中已经封装好的能力接到本文件流程里。
 import { useDebounceCallback } from 'usehooks-ts';
+// 引入 Command、getCommandName，将 ../commands.js 中已经封装好的能力接到本文件流程里。
 import { type Command, getCommandName } from '../commands.js';
+// 复用 getModeFromInput、getValueFromInput 终端界面组件，避免在这里重复拼装显示逻辑。
 import { getModeFromInput, getValueFromInput } from '../components/PromptInput/inputModes.js';
+// 类型依赖 { SuggestionItem, SuggestionType } 来自 ../components/PromptInput/PromptInputFooterSuggestions.js，用于校准React hook 状态流的数据契约。
 import type { SuggestionItem, SuggestionType } from '../components/PromptInput/PromptInputFooterSuggestions.js';
+// 引入 useIsModalOverlayActive、useRegisterOverlay，将 ../context/overlayContext.js 中已经封装好的能力接到本文件流程里。
 import { useIsModalOverlayActive, useRegisterOverlay } from '../context/overlayContext.js';
+// 复用 KeyboardEvent 终端界面组件，避免在这里重复拼装显示逻辑。
 import { KeyboardEvent } from '../ink/events/keyboard-event.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- backward-compat bridge until consumers wire handleKeyDown to <Box onKeyDown>
+// 引入 useInput，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { useInput } from '../ink.js';
+// 引入 useOptionalKeybindingContext、useRegisterKeybindingContext，将 ../keybindings/KeybindingContext.js 中已经封装好的能力接到本文件流程里。
 import { useOptionalKeybindingContext, useRegisterKeybindingContext } from '../keybindings/KeybindingContext.js';
+// 引入 useKeybindings，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybindings } from '../keybindings/useKeybinding.js';
+// 引入 useShortcutDisplay，将 ../keybindings/useShortcutDisplay.js 中已经封装好的能力接到本文件流程里。
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
+// 引入 useAppState、useAppStateStore，将 ../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState, useAppStateStore } from '../state/AppState.js';
+// 类型依赖 { AgentDefinition } 来自 ../tools/AgentTool/loadAgentsDir.js，用于校准React hook 状态流的数据契约。
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js';
+// 类型依赖 { InlineGhostText, PromptInputMode } 来自 ../types/textInputTypes.js，用于校准React hook 状态流的数据契约。
 import type { InlineGhostText, PromptInputMode } from '../types/textInputTypes.js';
+// 复用 isAgentSwarmsEnabled 工具函数，把通用处理留在 ../utils/agentSwarmsEnabled.js 中维护。
 import { isAgentSwarmsEnabled } from '../utils/agentSwarmsEnabled.js';
+// 复用 generateProgressiveArgumentHint、parseArguments 工具函数，把通用处理留在 ../utils/argumentSubstitution.js 中维护。
 import { generateProgressiveArgumentHint, parseArguments } from '../utils/argumentSubstitution.js';
+// 复用 getShellCompletions、ShellCompletionType 工具函数，把通用处理留在 ../utils/bash/shellCompletion.js 中维护。
 import { getShellCompletions, type ShellCompletionType } from '../utils/bash/shellCompletion.js';
+// 复用 formatLogMetadata 工具函数，把通用处理留在 ../utils/format.js 中维护。
 import { formatLogMetadata } from '../utils/format.js';
+// 复用 getSessionIdFromLog、searchSessionsByCustomTitle 工具函数，把通用处理留在 ../utils/sessionStorage.js 中维护。
 import { getSessionIdFromLog, searchSessionsByCustomTitle } from '../utils/sessionStorage.js';
+// 复用 applyCommandSuggestion、findMidInputSlashCommand、generateCommandSuggestions、getBestCommandMatch、isCommandInput 工具函数，把通用处理留在 ../utils/suggestions/commandSuggestions.js 中维护。
 import { applyCommandSuggestion, findMidInputSlashCommand, generateCommandSuggestions, getBestCommandMatch, isCommandInput } from '../utils/suggestions/commandSuggestions.js';
+// 复用 getDirectoryCompletions、getPathCompletions、isPathLikeToken 工具函数，把通用处理留在 ../utils/suggestions/directoryCompletion.js 中维护。
 import { getDirectoryCompletions, getPathCompletions, isPathLikeToken } from '../utils/suggestions/directoryCompletion.js';
+// 复用 getShellHistoryCompletion 工具函数，把通用处理留在 ../utils/suggestions/shellHistoryCompletion.js 中维护。
 import { getShellHistoryCompletion } from '../utils/suggestions/shellHistoryCompletion.js';
+// 复用 getSlackChannelSuggestions、hasSlackMcpServer 工具函数，把通用处理留在 ../utils/suggestions/slackChannelSuggestions.js 中维护。
 import { getSlackChannelSuggestions, hasSlackMcpServer } from '../utils/suggestions/slackChannelSuggestions.js';
+// 复用 TEAM_LEAD_NAME 工具函数，把通用处理留在 ../utils/swarm/constants.js 中维护。
 import { TEAM_LEAD_NAME } from '../utils/swarm/constants.js';
+// 引入 applyFileSuggestion、findLongestCommonPrefix、onIndexBuildComplete、startBackgroundCacheRefresh，将 ./fileSuggestions.js 中已经封装好的能力接到本文件流程里。
 import { applyFileSuggestion, findLongestCommonPrefix, onIndexBuildComplete, startBackgroundCacheRefresh } from './fileSuggestions.js';
+// 引入 generateUnifiedSuggestions，将 ./unifiedSuggestions.js 中已经封装好的能力接到本文件流程里。
 import { generateUnifiedSuggestions } from './unifiedSuggestions.js';
 
 // Unicode-aware character class for file path tokens:
 // \p{L} = letters (CJK, Latin, Cyrillic, etc.)
 // \p{N} = numbers (incl. fullwidth)
 // \p{M} = combining marks (macOS NFD accents, Devanagari vowel signs)
+// AT_TOKEN_HEAD_RE读取 `/^@[\p{L}\p{N}\p{M}_\-./\\()[\]~:]*/u` 对应条目，后续围绕该成员继续处理。
 const AT_TOKEN_HEAD_RE = /^@[\p{L}\p{N}\p{M}_\-./\\()[\]~:]*/u;
+// PATH_CHAR_HEAD_RE 路径数据读取 `/^[\p{L}\p{N}\p{M}_\-./\\()[\]~:]+/u` 对应条目，后续围绕该成员继续处理。
 const PATH_CHAR_HEAD_RE = /^[\p{L}\p{N}\p{M}_\-./\\()[\]~:]+/u;
+// TOKEN_WITH_AT_RE保存`/(@[\p{L}\p{N}\p{M}_\-./\\()[\]~:]*|[\p{L}\p{N}\p{M}_\-./...`，供React hook use Typeah...后续判断或输出使用。
 const TOKEN_WITH_AT_RE = /(@[\p{L}\p{N}\p{M}_\-./\\()[\]~:]*|[\p{L}\p{N}\p{M}_\-./\\()[\]~:]+)$/u;
+// TOKEN_WITHOUT_AT_RE保存`/[\p{L}\p{N}\p{M}_\-./\\()[\]~:]+$/u`，供React hook use Typeah...后续判断或输出使用。
 const TOKEN_WITHOUT_AT_RE = /[\p{L}\p{N}\p{M}_\-./\\()[\]~:]+$/u;
+// HAS_AT_SYMBOL_RE保存`/(^|\s)@([\p{L}\p{N}\p{M}_\-./\\()[\]~:]*|"[^"]*"?)$/u`，供React hook use Typeah...后续判断或输出使用。
 const HAS_AT_SYMBOL_RE = /(^|\s)@([\p{L}\p{N}\p{M}_\-./\\()[\]~:]*|"[^"]*"?)$/u;
+// HASH_CHANNEL_RE保存`/(^|\s)#([a-z0-9][a-z0-9_-]*)$/`，供React hook use Type...后续步骤使用。
 const HASH_CHANNEL_RE = /(^|\s)#([a-z0-9][a-z0-9_-]*)$/;
 
 // Type guard for path completion metadata
+// isPathMetadata 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
 function isPathMetadata(metadata: unknown): metadata is {
   type: 'directory' | 'file';
 } {
+  // 返回 typeof metadata === 'object' && metadata !== null && 'type' in metadata && (metadata.type === …，把React hook 状态流这个分支的结果交还调用方。
   return typeof metadata === 'object' && metadata !== null && 'type' in metadata && (metadata.type === 'directory' || metadata.type === 'file');
 }
 
 // Helper to determine selectedSuggestion when updating suggestions
+// getPreservedSelection 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
 function getPreservedSelection(prevSuggestions: SuggestionItem[], prevSelection: number, newSuggestions: SuggestionItem[]): number {
   // No new suggestions
+  // newSuggestions 集合为空时立即返回或跳过，避免React hook 状态流把空集合当成可处理内容。
   if (newSuggestions.length === 0) {
+    // 返回 -1，把React hook 状态流这个分支的结果交还调用方。
     return -1;
   }
 
   // No previous selection
+  // 满足 `prevSelection < 0` 时，React hook执行该分支。
   if (prevSelection < 0) {
+    // 返回 0，把React hook 状态流这个分支的结果交还调用方。
     return 0;
   }
 
   // Get the previously selected item
+  // prevSelectedItem保存`prevSuggestions[prevSelection]`，供React hook use Type...后续步骤使用。
   const prevSelectedItem = prevSuggestions[prevSelection];
+  // prevSelectedItem缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
   if (!prevSelectedItem) {
+    // 返回 0，把React hook 状态流这个分支的结果交还调用方。
     return 0;
   }
 
   // Try to find the same item in the new list by ID
+  // newIndex 索引筛选`newSuggestions.findIndex`，供React hook后续处理使用。
   const newIndex = newSuggestions.findIndex(item => item.id === prevSelectedItem.id);
 
   // Return the new index if found, otherwise default to 0
+  // 返回 newIndex >= 0 ? newIndex : 0，把React hook 状态流这个分支的结果交还调用方。
   return newIndex >= 0 ? newIndex : 0;
 }
+// buildResumeInputFromSuggestion 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
 function buildResumeInputFromSuggestion(suggestion: SuggestionItem): string {
+  // metadata保存`suggestion.metadata as {`，供React hook use Type...后续步骤使用。
   const metadata = suggestion.metadata as {
     sessionId: string;
   } | undefined;
+  // 返回 metadata?.sessionId ? `/resume ${metadata.sessionId}` : `/resume ${suggestion.displayText}`，把React hook 状态流这个分支的结果交还调用方。
   return metadata?.sessionId ? `/resume ${metadata.sessionId}` : `/resume ${suggestion.displayText}`;
 }
+// Props 固化React hook 状态流里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   onInputChange: (value: string) => void;
   onSubmit: (value: string, isSubmittingSlashCommand?: boolean) => void;
@@ -87,6 +139,7 @@ type Props = {
   commands: Command[];
   mode: string;
   agents: AgentDefinition[];
+  // React hook use Typeahead处理 `setSuggestionsState: (f: (previousSuggestionsState: {`，完成这一小步状态转换。
   setSuggestionsState: (f: (previousSuggestionsState: {
     suggestions: SuggestionItem[];
     selectedSuggestion: number;
@@ -102,9 +155,12 @@ type Props = {
     commandArgumentHint?: string;
   };
   suppressSuggestions?: boolean;
+  // 这个回调绑定到 markAccepted: () => void;，负责React hook 状态流在该局部场景下的响应。
   markAccepted: () => void;
+  // 这个回调绑定到 onModeChange?: (mode: PromptInputMode) => void;，负责React hook 状态流在该局部场景下的响应。
   onModeChange?: (mode: PromptInputMode) => void;
 };
+// UseTypeaheadResult 固化React hook 状态流里传递的数据形状，帮助调用方按同一结构读写字段。
 type UseTypeaheadResult = {
   suggestions: SuggestionItem[];
   selectedSuggestion: number;
@@ -112,6 +168,7 @@ type UseTypeaheadResult = {
   maxColumnWidth?: number;
   commandArgumentHint?: string;
   inlineGhostText?: InlineGhostText;
+  // 这个回调绑定到 handleKeyDown: (e: KeyboardEvent) => void;，负责React hook 状态流在该局部场景下的响应。
   handleKeyDown: (e: KeyboardEvent) => void;
 };
 
@@ -120,16 +177,22 @@ type UseTypeaheadResult = {
  * @param completionToken The completion token
  * @returns The search token with @ and quotes removed
  */
+// extractSearchToken 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
 export function extractSearchToken(completionToken: {
   token: string;
   isQuoted?: boolean;
 }): string {
+  // 满足 `completionToken.isQuoted` 时，React hook执行该分支。
   if (completionToken.isQuoted) {
     // Remove @" prefix and optional closing "
+    // 返回 completionToken.token.slice(2).replace(/"$/, '')，把React hook 状态流这个分支的结果交还调用方。
     return completionToken.token.slice(2).replace(/"$/, '');
+  // `completionToken.token.startsWith('@')` 成立时，React hook use Typeahead切换到这个 else-if 分支。
   } else if (completionToken.token.startsWith('@')) {
+    // 返回 completionToken.token.substring(1)，把React hook 状态流这个分支的结果交还调用方。
     return completionToken.token.substring(1);
   } else {
+    // 返回 completionToken.token，把React hook 状态流这个分支的结果交还调用方。
     return completionToken.token;
   }
 }
@@ -145,6 +208,7 @@ export function extractSearchToken(completionToken: {
  * @param options.isComplete Whether this is a complete suggestion (adds trailing space)
  * @returns The formatted replacement value
  */
+// formatReplacementValue 封装useTypeahead的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function formatReplacementValue(options: {
   displayText: string;
   mode: string;
@@ -153,6 +217,7 @@ export function formatReplacementValue(options: {
   isQuoted?: boolean;
   isComplete: boolean;
 }): string {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     displayText,
     mode,
@@ -161,13 +226,19 @@ export function formatReplacementValue(options: {
     isQuoted,
     isComplete
   } = options;
+  // space保存`isComplete ? ' ' : ''`，供React hook use Typeah...后续判断或输出使用。
   const space = isComplete ? ' ' : '';
+  // 组合条件 `isQuoted || needsQuotes` 成立时，React hook 状态流才启用这条专门路径。
   if (isQuoted || needsQuotes) {
     // Use quoted format
+    // 返回 `mode === 'bash' ? `"${displayText}"${space}` : `@"${displayText}"${spac...`，作为React hook 状态流这次计算的结果。
     return mode === 'bash' ? `"${displayText}"${space}` : `@"${displayText}"${space}`;
+  // React hook use Typeahead在这里处理 `} else if (hasAtPrefix) {`，完成这一小步状态转换。
   } else if (hasAtPrefix) {
+    // 返回 `mode === 'bash' ? `${displayText}${space}` : `@${displayText}${space}``，作为React hook 状态流这次计算的结果。
     return mode === 'bash' ? `${displayText}${space}` : `@${displayText}${space}`;
   } else {
+    // 返回 `displayText`，作为React hook 状态流这次计算的结果。
     return displayText;
   }
 }
@@ -175,50 +246,82 @@ export function formatReplacementValue(options: {
 /**
  * Apply a shell completion suggestion by replacing the current word
  */
+// applyShellSuggestion 封装useTypeahead的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function applyShellSuggestion(suggestion: SuggestionItem, input: string, cursorOffset: number, onInputChange: (value: string) => void, setCursorOffset: (offset: number) => void, completionType: ShellCompletionType | undefined): void {
+  // beforeCursor格式化`input.slice`，供React hook后续处理使用。
   const beforeCursor = input.slice(0, cursorOffset);
+  // lastSpaceIndex 索引保存`beforeCursor.lastIndexOf`，供React hook后续处理使用。
   const lastSpaceIndex = beforeCursor.lastIndexOf(' ');
+  // wordStart 命名 `lastSpaceIndex + 1`，让后续代码直接表达这个值的用途。
   const wordStart = lastSpaceIndex + 1;
 
   // Prepare the replacement text based on completion type
+  // replacementText 先占位，稍后的条件分支会根据实际输入补齐它。
   let replacementText: string;
+  // 当 `completionType` 匹配 `'variable'` 时，React hook执行对应分支。
   if (completionType === 'variable') {
+    // replacementText更新为 `'$' + suggestion.displayText + ' '`，确保useTypeahead后续读取最新状态。
     replacementText = '$' + suggestion.displayText + ' ';
+  // React hook use Typeahead在这里处理 `} else if (completionType === 'command') {`，完成这一小步状态转换。
   } else if (completionType === 'command') {
+    // replacementText更新为 `suggestion.displayText + ' '`，确保useTypeahead后续读取最新状态。
     replacementText = suggestion.displayText + ' ';
   } else {
+    // replacementText更新为 `suggestion.displayText`，确保useTypeahead后续读取最新状态。
     replacementText = suggestion.displayText;
   }
+  // newInput格式化`input.slice`，供React hook后续处理使用。
   const newInput = input.slice(0, wordStart) + replacementText + input.slice(cursorOffset);
+  // 调用 onInputChange，触发React hook此处需要的副作用。
   onInputChange(newInput);
+  // setCursorOffset 写入新的状态值，使React hook 状态流后续读取保持一致。
   setCursorOffset(wordStart + replacementText.length);
 }
+// DM_MEMBER_RE读取 `/(^|\s)@[\w-]*$/` 对应条目，后续围绕该成员继续处理。
 const DM_MEMBER_RE = /(^|\s)@[\w-]*$/;
+// applyTriggerSuggestion 封装useTypeahead的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function applyTriggerSuggestion(suggestion: SuggestionItem, input: string, cursorOffset: number, triggerRe: RegExp, onInputChange: (value: string) => void, setCursorOffset: (offset: number) => void): void {
+  // m格式化`input.slice`，供React hook后续处理使用。
   const m = input.slice(0, cursorOffset).match(triggerRe);
+  // 组合条件 `!m || m.index === undefined` 成立时，React hook 状态流才启用这条专门路径。
   if (!m || m.index === undefined) return;
+  // prefixStart记录 `m.index + (m[1]?.length ?? 0)` 是否成立，下一步按该结果分支。
   const prefixStart = m.index + (m[1]?.length ?? 0);
+  // before格式化`input.slice`，供React hook后续处理使用。
   const before = input.slice(0, prefixStart);
+  // newInput格式化`input.slice`，供React hook后续处理使用。
   const newInput = before + suggestion.displayText + ' ' + input.slice(cursorOffset);
+  // 调用 onInputChange，触发React hook此处需要的副作用。
   onInputChange(newInput);
+  // setCursorOffset 写入新的状态值，使React hook 状态流后续读取保持一致。
   setCursorOffset(before.length + suggestion.displayText.length + 1);
 }
+// currentShellCompletionAbortController 命名 `null`，让后续代码直接表达这个值的用途。
 let currentShellCompletionAbortController: AbortController | null = null;
 
 /**
  * Generate bash shell completion suggestions
  */
+// generateBashSuggestions 封装useTypeahead的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function generateBashSuggestions(input: string, cursorOffset: number): Promise<SuggestionItem[]> {
+  // 保护这一段可能失败的React hook 状态流操作，确保异常能进入相邻错误处理。
   try {
+    // 满足 `currentShellCompletionAbortController` 时，React hook执行该分支。
     if (currentShellCompletionAbortController) {
+      // 触发取消信号，通知React hook 状态流中仍在等待的异步任务尽快停止。
       currentShellCompletionAbortController.abort();
     }
+    // currentShellCompletionAbortController更新为 `new AbortController()`，确保useTypeahead后续读取最新状态。
     currentShellCompletionAbortController = new AbortController();
+    // suggestions 集合读取`getShellCompletions`，供React hook后续处理使用。
     const suggestions = await getShellCompletions(input, cursorOffset, currentShellCompletionAbortController.signal);
+    // 返回 `suggestions`，作为React hook 状态流这次计算的结果。
     return suggestions;
   } catch {
     // Silent failure - don't break UX
+    // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_shell_completion_failed', {});
+    // 返回列表结果，保留React hook 状态流已经排好的条目顺序。
     return [];
   }
 }
@@ -234,17 +337,24 @@ async function generateBashSuggestions(input: string, cursorOffset: number): Pro
  * @param isDirectory Whether the suggestion is a directory (adds / suffix) or file (adds space)
  * @returns Object with the new input text and cursor position
  */
+// applyDirectorySuggestion 封装useTypeahead的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function applyDirectorySuggestion(input: string, suggestionId: string, tokenStartPos: number, tokenLength: number, isDirectory: boolean): {
   newInput: string;
   cursorPos: number;
 } {
+  // suffix保存`isDirectory ? '/' : ' '`，供React hook use Typeah...后续判断或输出使用。
   const suffix = isDirectory ? '/' : ' ';
+  // before格式化`input.slice`，供React hook后续处理使用。
   const before = input.slice(0, tokenStartPos);
+  // after格式化`input.slice`，供React hook后续处理使用。
   const after = input.slice(tokenStartPos + tokenLength);
   // Always add @ prefix - if token already has it, we're replacing
   // the whole token (including @) with @suggestion.id
+  // replacement固定为 `'@' + suggestionId + suffix`，作为React hook use Typeah...后续展示或比较的基准。
   const replacement = '@' + suggestionId + suffix;
+  // newInput格式化`before + replacement + after`，供后续判断或组装使用。
   const newInput = before + replacement + after;
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     newInput,
     cursorPos: before.length + replacement.length
@@ -258,26 +368,37 @@ export function applyDirectorySuggestion(input: string, suggestionId: string, to
  * @param includeAtSymbol Whether to consider @ symbol as part of the token
  * @returns The completable token and its start position, or null if not found
  */
+// extractCompletionToken 封装useTypeahead的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function extractCompletionToken(text: string, cursorPos: number, includeAtSymbol = false): {
   token: string;
   startPos: number;
   isQuoted?: boolean;
 } | null {
   // Empty input check
+  // 文本缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
   if (!text) return null;
 
   // Get text up to cursor
+  // textBeforeCursor格式化`text.substring`，供React hook后续处理使用。
   const textBeforeCursor = text.substring(0, cursorPos);
 
   // Check for quoted @ mention first (e.g., @"my file with spaces")
+  // 满足 `includeAtSymbol` 时，React hook执行该分支。
   if (includeAtSymbol) {
+    // quotedAtRegex保存`/@"([^"]*)"?$/`，供React hook use Typeah...后续判断或输出使用。
     const quotedAtRegex = /@"([^"]*)"?$/;
+    // quotedMatch匹配`textBeforeCursor.match`，供React hook后续处理使用。
     const quotedMatch = textBeforeCursor.match(quotedAtRegex);
+    // `quotedMatch && quotedMatch.index` 与 `undefined` 不一致时刷新派生状态。
     if (quotedMatch && quotedMatch.index !== undefined) {
       // Include any remaining quoted content after cursor until closing quote or end
+      // textAfterCursor格式化`text.substring`，供React hook后续处理使用。
       const textAfterCursor = text.substring(cursorPos);
+      // afterQuotedMatch匹配`textAfterCursor.match`，供React hook后续处理使用。
       const afterQuotedMatch = textAfterCursor.match(/^[^"]*"?/);
+      // quotedSuffix保存`afterQuotedMatch ? afterQuotedMatch[0] : ''`，供React hook use Type...后续步骤使用。
       const quotedSuffix = afterQuotedMatch ? afterQuotedMatch[0] : '';
+      // 返回 {，把React hook 状态流这个分支的结果交还调用方。
       return {
         token: quotedMatch[0] + quotedSuffix,
         startPos: quotedMatch.index,
@@ -287,15 +408,25 @@ export function extractCompletionToken(text: string, cursorPos: number, includeA
   }
 
   // Fast path for @ tokens: use lastIndexOf to avoid expensive $ anchor scan
+  // 满足 `includeAtSymbol` 时，React hook执行该分支。
   if (includeAtSymbol) {
+    // atIdx保存`textBeforeCursor.lastIndexOf`，供React hook后续处理使用。
     const atIdx = textBeforeCursor.lastIndexOf('@');
+    // 判断 atIdx >= 0 && (atIdx === 0 || /\s/.test(textBeforeCursor[atIdx - 1]!))，将React hook 状态流分流到只适用于该条件的处理路径。
     if (atIdx >= 0 && (atIdx === 0 || /\s/.test(textBeforeCursor[atIdx - 1]!))) {
+      // fromAt格式化`textBeforeCursor.substring`，供React hook后续处理使用。
       const fromAt = textBeforeCursor.substring(atIdx);
+      // atHeadMatch匹配`fromAt.match`，供React hook后续处理使用。
       const atHeadMatch = fromAt.match(AT_TOKEN_HEAD_RE);
+      // 组合条件 `atHeadMatch && atHeadMatch[0].length === fromAt.l` 成立时，React hook 状态流才启用这条专门路径。
       if (atHeadMatch && atHeadMatch[0].length === fromAt.length) {
+        // textAfterCursor格式化`text.substring`，供React hook后续处理使用。
         const textAfterCursor = text.substring(cursorPos);
+        // afterMatch匹配`textAfterCursor.match`，供React hook后续处理使用。
         const afterMatch = textAfterCursor.match(PATH_CHAR_HEAD_RE);
+        // tokenSuffix保存`afterMatch ? afterMatch[0] : ''`，供React hook use Type...后续步骤使用。
         const tokenSuffix = afterMatch ? afterMatch[0] : '';
+        // 返回 {，把React hook 状态流这个分支的结果交还调用方。
         return {
           token: atHeadMatch[0] + tokenSuffix,
           startPos: atIdx,
@@ -306,50 +437,67 @@ export function extractCompletionToken(text: string, cursorPos: number, includeA
   }
 
   // Non-@ token or cursor outside @ token — use $ anchor on (short) tail
+  // tokenRegex保存`includeAtSymbol ? TOKEN_WITH_AT_RE : TOKEN_WITHOUT_AT_RE`，供React hook use Type...后续步骤使用。
   const tokenRegex = includeAtSymbol ? TOKEN_WITH_AT_RE : TOKEN_WITHOUT_AT_RE;
+  // match匹配`textBeforeCursor.match`，供React hook后续处理使用。
   const match = textBeforeCursor.match(tokenRegex);
+  // 组合条件 `!match || match.index === undefined` 成立时，React hook 状态流才启用这条专门路径。
   if (!match || match.index === undefined) {
+    // 返回 null，把React hook 状态流这个分支的结果交还调用方。
     return null;
   }
 
   // Check if cursor is in the MIDDLE of a token (more word characters after cursor)
   // If so, extend the token to include all characters until whitespace or end of string
+  // textAfterCursor格式化`text.substring`，供React hook后续处理使用。
   const textAfterCursor = text.substring(cursorPos);
+  // afterMatch匹配`textAfterCursor.match`，供React hook后续处理使用。
   const afterMatch = textAfterCursor.match(PATH_CHAR_HEAD_RE);
+  // tokenSuffix保存`afterMatch ? afterMatch[0] : ''`，供React hook use Type...后续步骤使用。
   const tokenSuffix = afterMatch ? afterMatch[0] : '';
+  // 返回 {，把React hook 状态流这个分支的结果交还调用方。
   return {
     token: match[0] + tokenSuffix,
     startPos: match.index,
     isQuoted: false
   };
 }
+// extractCommandNameAndArgs 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
 function extractCommandNameAndArgs(value: string): {
   commandName: string;
   args: string;
 } | null {
+  // 判断 isCommandInput(value)，将React hook 状态流分流到只适用于该条件的处理路径。
   if (isCommandInput(value)) {
+    // spaceIndex 索引保存`value.indexOf`，供React hook后续处理使用。
     const spaceIndex = value.indexOf(' ');
+    // 判断 spaceIndex === -1，将React hook 状态流分流到只适用于该条件的处理路径。
     if (spaceIndex === -1) return {
       commandName: value.slice(1),
       args: ''
     };
+    // 返回 {，把React hook 状态流这个分支的结果交还调用方。
     return {
       commandName: value.slice(1, spaceIndex),
       args: value.slice(spaceIndex + 1)
     };
   }
+  // 返回 null，把React hook 状态流这个分支的结果交还调用方。
   return null;
 }
+// hasCommandWithArguments 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
 function hasCommandWithArguments(isAtEndWithWhitespace: boolean, value: string) {
   // If value.endsWith(' ') but the user is not at the end, then the user has
   // potentially gone back to the command in an effort to edit the command name
   // (but preserve the arguments).
+  // 返回 !isAtEndWithWhitespace && value.includes(' ') && !value.endsWith(' ')，把React hook 状态流这个分支的结果交还调用方。
   return !isAtEndWithWhitespace && value.includes(' ') && !value.endsWith(' ');
 }
 
 /**
  * Hook for handling typeahead functionality for both commands and file paths
  */
+// useTypeahead 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
 export function useTypeahead({
   commands,
   onInputChange,
@@ -369,43 +517,65 @@ export function useTypeahead({
   markAccepted,
   onModeChange
 }: Props): UseTypeaheadResult {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     addNotification
   } = useNotifications();
+  // thinkingToggleShortcut保存`useShortcutDisplay`，供React hook后续处理使用。
   const thinkingToggleShortcut = useShortcutDisplay('chat:thinkingToggle', 'Chat', 'alt+t');
+  // 从 `useState<SuggestionType>('none')` 按位置拆出 suggestionType、setSuggestionType，让React hook use Typeahead分别处理这些返回值。
   const [suggestionType, setSuggestionType] = useState<SuggestionType>('none');
 
   // Compute max column width from ALL commands once (not filtered results)
   // This prevents layout shift when filtering
+  // allCommandsMaxWidth 命令数据保存`useMemo`，供React hook后续处理使用。
   const allCommandsMaxWidth = useMemo(() => {
+    // visibleCommands 命令数据筛选`commands.filter`，供React hook后续处理使用。
     const visibleCommands = commands.filter(cmd => !cmd.isHidden);
+    // 判断 visibleCommands.length === 0，将React hook 状态流分流到只适用于该条件的处理路径。
     if (visibleCommands.length === 0) return undefined;
+    // maxLen保存`Math.max`，供React hook后续处理使用。
     const maxLen = Math.max(...visibleCommands.map(cmd => getCommandName(cmd).length));
+    // 返回 maxLen + 6; // +1 for "/" prefix, +5 for padding，把React hook 状态流这个分支的结果交还调用方。
     return maxLen + 6; // +1 for "/" prefix, +5 for padding
   }, [commands]);
+  // 从 `useState<number | undefined>(undefined)` 按位置拆出 maxColumnWidth、setMaxColumnWidth，让React hook use Typeahead分别处理这些返回值。
   const [maxColumnWidth, setMaxColumnWidth] = useState<number | undefined>(undefined);
+  // mcpResources 集合保存`useAppState`，供React hook后续处理使用。
   const mcpResources = useAppState(s => s.mcp.resources);
+  // store保存`useAppStateStore`，供React hook后续处理使用。
   const store = useAppStateStore();
+  // promptSuggestion保存`useAppState`，供React hook后续处理使用。
   const promptSuggestion = useAppState(s => s.promptSuggestion);
   // PromptInput hides suggestion ghost text in teammate view — mirror that
   // gate here so Tab/rightArrow can't accept what isn't displayed.
+  // isViewingTeammate保存`useAppState`，供React hook后续处理使用。
   const isViewingTeammate = useAppState(s => !!s.viewingAgentTaskId);
 
   // Access keybinding context to check for pending chord sequences
+  // keybindingContext保存`useOptionalKeybindingContext`，供React hook后续处理使用。
   const keybindingContext = useOptionalKeybindingContext();
 
   // State for inline ghost text (bash history completion - async)
+  // 从 `useState<InlineGhostText | undefined>(undefined)` 按位置拆出 inlineGhostText、setInlineGhostText，让React hook use Typeahead分别处理这些返回值。
   const [inlineGhostText, setInlineGhostText] = useState<InlineGhostText | undefined>(undefined);
 
   // Synchronous ghost text for prompt mode mid-input slash commands.
   // Computed during render via useMemo to eliminate the one-frame flicker
   // that occurs when using useState + useEffect (effect runs after render).
+  // syncPromptGhostText保存`useMemo`，供React hook后续处理使用。
   const syncPromptGhostText = useMemo((): InlineGhostText | undefined => {
+    // 判断 mode !== 'prompt' || suppressSuggestions，将React hook 状态流分流到只适用于该条件的处理路径。
     if (mode !== 'prompt' || suppressSuggestions) return undefined;
+    // midInputCommand 命令数据筛选`findMidInputSlashCommand`，供React hook后续处理使用。
     const midInputCommand = findMidInputSlashCommand(input, cursorOffset);
+    // 判断 !midInputCommand，将React hook 状态流分流到只适用于该条件的处理路径。
     if (!midInputCommand) return undefined;
+    // match读取`getBestCommandMatch`，供React hook后续处理使用。
     const match = getBestCommandMatch(midInputCommand.partialCommand, commands);
+    // 判断 !match，将React hook 状态流分流到只适用于该条件的处理路径。
     if (!match) return undefined;
+    // 返回 {，把React hook 状态流这个分支的结果交还调用方。
     return {
       text: match.suffix,
       fullCommand: match.fullCommand,
@@ -414,66 +584,95 @@ export function useTypeahead({
   }, [input, cursorOffset, mode, commands, suppressSuggestions]);
 
   // Merged ghost text: prompt mode uses synchronous useMemo, bash mode uses async useState
+  // effectiveGhostText记录当前扫描状态，React hook use Type...随后按该状态分支。
   const effectiveGhostText = suppressSuggestions ? undefined : mode === 'prompt' ? syncPromptGhostText : inlineGhostText;
 
   // Use a ref for cursorOffset to avoid re-triggering suggestions on cursor movement alone
   // We only want to re-fetch suggestions when the actual search token changes
+  // cursorOffsetRef保存`useRef`，供React hook后续处理使用。
   const cursorOffsetRef = useRef(cursorOffset);
+  // current更新为 `cursorOffset`，确保useTypeahead后续读取最新状态。
   cursorOffsetRef.current = cursorOffset;
 
   // Track the latest search token to discard stale results from slow async operations
+  // latestSearchTokenRef读取 hook 提供的状态或服务，供React hook use Type...本轮渲染使用。
   const latestSearchTokenRef = useRef<string | null>(null);
   // Track previous input to detect actual text changes vs. callback recreations
+  // prevInputRef保存`useRef`，供React hook后续处理使用。
   const prevInputRef = useRef('');
   // Track the latest path token to discard stale results from path completion
+  // latestPathTokenRef 文件数据保存`useRef`，供React hook后续处理使用。
   const latestPathTokenRef = useRef('');
   // Track the latest bash input to discard stale results from history completion
+  // latestBashInputRef保存`useRef`，供React hook后续处理使用。
   const latestBashInputRef = useRef('');
   // Track the latest slack channel token to discard stale results from MCP
+  // latestSlackTokenRef保存`useRef`，供React hook后续处理使用。
   const latestSlackTokenRef = useRef('');
   // Track suggestions via ref to avoid updateSuggestions being recreated on selection changes
+  // suggestionsRef保存`useRef`，供React hook后续处理使用。
   const suggestionsRef = useRef(suggestions);
+  // current更新为 `suggestions`，确保useTypeahead后续读取最新状态。
   suggestionsRef.current = suggestions;
   // Track the input value when suggestions were manually dismissed to prevent re-triggering
+  // dismissedForInputRef读取 hook 提供的状态或服务，供React hook use Type...本轮渲染使用。
   const dismissedForInputRef = useRef<string | null>(null);
 
   // Clear all suggestions
+  // clearSuggestions 集合保存`useCallback`，供React hook后续处理使用。
   const clearSuggestions = useCallback(() => {
+    // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionsState(() => ({
       commandArgumentHint: undefined,
       suggestions: [],
       selectedSuggestion: -1
     }));
+    // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionType('none');
+    // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
     setMaxColumnWidth(undefined);
+    // setInlineGhostText写入新的状态值，使React hook 状态流后续读取保持一致。
     setInlineGhostText(undefined);
   }, [setSuggestionsState]);
 
   // Expensive async operation to fetch file/resource suggestions
+  // fetchFileSuggestions 文件数据保存`useCallback`，供React hook后续处理使用。
   const fetchFileSuggestions = useCallback(async (searchToken: string, isAtSymbol = false): Promise<void> => {
+    // current更新为 `searchToken`，确保useTypeahead后续读取最新状态。
     latestSearchTokenRef.current = searchToken;
+    // combinedItems 集合保存`generateUnifiedSuggestions`，供React hook后续处理使用。
     const combinedItems = await generateUnifiedSuggestions(searchToken, mcpResources, agents, isAtSymbol);
     // Discard stale results if a newer query was initiated while waiting
+    // `latestSearchTokenRef.current` 与 `searchToken` 不一致时刷新派生状态。
     if (latestSearchTokenRef.current !== searchToken) {
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // combinedItems 集合为空时立即返回或跳过，避免React hook 状态流把空集合当成可处理内容。
     if (combinedItems.length === 0) {
       // Inline clearSuggestions logic to avoid needing debouncedFetchFileSuggestions
+      // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
       setSuggestionsState(() => ({
         commandArgumentHint: undefined,
         suggestions: [],
         selectedSuggestion: -1
       }));
+      // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
       setSuggestionType('none');
+      // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
       setMaxColumnWidth(undefined);
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionsState(prev => ({
       commandArgumentHint: undefined,
       suggestions: combinedItems,
       selectedSuggestion: getPreservedSelection(prev.suggestions, prev.selectedSuggestion, combinedItems)
     }));
+    // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionType(combinedItems.length > 0 ? 'file' : 'none');
+    // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
     setMaxColumnWidth(undefined); // No fixed width for file suggestions
   }, [mcpResources, setSuggestionsState, setSuggestionType, setMaxColumnWidth, agents]);
 
@@ -491,14 +690,22 @@ export function useTypeahead({
   // background build outlives the test — its setImmediate chain leaks into
   // subsequent tests in the shard. The subscriber still registers so
   // fileSuggestions tests that trigger a refresh directly work correctly.
+  // useEffect执行React hook在此处需要的副作用或外部交互。
   useEffect(() => {
+    // `"production"` 与 `'test'` 不一致时刷新派生状态。
     if ("production" !== 'test') {
+      // startBackgroundCacheRefresh执行React hook在此处需要的副作用或外部交互。
       startBackgroundCacheRefresh();
     }
+    // 返回 onIndexBuildComplete(() => {，把React hook 状态流这个分支的结果交还调用方。
     return onIndexBuildComplete(() => {
+      // token保存`latestSearchTokenRef.current`，供React hook use Type...后续步骤使用。
       const token = latestSearchTokenRef.current;
+      // `token` 与 `null` 不一致时刷新派生状态。
       if (token !== null) {
+        // current更新为 `null`，确保useTypeahead后续读取最新状态。
         latestSearchTokenRef.current = null;
+        // 显式忽略 `fetchFileSuggestions(token, token === '')` 的返回值，只保留它触发的副作用。
         void fetchFileSuggestions(token, token === '');
       }
     });
@@ -508,17 +715,25 @@ export function useTypeahead({
   // key-repeat (~33ms) so held-delete/backspace coalesces into one search
   // instead of stuttering on each repeated key. The search itself is ~8–15ms
   // on a 270k-file index.
+  // debouncedFetchFileSuggestions 文件数据保存`useDebounceCallback`，供React hook后续处理使用。
   const debouncedFetchFileSuggestions = useDebounceCallback(fetchFileSuggestions, 50);
+  // fetchSlackChannels 集合保存`useCallback`，供React hook后续处理使用。
   const fetchSlackChannels = useCallback(async (partial: string): Promise<void> => {
+    // current更新为 `partial`，确保useTypeahead后续读取最新状态。
     latestSlackTokenRef.current = partial;
+    // channels 集合读取`getSlackChannelSuggestions`，供React hook后续处理使用。
     const channels = await getSlackChannelSuggestions(store.getState().mcp.clients, partial);
+    // 判断 latestSlackTokenRef.current !== partial，将React hook 状态流分流到只适用于该条件的处理路径。
     if (latestSlackTokenRef.current !== partial) return;
+    // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionsState(prev => ({
       commandArgumentHint: undefined,
       suggestions: channels,
       selectedSuggestion: getPreservedSelection(prev.suggestions, prev.selectedSuggestion, channels)
     }));
+    // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionType(channels.length > 0 ? 'slack-channel' : 'none');
+    // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
     setMaxColumnWidth(undefined);
   },
   // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable context ref
@@ -526,16 +741,23 @@ export function useTypeahead({
 
   // First keystroke after # needs the MCP round-trip; subsequent keystrokes
   // that share the same first-word segment hit the cache synchronously.
+  // debouncedFetchSlackChannels 集合保存`useDebounceCallback`，供React hook后续处理使用。
   const debouncedFetchSlackChannels = useDebounceCallback(fetchSlackChannels, 150);
 
   // Handle immediate suggestion logic (cheap operations)
   // biome-ignore lint/correctness/useExhaustiveDependencies: store is a stable context ref, read imperatively at call-time
+  // updateSuggestions 集合保存`useCallback`，供React hook后续处理使用。
   const updateSuggestions = useCallback(async (value: string, inputCursorOffset?: number): Promise<void> => {
     // Use provided cursor offset or fall back to ref (avoids dependency on cursorOffset)
+    // effectiveCursorOffset保存`inputCursorOffset ?? cursorOffsetRef.current`，供React hook use Type...后续步骤使用。
     const effectiveCursorOffset = inputCursorOffset ?? cursorOffsetRef.current;
+    // 满足 `suppressSuggestions` 时，React hook执行该分支。
     if (suppressSuggestions) {
+      // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
       debouncedFetchFileSuggestions.cancel();
+      // clearSuggestions执行React hook在此处需要的副作用或外部交互。
       clearSuggestions();
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
@@ -543,49 +765,70 @@ export function useTypeahead({
     // Only in prompt mode, not when input starts with "/" (handled separately)
     // Note: ghost text for prompt mode is computed synchronously via syncPromptGhostText useMemo.
     // We only need to clear dropdown suggestions here when ghost text is active.
+    // `mode` 命中特定值 `'prompt'` 时，进入React hook 状态流对应处理。
     if (mode === 'prompt') {
+      // midInputCommand 命令数据筛选`findMidInputSlashCommand`，供React hook后续处理使用。
       const midInputCommand = findMidInputSlashCommand(value, effectiveCursorOffset);
+      // 满足 `midInputCommand` 时，React hook执行该分支。
       if (midInputCommand) {
+        // match读取`getBestCommandMatch`，供React hook后续处理使用。
         const match = getBestCommandMatch(midInputCommand.partialCommand, commands);
+        // 满足 `match` 时，React hook执行该分支。
         if (match) {
           // Clear dropdown suggestions when showing ghost text
+          // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
           setSuggestionsState(() => ({
             commandArgumentHint: undefined,
             suggestions: [],
             selectedSuggestion: -1
           }));
+          // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
           setSuggestionType('none');
+          // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
           setMaxColumnWidth(undefined);
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
       }
     }
 
     // Bash mode: check for history-based ghost text completion
+    // 判断 mode === 'bash' && value.trim()，将React hook 状态流分流到只适用于该条件的处理路径。
     if (mode === 'bash' && value.trim()) {
+      // current更新为 `value`，确保useTypeahead后续读取最新状态。
       latestBashInputRef.current = value;
+      // historyMatch读取`getShellHistoryCompletion`，供React hook后续处理使用。
       const historyMatch = await getShellHistoryCompletion(value);
       // Discard stale results if input changed while waiting
+      // `latestBashInputRef.current` 与 `value` 不一致时刷新派生状态。
       if (latestBashInputRef.current !== value) {
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `historyMatch` 时，React hook执行该分支。
       if (historyMatch) {
+        // setInlineGhostText写入新的状态值，使React hook 状态流后续读取保持一致。
         setInlineGhostText({
           text: historyMatch.suffix,
           fullCommand: historyMatch.fullCommand,
           insertPosition: value.length
         });
         // Clear dropdown suggestions when showing ghost text
+        // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
         setSuggestionsState(() => ({
           commandArgumentHint: undefined,
           suggestions: [],
           selectedSuggestion: -1
         }));
+        // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
         setSuggestionType('none');
+        // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
         setMaxColumnWidth(undefined);
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       } else {
         // No history match, clear ghost text
+        // setInlineGhostText写入新的状态值，使React hook 状态流后续读取保持一致。
         setInlineGhostText(undefined);
       }
     }
@@ -593,19 +836,31 @@ export function useTypeahead({
     // Check for @ to trigger team member / named subagent suggestions
     // Must check before @ file symbol to prevent conflict
     // Skip in bash mode - @ has no special meaning in shell commands
+    // atMatch格式化`value.substring`，供React hook后续处理使用。
     const atMatch = mode !== 'bash' ? value.substring(0, effectiveCursorOffset).match(/(^|\s)@([\w-]*)$/) : null;
+    // 满足 `atMatch` 时，React hook执行该分支。
     if (atMatch) {
+      // partialName保存`toLowerCase`，供React hook后续处理使用。
       const partialName = (atMatch[2] ?? '').toLowerCase();
       // Imperative read — reading at call-time fixes staleness for
       // teammates/subagents added mid-session.
+      // state 状态读取`store.getState`，供React hook后续处理使用。
       const state = store.getState();
+      // members 集合从空数组开始收集，后续按处理顺序追加条目。
       const members: SuggestionItem[] = [];
+      // 已见集合构建`new Set<string>()`，供React hook use Type...后续步骤使用。
       const seen = new Set<string>();
+      // 判断 isAgentSwarmsEnabled() && state.teamContext，将React hook 状态流分流到只适用于该条件的处理路径。
       if (isAgentSwarmsEnabled() && state.teamContext) {
+        // 遍历 const t of Object.values(state.teamContext.teammates ?? {})，逐项推进React hook 状态流里的批量处理。
         for (const t of Object.values(state.teamContext.teammates ?? {})) {
+          // 判断 t.name === TEAM_LEAD_NAME，将React hook 状态流分流到只适用于该条件的处理路径。
           if (t.name === TEAM_LEAD_NAME) continue;
+          // 判断 !t.name.toLowerCase().startsWith(partialName)，将React hook 状态流分流到只适用于该条件的处理路径。
           if (!t.name.toLowerCase().startsWith(partialName)) continue;
+          // seen.add执行React hook在此处需要的副作用或外部交互。
           seen.add(t.name);
+          // members 集合追加新条目，保持收集顺序与输入顺序一致。
           members.push({
             id: `dm-${t.name}`,
             displayText: `@${t.name}`,
@@ -613,94 +868,137 @@ export function useTypeahead({
           });
         }
       }
+      // 遍历 const [name, agentId] of state.agentNameRegistry，让React hook 状态流逐项完成同一类处理。
       for (const [name, agentId] of state.agentNameRegistry) {
+        // 判断 seen.has(name)，将React hook 状态流分流到只适用于该条件的处理路径。
         if (seen.has(name)) continue;
+        // 判断 !name.toLowerCase().startsWith(partialName)，将React hook 状态流分流到只适用于该条件的处理路径。
         if (!name.toLowerCase().startsWith(partialName)) continue;
+        // status 集合保存`state.tasks[agentId]?.status`，供React hook use Type...后续步骤使用。
         const status = state.tasks[agentId]?.status;
+        // members 集合追加新条目，保持收集顺序与输入顺序一致。
         members.push({
           id: `dm-${name}`,
           displayText: `@${name}`,
           description: status ? `send message · ${status}` : 'send message'
         });
       }
+      // 满足 `members.length > 0` 时，React hook执行该分支。
       if (members.length > 0) {
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
         setSuggestionsState(prev => ({
           commandArgumentHint: undefined,
           suggestions: members,
           selectedSuggestion: getPreservedSelection(prev.suggestions, prev.selectedSuggestion, members)
         }));
+        // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
         setSuggestionType('agent');
+        // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
         setMaxColumnWidth(undefined);
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
 
     // Check for # to trigger Slack channel suggestions (requires Slack MCP server)
+    // `mode` 命中特定值 `'prompt'` 时，进入React hook 状态流对应处理。
     if (mode === 'prompt') {
+      // hashMatch格式化`value.substring`，供React hook后续处理使用。
       const hashMatch = value.substring(0, effectiveCursorOffset).match(HASH_CHANNEL_RE);
+      // 判断 hashMatch && hasSlackMcpServer(store.getState().mcp.clients)，将React hook 状态流分流到只适用于该条件的处理路径。
       if (hashMatch && hasSlackMcpServer(store.getState().mcp.clients)) {
+        // debouncedFetchSlackChannels执行React hook在此处需要的副作用或外部交互。
         debouncedFetchSlackChannels(hashMatch[2]!);
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
+      // `suggestionType === 'slack-channel'` 成立时，React hook use Typeahead切换到这个 else-if 分支。
       } else if (suggestionType === 'slack-channel') {
+        // debouncedFetchSlackChannels.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchSlackChannels.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
     }
 
     // Check for @ symbol to trigger file suggestions (including quoted paths)
     // Includes colon for MCP resources (e.g., server:resource/path)
+    // hasAtSymbol格式化`value.substring`，供React hook后续处理使用。
     const hasAtSymbol = value.substring(0, effectiveCursorOffset).match(HAS_AT_SYMBOL_RE);
 
     // First, check for slash command suggestions (higher priority than @ symbol)
     // Only show slash command selector if cursor is not on the "/" character itself
     // Also don't show if cursor is at end of line with whitespace before it
     // Don't show slash commands in bash mode
+    // isAtEndWithWhitespace记录当前扫描状态，React hook use Type...随后按该状态分支。
     const isAtEndWithWhitespace = effectiveCursorOffset === value.length && effectiveCursorOffset > 0 && value.length > 0 && value[effectiveCursorOffset - 1] === ' ';
 
     // Handle directory completion for commands
+    // 判断 mode === 'prompt' && isCommandInput(value) && effectiveCursorOffset > 0，将React hook 状态流分流到只适用于该条件的处理路径。
     if (mode === 'prompt' && isCommandInput(value) && effectiveCursorOffset > 0) {
+      // parsedCommand 命令数据保存`extractCommandNameAndArgs`，供React hook后续处理使用。
       const parsedCommand = extractCommandNameAndArgs(value);
+      // 组合条件 `parsedCommand && parsedCommand.commandName === 'a` 成立时，React hook 状态流才启用这条专门路径。
       if (parsedCommand && parsedCommand.commandName === 'add-dir' && parsedCommand.args) {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           args
         } = parsedCommand;
 
         // Clear suggestions if args end with whitespace (user is done with path)
+        // 判断 args.match(/\s+$/)，将React hook 状态流分流到只适用于该条件的处理路径。
         if (args.match(/\s+$/)) {
+          // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
           debouncedFetchFileSuggestions.cancel();
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // dirSuggestions 集合读取`getDirectoryCompletions`，供React hook后续处理使用。
         const dirSuggestions = await getDirectoryCompletions(args);
+        // 满足 `dirSuggestions.length > 0` 时，React hook执行该分支。
         if (dirSuggestions.length > 0) {
+          // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
           setSuggestionsState(prev => ({
             suggestions: dirSuggestions,
             selectedSuggestion: getPreservedSelection(prev.suggestions, prev.selectedSuggestion, dirSuggestions),
             commandArgumentHint: undefined
           }));
+          // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
           setSuggestionType('directory');
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
 
         // No suggestions found - clear and return
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Handle custom title completion for /resume command
+      // 判断 parsedCommand && parsedCommand.commandName === 'resume' && parsedCommand.args !== undefined &&…，将React hook 状态流分流到只适用于该条件的处理路径。
       if (parsedCommand && parsedCommand.commandName === 'resume' && parsedCommand.args !== undefined && value.includes(' ')) {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           args
         } = parsedCommand;
 
         // Get custom title suggestions using partial match
+        // 匹配结果保存`searchSessionsByCustomTitle`，供React hook后续处理使用。
         const matches = await searchSessionsByCustomTitle(args, {
           limit: 10
         });
+        // suggestions 集合派生`matches.map`，供React hook后续处理使用。
         const suggestions = matches.map(log => {
+          // sessionId读取`getSessionIdFromLog`，供React hook后续处理使用。
           const sessionId = getSessionIdFromLog(log);
+          // 返回 {，把React hook 状态流这个分支的结果交还调用方。
           return {
             id: `resume-title-${sessionId}`,
             displayText: log.customTitle!,
@@ -710,61 +1008,86 @@ export function useTypeahead({
             }
           };
         });
+        // 满足 `suggestions.length > 0` 时，React hook执行该分支。
         if (suggestions.length > 0) {
+          // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
           setSuggestionsState(prev => ({
             suggestions,
             selectedSuggestion: getPreservedSelection(prev.suggestions, prev.selectedSuggestion, suggestions),
             commandArgumentHint: undefined
           }));
+          // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
           setSuggestionType('custom-title');
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
 
         // No suggestions found - clear and return
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
 
     // Determine whether to display the argument hint and command suggestions.
+    // 判断 mode === 'prompt' && isCommandInput(value) && effectiveCursorOffset > 0 && !hasCommandWithArgu…，将React hook 状态流分流到只适用于该条件的处理路径。
     if (mode === 'prompt' && isCommandInput(value) && effectiveCursorOffset > 0 && !hasCommandWithArguments(isAtEndWithWhitespace, value)) {
+      // commandArgumentHint 命令数据保存`undefined`，供React hook use Typeahead后续步骤使用。
       let commandArgumentHint: string | undefined = undefined;
+      // 满足 `value.length > 1` 时，React hook执行该分支。
       if (value.length > 1) {
         // We have a partial or complete command without arguments
         // Check if it matches a command exactly and has an argument hint
 
         // Extract command name: everything after / until the first space (or end)
+        // spaceIndex 索引保存`value.indexOf`，供React hook后续处理使用。
         const spaceIndex = value.indexOf(' ');
+        // commandName 命令数据格式化`value.slice`，供React hook后续处理使用。
         const commandName = spaceIndex === -1 ? value.slice(1) : value.slice(1, spaceIndex);
 
         // Check if there are real arguments (non-whitespace after the command)
+        // hasRealArguments 集合格式化`value.slice`，供React hook后续处理使用。
         const hasRealArguments = spaceIndex !== -1 && value.slice(spaceIndex + 1).trim().length > 0;
 
         // Check if input is exactly "command + single space" (ready for arguments)
+        // hasExactlyOneTrailingSpace记录当前扫描状态，React hook use Type...随后按该状态分支。
         const hasExactlyOneTrailingSpace = spaceIndex !== -1 && value.length === spaceIndex + 1;
 
         // If input has a space after the command, don't show suggestions
         // This prevents Enter from selecting a different command after Tab completion
+        // `spaceIndex` 与 `-1` 不一致时刷新派生状态。
         if (spaceIndex !== -1) {
+          // exactMatch筛选`commands.find`，供React hook后续处理使用。
           const exactMatch = commands.find(cmd => getCommandName(cmd) === commandName);
+          // 组合条件 `exactMatch || hasRealArguments` 成立时，React hook 状态流才启用这条专门路径。
           if (exactMatch || hasRealArguments) {
             // Priority 1: Static argumentHint (only on first trailing space for backwards compat)
+            // 组合条件 `exactMatch?.argumentHint && hasExactlyOneTrailing` 成立时，React hook 状态流才启用这条专门路径。
             if (exactMatch?.argumentHint && hasExactlyOneTrailingSpace) {
+              // commandArgumentHint 命令数据更新为 `exactMatch.argumentHint`，确保useTypeahead后续读取最新状态。
               commandArgumentHint = exactMatch.argumentHint;
             }
             // Priority 2: Progressive hint from argNames (show when trailing space)
             else if (exactMatch?.type === 'prompt' && exactMatch.argNames?.length && value.endsWith(' ')) {
+              // argsText格式化`value.slice`，供React hook后续处理使用。
               const argsText = value.slice(spaceIndex + 1);
+              // typedArgs 集合解析`parseArguments`，供React hook后续处理使用。
               const typedArgs = parseArguments(argsText);
+              // commandArgumentHint 命令数据更新为 `generateProgressiveArgumentHint(exactMatch.argNames, type...`，确保useTypeahead后续读取最新状态。
               commandArgumentHint = generateProgressiveArgumentHint(exactMatch.argNames, typedArgs);
             }
+            // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
             setSuggestionsState(() => ({
               commandArgumentHint,
               suggestions: [],
               selectedSuggestion: -1
             }));
+            // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
             setSuggestionType('none');
+            // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
             setMaxColumnWidth(undefined);
+            // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
         }
@@ -772,112 +1095,160 @@ export function useTypeahead({
         // Note: argument hint is only shown when there's exactly one trailing space
         // (set above when hasExactlyOneTrailingSpace is true)
       }
+      // commandItems 命令数据保存`generateCommandSuggestions`，供React hook后续处理使用。
       const commandItems = generateCommandSuggestions(value, commands);
+      // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
       setSuggestionsState(() => ({
         commandArgumentHint,
         suggestions: commandItems,
         selectedSuggestion: commandItems.length > 0 ? 0 : -1
       }));
+      // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
       setSuggestionType(commandItems.length > 0 ? 'command' : 'none');
 
       // Use stable width from all commands (prevents layout shift when filtering)
+      // 满足 `commandItems.length > 0` 时，React hook执行该分支。
       if (commandItems.length > 0) {
+        // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
         setMaxColumnWidth(allCommandsMaxWidth);
       }
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // `suggestionType` 命中特定值 `'command'` 时，进入React hook 状态流对应处理。
     if (suggestionType === 'command') {
       // If we had command suggestions but the input no longer starts with '/'
       // we need to clear the suggestions. However, we should not return
       // because there may be relevant @ symbol and file suggestions.
+      // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
       debouncedFetchFileSuggestions.cancel();
+      // clearSuggestions执行React hook在此处需要的副作用或外部交互。
       clearSuggestions();
+    // `isCommandInput(value) && hasCommandWithArguments(isAtEndWithWhitespace,...` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (isCommandInput(value) && hasCommandWithArguments(isAtEndWithWhitespace, value)) {
       // If we have a command with arguments (no trailing space), clear any stale hint
       // This prevents the hint from flashing when transitioning between states
+      // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
       setSuggestionsState(prev => prev.commandArgumentHint ? {
         ...prev,
         commandArgumentHint: undefined
       } : prev);
     }
+    // `suggestionType` 命中特定值 `'custom-title'` 时，进入React hook 状态流对应处理。
     if (suggestionType === 'custom-title') {
       // If we had custom-title suggestions but the input is no longer /resume
       // we need to clear the suggestions.
+      // clearSuggestions执行React hook在此处需要的副作用或外部交互。
       clearSuggestions();
     }
+    // 判断 suggestionType === 'agent' && suggestionsRef.current.some((s: SuggestionItem) => s.id?.startsW…，将React hook 状态流分流到只适用于该条件的处理路径。
     if (suggestionType === 'agent' && suggestionsRef.current.some((s: SuggestionItem) => s.id?.startsWith('dm-'))) {
       // If we had team member suggestions but the input no longer has @
       // we need to clear the suggestions.
+      // hasAt格式化`value.substring`，供React hook后续处理使用。
       const hasAt = value.substring(0, effectiveCursorOffset).match(/(^|\s)@([\w-]*)$/);
+      // hasAt缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
       if (!hasAt) {
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
     }
 
     // Check for @ symbol to trigger file and MCP resource suggestions
     // Skip @ autocomplete in bash mode - @ has no special meaning in shell commands
+    // `hasAtSymbol && mode` 与 `'bash'` 不一致时刷新派生状态。
     if (hasAtSymbol && mode !== 'bash') {
       // Get the @ token (including the @ symbol)
+      // completionToken保存`extractCompletionToken`，供React hook后续处理使用。
       const completionToken = extractCompletionToken(value, effectiveCursorOffset, true);
+      // 判断 completionToken && completionToken.token.startsWith('@')，将React hook 状态流分流到只适用于该条件的处理路径。
       if (completionToken && completionToken.token.startsWith('@')) {
+        // searchToken保存`extractSearchToken`，供React hook后续处理使用。
         const searchToken = extractSearchToken(completionToken);
 
         // If the token after @ is path-like, use path completion instead of fuzzy search
         // This handles cases like @~/path, @./path, @/path for directory traversal
+        // 判断 isPathLikeToken(searchToken)，将React hook 状态流分流到只适用于该条件的处理路径。
         if (isPathLikeToken(searchToken)) {
+          // current更新为 `searchToken`，确保useTypeahead后续读取最新状态。
           latestPathTokenRef.current = searchToken;
+          // pathSuggestions 文件数据读取`getPathCompletions`，供React hook后续处理使用。
           const pathSuggestions = await getPathCompletions(searchToken, {
             maxResults: 10
           });
           // Discard stale results if a newer query was initiated while waiting
+          // `latestPathTokenRef.current` 与 `searchToken` 不一致时刷新派生状态。
           if (latestPathTokenRef.current !== searchToken) {
+            // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
+          // 满足 `pathSuggestions.length > 0` 时，React hook执行该分支。
           if (pathSuggestions.length > 0) {
+            // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
             setSuggestionsState(prev => ({
               suggestions: pathSuggestions,
               selectedSuggestion: getPreservedSelection(prev.suggestions, prev.selectedSuggestion, pathSuggestions),
               commandArgumentHint: undefined
             }));
+            // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
             setSuggestionType('directory');
+            // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
         }
 
         // Skip if we already fetched for this exact token (prevents loop from
         // suggestions dependency causing updateSuggestions to be recreated)
+        // 满足 `latestSearchTokenRef.current === searchToken` 时，React hook执行该分支。
         if (latestSearchTokenRef.current === searchToken) {
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // 显式忽略 `debouncedFetchFileSuggestions(searchToken, true)` 的返回值，只保留它触发的副作用。
         void debouncedFetchFileSuggestions(searchToken, true);
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
 
     // If we have active file suggestions or the input changed, check for file suggestions
+    // `suggestionType` 命中特定值 `'file'` 时，进入React hook 状态流对应处理。
     if (suggestionType === 'file') {
+      // completionToken保存`extractCompletionToken`，供React hook后续处理使用。
       const completionToken = extractCompletionToken(value, effectiveCursorOffset, true);
+      // 满足 `completionToken` 时，React hook执行该分支。
       if (completionToken) {
+        // searchToken保存`extractSearchToken`，供React hook后续处理使用。
         const searchToken = extractSearchToken(completionToken);
         // Skip if we already fetched for this exact token
+        // 满足 `latestSearchTokenRef.current === searchToken` 时，React hook执行该分支。
         if (latestSearchTokenRef.current === searchToken) {
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // 显式忽略 `debouncedFetchFileSuggestions(searchToken, false)` 的返回值，只保留它触发的副作用。
         void debouncedFetchFileSuggestions(searchToken, false);
       } else {
         // If we had file suggestions but now there's no completion token
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
     }
 
     // Clear shell suggestions if not in bash mode OR if input has changed
+    // `suggestionType` 命中特定值 `'shell'` 时，进入React hook 状态流对应处理。
     if (suggestionType === 'shell') {
+      // inputSnapshot保存`(suggestionsRef.current[0]?.metadata as {`，供React hook use Type...后续步骤使用。
       const inputSnapshot = (suggestionsRef.current[0]?.metadata as {
         inputSnapshot?: string;
       })?.inputSnapshot;
+      // `mode` 与 `'bash' || value !== inputSnapsh...` 不一致时刷新派生状态。
       if (mode !== 'bash' || value !== inputSnapshot) {
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
     }
@@ -890,172 +1261,271 @@ export function useTypeahead({
   // Note: We intentionally don't depend on cursorOffset here - cursor movement alone
   // shouldn't re-trigger suggestions. The cursorOffsetRef is used to get the current
   // position when needed without causing re-renders.
+  // useEffect执行React hook在此处需要的副作用或外部交互。
   useEffect(() => {
     // If suggestions were dismissed for this exact input, don't re-trigger
+    // 满足 `dismissedForInputRef.current === input` 时，React hook执行该分支。
     if (dismissedForInputRef.current === input) {
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
     // When the actual input text changes (not just updateSuggestions being recreated),
     // reset the search token ref so the same query can be re-fetched.
     // This fixes: type @readme.md, clear, retype @readme.md → no suggestions.
+    // `prevInputRef.current` 与 `input` 不一致时刷新派生状态。
     if (prevInputRef.current !== input) {
+      // current更新为 `input`，确保useTypeahead后续读取最新状态。
       prevInputRef.current = input;
+      // current更新为 `null`，确保useTypeahead后续读取最新状态。
       latestSearchTokenRef.current = null;
     }
     // Clear the dismissed state when input changes
+    // current更新为 `null`，确保useTypeahead后续读取最新状态。
     dismissedForInputRef.current = null;
+    // 显式忽略 `updateSuggestions(input)` 的返回值，只保留它触发的副作用。
     void updateSuggestions(input);
   }, [input, updateSuggestions]);
 
   // Handle tab key press - complete suggestions or trigger file suggestions
+  // handleTab保存`useCallback`，供React hook后续处理使用。
   const handleTab = useCallback(async () => {
     // If we have inline ghost text, apply it
+    // 满足 `effectiveGhostText` 时，React hook执行该分支。
     if (effectiveGhostText) {
       // Check for bash mode history completion first
+      // `mode` 命中特定值 `'bash'` 时，进入React hook 状态流对应处理。
       if (mode === 'bash') {
         // Replace the input with the full command from history
+        // onInputChange执行React hook在此处需要的副作用或外部交互。
         onInputChange(effectiveGhostText.fullCommand);
+        // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
         setCursorOffset(effectiveGhostText.fullCommand.length);
+        // setInlineGhostText写入新的状态值，使React hook 状态流后续读取保持一致。
         setInlineGhostText(undefined);
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Find the mid-input command to get its position (for prompt mode)
+      // midInputCommand 命令数据筛选`findMidInputSlashCommand`，供React hook后续处理使用。
       const midInputCommand = findMidInputSlashCommand(input, cursorOffset);
+      // 满足 `midInputCommand` 时，React hook执行该分支。
       if (midInputCommand) {
         // Replace the partial command with the full command + space
+        // before格式化`input.slice`，供React hook后续处理使用。
         const before = input.slice(0, midInputCommand.startPos);
+        // after格式化`input.slice`，供React hook后续处理使用。
         const after = input.slice(midInputCommand.startPos + midInputCommand.token.length);
+        // newInput保存`before + '/' + effectiveGhostText.fullCommand + ' ' + aft...`，供React hook use Type...后续步骤使用。
         const newInput = before + '/' + effectiveGhostText.fullCommand + ' ' + after;
+        // newCursorOffset保存`midInputCommand.startPos + 1 + effectiveGhostText.fullCom...`，供React hook use Type...后续步骤使用。
         const newCursorOffset = midInputCommand.startPos + 1 + effectiveGhostText.fullCommand.length + 1;
+        // onInputChange执行React hook在此处需要的副作用或外部交互。
         onInputChange(newInput);
+        // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
         setCursorOffset(newCursorOffset);
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
 
     // If we have active suggestions, select one
+    // 满足 `suggestions.length > 0` 时，React hook执行该分支。
     if (suggestions.length > 0) {
       // Cancel any pending debounced fetches to prevent flicker when accepting
+      // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
       debouncedFetchFileSuggestions.cancel();
+      // debouncedFetchSlackChannels.cancel执行React hook在此处需要的副作用或外部交互。
       debouncedFetchSlackChannels.cancel();
+      // index 索引记录当前扫描状态，React hook use Type...随后按该状态分支。
       const index = selectedSuggestion === -1 ? 0 : selectedSuggestion;
+      // suggestion保存`suggestions[index]`，供React hook use Type...后续步骤使用。
       const suggestion = suggestions[index];
+      // 组合条件 `suggestionType === 'command' && index < suggestio` 成立时，React hook 状态流才启用这条专门路径。
       if (suggestionType === 'command' && index < suggestions.length) {
+        // 满足 `suggestion` 时，React hook执行该分支。
         if (suggestion) {
+          // applyCommandSuggestion执行React hook在此处需要的副作用或外部交互。
           applyCommandSuggestion(suggestion, false,
           // don't execute on tab
           commands, onInputChange, setCursorOffset, onSubmit);
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
         }
+      // `suggestionType === 'custom-title' && suggestions.length > 0` 成立时，React hook use Typeahead切换到这个 else-if 分支。
       } else if (suggestionType === 'custom-title' && suggestions.length > 0) {
         // Apply custom title to /resume command with sessionId
+        // 满足 `suggestion` 时，React hook执行该分支。
         if (suggestion) {
+          // newInput构建`buildResumeInputFromSuggestion`，供React hook后续处理使用。
           const newInput = buildResumeInputFromSuggestion(suggestion);
+          // onInputChange执行React hook在此处需要的副作用或外部交互。
           onInputChange(newInput);
+          // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
           setCursorOffset(newInput.length);
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
         }
+      // `suggestionType === 'directory' && suggestions.length > 0` 成立时，React hook use Typeahead切换到这个 else-if 分支。
       } else if (suggestionType === 'directory' && suggestions.length > 0) {
+        // suggestion保存`suggestions[index]`，供React hook use Type...后续步骤使用。
         const suggestion = suggestions[index];
+        // 满足 `suggestion` 时，React hook执行该分支。
         if (suggestion) {
           // Check if this is a command context (e.g., /add-dir) or general path completion
+          // isInCommandContext 命令数据保存`isCommandInput`，供React hook后续处理使用。
           const isInCommandContext = isCommandInput(input);
+          // newInput先声明占位，稍后的分支会根据实际输入补齐。
           let newInput: string;
+          // 满足 `isInCommandContext` 时，React hook执行该分支。
           if (isInCommandContext) {
             // Command context: replace just the argument portion
+            // spaceIndex 索引保存`input.indexOf`，供React hook后续处理使用。
             const spaceIndex = input.indexOf(' ');
+            // commandPart 命令数据格式化`input.slice`，供React hook后续处理使用。
             const commandPart = input.slice(0, spaceIndex + 1); // Include the space
+            // cmdSuffix 命令数据保存`isPathMetadata`，供React hook后续处理使用。
             const cmdSuffix = isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory' ? '/' : ' ';
+            // newInput更新为 `commandPart + suggestion.id + cmdSuffix`，确保useTypeahead后续读取最新状态。
             newInput = commandPart + suggestion.id + cmdSuffix;
+            // onInputChange执行React hook在此处需要的副作用或外部交互。
             onInputChange(newInput);
+            // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
             setCursorOffset(newInput.length);
+            // 判断 isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory'，将React hook 状态流分流到只适用于该条件的处理路径。
             if (isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory') {
               // For directories, fetch new suggestions for the updated path
+              // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
               setSuggestionsState(prev => ({
                 ...prev,
                 commandArgumentHint: undefined
               }));
+              // 显式忽略 `updateSuggestions(newInput, newInput.length)` 的返回值，只保留它触发的副作用。
               void updateSuggestions(newInput, newInput.length);
             } else {
+              // clearSuggestions执行React hook在此处需要的副作用或外部交互。
               clearSuggestions();
             }
           } else {
             // General path completion: replace the path token in input with @-prefixed path
             // Try to get token with @ prefix first to check if already prefixed
+            // completionTokenWithAt保存`extractCompletionToken`，供React hook后续处理使用。
             const completionTokenWithAt = extractCompletionToken(input, cursorOffset, true);
+            // completionToken保存`extractCompletionToken`，供React hook后续处理使用。
             const completionToken = completionTokenWithAt ?? extractCompletionToken(input, cursorOffset, false);
+            // 满足 `completionToken` 时，React hook执行该分支。
             if (completionToken) {
+              // isDir保存`isPathMetadata`，供React hook后续处理使用。
               const isDir = isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory';
+              // 结果保存`applyDirectorySuggestion`，供React hook后续处理使用。
               const result = applyDirectorySuggestion(input, suggestion.id, completionToken.startPos, completionToken.token.length, isDir);
+              // newInput更新为 `result.newInput`，确保useTypeahead后续读取最新状态。
               newInput = result.newInput;
+              // onInputChange执行React hook在此处需要的副作用或外部交互。
               onInputChange(newInput);
+              // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
               setCursorOffset(result.cursorPos);
+              // 满足 `isDir` 时，React hook执行该分支。
               if (isDir) {
                 // For directories, fetch new suggestions for the updated path
+                // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
                 setSuggestionsState(prev => ({
                   ...prev,
                   commandArgumentHint: undefined
                 }));
+                // 显式忽略 `updateSuggestions(newInput, result.cursorPos)` 的返回值，只保留它触发的副作用。
                 void updateSuggestions(newInput, result.cursorPos);
               } else {
                 // For files, clear suggestions
+                // clearSuggestions执行React hook在此处需要的副作用或外部交互。
                 clearSuggestions();
               }
             } else {
               // No completion token found (e.g., cursor after space) - just clear suggestions
               // without modifying input to avoid data loss
+              // clearSuggestions执行React hook在此处需要的副作用或外部交互。
               clearSuggestions();
             }
           }
         }
+      // `suggestionType === 'shell' && suggestions.length > 0` 成立时，React hook use Typeahead切换到这个 else-if 分支。
       } else if (suggestionType === 'shell' && suggestions.length > 0) {
+        // suggestion保存`suggestions[index]`，供React hook use Type...后续步骤使用。
         const suggestion = suggestions[index];
+        // 满足 `suggestion` 时，React hook执行该分支。
         if (suggestion) {
+          // metadata保存`suggestion.metadata as {`，供React hook use Type...后续步骤使用。
           const metadata = suggestion.metadata as {
             completionType: ShellCompletionType;
           } | undefined;
+          // applyShellSuggestion执行React hook在此处需要的副作用或外部交互。
           applyShellSuggestion(suggestion, input, cursorOffset, onInputChange, setCursorOffset, metadata?.completionType);
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
         }
+      // `suggestionType === 'agent' && suggestions.length > 0 && suggestions[ind...` 成立时，React hook use Typeahead切换到这个 else-if 分支。
       } else if (suggestionType === 'agent' && suggestions.length > 0 && suggestions[index]?.id?.startsWith('dm-')) {
+        // suggestion保存`suggestions[index]`，供React hook use Type...后续步骤使用。
         const suggestion = suggestions[index];
+        // 满足 `suggestion` 时，React hook执行该分支。
         if (suggestion) {
+          // applyTriggerSuggestion执行React hook在此处需要的副作用或外部交互。
           applyTriggerSuggestion(suggestion, input, cursorOffset, DM_MEMBER_RE, onInputChange, setCursorOffset);
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
         }
+      // `suggestionType === 'slack-channel' && suggestions.length > 0` 成立时，React hook use Typeahead切换到这个 else-if 分支。
       } else if (suggestionType === 'slack-channel' && suggestions.length > 0) {
+        // suggestion保存`suggestions[index]`，供React hook use Type...后续步骤使用。
         const suggestion = suggestions[index];
+        // 满足 `suggestion` 时，React hook执行该分支。
         if (suggestion) {
+          // applyTriggerSuggestion执行React hook在此处需要的副作用或外部交互。
           applyTriggerSuggestion(suggestion, input, cursorOffset, HASH_CHANNEL_RE, onInputChange, setCursorOffset);
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
         }
+      // `suggestionType === 'file' && suggestions.length > 0` 成立时，React hook use Typeahead切换到这个 else-if 分支。
       } else if (suggestionType === 'file' && suggestions.length > 0) {
+        // completionToken保存`extractCompletionToken`，供React hook后续处理使用。
         const completionToken = extractCompletionToken(input, cursorOffset, true);
+        // completionToken缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
         if (!completionToken) {
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
 
         // Check if all suggestions share a common prefix longer than the current input
+        // commonPrefix筛选`findLongestCommonPrefix`，供React hook后续处理使用。
         const commonPrefix = findLongestCommonPrefix(suggestions);
 
         // Determine if token starts with @ to preserve it during replacement
+        // hasAtPrefix保存`token.startsWith`，供React hook后续处理使用。
         const hasAtPrefix = completionToken.token.startsWith('@');
         // The effective token length excludes the @ and quotes if present
+        // effectiveTokenLength先声明占位，稍后的分支会根据实际输入补齐。
         let effectiveTokenLength: number;
+        // 满足 `completionToken.isQuoted` 时，React hook执行该分支。
         if (completionToken.isQuoted) {
           // Remove @" prefix and optional closing " to get effective length
+          // effectiveTokenLength更新为 `completionToken.token.slice(2).replace(/"$/, '').length`，确保useTypeahead后续读取最新状态。
           effectiveTokenLength = completionToken.token.slice(2).replace(/"$/, '').length;
+        // `hasAtPrefix` 成立时，React hook use Typeahead切换到这个 else-if 分支。
         } else if (hasAtPrefix) {
+          // effectiveTokenLength更新为 `completionToken.token.length - 1`，确保useTypeahead后续读取最新状态。
           effectiveTokenLength = completionToken.token.length - 1;
         } else {
+          // effectiveTokenLength更新为 `completionToken.token.length`，确保useTypeahead后续读取最新状态。
           effectiveTokenLength = completionToken.token.length;
         }
 
         // If there's a common prefix longer than what the user has typed,
         // replace the current input with the common prefix
+        // 满足 `commonPrefix.length > effectiveTokenLength` 时，React hook执行该分支。
         if (commonPrefix.length > effectiveTokenLength) {
+          // replacementValue格式化`formatReplacementValue`，供React hook后续处理使用。
           const replacementValue = formatReplacementValue({
             displayText: commonPrefix,
             mode,
@@ -1065,15 +1535,22 @@ export function useTypeahead({
             isQuoted: completionToken.isQuoted,
             isComplete: false // partial completion
           });
+          // applyFileSuggestion执行React hook在此处需要的副作用或外部交互。
           applyFileSuggestion(replacementValue, input, completionToken.token, completionToken.startPos, onInputChange, setCursorOffset);
           // Don't clear suggestions so user can continue typing or select a specific option
           // Instead, update for the new prefix
+          // 显式忽略 `updateSuggestions(input.replace(completionToken.token, replacem...` 的返回值，只保留它触发的副作用。
           void updateSuggestions(input.replace(completionToken.token, replacementValue), cursorOffset);
+        // `index < suggestions.length` 成立时，React hook use Typeahead切换到这个 else-if 分支。
         } else if (index < suggestions.length) {
           // Otherwise, apply the selected suggestion
+          // suggestion保存`suggestions[index]`，供React hook use Type...后续步骤使用。
           const suggestion = suggestions[index];
+          // 满足 `suggestion` 时，React hook执行该分支。
           if (suggestion) {
+            // needsQuotes 集合筛选`displayText.includes`，供React hook后续处理使用。
             const needsQuotes = suggestion.displayText.includes(' ');
+            // replacementValue格式化`formatReplacementValue`，供React hook后续处理使用。
             const replacementValue = formatReplacementValue({
               displayText: suggestion.displayText,
               mode,
@@ -1082,106 +1559,171 @@ export function useTypeahead({
               isQuoted: completionToken.isQuoted,
               isComplete: true // complete suggestion
             });
+            // applyFileSuggestion执行React hook在此处需要的副作用或外部交互。
             applyFileSuggestion(replacementValue, input, completionToken.token, completionToken.startPos, onInputChange, setCursorOffset);
+            // clearSuggestions执行React hook在此处需要的副作用或外部交互。
             clearSuggestions();
           }
         }
       }
+    // `input.trim() !== ''` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (input.trim() !== '') {
+      // suggestionType先声明占位，稍后的分支会根据实际输入补齐。
       let suggestionType: SuggestionType;
+      // suggestionItems 集合先声明占位，稍后的分支会根据实际输入补齐。
       let suggestionItems: SuggestionItem[];
+      // `mode` 命中特定值 `'bash'` 时，进入React hook 状态流对应处理。
       if (mode === 'bash') {
+        // suggestionType更新为 `'shell'`，确保useTypeahead后续读取最新状态。
         suggestionType = 'shell';
         // This should be very fast, taking <10ms
+        // bashSuggestions 集合保存`generateBashSuggestions`，供React hook后续处理使用。
         const bashSuggestions = await generateBashSuggestions(input, cursorOffset);
+        // 满足 `bashSuggestions.length === 1` 时，React hook执行该分支。
         if (bashSuggestions.length === 1) {
           // If single suggestion, apply it immediately
+          // suggestion保存`bashSuggestions[0]`，供React hook use Type...后续步骤使用。
           const suggestion = bashSuggestions[0];
+          // 满足 `suggestion` 时，React hook执行该分支。
           if (suggestion) {
+            // metadata保存`suggestion.metadata as {`，供React hook use Type...后续步骤使用。
             const metadata = suggestion.metadata as {
               completionType: ShellCompletionType;
             } | undefined;
+            // applyShellSuggestion执行React hook在此处需要的副作用或外部交互。
             applyShellSuggestion(suggestion, input, cursorOffset, onInputChange, setCursorOffset, metadata?.completionType);
           }
+          // suggestionItems 集合更新为 `[]`，确保useTypeahead后续读取最新状态。
           suggestionItems = [];
         } else {
+          // suggestionItems 集合更新为 `bashSuggestions`，确保useTypeahead后续读取最新状态。
           suggestionItems = bashSuggestions;
         }
       } else {
+        // suggestionType更新为 `'file'`，确保useTypeahead后续读取最新状态。
         suggestionType = 'file';
         // If no suggestions, fetch file and MCP resource suggestions
+        // completionInfo保存`extractCompletionToken`，供React hook后续处理使用。
         const completionInfo = extractCompletionToken(input, cursorOffset, true);
+        // 满足 `completionInfo` 时，React hook执行该分支。
         if (completionInfo) {
           // If token starts with @, search without the @ prefix
+          // isAtSymbol保存`token.startsWith`，供React hook后续处理使用。
           const isAtSymbol = completionInfo.token.startsWith('@');
+          // searchToken格式化`token.substring`，供React hook后续处理使用。
           const searchToken = isAtSymbol ? completionInfo.token.substring(1) : completionInfo.token;
+          // suggestionItems 集合更新为 `await generateUnifiedSuggestions(searchToken, mcpResource...`，确保useTypeahead后续读取最新状态。
           suggestionItems = await generateUnifiedSuggestions(searchToken, mcpResources, agents, isAtSymbol);
         } else {
+          // suggestionItems 集合更新为 `[]`，确保useTypeahead后续读取最新状态。
           suggestionItems = [];
         }
       }
+      // 满足 `suggestionItems.length > 0` 时，React hook执行该分支。
       if (suggestionItems.length > 0) {
         // Multiple suggestions or not bash mode: show list
+        // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
         setSuggestionsState(prev => ({
           commandArgumentHint: undefined,
           suggestions: suggestionItems,
           selectedSuggestion: getPreservedSelection(prev.suggestions, prev.selectedSuggestion, suggestionItems)
         }));
+        // setSuggestionType写入新的状态值，使React hook 状态流后续读取保持一致。
         setSuggestionType(suggestionType);
+        // setMaxColumnWidth写入新的状态值，使React hook 状态流后续读取保持一致。
         setMaxColumnWidth(undefined);
       }
     }
   }, [suggestions, selectedSuggestion, input, suggestionType, commands, mode, onInputChange, setCursorOffset, onSubmit, clearSuggestions, cursorOffset, updateSuggestions, mcpResources, setSuggestionsState, agents, debouncedFetchFileSuggestions, debouncedFetchSlackChannels, effectiveGhostText]);
 
   // Handle enter key press - apply and execute suggestions
+  // handleEnter保存`useCallback`，供React hook后续处理使用。
   const handleEnter = useCallback(() => {
+    // 判断 selectedSuggestion < 0 || suggestions.length === 0，将React hook 状态流分流到只适用于该条件的处理路径。
     if (selectedSuggestion < 0 || suggestions.length === 0) return;
+    // suggestion保存`suggestions[selectedSuggestion]`，供React hook use Type...后续步骤使用。
     const suggestion = suggestions[selectedSuggestion];
+    // 组合条件 `suggestionType === 'command' && selectedSuggestio` 成立时，React hook 状态流才启用这条专门路径。
     if (suggestionType === 'command' && selectedSuggestion < suggestions.length) {
+      // 满足 `suggestion` 时，React hook执行该分支。
       if (suggestion) {
+        // applyCommandSuggestion执行React hook在此处需要的副作用或外部交互。
         applyCommandSuggestion(suggestion, true,
         // execute on return
         commands, onInputChange, setCursorOffset, onSubmit);
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
+    // `suggestionType === 'custom-title' && selectedSuggestion < suggestions.l...` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (suggestionType === 'custom-title' && selectedSuggestion < suggestions.length) {
       // Apply custom title and execute /resume command with sessionId
+      // 满足 `suggestion` 时，React hook执行该分支。
       if (suggestion) {
+        // newInput构建`buildResumeInputFromSuggestion`，供React hook后续处理使用。
         const newInput = buildResumeInputFromSuggestion(suggestion);
+        // onInputChange执行React hook在此处需要的副作用或外部交互。
         onInputChange(newInput);
+        // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
         setCursorOffset(newInput.length);
+        // onSubmit执行React hook在此处需要的副作用或外部交互。
         onSubmit(newInput, /* isSubmittingSlashCommand */true);
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
+    // `suggestionType === 'shell' && selectedSuggestion < suggestions.length` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (suggestionType === 'shell' && selectedSuggestion < suggestions.length) {
+      // suggestion保存`suggestions[selectedSuggestion]`，供React hook use Type...后续步骤使用。
       const suggestion = suggestions[selectedSuggestion];
+      // 满足 `suggestion` 时，React hook执行该分支。
       if (suggestion) {
+        // metadata保存`suggestion.metadata as {`，供React hook use Type...后续步骤使用。
         const metadata = suggestion.metadata as {
           completionType: ShellCompletionType;
         } | undefined;
+        // applyShellSuggestion执行React hook在此处需要的副作用或外部交互。
         applyShellSuggestion(suggestion, input, cursorOffset, onInputChange, setCursorOffset, metadata?.completionType);
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
+    // `suggestionType === 'agent' && selectedSuggestion < suggestions.length &...` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (suggestionType === 'agent' && selectedSuggestion < suggestions.length && suggestion?.id?.startsWith('dm-')) {
+      // applyTriggerSuggestion执行React hook在此处需要的副作用或外部交互。
       applyTriggerSuggestion(suggestion, input, cursorOffset, DM_MEMBER_RE, onInputChange, setCursorOffset);
+      // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
       debouncedFetchFileSuggestions.cancel();
+      // clearSuggestions执行React hook在此处需要的副作用或外部交互。
       clearSuggestions();
+    // `suggestionType === 'slack-channel' && selectedSuggestion < suggestions....` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (suggestionType === 'slack-channel' && selectedSuggestion < suggestions.length) {
+      // 满足 `suggestion` 时，React hook执行该分支。
       if (suggestion) {
+        // applyTriggerSuggestion执行React hook在此处需要的副作用或外部交互。
         applyTriggerSuggestion(suggestion, input, cursorOffset, HASH_CHANNEL_RE, onInputChange, setCursorOffset);
+        // debouncedFetchSlackChannels.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchSlackChannels.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
+    // `suggestionType === 'file' && selectedSuggestion < suggestions.length` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (suggestionType === 'file' && selectedSuggestion < suggestions.length) {
       // Extract completion token directly when needed
+      // completionInfo保存`extractCompletionToken`，供React hook后续处理使用。
       const completionInfo = extractCompletionToken(input, cursorOffset, true);
+      // 满足 `completionInfo` 时，React hook执行该分支。
       if (completionInfo) {
+        // 满足 `suggestion` 时，React hook执行该分支。
         if (suggestion) {
+          // hasAtPrefix保存`token.startsWith`，供React hook后续处理使用。
           const hasAtPrefix = completionInfo.token.startsWith('@');
+          // needsQuotes 集合筛选`displayText.includes`，供React hook后续处理使用。
           const needsQuotes = suggestion.displayText.includes(' ');
+          // replacementValue格式化`formatReplacementValue`，供React hook后续处理使用。
           const replacementValue = formatReplacementValue({
             displayText: suggestion.displayText,
             mode,
@@ -1190,56 +1732,83 @@ export function useTypeahead({
             isQuoted: completionInfo.isQuoted,
             isComplete: true // complete suggestion
           });
+          // applyFileSuggestion执行React hook在此处需要的副作用或外部交互。
           applyFileSuggestion(replacementValue, input, completionInfo.token, completionInfo.startPos, onInputChange, setCursorOffset);
+          // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
           debouncedFetchFileSuggestions.cancel();
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
         }
       }
+    // `suggestionType === 'directory' && selectedSuggestion < suggestions.leng...` 成立时，React hook use Typeahead切换到这个 else-if 分支。
     } else if (suggestionType === 'directory' && selectedSuggestion < suggestions.length) {
+      // 满足 `suggestion` 时，React hook执行该分支。
       if (suggestion) {
         // In command context (e.g., /add-dir), Enter submits the command
         // rather than applying the directory suggestion. Just clear
         // suggestions and let the submit handler process the current input.
+        // 判断 isCommandInput(input)，将React hook 状态流分流到只适用于该条件的处理路径。
         if (isCommandInput(input)) {
+          // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
           debouncedFetchFileSuggestions.cancel();
+          // clearSuggestions执行React hook在此处需要的副作用或外部交互。
           clearSuggestions();
+          // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
 
         // General path completion: replace the path token
+        // completionTokenWithAt保存`extractCompletionToken`，供React hook后续处理使用。
         const completionTokenWithAt = extractCompletionToken(input, cursorOffset, true);
+        // completionToken保存`extractCompletionToken`，供React hook后续处理使用。
         const completionToken = completionTokenWithAt ?? extractCompletionToken(input, cursorOffset, false);
+        // 满足 `completionToken` 时，React hook执行该分支。
         if (completionToken) {
+          // isDir保存`isPathMetadata`，供React hook后续处理使用。
           const isDir = isPathMetadata(suggestion.metadata) && suggestion.metadata.type === 'directory';
+          // 结果保存`applyDirectorySuggestion`，供React hook后续处理使用。
           const result = applyDirectorySuggestion(input, suggestion.id, completionToken.startPos, completionToken.token.length, isDir);
+          // onInputChange执行React hook在此处需要的副作用或外部交互。
           onInputChange(result.newInput);
+          // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
           setCursorOffset(result.cursorPos);
         }
         // If no completion token found (e.g., cursor after space), don't modify input
         // to avoid data loss - just clear suggestions
 
+        // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
         debouncedFetchFileSuggestions.cancel();
+        // clearSuggestions执行React hook在此处需要的副作用或外部交互。
         clearSuggestions();
       }
     }
   }, [suggestions, selectedSuggestion, suggestionType, commands, input, cursorOffset, mode, onInputChange, setCursorOffset, onSubmit, clearSuggestions, debouncedFetchFileSuggestions, debouncedFetchSlackChannels]);
 
   // Handler for autocomplete:accept - accepts current suggestion via Tab or Right Arrow
+  // handleAutocompleteAccept保存`useCallback`，供React hook后续处理使用。
   const handleAutocompleteAccept = useCallback(() => {
+    // 显式忽略 `handleTab()` 的返回值，只保留它触发的副作用。
     void handleTab();
   }, [handleTab]);
 
   // Handler for autocomplete:dismiss - clears suggestions and prevents re-triggering
+  // handleAutocompleteDismiss 集合保存`useCallback`，供React hook后续处理使用。
   const handleAutocompleteDismiss = useCallback(() => {
+    // debouncedFetchFileSuggestions.cancel执行React hook在此处需要的副作用或外部交互。
     debouncedFetchFileSuggestions.cancel();
+    // debouncedFetchSlackChannels.cancel执行React hook在此处需要的副作用或外部交互。
     debouncedFetchSlackChannels.cancel();
+    // clearSuggestions执行React hook在此处需要的副作用或外部交互。
     clearSuggestions();
     // Remember the input when dismissed to prevent immediate re-triggering
+    // current更新为 `input`，确保useTypeahead后续读取最新状态。
     dismissedForInputRef.current = input;
   }, [debouncedFetchFileSuggestions, debouncedFetchSlackChannels, clearSuggestions, input]);
 
   // Handler for autocomplete:previous - selects previous suggestion
+  // handleAutocompletePrevious 集合保存`useCallback`，供React hook后续处理使用。
   const handleAutocompletePrevious = useCallback(() => {
+    // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionsState(prev => ({
       ...prev,
       selectedSuggestion: prev.selectedSuggestion <= 0 ? suggestions.length - 1 : prev.selectedSuggestion - 1
@@ -1247,7 +1816,9 @@ export function useTypeahead({
   }, [suggestions.length, setSuggestionsState]);
 
   // Handler for autocomplete:next - selects next suggestion
+  // handleAutocompleteNext保存`useCallback`，供React hook后续处理使用。
   const handleAutocompleteNext = useCallback(() => {
+    // setSuggestionsState写入新的状态值，使React hook 状态流后续读取保持一致。
     setSuggestionsState(prev => ({
       ...prev,
       selectedSuggestion: prev.selectedSuggestion >= suggestions.length - 1 ? 0 : prev.selectedSuggestion + 1
@@ -1255,6 +1826,7 @@ export function useTypeahead({
   }, [suggestions.length, setSuggestionsState]);
 
   // Autocomplete context keybindings - only active when suggestions are visible
+  // autocompleteHandlers 集合保存`useMemo`，供React hook后续处理使用。
   const autocompleteHandlers = useMemo(() => ({
     'autocomplete:accept': handleAutocompleteAccept,
     'autocomplete:dismiss': handleAutocompleteDismiss,
@@ -1264,65 +1836,101 @@ export function useTypeahead({
 
   // Register autocomplete as an overlay so CancelRequestHandler defers ESC handling
   // This ensures ESC dismisses autocomplete before canceling running tasks
+  // isAutocompleteActive记录当前扫描状态，React hook use Type...随后按该状态分支。
   const isAutocompleteActive = suggestions.length > 0 || !!effectiveGhostText;
+  // isModalOverlayActive保存`useIsModalOverlayActive`，供React hook后续处理使用。
   const isModalOverlayActive = useIsModalOverlayActive();
+  // useRegisterOverlay执行React hook在此处需要的副作用或外部交互。
   useRegisterOverlay('autocomplete', isAutocompleteActive);
   // Register Autocomplete context so it appears in activeContexts for other handlers.
   // This allows Chat's resolver to see Autocomplete and defer to its bindings for up/down.
+  // useRegisterKeybindingContext执行React hook在此处需要的副作用或外部交互。
   useRegisterKeybindingContext('Autocomplete', isAutocompleteActive);
 
   // Disable autocomplete keybindings when a modal overlay (e.g., DiffDialog) is active,
   // so escape reaches the overlay's handler instead of dismissing autocomplete
+  // useKeybindings执行React hook在此处需要的副作用或外部交互。
   useKeybindings(autocompleteHandlers, {
     context: 'Autocomplete',
     isActive: isAutocompleteActive && !isModalOverlayActive
   });
+  // acceptSuggestionText 承担React hook 状态流中的独立步骤，串起React hook use Typeahead需要的输入整理、状态更新和结果输出。
   function acceptSuggestionText(text: string): void {
+    // detectedMode读取`getModeFromInput`，供React hook后续处理使用。
     const detectedMode = getModeFromInput(text);
+    // `detectedMode` 与 `'prompt' && onModeChange` 不一致时刷新派生状态。
     if (detectedMode !== 'prompt' && onModeChange) {
+      // onModeChange执行React hook在此处需要的副作用或外部交互。
       onModeChange(detectedMode);
+      // stripped读取`getValueFromInput`，供React hook后续处理使用。
       const stripped = getValueFromInput(text);
+      // onInputChange执行React hook在此处需要的副作用或外部交互。
       onInputChange(stripped);
+      // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
       setCursorOffset(stripped.length);
     } else {
+      // onInputChange执行React hook在此处需要的副作用或外部交互。
       onInputChange(text);
+      // setCursorOffset写入新的状态值，使React hook 状态流后续读取保持一致。
       setCursorOffset(text.length);
     }
   }
 
   // Handle keyboard input for behaviors not covered by keybindings
+  // handleKeyDown保存`(e: KeyboardEvent): void => {`，供React hook use Type...后续步骤使用。
   const handleKeyDown = (e: KeyboardEvent): void => {
     // Handle right arrow to accept prompt suggestion ghost text
+    // 组合条件 `e.key === 'right' && !isViewingTeammate` 成立时，React hook 状态流才启用这条专门路径。
     if (e.key === 'right' && !isViewingTeammate) {
+      // suggestionText保存`promptSuggestion.text`，供React hook use Type...后续步骤使用。
       const suggestionText = promptSuggestion.text;
+      // suggestionShownAt保存`promptSuggestion.shownAt`，供React hook use Type...后续步骤使用。
       const suggestionShownAt = promptSuggestion.shownAt;
+      // 组合条件 `suggestionText && suggestionShownAt > 0 && input` 成立时，React hook 状态流才启用这条专门路径。
       if (suggestionText && suggestionShownAt > 0 && input === '') {
+        // markAccepted执行React hook在此处需要的副作用或外部交互。
         markAccepted();
+        // acceptSuggestionText执行React hook在此处需要的副作用或外部交互。
         acceptSuggestionText(suggestionText);
+        // e.stopImmediatePropagation执行React hook在此处需要的副作用或外部交互。
         e.stopImmediatePropagation();
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
 
     // Handle Tab key fallback behaviors when no autocomplete suggestions
     // Don't handle tab if shift is pressed (used for mode cycle)
+    // 组合条件 `e.key === 'tab' && !e.shift` 成立时，React hook 状态流才启用这条专门路径。
     if (e.key === 'tab' && !e.shift) {
       // Skip if autocomplete is handling this (suggestions or ghost text exist)
+      // 组合条件 `suggestions.length > 0 || effectiveGhostText` 成立时，React hook 状态流才启用这条专门路径。
       if (suggestions.length > 0 || effectiveGhostText) {
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Accept prompt suggestion if it exists in AppState
+      // suggestionText保存`promptSuggestion.text`，供React hook use Type...后续步骤使用。
       const suggestionText = promptSuggestion.text;
+      // suggestionShownAt保存`promptSuggestion.shownAt`，供React hook use Type...后续步骤使用。
       const suggestionShownAt = promptSuggestion.shownAt;
+      // 组合条件 `suggestionText && suggestionShownAt > 0 && input` 成立时，React hook 状态流才启用这条专门路径。
       if (suggestionText && suggestionShownAt > 0 && input === '' && !isViewingTeammate) {
+        // e.preventDefault执行React hook在此处需要的副作用或外部交互。
         e.preventDefault();
+        // markAccepted执行React hook在此处需要的副作用或外部交互。
         markAccepted();
+        // acceptSuggestionText执行React hook在此处需要的副作用或外部交互。
         acceptSuggestionText(suggestionText);
+        // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Remind user about thinking toggle shortcut if empty input
+      // 判断 input.trim() === ''，将React hook 状态流分流到只适用于该条件的处理路径。
       if (input.trim() === '') {
+        // e.preventDefault执行React hook在此处需要的副作用或外部交互。
         e.preventDefault();
+        // addNotification执行React hook在此处需要的副作用或外部交互。
         addNotification({
           key: 'thinking-toggle-hint',
           jsx: <Text dimColor>
@@ -1332,31 +1940,45 @@ export function useTypeahead({
           timeoutMs: 3000
         });
       }
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Only continue with navigation if we have suggestions
+    // 判断 suggestions.length === 0，将React hook 状态流分流到只适用于该条件的处理路径。
     if (suggestions.length === 0) return;
 
     // Handle Ctrl-N/P for navigation (arrows handled by keybindings)
     // Skip if we're in the middle of a chord sequence to allow chords like ctrl+f n
+    // hasPendingChord记录当前扫描状态，React hook use Type...随后按该状态分支。
     const hasPendingChord = keybindingContext?.pendingChord != null;
+    // 组合条件 `e.ctrl && e.key === 'n' && !hasPendingChord` 成立时，React hook 状态流才启用这条专门路径。
     if (e.ctrl && e.key === 'n' && !hasPendingChord) {
+      // e.preventDefault执行React hook在此处需要的副作用或外部交互。
       e.preventDefault();
+      // handleAutocompleteNext执行React hook在此处需要的副作用或外部交互。
       handleAutocompleteNext();
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 组合条件 `e.ctrl && e.key === 'p' && !hasPendingChord` 成立时，React hook 状态流才启用这条专门路径。
     if (e.ctrl && e.key === 'p' && !hasPendingChord) {
+      // e.preventDefault执行React hook在此处需要的副作用或外部交互。
       e.preventDefault();
+      // handleAutocompletePrevious执行React hook在此处需要的副作用或外部交互。
       handleAutocompletePrevious();
+      // React hook use Typeahead在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Handle selection and execution via return/enter
     // Shift+Enter and Meta+Enter insert newlines (handled by useTextInput),
     // so don't accept the suggestion for those.
+    // 组合条件 `e.key === 'return' && !e.shift && !e.meta` 成立时，React hook 状态流才启用这条专门路径。
     if (e.key === 'return' && !e.shift && !e.meta) {
+      // e.preventDefault执行React hook在此处需要的副作用或外部交互。
       e.preventDefault();
+      // handleEnter执行React hook在此处需要的副作用或外部交互。
       handleEnter();
     }
   };
@@ -1365,13 +1987,19 @@ export function useTypeahead({
   // <Box onKeyDown>. Subscribe via useInput and adapt InputEvent →
   // KeyboardEvent until the consumer is migrated (separate PR).
   // TODO(onKeyDown-migration): remove once PromptInput passes handleKeyDown.
+  // useInput执行React hook在此处需要的副作用或外部交互。
   useInput((_input, _key, event) => {
+    // kbEvent保存`KeyboardEvent`，供React hook后续处理使用。
     const kbEvent = new KeyboardEvent(event.keypress);
+    // handleKeyDown执行React hook在此处需要的副作用或外部交互。
     handleKeyDown(kbEvent);
+    // 判断 kbEvent.didStopImmediatePropagation()，将React hook 状态流分流到只适用于该条件的处理路径。
     if (kbEvent.didStopImmediatePropagation()) {
+      // event.stopImmediatePropagation执行React hook在此处需要的副作用或外部交互。
       event.stopImmediatePropagation();
     }
   });
+  // 返回 {，把React hook 状态流这个分支的结果交还调用方。
   return {
     suggestions,
     selectedSuggestion,

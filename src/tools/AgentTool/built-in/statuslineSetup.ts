@@ -1,5 +1,7 @@
+// 类型依赖 { BuiltInAgentDefinition } 来自 ../loadAgentsDir.js，用于校准工具调用的数据契约。
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
+// STATUSLINE_SYSTEM_PROMPT固定为 ``You are a status line setup agent for Claude Code. Your ...`，作为工具调用Agent 工具 statusline Setup后续展示或比较的基准。
 const STATUSLINE_SYSTEM_PROMPT = `You are a status line setup agent for Claude Code. Your job is to create or update the statusLine command in the user's Claude Code settings.
 
 When asked to convert the user's shell PS1 configuration, follow these steps:
@@ -131,6 +133,7 @@ Guidelines:
   Also ensure that the user is informed that they can ask Claude to continue to make changes to the status line.
 `
 
+// STATUSLINE_SETUP_AGENT 集中保存Agent 工具 statusline Setup要一起传递的字段。
 export const STATUSLINE_SETUP_AGENT: BuiltInAgentDefinition = {
   agentType: 'statusline-setup',
   whenToUse:
@@ -140,5 +143,6 @@ export const STATUSLINE_SETUP_AGENT: BuiltInAgentDefinition = {
   baseDir: 'built-in',
   model: 'sonnet',
   color: 'orange',
+  // 这个回调绑定到 getSystemPrompt: () => STATUSLINE_SYSTEM_PROMPT,，负责工具调用在该局部场景下的响应。
   getSystemPrompt: () => STATUSLINE_SYSTEM_PROMPT,
 }

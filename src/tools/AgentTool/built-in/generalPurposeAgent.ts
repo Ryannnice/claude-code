@@ -1,7 +1,10 @@
+// 类型依赖 { BuiltInAgentDefinition } 来自 ../loadAgentsDir.js，用于校准工具调用的数据契约。
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
+// SHARED_PREFIX保存``You are an agent for Claude Code, Anthropic's official C...`，作为后续固定文本处理的输入。
 const SHARED_PREFIX = `You are an agent for Claude Code, Anthropic's official CLI for Claude. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done.`
 
+// SHARED_GUIDELINES 集合 命名 ``Your strengths:`，让后续代码直接表达这个值的用途。
 const SHARED_GUIDELINES = `Your strengths:
 - Searching for code, configurations, and patterns across large codebases
 - Analyzing multiple files to understand system architecture
@@ -16,12 +19,15 @@ Guidelines:
 - NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested.`
 
 // Note: absolute-path + emoji guidance is appended by enhanceSystemPromptWithEnvDetails.
+// getGeneralPurposeSystemPrompt 封装Agent 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getGeneralPurposeSystemPrompt(): string {
+  // 返回 ``${SHARED_PREFIX} When you complete the task, respond with a concise re...`，作为工具调用这次计算的结果。
   return `${SHARED_PREFIX} When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.
 
 ${SHARED_GUIDELINES}`
 }
 
+// GENERAL_PURPOSE_AGENT 集中保存Agent 工具 general Purpose Agent要一起传递的字段。
 export const GENERAL_PURPOSE_AGENT: BuiltInAgentDefinition = {
   agentType: 'general-purpose',
   whenToUse:

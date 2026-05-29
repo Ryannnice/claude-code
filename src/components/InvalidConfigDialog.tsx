@@ -1,85 +1,141 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 引入 Box、render、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, render, Text } from '../ink.js';
+// 引入 KeybindingSetup，将 ../keybindings/KeybindingProviderSetup.js 中已经封装好的能力接到本文件流程里。
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js';
+// 引入 AppStateProvider，将 ../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { AppStateProvider } from '../state/AppState.js';
+// 类型依赖 { ConfigParseError } 来自 ../utils/errors.js，用于校准终端渲染的数据契约。
 import type { ConfigParseError } from '../utils/errors.js';
+// 复用 getBaseRenderOptions 工具函数，把通用处理留在 ../utils/renderOptions.js 中维护。
 import { getBaseRenderOptions } from '../utils/renderOptions.js';
+// 复用 jsonStringify、writeFileSync_DEPRECATED 工具函数，把通用处理留在 ../utils/slowOperations.js 中维护。
 import { jsonStringify, writeFileSync_DEPRECATED } from '../utils/slowOperations.js';
+// 类型依赖 { ThemeName } 来自 ../utils/theme.js，用于校准终端渲染的数据契约。
 import type { ThemeName } from '../utils/theme.js';
+// 引入 Select，将 ./CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from './CustomSelect/index.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// InvalidConfigHandlerProps 描述终端渲染需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface InvalidConfigHandlerProps {
   error: ConfigParseError;
 }
+// InvalidConfigDialogProps 描述终端渲染需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface InvalidConfigDialogProps {
   filePath: string;
   errorDescription: string;
+  // 这个回调绑定到 onExit: () => void;，负责终端渲染在该局部场景下的响应。
   onExit: () => void;
+  // 这个回调绑定到 onReset: () => void;，负责终端渲染在该局部场景下的响应。
   onReset: () => void;
 }
 
 /**
  * Dialog shown when the Claude config file contains invalid JSON
  */
+// InvalidConfigDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function InvalidConfigDialog(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(19);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     filePath,
     errorDescription,
     onExit,
     onReset
   } = t0;
+  // t1 暂存 `value => {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== onExit || $[1] !== onReset) {
+    // t1 暂存 `value => {` 生成的渲染片段，后续返回路径直接复用。
     t1 = value => {
+      // 当 `value` 匹配 `"exit"` 时，终端渲染执行对应分支。
       if (value === "exit") {
+        // 调用 onExit，触发终端渲染此处需要的副作用。
         onExit();
       } else {
+        // 调用 onReset，触发终端渲染此处需要的副作用。
         onReset();
       }
     };
+    // $[0] 缓存 `onExit`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = onExit;
+    // $[1] 缓存 `onReset`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = onReset;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // handleSelect 命名 `t1`，让后续代码直接表达这个值的用途。
   const handleSelect = t1;
+  // t2 暂存 `<Text>The configuration file at <Text bold={true}>{filePa...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== filePath) {
+    // t2 暂存 `<Text>The configuration file at <Text bold={true}>{filePa...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Text>The configuration file at <Text bold={true}>{filePath}</Text> contains invalid JSON.</Text>;
+    // $[3] 缓存 `filePath`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = filePath;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[4];
   }
+  // t3 暂存 `<Text>{errorDescription}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== errorDescription) {
+    // t3 暂存 `<Text>{errorDescription}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text>{errorDescription}</Text>;
+    // $[5] 缓存 `errorDescription`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = errorDescription;
+    // $[6] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[6];
   }
+  // t4 暂存 `<Box flexDirection="column" gap={1}>{t2}{t3}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== t2 || $[8] !== t3) {
+    // t4 暂存 `<Box flexDirection="column" gap={1}>{t2}{t3}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t4 = <Box flexDirection="column" gap={1}>{t2}{t3}</Box>;
+    // $[7] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t2;
+    // $[8] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t3;
+    // $[9] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[9];
   }
+  // t5 暂存 `<Text bold={true}>Choose an option:</Text>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
+    // t5 暂存 `<Text bold={true}>Choose an option:</Text>` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Text bold={true}>Choose an option:</Text>;
+    // $[10] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[10];
   }
+  // t6 暂存 `[{` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
+    // t6 暂存 `[{` 生成的渲染片段，后续返回路径直接复用。
     t6 = [{
       label: "Exit and fix manually",
       value: "exit"
@@ -87,29 +143,47 @@ function InvalidConfigDialog(t0) {
       label: "Reset with default configuration",
       value: "reset"
     }];
+    // $[11] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[11];
   }
+  // t7 暂存 `<Box flexDirection="column">{t5}<Select options={t6} onCh...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[12] !== handleSelect || $[13] !== onExit) {
+    // t7 暂存 `<Box flexDirection="column">{t5}<Select options={t6} onCh...` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Box flexDirection="column">{t5}<Select options={t6} onChange={handleSelect} onCancel={onExit} /></Box>;
+    // $[12] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = handleSelect;
+    // $[13] 缓存 `onExit`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = onExit;
+    // $[14] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[14];
   }
+  // t8 暂存 `<Dialog title="Configuration Error" color="error" onCance...` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[15] !== onExit || $[16] !== t4 || $[17] !== t7) {
+    // t8 暂存 `<Dialog title="Configuration Error" color="error" onCance...` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Dialog title="Configuration Error" color="error" onCancel={onExit}>{t4}{t7}</Dialog>;
+    // $[15] 缓存 `onExit`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = onExit;
+    // $[16] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t4;
+    // $[17] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t7;
+    // $[18] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[18] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[18];
   }
+  // 返回 `t8`，作为终端渲染这次计算的结果。
   return t8;
 }
 
@@ -117,36 +191,51 @@ function InvalidConfigDialog(t0) {
  * Safe fallback theme name for error dialogs to avoid circular dependency.
  * Uses a hardcoded dark theme that doesn't require reading from config.
  */
+// SAFE_ERROR_THEME_NAME 错误信息固定为 `'dark'`，作为终端 UI 组件 Invalid Config Dialog后续展示或比较的基准。
 const SAFE_ERROR_THEME_NAME: ThemeName = 'dark';
+// showInvalidConfigDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function showInvalidConfigDialog({
   error
 }: InvalidConfigHandlerProps): Promise<void> {
   // Extend RenderOptions with theme property for this specific usage
+  // SafeRenderOptions 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
   type SafeRenderOptions = Parameters<typeof render>[1] & {
     theme?: ThemeName;
   };
+  // renderOptions 集合 集中保存终端 UI 组件 Invalid Config Dialog要一起传递的字段。
   const renderOptions: SafeRenderOptions = {
     ...getBaseRenderOptions(false),
     // IMPORTANT: Use hardcoded theme name to avoid circular dependency with getGlobalConfig()
     // This allows the error dialog to show even when config file has JSON syntax errors
     theme: SAFE_ERROR_THEME_NAME
   };
+  // 这个回调绑定到 await new Promise<void>(async resolve => {，负责终端渲染在该局部场景下的响应。
   await new Promise<void>(async resolve => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       unmount
     } = await render(<AppStateProvider>
         <KeybindingSetup>
+          {/* 这个回调绑定到 <InvalidConfigDialog filePath={error.filePath} errorDescription={error.message} onEx…，负责终端渲染在该局部场景下的响应。 */}
           <InvalidConfigDialog filePath={error.filePath} errorDescription={error.message} onExit={() => {
+          // 调用 unmount，触发终端渲染此处需要的副作用。
           unmount();
+          // 显式忽略 `resolve()` 的返回值，只保留它触发的副作用。
           void resolve();
+          // 调用 process.exit，触发终端渲染此处需要的副作用。
           process.exit(1);
+        // 这个回调绑定到 }} onReset={() => {，负责终端渲染在该局部场景下的响应。
         }} onReset={() => {
+          // 调用 writeFileSync_DEPRECATED，触发终端渲染此处需要的副作用。
           writeFileSync_DEPRECATED(error.filePath, jsonStringify(error.defaultConfig, null, 2), {
             flush: false,
             encoding: 'utf8'
           });
+          // 调用 unmount，触发终端渲染此处需要的副作用。
           unmount();
+          // 显式忽略 `resolve()` 的返回值，只保留它触发的副作用。
           void resolve();
+          // 调用 process.exit，触发终端渲染此处需要的副作用。
           process.exit(0);
         }} />
         </KeybindingSetup>

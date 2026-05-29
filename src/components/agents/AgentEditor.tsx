@@ -1,82 +1,133 @@
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useMemo、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useMemo, useState } from 'react';
+// 引入 useSetAppState，将 src/state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useSetAppState } from 'src/state/AppState.js';
+// 类型依赖 { KeyboardEvent } 来自 ../../ink/events/keyboard-event.js，用于校准终端渲染的数据契约。
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 引入 useKeybinding，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+// 类型依赖 { Tools } 来自 ../../Tool.js，用于校准终端渲染的数据契约。
 import type { Tools } from '../../Tool.js';
+// 接入 AgentColorName、setAgentColor 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { type AgentColorName, setAgentColor } from '../../tools/AgentTool/agentColorManager.js';
+// 接入 AgentDefinition、getActiveAgentsFromList、isCustomAgent、isPluginAgent 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { type AgentDefinition, getActiveAgentsFromList, isCustomAgent, isPluginAgent } from '../../tools/AgentTool/loadAgentsDir.js';
+// 复用 editFileInEditor 工具函数，把通用处理留在 ../../utils/promptEditor.js 中维护。
 import { editFileInEditor } from '../../utils/promptEditor.js';
+// 引入 getActualAgentFilePath、updateAgentFile，将 ./agentFileUtils.js 中已经封装好的能力接到本文件流程里。
 import { getActualAgentFilePath, updateAgentFile } from './agentFileUtils.js';
+// 引入 ColorPicker，将 ./ColorPicker.js 中已经封装好的能力接到本文件流程里。
 import { ColorPicker } from './ColorPicker.js';
+// 引入 ModelSelector，将 ./ModelSelector.js 中已经封装好的能力接到本文件流程里。
 import { ModelSelector } from './ModelSelector.js';
+// 引入 ToolSelector，将 ./ToolSelector.js 中已经封装好的能力接到本文件流程里。
 import { ToolSelector } from './ToolSelector.js';
+// 引入 getAgentSourceDisplayName，将 ./utils.js 中已经封装好的能力接到本文件流程里。
 import { getAgentSourceDisplayName } from './utils.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   agent: AgentDefinition;
   tools: Tools;
+  // 这个回调绑定到 onSaved: (message: string) => void;，负责终端渲染在该局部场景下的响应。
   onSaved: (message: string) => void;
+  // 这个回调绑定到 onBack: () => void;，负责终端渲染在该局部场景下的响应。
   onBack: () => void;
 };
+// EditMode 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type EditMode = 'menu' | 'edit-tools' | 'edit-color' | 'edit-model';
+// SaveChanges 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type SaveChanges = {
   tools?: string[];
   color?: AgentColorName;
   model?: string;
 };
+// AgentEditor 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AgentEditor({
   agent,
   tools,
   onSaved,
   onBack
 }: Props): React.ReactNode {
+  // setAppState 状态保存`useSetAppState`，供终端渲染后续处理使用。
   const setAppState = useSetAppState();
+  // editMode 由 React state 持有，setEditMode 会在用户操作或异步结果返回时触发刷新。
   const [editMode, setEditMode] = useState<EditMode>('menu');
+  // selectedMenuIndex 索引 由 React state 持有，setSelectedMenuIndex 会在用户操作或异步结果返回时触发刷新。
   const [selectedMenuIndex, setSelectedMenuIndex] = useState(0);
+  // 错误 由 React state 持有，setError 会在用户操作或异步结果返回时触发刷新。
   const [error, setError] = useState<string | null>(null);
+  // selectedColor 由 React state 持有，setSelectedColor 会在用户操作或异步结果返回时触发刷新。
   const [selectedColor, setSelectedColor] = useState<AgentColorName | undefined>(agent.color as AgentColorName | undefined);
+  // handleOpenInEditor保存`useCallback`，供终端渲染后续处理使用。
   const handleOpenInEditor = useCallback(async () => {
+    // 文件路径读取`getActualAgentFilePath`，供终端渲染后续处理使用。
     const filePath = getActualAgentFilePath(agent);
+    // 结果保存`editFileInEditor`，供终端渲染后续处理使用。
     const result = await editFileInEditor(filePath);
+    // 满足 `result.error` 时，终端渲染执行该分支。
     if (result.error) {
+      // setError 写入新的状态值，使终端渲染后续读取保持一致。
       setError(result.error);
     } else {
+      // 调用 onSaved，触发终端渲染此处需要的副作用。
       onSaved(`Opened ${agent.agentType} in editor. If you made edits, restart to load the latest version.`);
     }
   }, [agent, onSaved]);
+  // handleSave保存`useCallback`，供终端渲染后续处理使用。
   const handleSave = useCallback(async (changes: SaveChanges = {}) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       tools: newTools,
       color: newColor,
       model: newModel
     } = changes;
+    // finalColor 命名 `newColor ?? selectedColor`，让后续代码直接表达这个值的用途。
     const finalColor = newColor ?? selectedColor;
+    // hasToolsChanged标记终端 UI Agent Editor是否启用对应路径。
     const hasToolsChanged = newTools !== undefined;
+    // hasModelChanged标记终端 UI Agent Editor是否启用对应路径。
     const hasModelChanged = newModel !== undefined;
+    // hasColorChanged标记终端 UI Agent Editor是否启用对应路径。
     const hasColorChanged = finalColor !== agent.color;
+    // 只有 `!hasToolsChanged && !hasModelChanged && !hasColor` 满足时，终端渲染才执行该分支。
     if (!hasToolsChanged && !hasModelChanged && !hasColorChanged) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // Only custom/plugin agents can be edited
       // this is for type safety; the UI shouldn't allow editing otherwise
+      // 只有 `!isCustomAgent(agent) && !isPluginAgent(agent)` 满足时，终端渲染才执行该分支。
       if (!isCustomAgent(agent) && !isPluginAgent(agent)) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
+      // 等待 `updateAgentFile(agent, agent.whenToUse, newTools ?? agent.tools, agent....` 完成，再继续终端 UI 组件 Agent Editor的异步流程。
       await updateAgentFile(agent, agent.whenToUse, newTools ?? agent.tools, agent.getSystemPrompt(), finalColor, newModel ?? agent.model);
+      // 只有 `hasColorChanged && finalColor` 满足时，终端渲染才执行该分支。
       if (hasColorChanged && finalColor) {
+        // setAgentColor 写入新的状态值，使终端渲染后续读取保持一致。
         setAgentColor(agent.agentType, finalColor);
       }
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(state => {
+        // allAgents 集合派生`allAgents.map`，供终端渲染后续处理使用。
         const allAgents = state.agentDefinitions.allAgents.map(a => a.agentType === agent.agentType ? {
           ...a,
           tools: newTools ?? a.tools,
           color: finalColor,
           model: newModel ?? a.model
         } : a);
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...state,
           agentDefinitions: {
@@ -86,52 +137,79 @@ export function AgentEditor({
           }
         };
       });
+      // 调用 onSaved，触发终端渲染此处需要的副作用。
       onSaved(`Updated agent: ${chalk.bold(agent.agentType)}`);
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     } catch (err) {
+      // setError 写入新的状态值，使终端渲染后续读取保持一致。
       setError(err instanceof Error ? err.message : 'Failed to save agent');
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
   }, [agent, selectedColor, onSaved, setAppState]);
+  // menuItems 集合保存`useMemo`，供终端渲染后续处理使用。
   const menuItems = useMemo(() => [{
     label: 'Open in editor',
     action: handleOpenInEditor
   }, {
     label: 'Edit tools',
+    // 这个回调绑定到 action: () => setEditMode('edit-tools')，负责终端渲染在该局部场景下的响应。
     action: () => setEditMode('edit-tools')
   }, {
     label: 'Edit model',
+    // 这个回调绑定到 action: () => setEditMode('edit-model')，负责终端渲染在该局部场景下的响应。
     action: () => setEditMode('edit-model')
   }, {
     label: 'Edit color',
+    // 这个回调绑定到 action: () => setEditMode('edit-color')，负责终端渲染在该局部场景下的响应。
     action: () => setEditMode('edit-color')
   }], [handleOpenInEditor]);
+  // handleEscape保存`useCallback`，供终端渲染后续处理使用。
   const handleEscape = useCallback(() => {
+    // setError 写入新的状态值，使终端渲染后续读取保持一致。
     setError(null);
+    // 当 `editMode` 匹配 `'menu'` 时，终端渲染执行对应分支。
     if (editMode === 'menu') {
+      // 调用 onBack，触发终端渲染此处需要的副作用。
       onBack();
     } else {
+      // setEditMode 写入新的状态值，使终端渲染后续读取保持一致。
       setEditMode('menu');
     }
   }, [editMode, onBack]);
+  // handleMenuKeyDown保存`useCallback`，供终端渲染后续处理使用。
   const handleMenuKeyDown = useCallback((e: KeyboardEvent) => {
+    // 当 `e.key` 匹配 `'up'` 时，终端渲染执行对应分支。
     if (e.key === 'up') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // setSelectedMenuIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setSelectedMenuIndex(index => Math.max(0, index - 1));
+    // 终端 UI 组件 Agent Editor在这里处理 `} else if (e.key === 'down') {`，完成这一小步状态转换。
     } else if (e.key === 'down') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // setSelectedMenuIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setSelectedMenuIndex(index_0 => Math.min(menuItems.length - 1, index_0 + 1));
+    // 终端 UI 组件 Agent Editor在这里处理 `} else if (e.key === 'return') {`，完成这一小步状态转换。
     } else if (e.key === 'return') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // selectedItem保存`menuItems[selectedMenuIndex]`，供终端 UI Agent Editor后续判断或输出使用。
       const selectedItem = menuItems[selectedMenuIndex];
+      // 满足 `selectedItem` 时，终端渲染执行该分支。
       if (selectedItem) {
+        // 显式忽略 `selectedItem.action()` 的返回值，只保留它触发的副作用。
         void selectedItem.action();
       }
     }
   }, [menuItems, selectedMenuIndex]);
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleEscape, {
     context: 'Confirmation'
   });
+  // renderMenu封装成回调，供终端 UI Agent Editor在事件触发或异步步骤中调用。
   const renderMenu = (): React.ReactNode => <Box flexDirection="column" tabIndex={0} autoFocus onKeyDown={handleMenuKeyDown}>
       <Text dimColor>Source: {getAgentSourceDisplayName(agent.source)}</Text>
 
@@ -146,32 +224,45 @@ export function AgentEditor({
           <Text color="error">{error}</Text>
         </Box>}
     </Box>;
+  // 按照 editMode 的取值选择终端渲染的具体处理分支。
   switch (editMode) {
     case 'menu':
+      // 返回 `renderMenu()`，作为终端渲染这次计算的结果。
       return renderMenu();
     case 'edit-tools':
+      // 返回 `<ToolSelector tools={tools} initialTools={agent.tools} onComplete={asyn...`，作为终端渲染这次计算的结果。
       return <ToolSelector tools={tools} initialTools={agent.tools} onComplete={async finalTools => {
+        // setEditMode 写入新的状态值，使终端渲染后续读取保持一致。
         setEditMode('menu');
+        // 等待 `handleSave({` 完成，再继续终端 UI 组件 Agent Editor的异步流程。
         await handleSave({
           tools: finalTools
         });
       }} />;
     case 'edit-color':
+      // 返回 `<ColorPicker agentName={agent.agentType} currentColor={selectedColor ||...`，作为终端渲染这次计算的结果。
       return <ColorPicker agentName={agent.agentType} currentColor={selectedColor || agent.color as AgentColorName || 'automatic'} onConfirm={async color => {
+        // setSelectedColor 写入新的状态值，使终端渲染后续读取保持一致。
         setSelectedColor(color);
+        // setEditMode 写入新的状态值，使终端渲染后续读取保持一致。
         setEditMode('menu');
+        // 等待 `handleSave({` 完成，再继续终端 UI 组件 Agent Editor的异步流程。
         await handleSave({
           color
         });
       }} />;
     case 'edit-model':
+      // 返回 `<ModelSelector initialModel={agent.model} onComplete={async model => {`，作为终端渲染这次计算的结果。
       return <ModelSelector initialModel={agent.model} onComplete={async model => {
+        // setEditMode 写入新的状态值，使终端渲染后续读取保持一致。
         setEditMode('menu');
+        // 等待 `handleSave({` 完成，再继续终端 UI 组件 Agent Editor的异步流程。
         await handleSave({
           model
         });
       }} />;
     default:
+      // 返回 `null`，作为终端渲染这次计算的结果。
       return null;
   }
 }

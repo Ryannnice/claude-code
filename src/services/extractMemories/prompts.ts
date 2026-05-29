@@ -9,28 +9,39 @@
  * overlap the system prompt's harmlessly.
  */
 
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 整理这一组导入，让服务层 prompts后续逻辑可以直接复用这些外部能力。
 import {
   MEMORY_FRONTMATTER_EXAMPLE,
   TYPES_SECTION_COMBINED,
   TYPES_SECTION_INDIVIDUAL,
   WHAT_NOT_TO_SAVE_SECTION,
 } from '../../memdir/memoryTypes.js'
+// 接入 BASH_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { BASH_TOOL_NAME } from '../../tools/BashTool/toolName.js'
+// 接入 FILE_EDIT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
+// 接入 FILE_READ_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
+// 接入 FILE_WRITE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
+// 接入 GLOB_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { GLOB_TOOL_NAME } from '../../tools/GlobTool/prompt.js'
+// 接入 GREP_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { GREP_TOOL_NAME } from '../../tools/GrepTool/prompt.js'
 
 /**
  * Shared opener for both extract-prompt variants.
  */
+// opener 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function opener(newMessageCount: number, existingMemories: string): string {
+  // manifest 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const manifest =
     existingMemories.length > 0
       ? `\n\n## Existing memory files\n\n${existingMemories}\n\nCheck this list before writing — update an existing file rather than creating a duplicate.`
       : ''
+  // 返回列表结果，保留服务层 prompts已经排好的条目顺序。
   return [
     `You are now acting as the memory extraction subagent. Analyze the most recent ~${newMessageCount} messages above and use them to update your persistent memory systems.`,
     '',
@@ -47,11 +58,13 @@ function opener(newMessageCount: number, existingMemories: string): string {
  * Build the extraction prompt for auto-only memory (no team memory).
  * Four-type taxonomy, no scope guidance (single directory).
  */
+// buildExtractAutoOnlyPrompt 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildExtractAutoOnlyPrompt(
   newMessageCount: number,
   existingMemories: string,
   skipIndex = false,
 ): string {
+  // howToSave保存`skipIndex`，供服务层 prompts后续判断或输出使用。
   const howToSave = skipIndex
     ? [
         '## How to save memories',
@@ -81,6 +94,7 @@ export function buildExtractAutoOnlyPrompt(
         '- Do not write duplicate memories. First check if there is an existing memory you can update before writing a new one.',
       ]
 
+  // 返回列表结果，保留服务层 prompts已经排好的条目顺序。
   return [
     opener(newMessageCount, existingMemories),
     '',
@@ -98,12 +112,15 @@ export function buildExtractAutoOnlyPrompt(
  * Four-type taxonomy with per-type <scope> guidance (directory choice
  * is baked into each type block, no separate routing section needed).
  */
+// buildExtractCombinedPrompt 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildExtractCombinedPrompt(
   newMessageCount: number,
   existingMemories: string,
   skipIndex = false,
 ): string {
+  // 满足 `!feature('TEAMMEM')` 时，服务层 prompts执行该分支。
   if (!feature('TEAMMEM')) {
+    // 返回 `buildExtractAutoOnlyPrompt(`，作为服务层 prompts这次计算的结果。
     return buildExtractAutoOnlyPrompt(
       newMessageCount,
       existingMemories,
@@ -111,6 +128,7 @@ export function buildExtractCombinedPrompt(
     )
   }
 
+  // howToSave保存`skipIndex`，供服务层 prompts后续判断或输出使用。
   const howToSave = skipIndex
     ? [
         '## How to save memories',
@@ -140,6 +158,7 @@ export function buildExtractCombinedPrompt(
         '- Do not write duplicate memories. First check if there is an existing memory you can update before writing a new one.',
       ]
 
+  // 返回列表结果，保留服务层 prompts已经排好的条目顺序。
   return [
     opener(newMessageCount, existingMemories),
     '',

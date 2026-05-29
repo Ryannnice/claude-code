@@ -1,20 +1,33 @@
+// 引入 React、RefObject、useEffect、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import React, { type RefObject, useEffect, useRef } from 'react';
+// 引入 useNotifications，将 ../context/notifications.js 中已经封装好的能力接到本文件流程里。
 import { useNotifications } from '../context/notifications.js';
+// 引入 useCopyOnSelect、useSelectionBgColor，将 ../hooks/useCopyOnSelect.js 中已经封装好的能力接到本文件流程里。
 import { useCopyOnSelect, useSelectionBgColor } from '../hooks/useCopyOnSelect.js';
+// 类型依赖 { ScrollBoxHandle } 来自 ../ink/components/ScrollBox.js，用于校准终端渲染的数据契约。
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
+// 复用 useSelection 终端界面组件，避免在这里重复拼装显示逻辑。
 import { useSelection } from '../ink/hooks/use-selection.js';
+// 类型依赖 { FocusMove, SelectionState } 来自 ../ink/selection.js，用于校准终端渲染的数据契约。
 import type { FocusMove, SelectionState } from '../ink/selection.js';
+// 复用 isXtermJs 终端界面组件，避免在这里重复拼装显示逻辑。
 import { isXtermJs } from '../ink/terminal.js';
+// 复用 getClipboardPath 终端界面组件，避免在这里重复拼装显示逻辑。
 import { getClipboardPath } from '../ink/termio/osc.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- Esc needs conditional propagation based on selection state
+// 引入 Key、useInput，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { type Key, useInput } from '../ink.js';
+// 引入 useKeybindings，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybindings } from '../keybindings/useKeybinding.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   scrollRef: RefObject<ScrollBoxHandle | null>;
   isActive: boolean;
   /** Called after every scroll action with the resulting sticky state and
    *  the handle (for reading scrollTop/scrollHeight post-scroll). */
+  // 这个回调绑定到 onScroll?: (sticky: boolean, handle: ScrollBoxHandle) => void;，负责终端渲染在该局部场景下的响应。
   onScroll?: (sticky: boolean, handle: ScrollBoxHandle) => void;
   /** Enables modal pager keys (g/G, ctrl+u/d/b/f). Only safe when there
    *  is no text input competing for those characters — i.e. transcript
@@ -44,8 +57,11 @@ type Props = {
 // iTerm2 "faster scroll" similar) — base=1 is correct there. Others send 1
 // event/notch — users on those can set CLAUDE_CODE_SCROLL_SPEED=3 to match
 // vim/nvim/opencode app-side defaults. We can't detect which, so knob it.
+// WHEEL_ACCEL_WINDOW_MS 集合保存`40`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
 const WHEEL_ACCEL_WINDOW_MS = 40;
+// WHEEL_ACCEL_STEP 命名 `0.3`，让后续代码直接表达这个值的用途。
 const WHEEL_ACCEL_STEP = 0.3;
+// WHEEL_ACCEL_MAX保存`6`，供后续判断或组装使用。
 const WHEEL_ACCEL_MAX = 6;
 
 // Encoder bounce debounce + wheel-mode decay curve. Worn/cheap optical
@@ -62,10 +78,13 @@ const WHEEL_ACCEL_MAX = 6;
 // threshold needed, large gaps just have m≈0 → mult→1. Wheel mode is STICKY:
 // once a bounce confirms it's a mouse, the decay curve applies until an idle
 // gap or trackpad-flick-burst signals a possible device switch.
+// WHEEL_BOUNCE_GAP_MAX_MS 集合保存`200; // flip-back must arrive within this`，供后续判断或组装使用。
 const WHEEL_BOUNCE_GAP_MAX_MS = 200; // flip-back must arrive within this
 // Mouse is ~9 events/sec vs VS Code's ~30 — STEP is 3× xterm.js's 5 to
 // compensate. At gap=100ms (m≈0.63): one click gives 1+15*0.63≈10.5.
+// WHEEL_MODE_STEP 命名 `15`，让后续代码直接表达这个值的用途。
 const WHEEL_MODE_STEP = 15;
+// WHEEL_MODE_CAP 命名 `15`，让后续代码直接表达这个值的用途。
 const WHEEL_MODE_CAP = 15;
 // Max mult growth per event. Without this, the +STEP*m term jumps mult
 // from 1→10 in one event when wheelMode engages mid-scroll (bounce
@@ -73,12 +92,14 @@ const WHEEL_MODE_CAP = 15;
 // suddenly go 10× faster. Cap=3 gives 1→4→7→10→13→15 over ~0.5s at
 // 9 events/sec — smooth ramp instead of a jump. Decay is unaffected
 // (target<mult wins the min).
+// WHEEL_MODE_RAMP保存`3`，供后续判断或组装使用。
 const WHEEL_MODE_RAMP = 3;
 // Device-switch disengage: mouse finger-repositions max at ~830ms (measured);
 // trackpad between-gesture pauses are 2000ms+. An idle gap above this means
 // the user stopped — might have switched devices. Disengage; the next mouse
 // bounce re-engages. Trackpad slow swipe (no <5ms bursts, so the burst-count
 // guard doesn't catch it) is what this protects against.
+// WHEEL_MODE_IDLE_DISENGAGE_MS 集合 命名 `1500`，让后续代码直接表达这个值的用途。
 const WHEEL_MODE_IDLE_DISENGAGE_MS = 1500;
 
 // xterm.js: exponential decay. momentum=0.5^(gap/hl) — slow click → m≈0
@@ -89,18 +110,25 @@ const WHEEL_MODE_IDLE_DISENGAGE_MS = 1500;
 // frequency is high — at 40 Hz × 6 = 240 rows/sec max demand, which the
 // adaptive drain at ~200fps (measured) handles. Higher cap → pending explosion.
 // Tuned empirically (boris 2026-03). See docs/research/terminal-scroll-*.
+// WHEEL_DECAY_HALFLIFE_MS 集合 命名 `150`，让后续代码直接表达这个值的用途。
 const WHEEL_DECAY_HALFLIFE_MS = 150;
+// WHEEL_DECAY_STEP 命名 `5`，让后续代码直接表达这个值的用途。
 const WHEEL_DECAY_STEP = 5;
 // Same-batch events (<BURST_MS) arrive in one stdin batch — the terminal
 // is doing proportional reporting. Treat as 1 row/event like native.
+// WHEEL_BURST_MS 集合保存`5`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
 const WHEEL_BURST_MS = 5;
 // Cap boundary: slow events (≥GAP_MS) cap low for short smooth drains;
 // fast events cap higher for throughput (adaptive drain handles backlog).
+// WHEEL_DECAY_GAP_MS 集合 命名 `80`，让后续代码直接表达这个值的用途。
 const WHEEL_DECAY_GAP_MS = 80;
+// WHEEL_DECAY_CAP_SLOW保存`3; // gap ≥ GAP_MS: precision`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
 const WHEEL_DECAY_CAP_SLOW = 3; // gap ≥ GAP_MS: precision
+// WHEEL_DECAY_CAP_FAST保存`6; // gap < GAP_MS: throughput`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
 const WHEEL_DECAY_CAP_FAST = 6; // gap < GAP_MS: throughput
 // Idle threshold: gaps beyond this reset to the kick value (2) so the
 // first click after a pause feels responsive regardless of direction.
+// WHEEL_DECAY_IDLE_MS 集合保存`500`，供后续判断或组装使用。
 const WHEEL_DECAY_IDLE_MS = 500;
 
 /**
@@ -112,10 +140,15 @@ const WHEEL_DECAY_IDLE_MS = 500;
  * Bare arrows DO clear (user's cursor moves, native deselects). Wheel is
  * excluded — scroll:lineUp/Down already clears via the keybinding path.
  */
+// shouldClearSelectionOnKey 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldClearSelectionOnKey(key: Key): boolean {
+  // 只有 `key.wheelUp || key.wheelDown` 满足时，终端渲染才执行该分支。
   if (key.wheelUp || key.wheelDown) return false;
+  // isNav标记终端 UI Scroll Keybinding Ha...是否启用对应路径。
   const isNav = key.leftArrow || key.rightArrow || key.upArrow || key.downArrow || key.home || key.end || key.pageUp || key.pageDown;
+  // 只有 `isNav && (key.shift || key.meta || key.super)` 满足时，终端渲染才执行该分支。
   if (isNav && (key.shift || key.meta || key.super)) return false;
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
 
@@ -129,16 +162,26 @@ export function shouldClearSelectionOnKey(key: Key): boolean {
  * yet implemented — falls through to shouldClearSelectionOnKey which
  * preserves (modified nav). Returns null for non-extend keys.
  */
+// selectionFocusMoveForKey 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function selectionFocusMoveForKey(key: Key): FocusMove | null {
+  // 只有 `!key.shift || key.meta` 满足时，终端渲染才执行该分支。
   if (!key.shift || key.meta) return null;
+  // 满足 `key.leftArrow` 时，终端渲染执行该分支。
   if (key.leftArrow) return 'left';
+  // 满足 `key.rightArrow` 时，终端渲染执行该分支。
   if (key.rightArrow) return 'right';
+  // 满足 `key.upArrow` 时，终端渲染执行该分支。
   if (key.upArrow) return 'up';
+  // 满足 `key.downArrow` 时，终端渲染执行该分支。
   if (key.downArrow) return 'down';
+  // 满足 `key.home` 时，终端渲染执行该分支。
   if (key.home) return 'lineStart';
+  // 满足 `key.end` 时，终端渲染执行该分支。
   if (key.end) return 'lineEnd';
+  // 返回 `null`，作为终端渲染这次计算的结果。
   return null;
 }
+// WheelAccelState 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type WheelAccelState = {
   time: number;
   mult: number;
@@ -173,53 +216,76 @@ export type WheelAccelState = {
  *  a direction flip is deferred for bounce detection — call sites no-op on
  *  step=0 (scrollBy(0) is a no-op, onScroll(false) is idempotent). Exported
  *  for tests. */
+// computeWheelStep 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: number): number {
+  // state.xtermJs 状态缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!state.xtermJs) {
     // Device-switch guard ①: idle disengage. Runs BEFORE pendingFlip resolve
     // so a pending bounce (28% of last-mouse-events) doesn't bypass it via
     // the real-reversal early return. state.time is either the last committed
     // event OR the deferred flip — both count as "last activity".
+    // 只有 `state.wheelMode && now - state.time > WHEEL_MODE_` 满足时，终端渲染才执行该分支。
     if (state.wheelMode && now - state.time > WHEEL_MODE_IDLE_DISENGAGE_MS) {
+      // wheelMode更新为 `false`，确保终端 UI后续读取最新状态。
       state.wheelMode = false;
+      // burstCount 数量更新为 `0`，确保终端 UI后续读取最新状态。
       state.burstCount = 0;
+      // mult更新为 `state.base`，确保终端 UI后续读取最新状态。
       state.mult = state.base;
     }
 
     // Resolve any deferred flip BEFORE touching state.time/dir — we need the
     // pre-flip state.dir to distinguish bounce (flip-back) from real reversal
     // (flip persisted), and state.time (= bounce timestamp) for the gap check.
+    // 满足 `state.pendingFlip` 时，终端渲染执行该分支。
     if (state.pendingFlip) {
+      // pendingFlip更新为 `false`，确保终端 UI后续读取最新状态。
       state.pendingFlip = false;
+      // `dir` 与 `state.dir || now - state.time >...` 不一致时刷新派生状态，避免使用过期结果。
       if (dir !== state.dir || now - state.time > WHEEL_BOUNCE_GAP_MAX_MS) {
         // Real reversal: new dir persisted, OR flip-back arrived too late.
         // Commit. The deferred event's 1 row is lost (acceptable latency).
+        // dir更新为 `dir`，确保终端 UI后续读取最新状态。
         state.dir = dir;
+        // time更新为 `now`，确保终端 UI后续读取最新状态。
         state.time = now;
+        // mult更新为 `state.base`，确保终端 UI后续读取最新状态。
         state.mult = state.base;
+        // 返回 `Math.floor(state.mult)`，作为终端渲染这次计算的结果。
         return Math.floor(state.mult);
       }
       // Bounce confirmed: flipped back to original dir within the window.
       // state.dir/mult unchanged from pre-bounce. state.time was advanced to
       // the bounce below, so gap here = flip-back interval — reflects the
       // user's actual click cadence (bounce IS a physical click, just noisy).
+      // wheelMode更新为 `true`，确保终端 UI后续读取最新状态。
       state.wheelMode = true;
     }
+    // gap保存`now - state.time`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
     const gap = now - state.time;
+    // `dir` 与 `state.dir && state.dir !== 0` 不一致时刷新派生状态，避免使用过期结果。
     if (dir !== state.dir && state.dir !== 0) {
       // Flip. Defer — next event decides bounce vs. real reversal. Advance
       // time (but NOT dir/mult): if this turns out to be a bounce, the
       // confirm event's gap will be the flip-back interval, which reflects
       // the user's actual click rate. The bounce IS a physical wheel click,
       // just misread by the encoder — it should count toward cadence.
+      // pendingFlip更新为 `true`，确保终端 UI后续读取最新状态。
       state.pendingFlip = true;
+      // time更新为 `now`，确保终端 UI后续读取最新状态。
       state.time = now;
+      // 返回 `0`，作为终端渲染这次计算的结果。
       return 0;
     }
+    // dir更新为 `dir`，确保终端 UI后续读取最新状态。
     state.dir = dir;
+    // time更新为 `now`，确保终端 UI后续读取最新状态。
     state.time = now;
 
     // ─── MOUSE (wheel mode, sticky until device-switch signal) ───
+    // 满足 `state.wheelMode` 时，终端渲染执行该分支。
     if (state.wheelMode) {
+      // 满足 `gap < WHEEL_BURST_MS` 时，终端渲染执行该分支。
       if (gap < WHEEL_BURST_MS) {
         // Same-batch burst check (ported from xterm.js): iTerm2 proportional
         // reporting sends 2+ SGR events for one detent when macOS gives
@@ -228,27 +294,39 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
         //
         // Device-switch guard ②: trackpad flick produces 100+ events at <5ms
         // (measured); mouse produces ≤3. 5+ consecutive → trackpad flick.
+        // 满足 `++state.burstCount >= 5` 时，终端渲染执行该分支。
         if (++state.burstCount >= 5) {
+          // wheelMode更新为 `false`，确保终端 UI后续读取最新状态。
           state.wheelMode = false;
+          // burstCount 数量更新为 `0`，确保终端 UI后续读取最新状态。
           state.burstCount = 0;
+          // mult更新为 `state.base`，确保终端 UI后续读取最新状态。
           state.mult = state.base;
         } else {
+          // 返回 `1`，作为终端渲染这次计算的结果。
           return 1;
         }
       } else {
+        // burstCount 数量更新为 `0`，确保终端 UI后续读取最新状态。
         state.burstCount = 0;
       }
     }
     // Re-check: may have disengaged above.
+    // 满足 `state.wheelMode` 时，终端渲染执行该分支。
     if (state.wheelMode) {
       // xterm.js decay curve with STEP×3, higher cap. No idle threshold —
       // the curve handles it (gap=1000ms → m≈0.01 → mult≈1). No frac —
       // rounding loss is minor at high mult, and frac persisting across idle
       // was causing off-by-one on the first click back.
+      // m保存`Math.pow`，供终端渲染后续处理使用。
       const m = Math.pow(0.5, gap / WHEEL_DECAY_HALFLIFE_MS);
+      // cap保存`Math.max`，供终端渲染后续处理使用。
       const cap = Math.max(WHEEL_MODE_CAP, state.base * 2);
+      // next保存`1 + (state.mult - 1) * m + WHEEL_MODE_STEP * m`，供后续判断或组装使用。
       const next = 1 + (state.mult - 1) * m + WHEEL_MODE_STEP * m;
+      // mult更新为 `Math.min(cap, next, state.mult + WHEEL_MODE_RAMP)`，确保终端 UI后续读取最新状态。
       state.mult = Math.min(cap, next, state.mult + WHEEL_MODE_RAMP);
+      // 返回 `Math.floor(state.mult)`，作为终端渲染这次计算的结果。
       return Math.floor(state.mult);
     }
 
@@ -256,12 +334,17 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
     // Tight 40ms burst window: sub-40ms events ramp, anything slower resets.
     // Trackpad flick delivers 200+ events at <20ms gaps → rails to cap 6.
     // Trackpad slow swipe at 40-400ms gaps → resets every event → 1 row each.
+    // 满足 `gap > WHEEL_ACCEL_WINDOW_MS` 时，终端渲染执行该分支。
     if (gap > WHEEL_ACCEL_WINDOW_MS) {
+      // mult更新为 `state.base`，确保终端 UI后续读取最新状态。
       state.mult = state.base;
     } else {
+      // cap保存`Math.max`，供终端渲染后续处理使用。
       const cap = Math.max(WHEEL_ACCEL_MAX, state.base * 2);
+      // mult更新为 `Math.min(cap, state.mult + WHEEL_ACCEL_STEP)`，确保终端 UI后续读取最新状态。
       state.mult = Math.min(cap, state.mult + WHEEL_ACCEL_STEP);
     }
+    // 返回 `Math.floor(state.mult)`，作为终端渲染这次计算的结果。
     return Math.floor(state.mult);
   }
 
@@ -269,30 +352,45 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
   // Browser wheel events — no encoder bounce, no SGR bursts. Decay curve
   // unchanged from the original tuning. Same formula shape as wheel mode
   // above (keep in sync) but STEP=5 not 15 — higher event rate here.
+  // gap保存`now - state.time`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
   const gap = now - state.time;
+  // sameDir标记终端 UI Scroll Keybinding Ha...是否启用对应路径。
   const sameDir = dir === state.dir;
+  // time更新为 `now`，确保终端 UI后续读取最新状态。
   state.time = now;
+  // dir更新为 `dir`，确保终端 UI后续读取最新状态。
   state.dir = dir;
   // xterm.js path. Debug log shows two patterns: (a) 20-50ms gaps during
   // sustained scroll (~30 Hz), (b) <5ms same-batch bursts on flicks. For
   // (b) give 1 row/event — the burst count IS the acceleration, same as
   // native. For (a) the decay curve gives 3-5 rows. For sparse events
   // (100ms+, slow deliberate scroll) the curve gives 1-3.
+  // 只有 `sameDir && gap < WHEEL_BURST_MS` 满足时，终端渲染才执行该分支。
   if (sameDir && gap < WHEEL_BURST_MS) return 1;
+  // 只有 `!sameDir || gap > WHEEL_DECAY_IDLE_MS` 满足时，终端渲染才执行该分支。
   if (!sameDir || gap > WHEEL_DECAY_IDLE_MS) {
     // Direction reversal or long idle: start at 2 (not 1) so the first
     // click after a pause moves a visible amount. Without this, idle-
     // then-resume in the same direction decays to mult≈1 (1 row).
+    // mult更新为 `2`，确保终端 UI后续读取最新状态。
     state.mult = 2;
+    // frac更新为 `0`，确保终端 UI后续读取最新状态。
     state.frac = 0;
   } else {
+    // m保存`Math.pow`，供终端渲染后续处理使用。
     const m = Math.pow(0.5, gap / WHEEL_DECAY_HALFLIFE_MS);
+    // cap保存`gap >= WHEEL_DECAY_GAP_MS ? WHEEL_DECAY_CAP_SLOW : WHEEL_...`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
     const cap = gap >= WHEEL_DECAY_GAP_MS ? WHEEL_DECAY_CAP_SLOW : WHEEL_DECAY_CAP_FAST;
+    // mult更新为 `Math.min(cap, 1 + (state.mult - 1) * m + WHEEL_DECAY_STEP...`，确保终端 UI后续读取最新状态。
     state.mult = Math.min(cap, 1 + (state.mult - 1) * m + WHEEL_DECAY_STEP * m);
   }
+  // total保存`state.mult + state.frac`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
   const total = state.mult + state.frac;
+  // rows 集合保存`Math.floor`，供终端渲染后续处理使用。
   const rows = Math.floor(total);
+  // frac更新为 `total - rows`，确保终端 UI后续读取最新状态。
   state.frac = total - rows;
+  // 返回 `rows`，作为终端渲染这次计算的结果。
   return rows;
 }
 
@@ -302,16 +400,23 @@ export function computeWheelStep(state: WheelAccelState, dir: 1 | -1, now: numbe
  *  set CLAUDE_CODE_SCROLL_SPEED=3 to match vim/nvim/opencode. We can't
  *  detect which kind of terminal we're in, hence the knob. Called lazily
  *  from initAndLogWheelAccel so globalSettings.env has loaded. */
+// readScrollSpeedBase 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function readScrollSpeedBase(): number {
+  // 原始文本 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const raw = process.env.CLAUDE_CODE_SCROLL_SPEED;
+  // 原始文本缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!raw) return 1;
+  // n解析`parseFloat`，供终端渲染后续处理使用。
   const n = parseFloat(raw);
+  // 返回 `Number.isNaN(n) || n <= 0 ? 1 : Math.min(n, 20)`，作为终端渲染这次计算的结果。
   return Number.isNaN(n) || n <= 0 ? 1 : Math.min(n, 20);
 }
 
 /** Initial wheel accel state. xtermJs=true selects the decay curve.
  *  base is the native-path baseline rows/event (default 1). */
+// initWheelAccel 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function initWheelAccel(xtermJs = false, base = 1): WheelAccelState {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     time: 0,
     mult: base,
@@ -331,23 +436,31 @@ export function initWheelAccel(xtermJs = false, base = 1): WheelAccelState {
 // Logs detected mode once so --debug users can verify SSH detection worked.
 // The renderer also calls isXtermJsHost() (in render-node-to-output) to
 // select the drain algorithm — no state to pass through.
+// initAndLogWheelAccel 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function initAndLogWheelAccel(): WheelAccelState {
+  // xtermJs 集合保存`isXtermJs`，供终端渲染后续处理使用。
   const xtermJs = isXtermJs();
+  // base读取`readScrollSpeedBase`，供终端渲染后续处理使用。
   const base = readScrollSpeedBase();
+  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
   logForDebugging(`wheel accel: ${xtermJs ? 'decay (xterm.js)' : 'window (native)'} · base=${base} · TERM_PROGRAM=${process.env.TERM_PROGRAM ?? 'unset'}`);
+  // 返回 `initWheelAccel(xtermJs, base)`，作为终端渲染这次计算的结果。
   return initWheelAccel(xtermJs, base);
 }
 
 // Drag-to-scroll: when dragging past the viewport edge, scroll by this many
 // rows every AUTOSCROLL_INTERVAL_MS. Mode 1002 mouse tracking only fires on
 // cell change, so a timer is needed to continue scrolling while stationary.
+// AUTOSCROLL_LINES 集合保存`2`，供后续判断或组装使用。
 const AUTOSCROLL_LINES = 2;
+// AUTOSCROLL_INTERVAL_MS 集合保存`50`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
 const AUTOSCROLL_INTERVAL_MS = 50;
 // Hard cap on consecutive auto-scroll ticks. If the release event is lost
 // (mouse released outside terminal window — some emulators don't capture the
 // pointer and drop the release), isDragging stays true and the timer would
 // run until a scroll boundary. Cap bounds the damage; any new drag motion
 // event restarts the count via check()→start().
+// AUTOSCROLL_MAX_TICKS 集合保存`200; // 10s @ 50ms`，供后续判断或组装使用。
 const AUTOSCROLL_MAX_TICKS = 200; // 10s @ 50ms
 
 /**
@@ -356,38 +469,54 @@ const AUTOSCROLL_MAX_TICKS = 200; // 10s @ 50ms
  * Scrolling breaks sticky mode; Ctrl+End re-enables it. Wheeling down at
  * the bottom also re-enables sticky so new content follows naturally.
  */
+// ScrollKeybindingHandler 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function ScrollKeybindingHandler({
   scrollRef,
   isActive,
   onScroll,
   isModal = false
 }: Props): React.ReactNode {
+  // selection保存`useSelection`，供终端渲染后续处理使用。
   const selection = useSelection();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     addNotification
   } = useNotifications();
   // Lazy-inited on first wheel event so the XTVERSION probe (fired at
   // raw-mode-enable time) has resolved by then — initializing in useRef()
   // would read getWheelBase() before the probe reply arrives over SSH.
+  // wheelAccel读取 hook 状态，供终端 UI Scroll Keybinding Ha...本轮渲染使用。
   const wheelAccel = useRef<WheelAccelState | null>(null);
+  // showCopiedToast 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function showCopiedToast(text: string): void {
     // getClipboardPath reads env synchronously — predicts what setClipboard
     // did (native pbcopy / tmux load-buffer / raw OSC 52) so we can tell
     // the user whether paste will Just Work or needs prefix+].
+    // 路径读取`getClipboardPath`，供终端渲染后续处理使用。
     const path = getClipboardPath();
+    // n记录 `text.length` 是否成立，下一步按该结果分支。
     const n = text.length;
+    // 消息 先占位，稍后的条件分支会根据实际输入补齐它。
     let msg: string;
+    // 按照 path 的取值选择终端渲染的具体处理分支。
     switch (path) {
       case 'native':
+        // 消息更新为 ``copied ${n} chars to clipboard``，确保终端 UI后续读取最新状态。
         msg = `copied ${n} chars to clipboard`;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'tmux-buffer':
+        // 消息更新为 ``copied ${n} chars to tmux buffer · paste with prefix + ]``，确保终端 UI后续读取最新状态。
         msg = `copied ${n} chars to tmux buffer · paste with prefix + ]`;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'osc52':
+        // 消息更新为 ``sent ${n} chars via OSC 52 · check terminal clipboard se...`，确保终端 UI后续读取最新状态。
         msg = `sent ${n} chars via OSC 52 · check terminal clipboard settings if paste fails`;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
     }
+    // 调用 addNotification，触发终端渲染此处需要的副作用。
     addNotification({
       key: 'selection-copied',
       text: msg,
@@ -396,8 +525,11 @@ export function ScrollKeybindingHandler({
       timeoutMs: path === 'native' ? 2000 : 4000
     });
   }
+  // copyAndToast 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function copyAndToast(): void {
+    // text_0保存`selection.copySelection`，供终端渲染后续处理使用。
     const text_0 = selection.copySelection();
+    // 满足 `text_0) showCopiedToast(text_0` 时，终端渲染执行该分支。
     if (text_0) showCopiedToast(text_0);
   }
 
@@ -410,100 +542,161 @@ export function ScrollKeybindingHandler({
   // returns the full text. Wheel scroll (scroll:lineUp/Down via scrollBy)
   // still clears — its async pendingScrollDelta drain means the actual
   // delta isn't known synchronously (follow-up).
+  // translateSelectionForJump 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function translateSelectionForJump(s: ScrollBoxHandle, delta: number): void {
+    // sel读取`selection.getState`，供终端渲染后续处理使用。
     const sel = selection.getState();
+    // 只有 `!sel?.anchor || !sel.focus` 满足时，终端渲染才执行该分支。
     if (!sel?.anchor || !sel.focus) return;
+    // top读取`s.getViewportTop`，供终端渲染后续处理使用。
     const top = s.getViewportTop();
+    // bottom读取`s.getViewportHeight`，供终端渲染后续处理使用。
     const bottom = top + s.getViewportHeight() - 1;
     // Only translate if the selection is ON scrollbox content. Selections
     // in the footer/prompt/StickyPromptHeader are on static text — the
     // scroll doesn't move what's under them. Same guard as ink.tsx's
     // auto-follow translate (commit 36a8d154).
+    // 只有 `sel.anchor.row < top || sel.anchor.row > bottom` 满足时，终端渲染才执行该分支。
     if (sel.anchor.row < top || sel.anchor.row > bottom) return;
     // Cross-boundary: anchor in scrollbox, focus in footer/header. Mirror
     // ink.tsx's Flag-3 guard — fall through without shifting OR capturing.
     // The static endpoint pins the selection; shifting would teleport it
     // into scrollbox content.
+    // 只有 `sel.focus.row < top || sel.focus.row > bottom` 满足时，终端渲染才执行该分支。
     if (sel.focus.row < top || sel.focus.row > bottom) return;
+    // max保存`Math.max`，供终端渲染后续处理使用。
     const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
+    // cur读取`s.getScrollTop`，供终端渲染后续处理使用。
     const cur = s.getScrollTop() + s.getPendingDelta();
     // Actual scroll distance after boundary clamp. jumpBy may call
     // scrollToBottom when target >= max but the view can't move past max,
     // so the selection shift is bounded here.
+    // actual保存`Math.max`，供终端渲染后续处理使用。
     const actual = Math.max(0, Math.min(max, cur + delta)) - cur;
+    // 满足 `actual === 0` 时，终端渲染执行该分支。
     if (actual === 0) return;
+    // 满足 `actual > 0` 时，终端渲染执行该分支。
     if (actual > 0) {
       // Scrolling down: content moves up. Rows at the TOP leave viewport.
       // Anchor+focus shift -actual so they track the content that moved up.
+      // 调用 selection.captureScrolledRows，触发终端渲染此处需要的副作用。
       selection.captureScrolledRows(top, top + actual - 1, 'above');
+      // 调用 selection.shiftSelection，触发终端渲染此处需要的副作用。
       selection.shiftSelection(-actual, top, bottom);
     } else {
       // Scrolling up: content moves down. Rows at the BOTTOM leave viewport.
+      // a 命名 `-actual`，让后续代码直接表达这个值的用途。
       const a = -actual;
+      // 调用 selection.captureScrolledRows，触发终端渲染此处需要的副作用。
       selection.captureScrolledRows(bottom - a + 1, bottom, 'below');
+      // 调用 selection.shiftSelection，触发终端渲染此处需要的副作用。
       selection.shiftSelection(a, top, bottom);
     }
   }
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'scroll:pageUp': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:pageUp': () => {
+      // s_0保存`scrollRef.current`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
       const s_0 = scrollRef.current;
+      // s_0缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_0) return;
+      // d保存`Math.max`，供终端渲染后续处理使用。
       const d = -Math.max(1, Math.floor(s_0.getViewportHeight() / 2));
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_0, d);
+      // sticky保存`jumpBy`，供终端渲染后续处理使用。
       const sticky = jumpBy(s_0, d);
+      // 调用 onScroll?.(sticky, s_0);，完成这一处局部操作。
       onScroll?.(sticky, s_0);
     },
+    // 这个回调绑定到 'scroll:pageDown': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:pageDown': () => {
+      // s_1 命名 `scrollRef.current`，让后续代码直接表达这个值的用途。
       const s_1 = scrollRef.current;
+      // s_1缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_1) return;
+      // d_0保存`Math.max`，供终端渲染后续处理使用。
       const d_0 = Math.max(1, Math.floor(s_1.getViewportHeight() / 2));
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_1, d_0);
+      // sticky_0保存`jumpBy`，供终端渲染后续处理使用。
       const sticky_0 = jumpBy(s_1, d_0);
+      // 调用 onScroll?.(sticky_0, s_1);，完成这一处局部操作。
       onScroll?.(sticky_0, s_1);
     },
+    // 这个回调绑定到 'scroll:lineUp': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:lineUp': () => {
       // Wheel: scrollBy accumulates into pendingScrollDelta, drained async
       // by the renderer. captureScrolledRows can't read the outgoing rows
       // before they leave (drain is non-deterministic). Clear for now.
+      // 调用 selection.clearSelection，触发终端渲染此处需要的副作用。
       selection.clearSelection();
+      // s_2保存`scrollRef.current`，供后续判断或组装使用。
       const s_2 = scrollRef.current;
       // Return false (not consumed) when the ScrollBox content fits —
       // scroll would be a no-op. Lets a child component's handler take
       // the wheel event instead (e.g. Settings Config's list navigation
       // inside the centered Modal, where the paginated slice always fits).
+      // 只有 `!s_2 || s_2.getScrollHeight() <= s_2.getViewportHeight()` 满足时，终端渲染才执行该分支。
       if (!s_2 || s_2.getScrollHeight() <= s_2.getViewportHeight()) return false;
+      // 终端 UI 组件 Scroll Keybinding Handler在这里处理 `wheelAccel.current ??= initAndLogWheelAccel()`，完成这一小步状态转换。
       wheelAccel.current ??= initAndLogWheelAccel();
+      // 调用 scrollUp，触发终端渲染此处需要的副作用。
       scrollUp(s_2, computeWheelStep(wheelAccel.current, -1, performance.now()));
+      // 调用 onScroll?.(false, s_2);，完成这一处局部操作。
       onScroll?.(false, s_2);
     },
+    // 这个回调绑定到 'scroll:lineDown': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:lineDown': () => {
+      // 调用 selection.clearSelection，触发终端渲染此处需要的副作用。
       selection.clearSelection();
+      // s_3 命名 `scrollRef.current`，让后续代码直接表达这个值的用途。
       const s_3 = scrollRef.current;
+      // 只有 `!s_3 || s_3.getScrollHeight() <= s_3.getViewportHeight()` 满足时，终端渲染才执行该分支。
       if (!s_3 || s_3.getScrollHeight() <= s_3.getViewportHeight()) return false;
+      // 终端 UI 组件 Scroll Keybinding Handler在这里处理 `wheelAccel.current ??= initAndLogWheelAccel()`，完成这一小步状态转换。
       wheelAccel.current ??= initAndLogWheelAccel();
+      // step保存`computeWheelStep`，供终端渲染后续处理使用。
       const step = computeWheelStep(wheelAccel.current, 1, performance.now());
+      // reachedBottom保存`scrollDown`，供终端渲染后续处理使用。
       const reachedBottom = scrollDown(s_3, step);
+      // 调用 onScroll?.(reachedBottom, s_3);，完成这一处局部操作。
       onScroll?.(reachedBottom, s_3);
     },
+    // 这个回调绑定到 'scroll:top': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:top': () => {
+      // s_4保存`scrollRef.current`，供后续判断或组装使用。
       const s_4 = scrollRef.current;
+      // s_4缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_4) return;
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_4, -(s_4.getScrollTop() + s_4.getPendingDelta()));
+      // 调用 s_4.scrollTo，触发终端渲染此处需要的副作用。
       s_4.scrollTo(0);
+      // 调用 onScroll?.(false, s_4);，完成这一处局部操作。
       onScroll?.(false, s_4);
     },
+    // 这个回调绑定到 'scroll:bottom': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:bottom': () => {
+      // s_5保存`scrollRef.current`，供后续判断或组装使用。
       const s_5 = scrollRef.current;
+      // s_5缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_5) return;
+      // max_0保存`Math.max`，供终端渲染后续处理使用。
       const max_0 = Math.max(0, s_5.getScrollHeight() - s_5.getViewportHeight());
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_5, max_0 - (s_5.getScrollTop() + s_5.getPendingDelta()));
       // scrollTo(max) eager-writes scrollTop so the render-phase sticky
       // follow computes followDelta=0. Without this, scrollToBottom()
       // alone leaves scrollTop stale → followDelta=max-stale →
       // shiftSelectionForFollow applies the SAME shift we already did
       // above, 2× offset. scrollToBottom() then re-enables sticky.
+      // 调用 s_5.scrollTo，触发终端渲染此处需要的副作用。
       s_5.scrollTo(max_0);
+      // 调用 s_5.scrollToBottom，触发终端渲染此处需要的副作用。
       s_5.scrollToBottom();
+      // 调用 onScroll?.(true, s_5);，完成这一处局部操作。
       onScroll?.(true, s_5);
     },
     'selection:copy': copyAndToast
@@ -516,37 +709,66 @@ export function ScrollKeybindingHandler({
   // all have real owners in normal mode (kill-line/exit/task:background/
   // kill-agents). Transcript mode gets them via the isModal raw useInput
   // below. These handlers stay for custom rebinds only.
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'scroll:halfPageUp': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:halfPageUp': () => {
+      // s_6保存`scrollRef.current`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
       const s_6 = scrollRef.current;
+      // s_6缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_6) return;
+      // d_1保存`Math.max`，供终端渲染后续处理使用。
       const d_1 = -Math.max(1, Math.floor(s_6.getViewportHeight() / 2));
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_6, d_1);
+      // sticky_1保存`jumpBy`，供终端渲染后续处理使用。
       const sticky_1 = jumpBy(s_6, d_1);
+      // 调用 onScroll?.(sticky_1, s_6);，完成这一处局部操作。
       onScroll?.(sticky_1, s_6);
     },
+    // 这个回调绑定到 'scroll:halfPageDown': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:halfPageDown': () => {
+      // s_7保存`scrollRef.current`，供后续判断或组装使用。
       const s_7 = scrollRef.current;
+      // s_7缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_7) return;
+      // d_2保存`Math.max`，供终端渲染后续处理使用。
       const d_2 = Math.max(1, Math.floor(s_7.getViewportHeight() / 2));
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_7, d_2);
+      // sticky_2保存`jumpBy`，供终端渲染后续处理使用。
       const sticky_2 = jumpBy(s_7, d_2);
+      // 调用 onScroll?.(sticky_2, s_7);，完成这一处局部操作。
       onScroll?.(sticky_2, s_7);
     },
+    // 这个回调绑定到 'scroll:fullPageUp': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:fullPageUp': () => {
+      // s_8 命名 `scrollRef.current`，让后续代码直接表达这个值的用途。
       const s_8 = scrollRef.current;
+      // s_8缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_8) return;
+      // d_3保存`Math.max`，供终端渲染后续处理使用。
       const d_3 = -Math.max(1, s_8.getViewportHeight());
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_8, d_3);
+      // sticky_3保存`jumpBy`，供终端渲染后续处理使用。
       const sticky_3 = jumpBy(s_8, d_3);
+      // 调用 onScroll?.(sticky_3, s_8);，完成这一处局部操作。
       onScroll?.(sticky_3, s_8);
     },
+    // 这个回调绑定到 'scroll:fullPageDown': () => {，负责终端渲染在该局部场景下的响应。
     'scroll:fullPageDown': () => {
+      // s_9保存`scrollRef.current`，供后续判断或组装使用。
       const s_9 = scrollRef.current;
+      // s_9缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_9) return;
+      // d_4保存`Math.max`，供终端渲染后续处理使用。
       const d_4 = Math.max(1, s_9.getViewportHeight());
+      // 调用 translateSelectionForJump，触发终端渲染此处需要的副作用。
       translateSelectionForJump(s_9, d_4);
+      // sticky_4保存`jumpBy`，供终端渲染后续处理使用。
       const sticky_4 = jumpBy(s_9, d_4);
+      // 调用 onScroll?.(sticky_4, s_9);，完成这一处局部操作。
       onScroll?.(sticky_4, s_9);
     }
   }, {
@@ -570,12 +792,19 @@ export function ScrollKeybindingHandler({
   // anchorY already solve scroll-to-index. jumpToPrevTurn is the n/N
   // template. Single-shot via OVERSCAN_ROWS=80; two-phase was tried and
   // abandoned (❯ oscillation). See team memory scroll-copy-mode-design.md.
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((input, key, event) => {
+    // s_10 命名 `scrollRef.current`，让后续代码直接表达这个值的用途。
     const s_10 = scrollRef.current;
+    // s_10缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!s_10) return;
+    // sticky_5保存`applyModalPagerAction`，供终端渲染后续处理使用。
     const sticky_5 = applyModalPagerAction(s_10, modalPagerAction(input, key), d_5 => translateSelectionForJump(s_10, d_5));
+    // 满足 `sticky_5 === null` 时，终端渲染执行该分支。
     if (sticky_5 === null) return;
+    // 调用 onScroll?.(sticky_5, s_10);，完成这一处局部操作。
     onScroll?.(sticky_5, s_10);
+    // 调用 event.stopImmediatePropagation，触发终端渲染此处需要的副作用。
     event.stopImmediatePropagation();
   }, {
     isActive: isActive && isModal
@@ -592,33 +821,54 @@ export function ScrollKeybindingHandler({
   // propagation — they're observed to clear selection as a side-effect.
   // The selection:copy keybinding (ctrl+shift+c / cmd+c) registers above
   // via useKeybindings and consumes its event before reaching here.
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((input_0, key_0, event_0) => {
+    // 满足 `!selection.hasSelection()` 时，终端渲染执行该分支。
     if (!selection.hasSelection()) return;
+    // 满足 `key_0.escape` 时，终端渲染执行该分支。
     if (key_0.escape) {
+      // 调用 selection.clearSelection，触发终端渲染此处需要的副作用。
       selection.clearSelection();
+      // 调用 event_0.stopImmediatePropagation，触发终端渲染此处需要的副作用。
       event_0.stopImmediatePropagation();
+      // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 只有 `key_0.ctrl && !key_0.shift && !key_0.meta && inpu` 满足时，终端渲染才执行该分支。
     if (key_0.ctrl && !key_0.shift && !key_0.meta && input_0 === 'c') {
+      // 调用 copyAndToast，触发终端渲染此处需要的副作用。
       copyAndToast();
+      // 调用 event_0.stopImmediatePropagation，触发终端渲染此处需要的副作用。
       event_0.stopImmediatePropagation();
+      // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // move保存`selectionFocusMoveForKey`，供终端渲染后续处理使用。
     const move = selectionFocusMoveForKey(key_0);
+    // 满足 `move` 时，终端渲染执行该分支。
     if (move) {
+      // 调用 selection.moveFocus，触发终端渲染此处需要的副作用。
       selection.moveFocus(move);
+      // 调用 event_0.stopImmediatePropagation，触发终端渲染此处需要的副作用。
       event_0.stopImmediatePropagation();
+      // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `shouldClearSelectionOnKey(key_0)` 时，终端渲染执行该分支。
     if (shouldClearSelectionOnKey(key_0)) {
+      // 调用 selection.clearSelection，触发终端渲染此处需要的副作用。
       selection.clearSelection();
     }
   }, {
     isActive
   });
+  // 调用 useDragToScroll，触发终端渲染此处需要的副作用。
   useDragToScroll(scrollRef, selection, isActive, onScroll);
+  // 调用 useCopyOnSelect，触发终端渲染此处需要的副作用。
   useCopyOnSelect(selection, isActive, showCopiedToast);
+  // 调用 useSelectionBgColor，触发终端渲染此处需要的副作用。
   useSelectionBgColor(selection);
+  // 返回 `null`，作为终端渲染这次计算的结果。
   return null;
 }
 
@@ -634,36 +884,57 @@ export function ScrollKeybindingHandler({
  * scrolledOffBelow before each scroll step and joined back in by
  * getSelectedText.
  */
+// useDragToScroll 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection: ReturnType<typeof useSelection>, isActive: boolean, onScroll: Props['onScroll']): void {
+  // timerRef 引用保存 hook 状态，让终端 UI Scroll Keybinding Ha...跨渲染复用同一个容器。
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  // dirRef 引用保存 hook 状态，让终端 UI Scroll Keybinding Ha...跨渲染复用同一个容器。
   const dirRef = useRef<-1 | 0 | 1>(0); // -1 scrolling up, +1 down, 0 idle
   // Survives stop() — reset only on drag-finish. See check() for semantics.
+  // lastScrolledDirRef 引用保存 hook 状态，让终端 UI Scroll Keybinding Ha...跨渲染复用同一个容器。
   const lastScrolledDirRef = useRef<-1 | 0 | 1>(0);
+  // ticksRef 引用保存`useRef`，供终端渲染后续处理使用。
   const ticksRef = useRef(0);
   // onScroll may change identity every render (if not memoized by caller).
   // Read through a ref so the effect doesn't re-subscribe and kill the timer
   // on each scroll-induced re-render.
+  // onScrollRef 引用保存`useRef`，供终端渲染后续处理使用。
   const onScrollRef = useRef(onScroll);
+  // current更新为 `onScroll`，确保终端 UI后续读取最新状态。
   onScrollRef.current = onScroll;
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // isActive缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isActive) return;
+    // stop 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function stop(): void {
+      // current更新为 `0`，确保终端 UI后续读取最新状态。
       dirRef.current = 0;
+      // 满足 `timerRef.current` 时，终端渲染执行该分支。
       if (timerRef.current) {
+        // 调用 clearInterval，触发终端渲染此处需要的副作用。
         clearInterval(timerRef.current);
+        // current更新为 `null`，确保终端 UI后续读取最新状态。
         timerRef.current = null;
       }
     }
+    // tick 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function tick(): void {
+      // sel读取`selection.getState`，供终端渲染后续处理使用。
       const sel = selection.getState();
+      // s 集合保存`scrollRef.current`，供后续判断或组装使用。
       const s = scrollRef.current;
+      // dir保存`dirRef.current`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
       const dir = dirRef.current;
       // dir === 0 defends against a stale interval (start() may have set one
       // after the immediate tick already called stop() at a scroll boundary).
       // ticks cap defends against a lost release event (mouse released
       // outside terminal window) leaving isDragging stuck true.
+      // 只有 `!sel?.isDragging || !sel.focus || !s || dir === 0` 满足时，终端渲染才执行该分支。
       if (!sel?.isDragging || !sel.focus || !s || dir === 0 || ++ticksRef.current > AUTOSCROLL_MAX_TICKS) {
+        // 调用 stop，触发终端渲染此处需要的副作用。
         stop();
+        // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // scrollBy accumulates into pendingScrollDelta; the screen buffer
@@ -673,60 +944,89 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
       // accumulator AND missing the rows that actually scrolled out).
       // Skip this tick; the 50ms interval will retry after Ink's 16ms
       // render catches up. Also prevents shiftAnchor from desyncing.
+      // `s.getPendingDelta()` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
       if (s.getPendingDelta() !== 0) return;
+      // top读取`s.getViewportTop`，供终端渲染后续处理使用。
       const top = s.getViewportTop();
+      // bottom读取`s.getViewportHeight`，供终端渲染后续处理使用。
       const bottom = top + s.getViewportHeight() - 1;
       // Clamp anchor within [top, bottom]. Not [0, bottom]: the ScrollBox
       // padding row at 0 would produce a blank line between scrolledOffAbove
       // and the on-screen content in getSelectedText. The padding-row
       // highlight was a minor visual nicety; text correctness wins.
+      // 满足 `dir < 0` 时，终端渲染执行该分支。
       if (dir < 0) {
+        // 满足 `s.getScrollTop() <= 0` 时，终端渲染执行该分支。
         if (s.getScrollTop() <= 0) {
+          // 调用 stop，触发终端渲染此处需要的副作用。
           stop();
+          // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
         // Scrolling up: content moves down in viewport, so anchor row +N.
         // Clamp to actual scroll distance so anchor stays in sync when near
         // the top boundary (renderer clamps scrollTop to 0 on drain).
+        // actual保存`Math.min`，供终端渲染后续处理使用。
         const actual = Math.min(AUTOSCROLL_LINES, s.getScrollTop());
         // Capture rows about to scroll out the BOTTOM before scrollBy
         // overwrites them. Only rows inside the selection are captured
         // (captureScrolledRows intersects with selection bounds).
+        // 调用 selection.captureScrolledRows，触发终端渲染此处需要的副作用。
         selection.captureScrolledRows(bottom - actual + 1, bottom, 'below');
+        // 调用 selection.shiftAnchor，触发终端渲染此处需要的副作用。
         selection.shiftAnchor(actual, 0, bottom);
+        // 调用 s.scrollBy，触发终端渲染此处需要的副作用。
         s.scrollBy(-AUTOSCROLL_LINES);
       } else {
+        // max保存`Math.max`，供终端渲染后续处理使用。
         const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
+        // 满足 `s.getScrollTop() >= max` 时，终端渲染执行该分支。
         if (s.getScrollTop() >= max) {
+          // 调用 stop，触发终端渲染此处需要的副作用。
           stop();
+          // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
         // Scrolling down: content moves up in viewport, so anchor row -N.
         // Clamp to actual scroll distance so anchor stays in sync when near
         // the bottom boundary (renderer clamps scrollTop to max on drain).
+        // actual_0保存`Math.min`，供终端渲染后续处理使用。
         const actual_0 = Math.min(AUTOSCROLL_LINES, max - s.getScrollTop());
         // Capture rows about to scroll out the TOP.
+        // 调用 selection.captureScrolledRows，触发终端渲染此处需要的副作用。
         selection.captureScrolledRows(top, top + actual_0 - 1, 'above');
+        // 调用 selection.shiftAnchor，触发终端渲染此处需要的副作用。
         selection.shiftAnchor(-actual_0, top, bottom);
+        // 调用 s.scrollBy，触发终端渲染此处需要的副作用。
         s.scrollBy(AUTOSCROLL_LINES);
       }
+      // 调用 onScrollRef.current?.(false, s);，完成这一处局部操作。
       onScrollRef.current?.(false, s);
     }
+    // start 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function start(dir_0: -1 | 1): void {
       // Record BEFORE early-return: the empty-accumulator reset in check()
       // may have zeroed this during the pre-crossing phase (accumulators
       // empty until the anchor row enters the capture range). Re-record
       // on every call so the corruption is instantly healed.
+      // current更新为 `dir_0`，确保终端 UI后续读取最新状态。
       lastScrolledDirRef.current = dir_0;
+      // 满足 `dirRef.current === dir_0` 时，终端渲染执行该分支。
       if (dirRef.current === dir_0) return; // already going this way
+      // 调用 stop，触发终端渲染此处需要的副作用。
       stop();
+      // current更新为 `dir_0`，确保终端 UI后续读取最新状态。
       dirRef.current = dir_0;
+      // current更新为 `0`，确保终端 UI后续读取最新状态。
       ticksRef.current = 0;
+      // 调用 tick，触发终端渲染此处需要的副作用。
       tick();
       // tick() may have hit a scroll boundary and called stop() (dir reset to
       // 0). Only start the interval if we're still going — otherwise the
       // interval would run forever with dir === 0 doing nothing useful.
+      // 满足 `dirRef.current === dir_0` 时，终端渲染执行该分支。
       if (dirRef.current === dir_0) {
+        // current更新为 `setInterval(tick, AUTOSCROLL_INTERVAL_MS)`，确保终端 UI后续读取最新状态。
         timerRef.current = setInterval(tick, AUTOSCROLL_INTERVAL_MS);
       }
     }
@@ -738,14 +1038,22 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
     // the follow delta instead (native terminal behavior: view keeps
     // scrolling, highlight walks up with the text). Keeping sticky also
     // avoids useVirtualScroll's tail-walk → forward-walk phantom growth.
+    // check 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function check(): void {
+      // s_0保存`scrollRef.current`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
       const s_0 = scrollRef.current;
+      // s_0缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!s_0) {
+        // 调用 stop，触发终端渲染此处需要的副作用。
         stop();
+        // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // top_0读取`s_0.getViewportTop`，供终端渲染后续处理使用。
       const top_0 = s_0.getViewportTop();
+      // bottom_0读取`s_0.getViewportHeight`，供终端渲染后续处理使用。
       const bottom_0 = top_0 + s_0.getViewportHeight() - 1;
+      // sel_0读取`selection.getState`，供终端渲染后续处理使用。
       const sel_0 = selection.getState();
       // Pass the LAST-scrolled direction (not dirRef) so the anchor guard is
       // bypassed after shiftAnchor has clamped anchor toward row 0. Using
@@ -759,33 +1067,52 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
       // stuck true, the reason AUTOSCROLL_MAX_TICKS exists) still resets.
       // Safe: start() below re-records lastScrolledDirRef before its
       // early-return, so a mid-scroll reset here is instantly undone.
+      // 只有 `!sel_0?.isDragging || sel_0.scrolledOffAbove.leng` 满足时，终端渲染才执行该分支。
       if (!sel_0?.isDragging || sel_0.scrolledOffAbove.length === 0 && sel_0.scrolledOffBelow.length === 0) {
+        // current更新为 `0`，确保终端 UI后续读取最新状态。
         lastScrolledDirRef.current = 0;
       }
+      // dir_1保存`dragScrollDirection`，供终端渲染后续处理使用。
       const dir_1 = dragScrollDirection(sel_0, top_0, bottom_0, lastScrolledDirRef.current);
+      // 满足 `dir_1 === 0` 时，终端渲染执行该分支。
       if (dir_1 === 0) {
         // Blocked reversal: focus jumped to the opposite edge (off-window
         // drag return, fast flick). handleSelectionDrag already moved focus
         // past the anchor, flipping selectionBounds — the accumulator is
         // now orphaned (holds rows on the wrong side). Clear it so
         // getSelectedText matches the visible highlight.
+        // `lastScrolledDirRef.current` 与 `0 && sel_0?.focus` 不一致时刷新派生状态，避免使用过期结果。
         if (lastScrolledDirRef.current !== 0 && sel_0?.focus) {
+          // want保存`sel_0.focus.row < top_0 ? -1 : sel_0.focus.row > bottom_0...`，供终端 UI Scroll Keybinding Ha...后续判断或输出使用。
           const want = sel_0.focus.row < top_0 ? -1 : sel_0.focus.row > bottom_0 ? 1 : 0;
+          // `want` 与 `0 && want !== lastScrolledDirRe...` 不一致时刷新派生状态，避免使用过期结果。
           if (want !== 0 && want !== lastScrolledDirRef.current) {
+            // scrolledOffAbove更新为 `[]`，确保终端 UI后续读取最新状态。
             sel_0.scrolledOffAbove = [];
+            // scrolledOffBelow更新为 `[]`，确保终端 UI后续读取最新状态。
             sel_0.scrolledOffBelow = [];
+            // scrolledOffAboveSW更新为 `[]`，确保终端 UI后续读取最新状态。
             sel_0.scrolledOffAboveSW = [];
+            // scrolledOffBelowSW更新为 `[]`，确保终端 UI后续读取最新状态。
             sel_0.scrolledOffBelowSW = [];
+            // current更新为 `0`，确保终端 UI后续读取最新状态。
             lastScrolledDirRef.current = 0;
           }
         }
+        // 调用 stop，触发终端渲染此处需要的副作用。
         stop();
+      // 终端 UI 组件 Scroll Keybinding Handler在这里处理 `} else start(dir_1)`，完成这一小步状态转换。
       } else start(dir_1);
     }
+    // unsubscribe保存`selection.subscribe`，供终端渲染后续处理使用。
     const unsubscribe = selection.subscribe(check);
+    // 返回 `() => {`，作为终端渲染这次计算的结果。
     return () => {
+      // 调用 unsubscribe，触发终端渲染此处需要的副作用。
       unsubscribe();
+      // 调用 stop，触发终端渲染此处需要的副作用。
       stop();
+      // current更新为 `0`，确保终端 UI后续读取最新状态。
       lastScrolledDirRef.current = 0;
     };
   }, [isActive, scrollRef, selection]);
@@ -807,20 +1134,28 @@ function useDragToScroll(scrollRef: RefObject<ScrollBoxHandle | null>, selection
  * returns 0 to stop — reversing without clearing scrolledOffAbove/Below
  * would duplicate captured rows when they scroll back on-screen.
  */
+// dragScrollDirection 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function dragScrollDirection(sel: SelectionState | null, top: number, bottom: number, alreadyScrollingDir: -1 | 0 | 1 = 0): -1 | 0 | 1 {
+  // 只有 `!sel?.isDragging || !sel.anchor || !sel.focus` 满足时，终端渲染才执行该分支。
   if (!sel?.isDragging || !sel.anchor || !sel.focus) return 0;
+  // row 命名 `sel.focus.row`，让后续代码直接表达这个值的用途。
   const row = sel.focus.row;
+  // want保存`row < top ? -1 : row > bottom ? 1 : 0`，供后续判断或组装使用。
   const want: -1 | 0 | 1 = row < top ? -1 : row > bottom ? 1 : 0;
+  // `alreadyScrollingDir` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
   if (alreadyScrollingDir !== 0) {
     // Same-direction only. Focus on the opposite side, or back inside the
     // viewport, stops the scroll — captured rows stay in scrolledOffAbove/
     // Below but never scroll back on-screen, so getSelectedText is correct.
+    // 返回 `want === alreadyScrollingDir ? want : 0`，作为终端渲染这次计算的结果。
     return want === alreadyScrollingDir ? want : 0;
   }
   // Anchor must be inside the viewport for us to own this drag. If the
   // user started selecting in the input box or header, autoscrolling the
   // message history is surprising and corrupts the anchor via shiftAnchor.
+  // 只有 `sel.anchor.row < top || sel.anchor.row > bottom` 满足时，终端渲染才执行该分支。
   if (sel.anchor.row < top || sel.anchor.row > bottom) return 0;
+  // 返回 `want`，作为终端渲染这次计算的结果。
   return want;
 }
 
@@ -831,36 +1166,53 @@ export function dragScrollDirection(sel: SelectionState | null, top: number, bot
 // wheel smoothness, wrong for PgUp/ctrl+u where the user expects a snap.
 // Target is relative to scrollTop+pendingDelta so a jump mid-wheel-burst
 // lands where the wheel was heading.
+// jumpBy 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function jumpBy(s: ScrollBoxHandle, delta: number): boolean {
+  // max保存`Math.max`，供终端渲染后续处理使用。
   const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
+  // target读取`s.getScrollTop`，供终端渲染后续处理使用。
   const target = s.getScrollTop() + s.getPendingDelta() + delta;
+  // 满足 `target >= max` 时，终端渲染执行该分支。
   if (target >= max) {
     // Eager-write scrollTop so follow-scroll sees followDelta=0. Callers
     // that ran translateSelectionForJump already shifted; scrollToBottom()
     // alone would double-shift via the render-phase sticky follow.
+    // 调用 s.scrollTo，触发终端渲染此处需要的副作用。
     s.scrollTo(max);
+    // 调用 s.scrollToBottom，触发终端渲染此处需要的副作用。
     s.scrollToBottom();
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   }
+  // 调用 s.scrollTo，触发终端渲染此处需要的副作用。
   s.scrollTo(Math.max(0, target));
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false;
 }
 
 // Wheel-down past maxScroll re-enables sticky so wheeling at the bottom
 // naturally re-pins (matches typical chat-app behavior). Returns the
 // resulting sticky state so callers can propagate it.
+// scrollDown 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function scrollDown(s: ScrollBoxHandle, amount: number): boolean {
+  // max保存`Math.max`，供终端渲染后续处理使用。
   const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
   // Include pendingDelta: scrollBy accumulates into pendingScrollDelta
   // without updating scrollTop, so getScrollTop() alone is stale within
   // a batch of wheel events. Without this, wheeling to the bottom never
   // re-enables sticky scroll.
+  // effectiveTop读取`s.getScrollTop`，供终端渲染后续处理使用。
   const effectiveTop = s.getScrollTop() + s.getPendingDelta();
+  // 满足 `effectiveTop + amount >= max` 时，终端渲染执行该分支。
   if (effectiveTop + amount >= max) {
+    // 调用 s.scrollToBottom，触发终端渲染此处需要的副作用。
     s.scrollToBottom();
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   }
+  // 调用 s.scrollBy，触发终端渲染此处需要的副作用。
   s.scrollBy(amount);
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false;
 }
 
@@ -870,16 +1222,23 @@ function scrollDown(s: ScrollBoxHandle, amount: number): boolean {
 // useVirtualScroll's [effLo, effHi] span grows past what MAX_MOUNTED_ITEMS
 // can cover and intermediate drain frames render at scrollTops with no
 // mounted children — blank viewport.
+// scrollUp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function scrollUp(s: ScrollBoxHandle, amount: number): void {
   // Include pendingDelta: scrollBy accumulates without updating scrollTop,
   // so getScrollTop() alone is stale within a batch of wheel events.
+  // effectiveTop读取`s.getScrollTop`，供终端渲染后续处理使用。
   const effectiveTop = s.getScrollTop() + s.getPendingDelta();
+  // 满足 `effectiveTop - amount <= 0` 时，终端渲染执行该分支。
   if (effectiveTop - amount <= 0) {
+    // 调用 s.scrollTo，触发终端渲染此处需要的副作用。
     s.scrollTo(0);
+    // 终端 UI 组件 Scroll Keybinding Handler在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
+  // 调用 s.scrollBy，触发终端渲染此处需要的副作用。
   s.scrollBy(-amount);
 }
+// ModalPagerAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ModalPagerAction = 'lineUp' | 'lineDown' | 'halfPageUp' | 'halfPageDown' | 'fullPageUp' | 'fullPageDown' | 'top' | 'bottom';
 
 /**
@@ -897,64 +1256,92 @@ export type ModalPagerAction = 'lineUp' | 'lineDown' | 'halfPageUp' | 'halfPageD
  * count is irrelevant (consuming the batch just prevents it from leaking
  * to the selection-clear-on-printable handler).
  */
+// modalPagerAction 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' | 'shift' | 'upArrow' | 'downArrow' | 'home' | 'end'>): ModalPagerAction | null {
+  // 满足 `key.meta` 时，终端渲染执行该分支。
   if (key.meta) return null;
   // Special keys first — arrows/home/end arrive with empty or junk input,
   // so these must be checked before any input-string logic. shift is
   // reserved for selection-extend (selectionFocusMoveForKey); ctrl+home/end
   // already has a useKeybindings route to scroll:top/bottom.
+  // 只有 `!key.ctrl && !key.shift` 满足时，终端渲染才执行该分支。
   if (!key.ctrl && !key.shift) {
+    // 满足 `key.upArrow` 时，终端渲染执行该分支。
     if (key.upArrow) return 'lineUp';
+    // 满足 `key.downArrow` 时，终端渲染执行该分支。
     if (key.downArrow) return 'lineDown';
+    // 满足 `key.home` 时，终端渲染执行该分支。
     if (key.home) return 'top';
+    // 满足 `key.end` 时，终端渲染执行该分支。
     if (key.end) return 'bottom';
   }
+  // 满足 `key.ctrl` 时，终端渲染执行该分支。
   if (key.ctrl) {
+    // 满足 `key.shift` 时，终端渲染执行该分支。
     if (key.shift) return null;
+    // 按照 input 的取值选择终端渲染的具体处理分支。
     switch (input) {
       case 'u':
+        // 返回 `'halfPageUp'`，作为终端渲染这次计算的结果。
         return 'halfPageUp';
       case 'd':
+        // 返回 `'halfPageDown'`，作为终端渲染这次计算的结果。
         return 'halfPageDown';
       case 'b':
+        // 返回 `'fullPageUp'`，作为终端渲染这次计算的结果。
         return 'fullPageUp';
       case 'f':
+        // 返回 `'fullPageDown'`，作为终端渲染这次计算的结果。
         return 'fullPageDown';
       // emacs-style line scroll (less accepts both ctrl+n/p and ctrl+e/y).
       // Works during search nav — fine-adjust after a jump without
       // leaving modal. No !searchOpen gate on this useInput's isActive.
       case 'n':
+        // 返回 `'lineDown'`，作为终端渲染这次计算的结果。
         return 'lineDown';
       case 'p':
+        // 返回 `'lineUp'`，作为终端渲染这次计算的结果。
         return 'lineUp';
       default:
+        // 返回 `null`，作为终端渲染这次计算的结果。
         return null;
     }
   }
   // Bare letters. Key-repeat batches: only act on uniform runs.
+  // c 命名 `input[0]`，让后续代码直接表达这个值的用途。
   const c = input[0];
+  // `!c || input` 与 `c.repeat(input.length)` 不一致时刷新派生状态，避免使用过期结果。
   if (!c || input !== c.repeat(input.length)) return null;
   // kitty sends G as input='g' shift=true; legacy as 'G' shift=false.
   // Check BEFORE the shift-gate so both hit 'bottom'.
+  // 只有 `c === 'G' || c === 'g' && key.shift` 满足时，终端渲染才执行该分支。
   if (c === 'G' || c === 'g' && key.shift) return 'bottom';
+  // 满足 `key.shift` 时，终端渲染执行该分支。
   if (key.shift) return null;
+  // 按照 c 的取值选择终端渲染的具体处理分支。
   switch (c) {
     case 'g':
+      // 返回 `'top'`，作为终端渲染这次计算的结果。
       return 'top';
     // j/k re-added per Tom Mar 18 — reversal of Mar 16 removal. Works
     // during search nav (fine-adjust after n/N lands) since isModal is
     // independent of searchOpen.
     case 'j':
+      // 返回 `'lineDown'`，作为终端渲染这次计算的结果。
       return 'lineDown';
     case 'k':
+      // 返回 `'lineUp'`，作为终端渲染这次计算的结果。
       return 'lineUp';
     // less: space = page down, b = page up. ctrl+b already maps above;
     // bare b is the less-native version.
     case ' ':
+      // 返回 `'fullPageDown'`，作为终端渲染这次计算的结果。
       return 'fullPageDown';
     case 'b':
+      // 返回 `'fullPageUp'`，作为终端渲染这次计算的结果。
       return 'fullPageUp';
     default:
+      // 返回 `null`，作为终端渲染这次计算的结果。
       return null;
   }
 }
@@ -966,45 +1353,67 @@ export function modalPagerAction(input: string, key: Pick<Key, 'ctrl' | 'meta' |
  * translate the text selection by the scroll delta (capture outgoing rows,
  * shift anchor+focus) instead of clearing it. Exported for testing.
  */
+// applyModalPagerAction 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function applyModalPagerAction(s: ScrollBoxHandle, act: ModalPagerAction | null, onBeforeJump: (delta: number) => void): boolean | null {
+  // 按照 act 的取值选择终端渲染的具体处理分支。
   switch (act) {
     case null:
+      // 返回 `null`，作为终端渲染这次计算的结果。
       return null;
     case 'lineUp':
     case 'lineDown':
       {
+        // d标记终端 UI Scroll Keybinding Ha...是否启用对应路径。
         const d = act === 'lineDown' ? 1 : -1;
+        // 调用 onBeforeJump，触发终端渲染此处需要的副作用。
         onBeforeJump(d);
+        // 返回 `jumpBy(s, d)`，作为终端渲染这次计算的结果。
         return jumpBy(s, d);
       }
     case 'halfPageUp':
     case 'halfPageDown':
       {
+        // half保存`Math.max`，供终端渲染后续处理使用。
         const half = Math.max(1, Math.floor(s.getViewportHeight() / 2));
+        // d标记终端 UI Scroll Keybinding Ha...是否启用对应路径。
         const d = act === 'halfPageDown' ? half : -half;
+        // 调用 onBeforeJump，触发终端渲染此处需要的副作用。
         onBeforeJump(d);
+        // 返回 `jumpBy(s, d)`，作为终端渲染这次计算的结果。
         return jumpBy(s, d);
       }
     case 'fullPageUp':
     case 'fullPageDown':
       {
+        // page保存`Math.max`，供终端渲染后续处理使用。
         const page = Math.max(1, s.getViewportHeight());
+        // d标记终端 UI Scroll Keybinding Ha...是否启用对应路径。
         const d = act === 'fullPageDown' ? page : -page;
+        // 调用 onBeforeJump，触发终端渲染此处需要的副作用。
         onBeforeJump(d);
+        // 返回 `jumpBy(s, d)`，作为终端渲染这次计算的结果。
         return jumpBy(s, d);
       }
     case 'top':
+      // 调用 onBeforeJump，触发终端渲染此处需要的副作用。
       onBeforeJump(-(s.getScrollTop() + s.getPendingDelta()));
+      // 调用 s.scrollTo，触发终端渲染此处需要的副作用。
       s.scrollTo(0);
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     case 'bottom':
       {
+        // max保存`Math.max`，供终端渲染后续处理使用。
         const max = Math.max(0, s.getScrollHeight() - s.getViewportHeight());
+        // 调用 onBeforeJump，触发终端渲染此处需要的副作用。
         onBeforeJump(max - (s.getScrollTop() + s.getPendingDelta()));
         // Eager-write scrollTop before scrollToBottom — same double-shift
         // fix as scroll:bottom and jumpBy's max branch.
+        // 调用 s.scrollTo，触发终端渲染此处需要的副作用。
         s.scrollTo(max);
+        // 调用 s.scrollToBottom，触发终端渲染此处需要的副作用。
         s.scrollToBottom();
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true;
       }
   }

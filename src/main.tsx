@@ -6,206 +6,381 @@
 //    key) in parallel — isRemoteManagedSettingsEligible() otherwise reads them
 //    sequentially via sync spawn inside applySafeConfigEnvironmentVariables()
 //    (~65ms on every macOS startup)
+// 复用 profileCheckpoint、profileReport 工具函数，把通用处理留在 ./utils/startupProfiler.js 中维护。
 import { profileCheckpoint, profileReport } from './utils/startupProfiler.js';
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
+// 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
 profileCheckpoint('main_tsx_entry');
+// 复用 startMdmRawRead 工具函数，把通用处理留在 ./utils/settings/mdm/rawRead.js 中维护。
 import { startMdmRawRead } from './utils/settings/mdm/rawRead.js';
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
+// 调用 startMdmRawRead，触发完整 CLI 启动主流程此处需要的副作用。
 startMdmRawRead();
+// 复用 ensureKeychainPrefetchCompleted、startKeychainPrefetch 工具函数，把通用处理留在 ./utils/secureStorage/keychainPrefetch.js 中维护。
 import { ensureKeychainPrefetchCompleted, startKeychainPrefetch } from './utils/secureStorage/keychainPrefetch.js';
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
+// 调用 startKeychainPrefetch，触发完整 CLI 启动主流程此处需要的副作用。
 startKeychainPrefetch();
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 Command as CommanderCommand、InvalidArgumentError、Option，将 @commander-js/extra-typings 中已经封装好的能力接到本文件流程里。
 import { Command as CommanderCommand, InvalidArgumentError, Option } from '@commander-js/extra-typings';
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 使用 Node/Bun 的 fs 能力处理本地运行时资源。
 import { readFileSync } from 'fs';
+// 引入 mapValues，将 lodash-es/mapValues.js 中已经封装好的能力接到本文件流程里。
 import mapValues from 'lodash-es/mapValues.js';
+// 引入 pickBy，将 lodash-es/pickBy.js 中已经封装好的能力接到本文件流程里。
 import pickBy from 'lodash-es/pickBy.js';
+// 引入 uniqBy，将 lodash-es/uniqBy.js 中已经封装好的能力接到本文件流程里。
 import uniqBy from 'lodash-es/uniqBy.js';
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 引入 getOauthConfig，将 ./constants/oauth.js 中已经封装好的能力接到本文件流程里。
 import { getOauthConfig } from './constants/oauth.js';
+// 引入 getRemoteSessionUrl，将 ./constants/product.js 中已经封装好的能力接到本文件流程里。
 import { getRemoteSessionUrl } from './constants/product.js';
+// 引入 getSystemContext、getUserContext，将 ./context.js 中已经封装好的能力接到本文件流程里。
 import { getSystemContext, getUserContext } from './context.js';
+// 引入 init、initializeTelemetryAfterTrust，将 ./entrypoints/init.js 中已经封装好的能力接到本文件流程里。
 import { init, initializeTelemetryAfterTrust } from './entrypoints/init.js';
+// 引入 addToHistory，将 ./history.js 中已经封装好的能力接到本文件流程里。
 import { addToHistory } from './history.js';
+// 类型依赖 { Root } 来自 ./ink.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { Root } from './ink.js';
+// 引入 launchRepl，将 ./replLauncher.js 中已经封装好的能力接到本文件流程里。
 import { launchRepl } from './replLauncher.js';
+// 接入 hasGrowthBookEnvOverride、initializeGrowthBook、refreshGrowthBookAfterAuthChange 服务层能力，把外部通信或共享状态交给 ./services/analytics/growthbook.js 处理。
 import { hasGrowthBookEnvOverride, initializeGrowthBook, refreshGrowthBookAfterAuthChange } from './services/analytics/growthbook.js';
+// 接入 fetchBootstrapData 服务层能力，把外部通信或共享状态交给 ./services/api/bootstrap.js 处理。
 import { fetchBootstrapData } from './services/api/bootstrap.js';
+// 接入 DownloadResult、downloadSessionFiles、FilesApiConfig、parseFileSpecs 服务层能力，把外部通信或共享状态交给 ./services/api/filesApi.js 处理。
 import { type DownloadResult, downloadSessionFiles, type FilesApiConfig, parseFileSpecs } from './services/api/filesApi.js';
+// 接入 prefetchPassesEligibility 服务层能力，把外部通信或共享状态交给 ./services/api/referral.js 处理。
 import { prefetchPassesEligibility } from './services/api/referral.js';
+// 接入 prefetchOfficialMcpUrls 服务层能力，把外部通信或共享状态交给 ./services/mcp/officialRegistry.js 处理。
 import { prefetchOfficialMcpUrls } from './services/mcp/officialRegistry.js';
+// 类型依赖 { McpSdkServerConfig, McpServerConfig, ScopedMcpServerConfi… 来自 ./services/mcp/types.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { McpSdkServerConfig, McpServerConfig, ScopedMcpServerConfig } from './services/mcp/types.js';
+// 接入 isPolicyAllowed、loadPolicyLimits、refreshPolicyLimits、waitForPolicyLimitsToLoad 服务层能力，把外部通信或共享状态交给 ./services/policyLimits/index.js 处理。
 import { isPolicyAllowed, loadPolicyLimits, refreshPolicyLimits, waitForPolicyLimitsToLoad } from './services/policyLimits/index.js';
+// 接入 loadRemoteManagedSettings、refreshRemoteManagedSettings 服务层能力，把外部通信或共享状态交给 ./services/remoteManagedSettings/index.js 处理。
 import { loadRemoteManagedSettings, refreshRemoteManagedSettings } from './services/remoteManagedSettings/index.js';
+// 类型依赖 { ToolInputJSONSchema } 来自 ./Tool.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { ToolInputJSONSchema } from './Tool.js';
+// 接入 createSyntheticOutputTool、isSyntheticOutputToolEnabled 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { createSyntheticOutputTool, isSyntheticOutputToolEnabled } from './tools/SyntheticOutputTool/SyntheticOutputTool.js';
+// 引入 getTools，将 ./tools.js 中已经封装好的能力接到本文件流程里。
 import { getTools } from './tools.js';
+// 复用 canUserConfigureAdvisor、getInitialAdvisorSetting、isAdvisorEnabled、isValidAdvisorModel、modelSupportsAdvisor 工具函数，把通用处理留在 ./utils/advisor.js 中维护。
 import { canUserConfigureAdvisor, getInitialAdvisorSetting, isAdvisorEnabled, isValidAdvisorModel, modelSupportsAdvisor } from './utils/advisor.js';
+// 复用 isAgentSwarmsEnabled 工具函数，把通用处理留在 ./utils/agentSwarmsEnabled.js 中维护。
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js';
+// 复用 count、uniq 工具函数，把通用处理留在 ./utils/array.js 中维护。
 import { count, uniq } from './utils/array.js';
+// 复用 installAsciicastRecorder 工具函数，把通用处理留在 ./utils/asciicast.js 中维护。
 import { installAsciicastRecorder } from './utils/asciicast.js';
+// 复用 getSubscriptionType、isClaudeAISubscriber、prefetchAwsCredentialsAndBedRockInfoIfSafe、prefetchGcpCredentialsIfSafe、validateForceLoginOrg 工具函数，把通用处理留在 ./utils/auth.js 中维护。
 import { getSubscriptionType, isClaudeAISubscriber, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
+// 复用 checkHasTrustDialogAccepted、getGlobalConfig、getRemoteControlAtStartup、isAutoUpdaterDisabled、saveGlobalConfig 工具函数，把通用处理留在 ./utils/config.js 中维护。
 import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup, isAutoUpdaterDisabled, saveGlobalConfig } from './utils/config.js';
+// 复用 seedEarlyInput、stopCapturingEarlyInput 工具函数，把通用处理留在 ./utils/earlyInput.js 中维护。
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
+// 复用 getInitialEffortSetting、parseEffortValue 工具函数，把通用处理留在 ./utils/effort.js 中维护。
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
+// 复用 getInitialFastModeSetting、isFastModeEnabled、prefetchFastModeStatus、resolveFastModeStatusFromCache 工具函数，把通用处理留在 ./utils/fastMode.js 中维护。
 import { getInitialFastModeSetting, isFastModeEnabled, prefetchFastModeStatus, resolveFastModeStatusFromCache } from './utils/fastMode.js';
+// 复用 applyConfigEnvironmentVariables 工具函数，把通用处理留在 ./utils/managedEnv.js 中维护。
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
+// 复用 createSystemMessage、createUserMessage 工具函数，把通用处理留在 ./utils/messages.js 中维护。
 import { createSystemMessage, createUserMessage } from './utils/messages.js';
+// 复用 getPlatform 工具函数，把通用处理留在 ./utils/platform.js 中维护。
 import { getPlatform } from './utils/platform.js';
+// 复用 getBaseRenderOptions 工具函数，把通用处理留在 ./utils/renderOptions.js 中维护。
 import { getBaseRenderOptions } from './utils/renderOptions.js';
+// 复用 getSessionIngressAuthToken 工具函数，把通用处理留在 ./utils/sessionIngressAuth.js 中维护。
 import { getSessionIngressAuthToken } from './utils/sessionIngressAuth.js';
+// 复用 settingsChangeDetector 工具函数，把通用处理留在 ./utils/settings/changeDetector.js 中维护。
 import { settingsChangeDetector } from './utils/settings/changeDetector.js';
+// 复用 skillChangeDetector 工具函数，把通用处理留在 ./utils/skills/skillChangeDetector.js 中维护。
 import { skillChangeDetector } from './utils/skills/skillChangeDetector.js';
+// 复用 jsonParse、writeFileSync_DEPRECATED 工具函数，把通用处理留在 ./utils/slowOperations.js 中维护。
 import { jsonParse, writeFileSync_DEPRECATED } from './utils/slowOperations.js';
+// 复用 computeInitialTeamContext 工具函数，把通用处理留在 ./utils/swarm/reconnection.js 中维护。
 import { computeInitialTeamContext } from './utils/swarm/reconnection.js';
+// 复用 initializeWarningHandler 工具函数，把通用处理留在 ./utils/warningHandler.js 中维护。
 import { initializeWarningHandler } from './utils/warningHandler.js';
+// 复用 isWorktreeModeEnabled 工具函数，把通用处理留在 ./utils/worktreeModeEnabled.js 中维护。
 import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js';
 
 // Lazy require to avoid circular dependency: teammate.ts -> AppState.tsx -> ... -> main.tsx
 /* eslint-disable @typescript-eslint/no-require-imports */
+// getTeammateUtils 集合保存`require`，供完整 CLI 启动主流程后续处理使用。
 const getTeammateUtils = () => require('./utils/teammate.js') as typeof import('./utils/teammate.js');
+// getTeammatePromptAddendum保存`require`，供完整 CLI 启动主流程后续处理使用。
 const getTeammatePromptAddendum = () => require('./utils/swarm/teammatePromptAddendum.js') as typeof import('./utils/swarm/teammatePromptAddendum.js');
+// getTeammateModeSnapshot保存`require`，供完整 CLI 启动主流程后续处理使用。
 const getTeammateModeSnapshot = () => require('./utils/swarm/backends/teammateModeSnapshot.js') as typeof import('./utils/swarm/backends/teammateModeSnapshot.js');
 /* eslint-enable @typescript-eslint/no-require-imports */
 // Dead code elimination: conditional import for COORDINATOR_MODE
 /* eslint-disable @typescript-eslint/no-require-imports */
+// coordinatorModeModule保存`feature`，供完整 CLI 启动主流程后续处理使用。
 const coordinatorModeModule = feature('COORDINATOR_MODE') ? require('./coordinator/coordinatorMode.js') as typeof import('./coordinator/coordinatorMode.js') : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
 // Dead code elimination: conditional import for KAIROS (assistant mode)
 /* eslint-disable @typescript-eslint/no-require-imports */
+// assistantModule保存`feature`，供完整 CLI 启动主流程后续处理使用。
 const assistantModule = feature('KAIROS') ? require('./assistant/index.js') as typeof import('./assistant/index.js') : null;
+// kairosGate保存`feature`，供完整 CLI 启动主流程后续处理使用。
 const kairosGate = feature('KAIROS') ? require('./assistant/gate.js') as typeof import('./assistant/gate.js') : null;
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { relative, resolve } from 'path';
+// 接入 isAnalyticsDisabled 服务层能力，把外部通信或共享状态交给 src/services/analytics/config.js 处理。
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 src/services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 接入 initializeAnalyticsGates 服务层能力，把外部通信或共享状态交给 src/services/analytics/sink.js 处理。
 import { initializeAnalyticsGates } from 'src/services/analytics/sink.js';
+// 引入 getOriginalCwd、setAdditionalDirectoriesForClaudeMd、setIsRemoteMode、setMainLoopModelOverride、setMainThreadAgentType、setTeleportedSessionInfo，将 ./bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getOriginalCwd, setAdditionalDirectoriesForClaudeMd, setIsRemoteMode, setMainLoopModelOverride, setMainThreadAgentType, setTeleportedSessionInfo } from './bootstrap/state.js';
+// 引入 filterCommandsForRemoteMode、getCommands，将 ./commands.js 中已经封装好的能力接到本文件流程里。
 import { filterCommandsForRemoteMode, getCommands } from './commands.js';
+// 类型依赖 { StatsStore } 来自 ./context/stats.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { StatsStore } from './context/stats.js';
+// 引入 launchAssistantInstallWizard、launchAssistantSessionChooser、launchInvalidSettingsDialog、launchResumeChooser、launchSnapshotUpdateDialog、launchTeleportRepoMismatchDialog、launchTeleportResumeWrapper，将 ./dialogLaunchers.js 中已经封装好的能力接到本文件流程里。
 import { launchAssistantInstallWizard, launchAssistantSessionChooser, launchInvalidSettingsDialog, launchResumeChooser, launchSnapshotUpdateDialog, launchTeleportRepoMismatchDialog, launchTeleportResumeWrapper } from './dialogLaunchers.js';
+// 复用 SHOW_CURSOR 终端界面组件，避免在这里重复拼装显示逻辑。
 import { SHOW_CURSOR } from './ink/termio/dec.js';
+// 引入 exitWithError、exitWithMessage、getRenderContext、renderAndRun、showSetupScreens，将 ./interactiveHelpers.js 中已经封装好的能力接到本文件流程里。
 import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens } from './interactiveHelpers.js';
+// 引入 initBuiltinPlugins，将 ./plugins/bundled/index.js 中已经封装好的能力接到本文件流程里。
 import { initBuiltinPlugins } from './plugins/bundled/index.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
+// 接入 checkQuotaStatus 服务层能力，把外部通信或共享状态交给 ./services/claudeAiLimits.js 处理。
 import { checkQuotaStatus } from './services/claudeAiLimits.js';
+// 接入 getMcpToolsCommandsAndResources、prefetchAllMcpResources 服务层能力，把外部通信或共享状态交给 ./services/mcp/client.js 处理。
 import { getMcpToolsCommandsAndResources, prefetchAllMcpResources } from './services/mcp/client.js';
+// 接入 VALID_INSTALLABLE_SCOPES、VALID_UPDATE_SCOPES 服务层能力，把外部通信或共享状态交给 ./services/plugins/pluginCliCommands.js 处理。
 import { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES } from './services/plugins/pluginCliCommands.js';
+// 引入 initBundledSkills，将 ./skills/bundled/index.js 中已经封装好的能力接到本文件流程里。
 import { initBundledSkills } from './skills/bundled/index.js';
+// 类型依赖 { AgentColorName } 来自 ./tools/AgentTool/agentColorManager.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { AgentColorName } from './tools/AgentTool/agentColorManager.js';
+// 接入 getActiveAgentsFromList、getAgentDefinitionsWithOverrides、isBuiltInAgent、isCustomAgent、parseAgentsFromJson 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { getActiveAgentsFromList, getAgentDefinitionsWithOverrides, isBuiltInAgent, isCustomAgent, parseAgentsFromJson } from './tools/AgentTool/loadAgentsDir.js';
+// 类型依赖 { LogOption } 来自 ./types/logs.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { LogOption } from './types/logs.js';
+// 类型依赖 { Message as MessageType } 来自 ./types/message.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { Message as MessageType } from './types/message.js';
+// 复用 assertMinVersion 工具函数，把通用处理留在 ./utils/autoUpdater.js 中维护。
 import { assertMinVersion } from './utils/autoUpdater.js';
+// 复用 CLAUDE_IN_CHROME_SKILL_HINT、CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER 工具函数，把通用处理留在 ./utils/claudeInChrome/prompt.js 中维护。
 import { CLAUDE_IN_CHROME_SKILL_HINT, CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/claudeInChrome/prompt.js';
+// 复用 setupClaudeInChrome、shouldAutoEnableClaudeInChrome、shouldEnableClaudeInChrome 工具函数，把通用处理留在 ./utils/claudeInChrome/setup.js 中维护。
 import { setupClaudeInChrome, shouldAutoEnableClaudeInChrome, shouldEnableClaudeInChrome } from './utils/claudeInChrome/setup.js';
+// 复用 getContextWindowForModel 工具函数，把通用处理留在 ./utils/context.js 中维护。
 import { getContextWindowForModel } from './utils/context.js';
+// 复用 loadConversationForResume 工具函数，把通用处理留在 ./utils/conversationRecovery.js 中维护。
 import { loadConversationForResume } from './utils/conversationRecovery.js';
+// 复用 buildDeepLinkBanner 工具函数，把通用处理留在 ./utils/deepLink/banner.js 中维护。
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js';
+// 复用 hasNodeOption、isBareMode、isEnvTruthy、isInProtectedNamespace 工具函数，把通用处理留在 ./utils/envUtils.js 中维护。
 import { hasNodeOption, isBareMode, isEnvTruthy, isInProtectedNamespace } from './utils/envUtils.js';
+// 复用 refreshExampleCommands 工具函数，把通用处理留在 ./utils/exampleCommands.js 中维护。
 import { refreshExampleCommands } from './utils/exampleCommands.js';
+// 类型依赖 { FpsMetrics } 来自 ./utils/fpsTracker.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { FpsMetrics } from './utils/fpsTracker.js';
+// 复用 getWorktreePaths 工具函数，把通用处理留在 ./utils/getWorktreePaths.js 中维护。
 import { getWorktreePaths } from './utils/getWorktreePaths.js';
+// 复用 findGitRoot、getBranch、getIsGit、getWorktreeCount 工具函数，把通用处理留在 ./utils/git.js 中维护。
 import { findGitRoot, getBranch, getIsGit, getWorktreeCount } from './utils/git.js';
+// 复用 getGhAuthStatus 工具函数，把通用处理留在 ./utils/github/ghAuthStatus.js 中维护。
 import { getGhAuthStatus } from './utils/github/ghAuthStatus.js';
+// 复用 safeParseJSON 工具函数，把通用处理留在 ./utils/json.js 中维护。
 import { safeParseJSON } from './utils/json.js';
+// 复用 logError 工具函数，把通用处理留在 ./utils/log.js 中维护。
 import { logError } from './utils/log.js';
+// 复用 getModelDeprecationWarning 工具函数，把通用处理留在 ./utils/model/deprecation.js 中维护。
 import { getModelDeprecationWarning } from './utils/model/deprecation.js';
+// 复用 getDefaultMainLoopModel、getUserSpecifiedModelSetting、normalizeModelStringForAPI、parseUserSpecifiedModel 工具函数，把通用处理留在 ./utils/model/model.js 中维护。
 import { getDefaultMainLoopModel, getUserSpecifiedModelSetting, normalizeModelStringForAPI, parseUserSpecifiedModel } from './utils/model/model.js';
+// 复用 ensureModelStringsInitialized 工具函数，把通用处理留在 ./utils/model/modelStrings.js 中维护。
 import { ensureModelStringsInitialized } from './utils/model/modelStrings.js';
+// 复用 PERMISSION_MODES 工具函数，把通用处理留在 ./utils/permissions/PermissionMode.js 中维护。
 import { PERMISSION_MODES } from './utils/permissions/PermissionMode.js';
+// 复用 checkAndDisableBypassPermissions、getAutoModeEnabledStateIfCached、initializeToolPermissionContext、initialPermissionModeFromCLI、isDefaultPermissionModeAuto、parseToolListFromCLI、removeDangerousPermissions、stripDangerousPermissionsForAutoMode、verifyAutoModeGateAccess 工具函数，把通用处理留在 ./utils/permissions/permissionSetup.js 中维护。
 import { checkAndDisableBypassPermissions, getAutoModeEnabledStateIfCached, initializeToolPermissionContext, initialPermissionModeFromCLI, isDefaultPermissionModeAuto, parseToolListFromCLI, removeDangerousPermissions, stripDangerousPermissionsForAutoMode, verifyAutoModeGateAccess } from './utils/permissions/permissionSetup.js';
+// 复用 cleanupOrphanedPluginVersionsInBackground 工具函数，把通用处理留在 ./utils/plugins/cacheUtils.js 中维护。
 import { cleanupOrphanedPluginVersionsInBackground } from './utils/plugins/cacheUtils.js';
+// 复用 initializeVersionedPlugins 工具函数，把通用处理留在 ./utils/plugins/installedPluginsManager.js 中维护。
 import { initializeVersionedPlugins } from './utils/plugins/installedPluginsManager.js';
+// 复用 getManagedPluginNames 工具函数，把通用处理留在 ./utils/plugins/managedPlugins.js 中维护。
 import { getManagedPluginNames } from './utils/plugins/managedPlugins.js';
+// 复用 getGlobExclusionsForPluginCache 工具函数，把通用处理留在 ./utils/plugins/orphanedPluginFilter.js 中维护。
 import { getGlobExclusionsForPluginCache } from './utils/plugins/orphanedPluginFilter.js';
+// 复用 getPluginSeedDirs 工具函数，把通用处理留在 ./utils/plugins/pluginDirectories.js 中维护。
 import { getPluginSeedDirs } from './utils/plugins/pluginDirectories.js';
+// 复用 countFilesRoundedRg 工具函数，把通用处理留在 ./utils/ripgrep.js 中维护。
 import { countFilesRoundedRg } from './utils/ripgrep.js';
+// 复用 processSessionStartHooks、processSetupHooks 工具函数，把通用处理留在 ./utils/sessionStart.js 中维护。
 import { processSessionStartHooks, processSetupHooks } from './utils/sessionStart.js';
+// 复用 cacheSessionTitle、getSessionIdFromLog、loadTranscriptFromFile、saveAgentSetting、saveMode、searchSessionsByCustomTitle、sessionIdExists 工具函数，把通用处理留在 ./utils/sessionStorage.js 中维护。
 import { cacheSessionTitle, getSessionIdFromLog, loadTranscriptFromFile, saveAgentSetting, saveMode, searchSessionsByCustomTitle, sessionIdExists } from './utils/sessionStorage.js';
+// 复用 ensureMdmSettingsLoaded 工具函数，把通用处理留在 ./utils/settings/mdm/settings.js 中维护。
 import { ensureMdmSettingsLoaded } from './utils/settings/mdm/settings.js';
+// 复用 getInitialSettings、getManagedSettingsKeysForLogging、getSettingsForSource、getSettingsWithErrors 工具函数，把通用处理留在 ./utils/settings/settings.js 中维护。
 import { getInitialSettings, getManagedSettingsKeysForLogging, getSettingsForSource, getSettingsWithErrors } from './utils/settings/settings.js';
+// 复用 resetSettingsCache 工具函数，把通用处理留在 ./utils/settings/settingsCache.js 中维护。
 import { resetSettingsCache } from './utils/settings/settingsCache.js';
+// 类型依赖 { ValidationError } 来自 ./utils/settings/validation.js，用于校准完整 CLI 启动主流程的数据契约。
 import type { ValidationError } from './utils/settings/validation.js';
+// 复用 DEFAULT_TASKS_MODE_TASK_LIST_ID、TASK_STATUSES 工具函数，把通用处理留在 ./utils/tasks.js 中维护。
 import { DEFAULT_TASKS_MODE_TASK_LIST_ID, TASK_STATUSES } from './utils/tasks.js';
+// 复用 logPluginLoadErrors、logPluginsEnabledForSession 工具函数，把通用处理留在 ./utils/telemetry/pluginTelemetry.js 中维护。
 import { logPluginLoadErrors, logPluginsEnabledForSession } from './utils/telemetry/pluginTelemetry.js';
+// 复用 logSkillsLoaded 工具函数，把通用处理留在 ./utils/telemetry/skillLoadedEvent.js 中维护。
 import { logSkillsLoaded } from './utils/telemetry/skillLoadedEvent.js';
+// 复用 generateTempFilePath 工具函数，把通用处理留在 ./utils/tempfile.js 中维护。
 import { generateTempFilePath } from './utils/tempfile.js';
+// 复用 validateUuid 工具函数，把通用处理留在 ./utils/uuid.js 中维护。
 import { validateUuid } from './utils/uuid.js';
 // Plugin startup checks are now handled non-blockingly in REPL.tsx
 
+// 注册 registerMcpAddCommand 命令实现，后续会把它纳入斜杠命令集合。
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
+// 注册 registerMcpXaaIdpCommand 命令实现，后续会把它纳入斜杠命令集合。
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
+// 接入 logPermissionContextForAnts 服务层能力，把外部通信或共享状态交给 src/services/internalLogging.js 处理。
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js';
+// 接入 fetchClaudeAIMcpConfigsIfEligible 服务层能力，把外部通信或共享状态交给 src/services/mcp/claudeai.js 处理。
 import { fetchClaudeAIMcpConfigsIfEligible } from 'src/services/mcp/claudeai.js';
+// 接入 clearServerCache 服务层能力，把外部通信或共享状态交给 src/services/mcp/client.js 处理。
 import { clearServerCache } from 'src/services/mcp/client.js';
+// 接入 areMcpConfigsAllowedWithEnterpriseMcpConfig、dedupClaudeAiMcpServers、doesEnterpriseMcpConfigExist、filterMcpServersByPolicy、getClaudeCodeMcpConfigs、getMcpServerSignature、parseMcpConfig、parseMcpConfigFromFilePath 服务层能力，把外部通信或共享状态交给 src/services/mcp/config.js 处理。
 import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupClaudeAiMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getClaudeCodeMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
+// 接入 excludeCommandsByServer、excludeResourcesByServer 服务层能力，把外部通信或共享状态交给 src/services/mcp/utils.js 处理。
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
+// 接入 isXaaEnabled 服务层能力，把外部通信或共享状态交给 src/services/mcp/xaaIdpLogin.js 处理。
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
+// 接入 getRelevantTips 服务层能力，把外部通信或共享状态交给 src/services/tips/tipRegistry.js 处理。
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
+// 复用 logContextMetrics 工具函数，把通用处理留在 src/utils/api.js 中维护。
 import { logContextMetrics } from 'src/utils/api.js';
+// 复用 CLAUDE_IN_CHROME_MCP_SERVER_NAME、isClaudeInChromeMCPServer 工具函数，把通用处理留在 src/utils/claudeInChrome/common.js 中维护。
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isClaudeInChromeMCPServer } from 'src/utils/claudeInChrome/common.js';
+// 复用 registerCleanup 工具函数，把通用处理留在 src/utils/cleanupRegistry.js 中维护。
 import { registerCleanup } from 'src/utils/cleanupRegistry.js';
+// 复用 eagerParseCliFlag 工具函数，把通用处理留在 src/utils/cliArgs.js 中维护。
 import { eagerParseCliFlag } from 'src/utils/cliArgs.js';
+// 复用 createEmptyAttributionState 工具函数，把通用处理留在 src/utils/commitAttribution.js 中维护。
 import { createEmptyAttributionState } from 'src/utils/commitAttribution.js';
+// 复用 countConcurrentSessions、registerSession、updateSessionName 工具函数，把通用处理留在 src/utils/concurrentSessions.js 中维护。
 import { countConcurrentSessions, registerSession, updateSessionName } from 'src/utils/concurrentSessions.js';
+// 复用 getCwd 工具函数，把通用处理留在 src/utils/cwd.js 中维护。
 import { getCwd } from 'src/utils/cwd.js';
+// 复用 logForDebugging、setHasFormattedOutput 工具函数，把通用处理留在 src/utils/debug.js 中维护。
 import { logForDebugging, setHasFormattedOutput } from 'src/utils/debug.js';
+// 复用 errorMessage、getErrnoCode、isENOENT、TeleportOperationError、toError 工具函数，把通用处理留在 src/utils/errors.js 中维护。
 import { errorMessage, getErrnoCode, isENOENT, TeleportOperationError, toError } from 'src/utils/errors.js';
+// 复用 getFsImplementation、safeResolvePath 工具函数，把通用处理留在 src/utils/fsOperations.js 中维护。
 import { getFsImplementation, safeResolvePath } from 'src/utils/fsOperations.js';
+// 复用 gracefulShutdown、gracefulShutdownSync 工具函数，把通用处理留在 src/utils/gracefulShutdown.js 中维护。
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
+// 复用 setAllHookEventsEnabled 工具函数，把通用处理留在 src/utils/hooks/hookEvents.js 中维护。
 import { setAllHookEventsEnabled } from 'src/utils/hooks/hookEvents.js';
+// 复用 refreshModelCapabilities 工具函数，把通用处理留在 src/utils/model/modelCapabilities.js 中维护。
 import { refreshModelCapabilities } from 'src/utils/model/modelCapabilities.js';
+// 复用 peekForStdinData、writeToStderr 工具函数，把通用处理留在 src/utils/process.js 中维护。
 import { peekForStdinData, writeToStderr } from 'src/utils/process.js';
+// 复用 setCwd 工具函数，把通用处理留在 src/utils/Shell.js 中维护。
 import { setCwd } from 'src/utils/Shell.js';
+// 复用 ProcessedResume、processResumedConversation 工具函数，把通用处理留在 src/utils/sessionRestore.js 中维护。
 import { type ProcessedResume, processResumedConversation } from 'src/utils/sessionRestore.js';
+// 复用 parseSettingSourcesFlag 工具函数，把通用处理留在 src/utils/settings/constants.js 中维护。
 import { parseSettingSourcesFlag } from 'src/utils/settings/constants.js';
+// 复用 plural 工具函数，把通用处理留在 src/utils/stringUtils.js 中维护。
 import { plural } from 'src/utils/stringUtils.js';
+// 引入 ChannelEntry、getInitialMainLoopModel、getIsNonInteractiveSession、getSdkBetas、getSessionId、getUserMsgOptIn、setAllowedChannels、setAllowedSettingSources、setChromeFlagOverride、setClientType、setCwdState、setDirectConnectServerUrl、setFlagSettingsPath、setInitialMainLoopModel、setInlinePlugins、setIsInteractive、setKairosActive、setOriginalCwd、setProjectRoot、setQuestionPreviewFormat、setSdkBetas、setSessionBypassPermissionsMode、setSessionPersistenceDisabled、setSessionSource、setUserMsgOptIn、switchSession，将 ./bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { type ChannelEntry, getInitialMainLoopModel, getIsNonInteractiveSession, getSdkBetas, getSessionId, getUserMsgOptIn, setAllowedChannels, setAllowedSettingSources, setChromeFlagOverride, setClientType, setCwdState, setDirectConnectServerUrl, setFlagSettingsPath, setInitialMainLoopModel, setInlinePlugins, setIsInteractive, setKairosActive, setOriginalCwd, setProjectRoot, setQuestionPreviewFormat, setSdkBetas, setSessionBypassPermissionsMode, setSessionPersistenceDisabled, setSessionSource, setUserMsgOptIn, switchSession } from './bootstrap/state.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
+// autoModeStateModule 状态保存`feature`，供完整 CLI 启动主流程后续处理使用。
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/permissions/autoModeState.js') as typeof import('./utils/permissions/autoModeState.js') : null;
 
 // TeleportRepoMismatchDialog, TeleportResumeWrapper dynamically imported at call sites
+// 引入 migrateAutoUpdatesToSettings，将 ./migrations/migrateAutoUpdatesToSettings.js 中已经封装好的能力接到本文件流程里。
 import { migrateAutoUpdatesToSettings } from './migrations/migrateAutoUpdatesToSettings.js';
+// 引入 migrateBypassPermissionsAcceptedToSettings，将 ./migrations/migrateBypassPermissionsAcceptedToSettings.js 中已经封装好的能力接到本文件流程里。
 import { migrateBypassPermissionsAcceptedToSettings } from './migrations/migrateBypassPermissionsAcceptedToSettings.js';
+// 引入 migrateEnableAllProjectMcpServersToSettings，将 ./migrations/migrateEnableAllProjectMcpServersToSettings.js 中已经封装好的能力接到本文件流程里。
 import { migrateEnableAllProjectMcpServersToSettings } from './migrations/migrateEnableAllProjectMcpServersToSettings.js';
+// 引入 migrateFennecToOpus，将 ./migrations/migrateFennecToOpus.js 中已经封装好的能力接到本文件流程里。
 import { migrateFennecToOpus } from './migrations/migrateFennecToOpus.js';
+// 引入 migrateLegacyOpusToCurrent，将 ./migrations/migrateLegacyOpusToCurrent.js 中已经封装好的能力接到本文件流程里。
 import { migrateLegacyOpusToCurrent } from './migrations/migrateLegacyOpusToCurrent.js';
+// 引入 migrateOpusToOpus1m，将 ./migrations/migrateOpusToOpus1m.js 中已经封装好的能力接到本文件流程里。
 import { migrateOpusToOpus1m } from './migrations/migrateOpusToOpus1m.js';
+// 引入 migrateReplBridgeEnabledToRemoteControlAtStartup，将 ./migrations/migrateReplBridgeEnabledToRemoteControlAtStartup.js 中已经封装好的能力接到本文件流程里。
 import { migrateReplBridgeEnabledToRemoteControlAtStartup } from './migrations/migrateReplBridgeEnabledToRemoteControlAtStartup.js';
+// 引入 migrateSonnet1mToSonnet45，将 ./migrations/migrateSonnet1mToSonnet45.js 中已经封装好的能力接到本文件流程里。
 import { migrateSonnet1mToSonnet45 } from './migrations/migrateSonnet1mToSonnet45.js';
+// 引入 migrateSonnet45ToSonnet46，将 ./migrations/migrateSonnet45ToSonnet46.js 中已经封装好的能力接到本文件流程里。
 import { migrateSonnet45ToSonnet46 } from './migrations/migrateSonnet45ToSonnet46.js';
+// 引入 resetAutoModeOptInForDefaultOffer，将 ./migrations/resetAutoModeOptInForDefaultOffer.js 中已经封装好的能力接到本文件流程里。
 import { resetAutoModeOptInForDefaultOffer } from './migrations/resetAutoModeOptInForDefaultOffer.js';
+// 引入 resetProToOpusDefault，将 ./migrations/resetProToOpusDefault.js 中已经封装好的能力接到本文件流程里。
 import { resetProToOpusDefault } from './migrations/resetProToOpusDefault.js';
+// 引入 createRemoteSessionConfig，将 ./remote/RemoteSessionManager.js 中已经封装好的能力接到本文件流程里。
 import { createRemoteSessionConfig } from './remote/RemoteSessionManager.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 // teleportWithProgress dynamically imported at call site
+// 引入 createDirectConnectSession、DirectConnectError，将 ./server/createDirectConnectSession.js 中已经封装好的能力接到本文件流程里。
 import { createDirectConnectSession, DirectConnectError } from './server/createDirectConnectSession.js';
+// 接入 initializeLspServerManager 服务层能力，把外部通信或共享状态交给 ./services/lsp/manager.js 处理。
 import { initializeLspServerManager } from './services/lsp/manager.js';
+// 接入 shouldEnablePromptSuggestion 服务层能力，把外部通信或共享状态交给 ./services/PromptSuggestion/promptSuggestion.js 处理。
 import { shouldEnablePromptSuggestion } from './services/PromptSuggestion/promptSuggestion.js';
+// 引入 AppState、getDefaultAppState、IDLE_SPECULATION_STATE，将 ./state/AppStateStore.js 中已经封装好的能力接到本文件流程里。
 import { type AppState, getDefaultAppState, IDLE_SPECULATION_STATE } from './state/AppStateStore.js';
+// 引入 onChangeAppState，将 ./state/onChangeAppState.js 中已经封装好的能力接到本文件流程里。
 import { onChangeAppState } from './state/onChangeAppState.js';
+// 引入 createStore，将 ./state/store.js 中已经封装好的能力接到本文件流程里。
 import { createStore } from './state/store.js';
+// 引入 asSessionId，将 ./types/ids.js 中已经封装好的能力接到本文件流程里。
 import { asSessionId } from './types/ids.js';
+// 复用 filterAllowedSdkBetas 工具函数，把通用处理留在 ./utils/betas.js 中维护。
 import { filterAllowedSdkBetas } from './utils/betas.js';
+// 复用 isInBundledMode、isRunningWithBun 工具函数，把通用处理留在 ./utils/bundledMode.js 中维护。
 import { isInBundledMode, isRunningWithBun } from './utils/bundledMode.js';
+// 复用 logForDiagnosticsNoPII 工具函数，把通用处理留在 ./utils/diagLogs.js 中维护。
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js';
+// 复用 filterExistingPaths、getKnownPathsForRepo 工具函数，把通用处理留在 ./utils/githubRepoPathMapping.js 中维护。
 import { filterExistingPaths, getKnownPathsForRepo } from './utils/githubRepoPathMapping.js';
+// 复用 clearPluginCache、loadAllPluginsCacheOnly 工具函数，把通用处理留在 ./utils/plugins/pluginLoader.js 中维护。
 import { clearPluginCache, loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js';
+// 复用 migrateChangelogFromConfig 工具函数，把通用处理留在 ./utils/releaseNotes.js 中维护。
 import { migrateChangelogFromConfig } from './utils/releaseNotes.js';
+// 复用 SandboxManager 工具函数，把通用处理留在 ./utils/sandbox/sandbox-adapter.js 中维护。
 import { SandboxManager } from './utils/sandbox/sandbox-adapter.js';
+// 复用 fetchSession、prepareApiRequest 工具函数，把通用处理留在 ./utils/teleport/api.js 中维护。
 import { fetchSession, prepareApiRequest } from './utils/teleport/api.js';
+// 复用 checkOutTeleportedSessionBranch、processMessagesForTeleportResume、teleportToRemoteWithErrorHandling、validateGitState、validateSessionRepository 工具函数，把通用处理留在 ./utils/teleport.js 中维护。
 import { checkOutTeleportedSessionBranch, processMessagesForTeleportResume, teleportToRemoteWithErrorHandling, validateGitState, validateSessionRepository } from './utils/teleport.js';
+// 复用 shouldEnableThinkingByDefault、ThinkingConfig 工具函数，把通用处理留在 ./utils/thinking.js 中维护。
 import { shouldEnableThinkingByDefault, type ThinkingConfig } from './utils/thinking.js';
+// 复用 initUser、resetUserCache 工具函数，把通用处理留在 ./utils/user.js 中维护。
 import { initUser, resetUserCache } from './utils/user.js';
+// 复用 getTmuxInstallInstructions、isTmuxAvailable、parsePRReference 工具函数，把通用处理留在 ./utils/worktree.js 中维护。
 import { getTmuxInstallInstructions, isTmuxAvailable, parsePRReference } from './utils/worktree.js';
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
+// 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
 profileCheckpoint('main_tsx_imports_loaded');
 
 /**
@@ -213,11 +388,17 @@ profileCheckpoint('main_tsx_imports_loaded');
  * This is called after init() completes to ensure settings are loaded
  * and environment variables are applied before model resolution.
  */
+// logManagedSettings 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function logManagedSettings(): void {
+  // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
   try {
+    // policySettings 集合读取`getSettingsForSource`，供完整 CLI 启动主流程后续处理使用。
     const policySettings = getSettingsForSource('policySettings');
+    // 满足 `policySettings` 时，完整 CLI 启动主流程执行该分支。
     if (policySettings) {
+      // allKeys 集合读取`getManagedSettingsKeysForLogging`，供完整 CLI 启动主流程后续处理使用。
       const allKeys = getManagedSettingsKeysForLogging(policySettings);
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_managed_settings_loaded', {
         keyCount: allKeys.length,
         keys: allKeys.join(',') as unknown as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -229,44 +410,58 @@ function logManagedSettings(): void {
 }
 
 // Check if running in debug/inspection mode
+// isBeingDebugged 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isBeingDebugged() {
+  // isBun记录 `isRunningWithBun` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const isBun = isRunningWithBun();
 
   // Check for inspect flags in process arguments (including all variants)
+  // hasInspectArg记录 `execArgv.some` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const hasInspectArg = process.execArgv.some(arg => {
+    // 满足 `isBun` 时，完整 CLI 启动主流程执行该分支。
     if (isBun) {
       // Note: Bun has an issue with single-file executables where application arguments
       // from process.argv leak into process.execArgv (similar to https://github.com/oven-sh/bun/issues/11673)
       // This breaks use of --debug mode if we omit this branch
       // We're fine to skip that check, because Bun doesn't support Node.js legacy --debug or --debug-brk flags
+      // 返回 `/--inspect(-brk)?/.test(arg)`，作为完整 CLI 启动主流程这次计算的结果。
       return /--inspect(-brk)?/.test(arg);
     } else {
       // In Node.js, check for both --inspect and legacy --debug flags
+      // 返回 `/--inspect(-brk)?|--debug(-brk)?/.test(arg)`，作为完整 CLI 启动主流程这次计算的结果。
       return /--inspect(-brk)?|--debug(-brk)?/.test(arg);
     }
   });
 
   // Check if NODE_OPTIONS contains inspect flags
+  // hasInspectEnv记录 `inspect` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const hasInspectEnv = process.env.NODE_OPTIONS && /--inspect(-brk)?|--debug(-brk)?/.test(process.env.NODE_OPTIONS);
 
   // Check if inspector is available and active (indicates debugging)
+  // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
   try {
     // Dynamic import would be better but is async - use global object instead
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // inspector保存`require`，供完整 CLI 启动主流程后续处理使用。
     const inspector = (global as any).require('inspector');
+    // hasInspectorUrl记录 `inspector.url` 是否成立，完整 CLI 启动主流程随后按该结果分支。
     const hasInspectorUrl = !!inspector.url();
+    // 返回 `hasInspectorUrl || hasInspectArg || hasInspectEnv`，作为完整 CLI 启动主流程这次计算的结果。
     return hasInspectorUrl || hasInspectArg || hasInspectEnv;
   } catch {
     // Ignore error and fall back to argument detection
+    // 返回 `hasInspectArg || hasInspectEnv`，作为完整 CLI 启动主流程这次计算的结果。
     return hasInspectArg || hasInspectEnv;
   }
 }
 
 // Exit if we detect node debugging or inspection
+// `"external"` 与 `'ant' && isBeingDebugged()` 不一致时刷新派生状态，避免使用过期结果。
 if ("external" !== 'ant' && isBeingDebugged()) {
   // Use process.exit directly here since we're in the top-level code before imports
   // and gracefulShutdown is not yet available
   // eslint-disable-next-line custom-rules/no-top-level-side-effects
+  // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
   process.exit(1);
 }
 
@@ -276,37 +471,60 @@ if ("external" !== 'ant' && isBeingDebugged()) {
  * main.tsx but branch before the interactive startup path, so it needs two
  * call sites here rather than one here + one in QueryEngine.
  */
+// logSessionTelemetry 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function logSessionTelemetry(): void {
+  // 模型名称解析`parseUserSpecifiedModel`，供完整 CLI 启动主流程后续处理使用。
   const model = parseUserSpecifiedModel(getInitialMainLoopModel() ?? getDefaultMainLoopModel());
+  // 显式忽略 `logSkillsLoaded(getCwd(), getContextWindowForModel(model, getSd...` 的返回值，只保留它触发的副作用。
   void logSkillsLoaded(getCwd(), getContextWindowForModel(model, getSdkBetas()));
+  // 显式忽略 `loadAllPluginsCacheOnly().then(({` 的返回值，只保留它触发的副作用。
   void loadAllPluginsCacheOnly().then(({
     enabled,
     errors
   }) => {
+    // managedNames 集合读取`getManagedPluginNames`，供完整 CLI 启动主流程后续处理使用。
     const managedNames = getManagedPluginNames();
+    // 调用 logPluginsEnabledForSession，触发完整 CLI 启动主流程此处需要的副作用。
     logPluginsEnabledForSession(enabled, managedNames, getPluginSeedDirs());
+    // 调用 logPluginLoadErrors，触发完整 CLI 启动主流程此处需要的副作用。
     logPluginLoadErrors(errors, managedNames);
+  // 这个回调绑定到 }).catch(err => logError(err));，负责完整 CLI 启动主流程在该局部场景下的响应。
   }).catch(err => logError(err));
 }
+// getCertEnvVarTelemetry 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getCertEnvVarTelemetry(): Record<string, boolean> {
+  // 结果 从空对象开始收集键值，后续按名称补齐内容。
   const result: Record<string, boolean> = {};
+  // 满足 `process.env.NODE_EXTRA_CA_CERTS` 时，完整 CLI 启动主流程执行该分支。
   if (process.env.NODE_EXTRA_CA_CERTS) {
+    // has_node_extra_ca_certs 集合更新为 `true`，确保main后续读取最新状态。
     result.has_node_extra_ca_certs = true;
   }
+  // 满足 `process.env.CLAUDE_CODE_CLIENT_CERT` 时，完整 CLI 启动主流程执行该分支。
   if (process.env.CLAUDE_CODE_CLIENT_CERT) {
+    // has_client_cert更新为 `true`，确保main后续读取最新状态。
     result.has_client_cert = true;
   }
+  // 满足 `hasNodeOption('--use-system-ca')` 时，完整 CLI 启动主流程执行该分支。
   if (hasNodeOption('--use-system-ca')) {
+    // has_use_system_ca更新为 `true`，确保main后续读取最新状态。
     result.has_use_system_ca = true;
   }
+  // 满足 `hasNodeOption('--use-openssl-ca')` 时，完整 CLI 启动主流程执行该分支。
   if (hasNodeOption('--use-openssl-ca')) {
+    // has_use_openssl_ca更新为 `true`，确保main后续读取最新状态。
     result.has_use_openssl_ca = true;
   }
+  // 返回 `result`，作为完整 CLI 启动主流程这次计算的结果。
   return result;
 }
+// logStartupTelemetry 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function logStartupTelemetry(): Promise<void> {
+  // 满足 `isAnalyticsDisabled()` 时，完整 CLI 启动主流程执行该分支。
   if (isAnalyticsDisabled()) return;
+  // 并行获取 isGit、worktreeCount、ghAuthStatus，缩短完整 CLI 启动主流程等待多个独立异步任务的时间。
   const [isGit, worktreeCount, ghAuthStatus] = await Promise.all([getIsGit(), getWorktreeCount(), getGhAuthStatus()]);
+  // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_startup_telemetry', {
     is_git: isGit,
     worktree_count: worktreeCount,
@@ -322,30 +540,48 @@ async function logStartupTelemetry(): Promise<void> {
 
 // @[MODEL LAUNCH]: Consider any migrations you may need for model strings. See migrateSonnet1mToSonnet45.ts for an example.
 // Bump this when adding a new sync migration so existing users re-run the set.
+// CURRENT_MIGRATION_VERSION 命名 `11`，让后续代码直接表达这个值的用途。
 const CURRENT_MIGRATION_VERSION = 11;
+// runMigrations 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function runMigrations(): void {
+  // `getGlobalConfig().migrationVersion` 与 `CURRENT_MIGRATION_VERSION` 不一致时刷新派生状态，避免使用过期结果。
   if (getGlobalConfig().migrationVersion !== CURRENT_MIGRATION_VERSION) {
+    // 调用 migrateAutoUpdatesToSettings，触发完整 CLI 启动主流程此处需要的副作用。
     migrateAutoUpdatesToSettings();
+    // 调用 migrateBypassPermissionsAcceptedToSettings，触发完整 CLI 启动主流程此处需要的副作用。
     migrateBypassPermissionsAcceptedToSettings();
+    // 调用 migrateEnableAllProjectMcpServersToSettings，触发完整 CLI 启动主流程此处需要的副作用。
     migrateEnableAllProjectMcpServersToSettings();
+    // 调用 resetProToOpusDefault，触发完整 CLI 启动主流程此处需要的副作用。
     resetProToOpusDefault();
+    // 调用 migrateSonnet1mToSonnet45，触发完整 CLI 启动主流程此处需要的副作用。
     migrateSonnet1mToSonnet45();
+    // 调用 migrateLegacyOpusToCurrent，触发完整 CLI 启动主流程此处需要的副作用。
     migrateLegacyOpusToCurrent();
+    // 调用 migrateSonnet45ToSonnet46，触发完整 CLI 启动主流程此处需要的副作用。
     migrateSonnet45ToSonnet46();
+    // 调用 migrateOpusToOpus1m，触发完整 CLI 启动主流程此处需要的副作用。
     migrateOpusToOpus1m();
+    // 调用 migrateReplBridgeEnabledToRemoteControlAtStartup，触发完整 CLI 启动主流程此处需要的副作用。
     migrateReplBridgeEnabledToRemoteControlAtStartup();
+    // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，完整 CLI 启动主流程执行该分支。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
+      // 调用 resetAutoModeOptInForDefaultOffer，触发完整 CLI 启动主流程此处需要的副作用。
       resetAutoModeOptInForDefaultOffer();
     }
+    // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
     if ("external" === 'ant') {
+      // 调用 migrateFennecToOpus，触发完整 CLI 启动主流程此处需要的副作用。
       migrateFennecToOpus();
     }
+    // 调用 saveGlobalConfig，触发完整 CLI 启动主流程此处需要的副作用。
     saveGlobalConfig(prev => prev.migrationVersion === CURRENT_MIGRATION_VERSION ? prev : {
       ...prev,
       migrationVersion: CURRENT_MIGRATION_VERSION
     });
   }
   // Async migration - fire and forget since it's non-blocking
+  // 调用 migrateChangelogFromConfig，触发完整 CLI 启动主流程此处需要的副作用。
   migrateChangelogFromConfig().catch(() => {
     // Silently ignore migration errors - will retry on next startup
   });
@@ -357,23 +593,34 @@ function runMigrations(): void {
  * diff.external), so we must only run them after trust is established or in
  * non-interactive mode where trust is implicit.
  */
+// prefetchSystemContextIfSafe 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function prefetchSystemContextIfSafe(): void {
+  // isNonInteractiveSession 会话数据记录 `getIsNonInteractiveSession` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const isNonInteractiveSession = getIsNonInteractiveSession();
 
   // In non-interactive mode (--print), trust dialog is skipped and
   // execution is considered trusted (as documented in help text)
+  // 满足 `isNonInteractiveSession` 时，完整 CLI 启动主流程执行该分支。
   if (isNonInteractiveSession) {
+    // 调用 logForDiagnosticsNoPII，触发完整 CLI 启动主流程此处需要的副作用。
     logForDiagnosticsNoPII('info', 'prefetch_system_context_non_interactive');
+    // 显式忽略 `getSystemContext()` 的返回值，只保留它触发的副作用。
     void getSystemContext();
+    // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
 
   // In interactive mode, only prefetch if trust has already been established
+  // hasTrust记录 `checkHasTrustDialogAccepted` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const hasTrust = checkHasTrustDialogAccepted();
+  // 满足 `hasTrust` 时，完整 CLI 启动主流程执行该分支。
   if (hasTrust) {
+    // 调用 logForDiagnosticsNoPII，触发完整 CLI 启动主流程此处需要的副作用。
     logForDiagnosticsNoPII('info', 'prefetch_system_context_has_trust');
+    // 显式忽略 `getSystemContext()` 的返回值，只保留它触发的副作用。
     void getSystemContext();
   } else {
+    // 调用 logForDiagnosticsNoPII，触发完整 CLI 启动主流程此处需要的副作用。
     logForDiagnosticsNoPII('info', 'prefetch_system_context_skipped_no_trust');
   }
   // Otherwise, don't prefetch - wait for trust to be established first
@@ -385,60 +632,91 @@ function prefetchSystemContextIfSafe(): void {
  * spawning during the critical startup path.
  * Call this after the REPL has been rendered.
  */
+// startDeferredPrefetches 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function startDeferredPrefetches(): void {
   // This function runs after first render, so it doesn't block the initial paint.
   // However, the spawned processes and async work still contend for CPU and event
   // loop time, which skews startup benchmarks (CPU profiles, time-to-first-render
   // measurements). Skip all of it when we're only measuring startup performance.
+  // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_EXIT_AFTER_FIRST_RENDER` 时，完整 CLI 启动主流程执行该分支。
   if (isEnvTruthy(process.env.CLAUDE_CODE_EXIT_AFTER_FIRST_RENDER) ||
   // --bare: skip ALL prefetches. These are cache-warms for the REPL's
   // first-turn responsiveness (initUser, getUserContext, tips, countFiles,
   // modelCapabilities, change detectors). Scripted -p calls don't have a
   // "user is typing" window to hide this work in — it's pure overhead on
   // the critical path.
+  // 调用 isBareMode，触发完整 CLI 启动主流程此处需要的副作用。
   isBareMode()) {
+    // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
 
   // Process-spawning prefetches (consumed at first API call, user is still typing)
+  // 显式忽略 `initUser()` 的返回值，只保留它触发的副作用。
   void initUser();
+  // 显式忽略 `getUserContext()` 的返回值，只保留它触发的副作用。
   void getUserContext();
+  // 调用 prefetchSystemContextIfSafe，触发完整 CLI 启动主流程此处需要的副作用。
   prefetchSystemContextIfSafe();
+  // 显式忽略 `getRelevantTips()` 的返回值，只保留它触发的副作用。
   void getRelevantTips();
+  // 组合条件 `isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) && !isEnvTruthy(process.env.CLAU...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) && !isEnvTruthy(process.env.CLAUDE_CODE_SKIP_BEDROCK_AUTH)) {
+    // 显式忽略 `prefetchAwsCredentialsAndBedRockInfoIfSafe()` 的返回值，只保留它触发的副作用。
     void prefetchAwsCredentialsAndBedRockInfoIfSafe();
   }
+  // 组合条件 `isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) && !isEnvTruthy(process.env.CLAUD...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) && !isEnvTruthy(process.env.CLAUDE_CODE_SKIP_VERTEX_AUTH)) {
+    // 显式忽略 `prefetchGcpCredentialsIfSafe()` 的返回值，只保留它触发的副作用。
     void prefetchGcpCredentialsIfSafe();
   }
+  // 显式忽略 `countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), [])` 的返回值，只保留它触发的副作用。
   void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
 
   // Analytics and feature flag initialization
+  // 显式忽略 `initializeAnalyticsGates()` 的返回值，只保留它触发的副作用。
   void initializeAnalyticsGates();
+  // 显式忽略 `prefetchOfficialMcpUrls()` 的返回值，只保留它触发的副作用。
   void prefetchOfficialMcpUrls();
+  // 显式忽略 `refreshModelCapabilities()` 的返回值，只保留它触发的副作用。
   void refreshModelCapabilities();
 
   // File change detectors deferred from init() to unblock first render
+  // 显式忽略 `settingsChangeDetector.initialize()` 的返回值，只保留它触发的副作用。
   void settingsChangeDetector.initialize();
+  // 满足 `!isBareMode()` 时，完整 CLI 启动主流程执行该分支。
   if (!isBareMode()) {
+    // 显式忽略 `skillChangeDetector.initialize()` 的返回值，只保留它触发的副作用。
     void skillChangeDetector.initialize();
   }
 
   // Event loop stall detector — logs when the main thread is blocked >500ms
+  // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
   if ("external" === 'ant') {
+    // 这个回调绑定到 void import('./utils/eventLoopStallDetector.js').then(m => m.startEventLoopStallDete…，负责完整 CLI 启动主流程在该局部场景下的响应。
     void import('./utils/eventLoopStallDetector.js').then(m => m.startEventLoopStallDetector());
   }
 }
+// loadSettingsFromFlag 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function loadSettingsFromFlag(settingsFile: string): void {
+  // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
   try {
+    // trimmedSettings 集合格式化`settingsFile.trim`，供完整 CLI 启动主流程后续处理使用。
     const trimmedSettings = settingsFile.trim();
+    // looksLikeJson格式化`trimmedSettings.startsWith`，供完整 CLI 启动主流程后续处理使用。
     const looksLikeJson = trimmedSettings.startsWith('{') && trimmedSettings.endsWith('}');
+    // settingsPath 路径数据 先占位，稍后的条件分支会根据实际输入补齐它。
     let settingsPath: string;
+    // 满足 `looksLikeJson` 时，完整 CLI 启动主流程执行该分支。
     if (looksLikeJson) {
       // It's a JSON string - validate and create temp file
+      // parsedJson保存`safeParseJSON`，供完整 CLI 启动主流程后续处理使用。
       const parsedJson = safeParseJSON(trimmedSettings);
+      // parsedJson缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!parsedJson) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: Invalid JSON provided to --settings\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
 
@@ -451,46 +729,71 @@ function loadSettingsFromFlag(settingsFile: string): void {
       // the cache prefix and causing a 12x input token cost penalty.
       // The content hash ensures identical settings produce the same path
       // across process boundaries (each SDK query() spawns a new process).
+      // settingsPath 路径数据更新为 `generateTempFilePath('claude-settings', '.json', {`，确保main后续读取最新状态。
       settingsPath = generateTempFilePath('claude-settings', '.json', {
         contentHash: trimmedSettings
       });
+      // 调用 writeFileSync_DEPRECATED，触发完整 CLI 启动主流程此处需要的副作用。
       writeFileSync_DEPRECATED(settingsPath, trimmedSettings, 'utf8');
     } else {
       // It's a file path - resolve and validate by attempting to read
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         resolvedPath: resolvedSettingsPath
       } = safeResolvePath(getFsImplementation(), settingsFile);
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // 调用 readFileSync，触发完整 CLI 启动主流程此处需要的副作用。
         readFileSync(resolvedSettingsPath, 'utf8');
       } catch (e) {
+        // 满足 `isENOENT(e)` 时，完整 CLI 启动主流程执行该分支。
         if (isENOENT(e)) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red(`Error: Settings file not found: ${resolvedSettingsPath}\n`));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
+        // 抛出 e;，阻止完整 CLI 启动主流程在无效状态下继续运行。
         throw e;
       }
+      // settingsPath 路径数据更新为 `resolvedSettingsPath`，确保main后续读取最新状态。
       settingsPath = resolvedSettingsPath;
     }
+    // setFlagSettingsPath 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setFlagSettingsPath(settingsPath);
+    // 调用 resetSettingsCache，触发完整 CLI 启动主流程此处需要的副作用。
     resetSettingsCache();
   } catch (error) {
+    // 满足 `error instanceof Error` 时，完整 CLI 启动主流程执行该分支。
     if (error instanceof Error) {
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logError(error);
     }
+    // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
     process.stderr.write(chalk.red(`Error processing settings: ${errorMessage(error)}\n`));
+    // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
     process.exit(1);
   }
 }
+// loadSettingSourcesFromFlag 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function loadSettingSourcesFromFlag(settingSourcesArg: string): void {
+  // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
   try {
+    // sources 集合解析`parseSettingSourcesFlag`，供完整 CLI 启动主流程后续处理使用。
     const sources = parseSettingSourcesFlag(settingSourcesArg);
+    // setAllowedSettingSources 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setAllowedSettingSources(sources);
+    // 调用 resetSettingsCache，触发完整 CLI 启动主流程此处需要的副作用。
     resetSettingsCache();
   } catch (error) {
+    // 满足 `error instanceof Error` 时，完整 CLI 启动主流程执行该分支。
     if (error instanceof Error) {
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logError(error);
     }
+    // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
     process.stderr.write(chalk.red(`Error processing --setting-sources: ${errorMessage(error)}\n`));
+    // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
     process.exit(1);
   }
 }
@@ -499,36 +802,56 @@ function loadSettingSourcesFromFlag(settingSourcesArg: string): void {
  * Parse and load settings flags early, before init()
  * This ensures settings are filtered from the start of initialization
  */
+// eagerLoadSettings 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function eagerLoadSettings(): void {
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('eagerLoadSettings_start');
   // Parse --settings flag early to ensure settings are loaded before init()
+  // settingsFile 文件数据保存`eagerParseCliFlag`，供完整 CLI 启动主流程后续处理使用。
   const settingsFile = eagerParseCliFlag('--settings');
+  // 满足 `settingsFile` 时，完整 CLI 启动主流程执行该分支。
   if (settingsFile) {
+    // 调用 loadSettingsFromFlag，触发完整 CLI 启动主流程此处需要的副作用。
     loadSettingsFromFlag(settingsFile);
   }
 
   // Parse --setting-sources flag early to control which sources are loaded
+  // settingSourcesArg保存`eagerParseCliFlag`，供完整 CLI 启动主流程后续处理使用。
   const settingSourcesArg = eagerParseCliFlag('--setting-sources');
+  // `settingSourcesArg` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (settingSourcesArg !== undefined) {
+    // 调用 loadSettingSourcesFromFlag，触发完整 CLI 启动主流程此处需要的副作用。
     loadSettingSourcesFromFlag(settingSourcesArg);
   }
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('eagerLoadSettings_end');
 }
+// initializeEntrypoint 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function initializeEntrypoint(isNonInteractive: boolean): void {
   // Skip if already set (e.g., by SDK or other entrypoints)
+  // 满足 `process.env.CLAUDE_CODE_ENTRYPOINT` 时，完整 CLI 启动主流程执行该分支。
   if (process.env.CLAUDE_CODE_ENTRYPOINT) {
+    // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
+  // cliArgs 集合格式化`argv.slice`，供完整 CLI 启动主流程后续处理使用。
   const cliArgs = process.argv.slice(2);
 
   // Check for MCP serve command (handle flags before mcp serve, e.g., --debug mcp serve)
+  // mcpIndex 索引保存`cliArgs.indexOf`，供完整 CLI 启动主流程后续处理使用。
   const mcpIndex = cliArgs.indexOf('mcp');
+  // `mcpIndex` 与 `-1 && cliArgs[mcpIndex + 1] ===...` 不一致时刷新派生状态，避免使用过期结果。
   if (mcpIndex !== -1 && cliArgs[mcpIndex + 1] === 'serve') {
+    // CLAUDE_CODE_ENTRYPOINT更新为 `'mcp'`，确保main后续读取最新状态。
     process.env.CLAUDE_CODE_ENTRYPOINT = 'mcp';
+    // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
+  // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_ACTION)` 时，完整 CLI 启动主流程执行该分支。
   if (isEnvTruthy(process.env.CLAUDE_CODE_ACTION)) {
+    // CLAUDE_CODE_ENTRYPOINT更新为 `'claude-code-github-action'`，确保main后续读取最新状态。
     process.env.CLAUDE_CODE_ENTRYPOINT = 'claude-code-github-action';
+    // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
 
@@ -536,15 +859,18 @@ function initializeEntrypoint(isNonInteractive: boolean): void {
   // via CLAUDE_CODE_ENTRYPOINT env var (handled by early return above)
 
   // Set based on interactive status
+  // CLAUDE_CODE_ENTRYPOINT更新为 `isNonInteractive ? 'sdk-cli' : 'cli'`，确保main后续读取最新状态。
   process.env.CLAUDE_CODE_ENTRYPOINT = isNonInteractive ? 'sdk-cli' : 'cli';
 }
 
 // Set by early argv processing when `claude open <url>` is detected (interactive mode only)
+// PendingConnect 固化完整 CLI 启动主流程里传递的数据形状，帮助调用方按同一结构读写字段。
 type PendingConnect = {
   url: string | undefined;
   authToken: string | undefined;
   dangerouslySkipPermissions: boolean;
 };
+// _pendingConnect 通过懒加载取得，避免完整 CLI 启动主流程在启动阶段加载暂时用不到的实现。
 const _pendingConnect: PendingConnect | undefined = feature('DIRECT_CONNECT') ? {
   url: undefined,
   authToken: undefined,
@@ -552,10 +878,12 @@ const _pendingConnect: PendingConnect | undefined = feature('DIRECT_CONNECT') ? 
 } : undefined;
 
 // Set by early argv processing when `claude assistant [sessionId]` is detected
+// PendingAssistantChat 固化完整 CLI 启动主流程里传递的数据形状，帮助调用方按同一结构读写字段。
 type PendingAssistantChat = {
   sessionId?: string;
   discover: boolean;
 };
+// _pendingAssistantChat 通过懒加载取得，避免完整 CLI 启动主流程在启动阶段加载暂时用不到的实现。
 const _pendingAssistantChat: PendingAssistantChat | undefined = feature('KAIROS') ? {
   sessionId: undefined,
   discover: false
@@ -564,6 +892,7 @@ const _pendingAssistantChat: PendingAssistantChat | undefined = feature('KAIROS'
 // `claude ssh <host> [dir]` — parsed from argv early (same pattern as
 // DIRECT_CONNECT above) so the main command path can pick it up and hand
 // the REPL an SSH-backed session instead of a local one.
+// PendingSSH 固化完整 CLI 启动主流程里传递的数据形状，帮助调用方按同一结构读写字段。
 type PendingSSH = {
   host: string | undefined;
   cwd: string | undefined;
@@ -574,6 +903,7 @@ type PendingSSH = {
   /** Extra CLI args to forward to the remote CLI on initial spawn (--resume, -c). */
   extraCliArgs: string[];
 };
+// _pendingSSH 通过懒加载取得，避免完整 CLI 启动主流程在启动阶段加载暂时用不到的实现。
 const _pendingSSH: PendingSSH | undefined = feature('SSH_REMOTE') ? {
   host: undefined,
   cwd: undefined,
@@ -582,60 +912,92 @@ const _pendingSSH: PendingSSH | undefined = feature('SSH_REMOTE') ? {
   local: false,
   extraCliArgs: []
 } : undefined;
+// main 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function main() {
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('main_function_start');
 
   // SECURITY: Prevent Windows from executing commands from current directory
   // This must be set before ANY command execution to prevent PATH hijacking attacks
   // See: https://docs.microsoft.com/en-us/windows/win32/api/processenv/nf-processenv-searchpathw
+  // NoDefaultCurrentDirectoryInExePath 路径数据更新为 `'1'`，确保main后续读取最新状态。
   process.env.NoDefaultCurrentDirectoryInExePath = '1';
 
   // Initialize warning handler early to catch warnings
+  // 调用 initializeWarningHandler，触发完整 CLI 启动主流程此处需要的副作用。
   initializeWarningHandler();
+  // 调用 process.on，触发完整 CLI 启动主流程此处需要的副作用。
   process.on('exit', () => {
+    // 调用 resetCursor，触发完整 CLI 启动主流程此处需要的副作用。
     resetCursor();
   });
+  // 调用 process.on，触发完整 CLI 启动主流程此处需要的副作用。
   process.on('SIGINT', () => {
     // In print mode, print.ts registers its own SIGINT handler that aborts
     // the in-flight query and calls gracefulShutdown; skip here to avoid
     // preempting it with a synchronous process.exit().
+    // 组合条件 `process.argv.includes('-p') || process.argv.includes('--print')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (process.argv.includes('-p') || process.argv.includes('--print')) {
+      // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
     process.exit(0);
   });
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('main_warning_handler_initialized');
 
   // Check for cc:// or cc+unix:// URL in argv — rewrite so the main command
   // handles it, giving the full interactive TUI instead of a stripped-down subcommand.
   // For headless (-p), we rewrite to the internal `open` subcommand.
+  // 满足 `feature('DIRECT_CONNECT')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('DIRECT_CONNECT')) {
+    // rawCliArgs 集合格式化`argv.slice`，供完整 CLI 启动主流程后续处理使用。
     const rawCliArgs = process.argv.slice(2);
+    // ccIdx筛选`rawCliArgs.findIndex`，供完整 CLI 启动主流程后续处理使用。
     const ccIdx = rawCliArgs.findIndex(a => a.startsWith('cc://') || a.startsWith('cc+unix://'));
+    // `ccIdx` 与 `-1 && _pendingConnect` 不一致时刷新派生状态，避免使用过期结果。
     if (ccIdx !== -1 && _pendingConnect) {
+      // ccUrl读取 `rawCliArgs[ccIdx]!` 对应条目，后续围绕该成员继续处理。
       const ccUrl = rawCliArgs[ccIdx]!;
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         parseConnectUrl
       } = await import('./server/parseConnectUrl.js');
+      // 解析结果解析`parseConnectUrl`，供完整 CLI 启动主流程后续处理使用。
       const parsed = parseConnectUrl(ccUrl);
+      // dangerouslySkipPermissions 权限数据更新为 `rawCliArgs.includes('--dangerously-skip-permissions')`，确保main后续读取最新状态。
       _pendingConnect.dangerouslySkipPermissions = rawCliArgs.includes('--dangerously-skip-permissions');
+      // 组合条件 `rawCliArgs.includes('-p') || rawCliArgs.includes('--print')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (rawCliArgs.includes('-p') || rawCliArgs.includes('--print')) {
         // Headless: rewrite to internal `open` subcommand
+        // stripped筛选`rawCliArgs.filter`，供完整 CLI 启动主流程后续处理使用。
         const stripped = rawCliArgs.filter((_, i) => i !== ccIdx);
+        // dspIdx保存`stripped.indexOf`，供完整 CLI 启动主流程后续处理使用。
         const dspIdx = stripped.indexOf('--dangerously-skip-permissions');
+        // `dspIdx` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
         if (dspIdx !== -1) {
+          // 调用 stripped.splice，触发完整 CLI 启动主流程此处需要的副作用。
           stripped.splice(dspIdx, 1);
         }
+        // 命令行参数更新为 `[process.argv[0]!, process.argv[1]!, 'open', ccUrl, ...st...`，确保main后续读取最新状态。
         process.argv = [process.argv[0]!, process.argv[1]!, 'open', ccUrl, ...stripped];
       } else {
         // Interactive: strip cc:// URL and flags, run main command
+        // URL更新为 `parsed.serverUrl`，确保main后续读取最新状态。
         _pendingConnect.url = parsed.serverUrl;
+        // 认证令牌更新为 `parsed.authToken`，确保main后续读取最新状态。
         _pendingConnect.authToken = parsed.authToken;
+        // stripped筛选`rawCliArgs.filter`，供完整 CLI 启动主流程后续处理使用。
         const stripped = rawCliArgs.filter((_, i) => i !== ccIdx);
+        // dspIdx保存`stripped.indexOf`，供完整 CLI 启动主流程后续处理使用。
         const dspIdx = stripped.indexOf('--dangerously-skip-permissions');
+        // `dspIdx` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
         if (dspIdx !== -1) {
+          // 调用 stripped.splice，触发完整 CLI 启动主流程此处需要的副作用。
           stripped.splice(dspIdx, 1);
         }
+        // 命令行参数更新为 `[process.argv[0]!, process.argv[1]!, ...stripped]`，确保main后续读取最新状态。
         process.argv = [process.argv[0]!, process.argv[1]!, ...stripped];
       }
     }
@@ -644,18 +1006,27 @@ export async function main() {
   // Handle deep link URIs early — this is invoked by the OS protocol handler
   // and should bail out before full init since it only needs to parse the URI
   // and open a terminal.
+  // 满足 `feature('LODESTONE')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('LODESTONE')) {
+    // handleUriIdx保存`argv.indexOf`，供完整 CLI 启动主流程后续处理使用。
     const handleUriIdx = process.argv.indexOf('--handle-uri');
+    // `handleUriIdx` 与 `-1 && process.argv[handleUriIdx` 不一致时刷新派生状态，避免使用过期结果。
     if (handleUriIdx !== -1 && process.argv[handleUriIdx + 1]) {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         enableConfigs
       } = await import('./utils/config.js');
+      // 调用 enableConfigs，触发完整 CLI 启动主流程此处需要的副作用。
       enableConfigs();
+      // uri 命名 `process.argv[handleUriIdx + 1]!`，让后续代码直接表达这个值的用途。
       const uri = process.argv[handleUriIdx + 1]!;
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         handleDeepLinkUri
       } = await import('./utils/deepLink/protocolHandler.js');
+      // exitCode保存`handleDeepLinkUri`，供完整 CLI 启动主流程后续处理使用。
       const exitCode = await handleDeepLinkUri(uri);
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(exitCode);
     }
 
@@ -663,15 +1034,21 @@ export async function main() {
     // URL arrives via Apple Event (not argv). LaunchServices overwrites
     // __CFBundleIdentifier to the launching bundle's ID, which is a precise
     // positive signal — cheaper than importing and guessing with heuristics.
+    // 组合条件 `process.platform === 'darwin' && process.env.__CF` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === 'com.anthropic.claude-code-url-handler') {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         enableConfigs
       } = await import('./utils/config.js');
+      // 调用 enableConfigs，触发完整 CLI 启动主流程此处需要的副作用。
       enableConfigs();
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         handleUrlSchemeLaunch
       } = await import('./utils/deepLink/protocolHandler.js');
+      // urlSchemeResult保存`handleUrlSchemeLaunch`，供完整 CLI 启动主流程后续处理使用。
       const urlSchemeResult = await handleUrlSchemeLaunch();
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(urlSchemeResult ?? 1);
     }
   }
@@ -682,17 +1059,29 @@ export async function main() {
   // `claude -p "explain assistant"`. Root-flag-before-subcommand
   // (e.g. `--debug assistant`) falls through to the stub, which
   // prints usage.
+  // 组合条件 `feature('KAIROS') && _pendingAssistantChat` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (feature('KAIROS') && _pendingAssistantChat) {
+    // rawArgs 集合格式化`argv.slice`，供完整 CLI 启动主流程后续处理使用。
     const rawArgs = process.argv.slice(2);
+    // 当 `rawArgs[0]` 匹配 `'assistant'` 时，完整 CLI 启动主流程执行对应分支。
     if (rawArgs[0] === 'assistant') {
+      // nextArg读取 `rawArgs[1]` 对应条目，后续围绕该成员继续处理。
       const nextArg = rawArgs[1];
+      // 组合条件 `nextArg && !nextArg.startsWith('-')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (nextArg && !nextArg.startsWith('-')) {
+        // sessionId 会话数据更新为 `nextArg`，确保main后续读取最新状态。
         _pendingAssistantChat.sessionId = nextArg;
+        // 调用 rawArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
         rawArgs.splice(0, 2); // drop 'assistant' and sessionId
+        // 命令行参数更新为 `[process.argv[0]!, process.argv[1]!, ...rawArgs]`，确保main后续读取最新状态。
         process.argv = [process.argv[0]!, process.argv[1]!, ...rawArgs];
+      // 完整 CLI 启动主流程在这里处理 `} else if (!nextArg) {`，完成这一小步状态转换。
       } else if (!nextArg) {
+        // discover更新为 `true`，确保main后续读取最新状态。
         _pendingAssistantChat.discover = true;
+        // 调用 rawArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
         rawArgs.splice(0, 1); // drop 'assistant'
+        // 命令行参数更新为 `[process.argv[0]!, process.argv[1]!, ...rawArgs]`，确保main后续读取最新状态。
         process.argv = [process.argv[0]!, process.argv[1]!, ...rawArgs];
       }
       // else: `claude assistant --help` → fall through to stub
@@ -703,7 +1092,9 @@ export async function main() {
   // runs (full interactive TUI), stash the host/dir for the REPL branch at
   // ~line 3720 to pick up. Headless (-p) mode not supported in v1: SSH
   // sessions need the local REPL to drive them (interrupt, permissions).
+  // 组合条件 `feature('SSH_REMOTE') && _pendingSSH` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (feature('SSH_REMOTE') && _pendingSSH) {
+    // rawCliArgs 集合格式化`argv.slice`，供完整 CLI 启动主流程后续处理使用。
     const rawCliArgs = process.argv.slice(2);
     // SSH-specific flags can appear before the host positional (e.g.
     // `ssh --permission-mode auto host /tmp` — standard POSIX flags-before-
@@ -711,59 +1102,93 @@ export async function main() {
     // given, so `claude ssh --permission-mode auto host` and `claude ssh host
     // --permission-mode auto` are equivalent. The host check below only needs
     // to guard against `-h`/`--help` (which commander should handle).
+    // 当 `rawCliArgs[0]` 匹配 `'ssh'` 时，完整 CLI 启动主流程执行对应分支。
     if (rawCliArgs[0] === 'ssh') {
+      // localIdx保存`rawCliArgs.indexOf`，供完整 CLI 启动主流程后续处理使用。
       const localIdx = rawCliArgs.indexOf('--local');
+      // `localIdx` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
       if (localIdx !== -1) {
+        // local更新为 `true`，确保main后续读取最新状态。
         _pendingSSH.local = true;
+        // 调用 rawCliArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
         rawCliArgs.splice(localIdx, 1);
       }
+      // dspIdx保存`rawCliArgs.indexOf`，供完整 CLI 启动主流程后续处理使用。
       const dspIdx = rawCliArgs.indexOf('--dangerously-skip-permissions');
+      // `dspIdx` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
       if (dspIdx !== -1) {
+        // dangerouslySkipPermissions 权限数据更新为 `true`，确保main后续读取最新状态。
         _pendingSSH.dangerouslySkipPermissions = true;
+        // 调用 rawCliArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
         rawCliArgs.splice(dspIdx, 1);
       }
+      // pmIdx保存`rawCliArgs.indexOf`，供完整 CLI 启动主流程后续处理使用。
       const pmIdx = rawCliArgs.indexOf('--permission-mode');
+      // `pmIdx` 与 `-1 && rawCliArgs[pmIdx + 1] && ...` 不一致时刷新派生状态，避免使用过期结果。
       if (pmIdx !== -1 && rawCliArgs[pmIdx + 1] && !rawCliArgs[pmIdx + 1]!.startsWith('-')) {
+        // permissionMode 权限数据更新为 `rawCliArgs[pmIdx + 1]`，确保main后续读取最新状态。
         _pendingSSH.permissionMode = rawCliArgs[pmIdx + 1];
+        // 调用 rawCliArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
         rawCliArgs.splice(pmIdx, 2);
       }
+      // pmEqIdx筛选`rawCliArgs.findIndex`，供完整 CLI 启动主流程后续处理使用。
       const pmEqIdx = rawCliArgs.findIndex(a => a.startsWith('--permission-mode='));
+      // `pmEqIdx` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
       if (pmEqIdx !== -1) {
+        // permissionMode 权限数据更新为 `rawCliArgs[pmEqIdx]!.split('=')[1]`，确保main后续读取最新状态。
         _pendingSSH.permissionMode = rawCliArgs[pmEqIdx]!.split('=')[1];
+        // 调用 rawCliArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
         rawCliArgs.splice(pmEqIdx, 1);
       }
       // Forward session-resume + model flags to the remote CLI's initial spawn.
       // --continue/-c and --resume <uuid> operate on the REMOTE session history
       // (which persists under the remote's ~/.claude/projects/<cwd>/).
       // --model controls which model the remote uses.
+      // extractFlag 命名 `(flag: string, opts: {`，让后续代码直接表达这个值的用途。
       const extractFlag = (flag: string, opts: {
         hasValue?: boolean;
         as?: string;
       } = {}) => {
+        // i保存`rawCliArgs.indexOf`，供完整 CLI 启动主流程后续处理使用。
         const i = rawCliArgs.indexOf(flag);
+        // `i` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
         if (i !== -1) {
+          // extraCliArgs 集合追加新条目，保持收集顺序与输入顺序一致。
           _pendingSSH.extraCliArgs.push(opts.as ?? flag);
+          // val 命名 `rawCliArgs[i + 1]`，让后续代码直接表达这个值的用途。
           const val = rawCliArgs[i + 1];
+          // 组合条件 `opts.hasValue && val && !val.startsWith('-')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
           if (opts.hasValue && val && !val.startsWith('-')) {
+            // extraCliArgs 集合追加新条目，保持收集顺序与输入顺序一致。
             _pendingSSH.extraCliArgs.push(val);
+            // 调用 rawCliArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
             rawCliArgs.splice(i, 2);
           } else {
+            // 调用 rawCliArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
             rawCliArgs.splice(i, 1);
           }
         }
+        // eqI筛选`rawCliArgs.findIndex`，供完整 CLI 启动主流程后续处理使用。
         const eqI = rawCliArgs.findIndex(a => a.startsWith(`${flag}=`));
+        // `eqI` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
         if (eqI !== -1) {
+          // extraCliArgs 集合追加新条目，保持收集顺序与输入顺序一致。
           _pendingSSH.extraCliArgs.push(opts.as ?? flag, rawCliArgs[eqI]!.slice(flag.length + 1));
+          // 调用 rawCliArgs.splice，触发完整 CLI 启动主流程此处需要的副作用。
           rawCliArgs.splice(eqI, 1);
         }
       };
+      // 调用 extractFlag，触发完整 CLI 启动主流程此处需要的副作用。
       extractFlag('-c', {
         as: '--continue'
       });
+      // 调用 extractFlag，触发完整 CLI 启动主流程此处需要的副作用。
       extractFlag('--continue');
+      // 调用 extractFlag，触发完整 CLI 启动主流程此处需要的副作用。
       extractFlag('--resume', {
         hasValue: true
       });
+      // 调用 extractFlag，触发完整 CLI 启动主流程此处需要的副作用。
       extractFlag('--model', {
         hasValue: true
       });
@@ -771,155 +1196,233 @@ export async function main() {
     // After pre-extraction, any remaining dash-arg at [1] is either -h/--help
     // (commander handles) or an unknown-to-ssh flag (fall through to commander
     // so it surfaces a proper error). Only a non-dash arg is the host.
+    // 组合条件 `rawCliArgs[0] === 'ssh' && rawCliArgs[1] && !rawCliArgs[1].startsWith('-')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (rawCliArgs[0] === 'ssh' && rawCliArgs[1] && !rawCliArgs[1].startsWith('-')) {
+      // host更新为 `rawCliArgs[1]`，确保main后续读取最新状态。
       _pendingSSH.host = rawCliArgs[1];
       // Optional positional cwd.
+      // consumed保存`2`，供后续判断或组装使用。
       let consumed = 2;
+      // 组合条件 `rawCliArgs[2] && !rawCliArgs[2].startsWith('-')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (rawCliArgs[2] && !rawCliArgs[2].startsWith('-')) {
+        // cwd更新为 `rawCliArgs[2]`，确保main后续读取最新状态。
         _pendingSSH.cwd = rawCliArgs[2];
+        // consumed更新为 `3`，确保main后续读取最新状态。
         consumed = 3;
       }
+      // rest格式化`rawCliArgs.slice`，供完整 CLI 启动主流程后续处理使用。
       const rest = rawCliArgs.slice(consumed);
 
       // Headless (-p) mode is not supported with SSH in v1 — reject early
       // so the flag doesn't silently cause local execution.
+      // 组合条件 `rest.includes('-p') || rest.includes('--print')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (rest.includes('-p') || rest.includes('--print')) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write('Error: headless (-p/--print) mode is not supported with claude ssh\n');
+        // 调用 gracefulShutdownSync，触发完整 CLI 启动主流程此处需要的副作用。
         gracefulShutdownSync(1);
+        // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Rewrite argv so the main command sees remaining flags but not `ssh`.
+      // 命令行参数更新为 `[process.argv[0]!, process.argv[1]!, ...rest]`，确保main后续读取最新状态。
       process.argv = [process.argv[0]!, process.argv[1]!, ...rest];
     }
   }
 
   // Check for -p/--print and --init-only flags early to set isInteractiveSession before init()
   // This is needed because telemetry initialization calls auth functions that need this flag
+  // cliArgs 集合格式化`argv.slice`，供完整 CLI 启动主流程后续处理使用。
   const cliArgs = process.argv.slice(2);
+  // hasPrintFlag记录 `cliArgs.includes` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const hasPrintFlag = cliArgs.includes('-p') || cliArgs.includes('--print');
+  // hasInitOnlyFlag记录 `cliArgs.includes` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const hasInitOnlyFlag = cliArgs.includes('--init-only');
+  // hasSdkUrl记录 `cliArgs.some` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const hasSdkUrl = cliArgs.some(arg => arg.startsWith('--sdk-url'));
+  // isNonInteractive标记完整 CLI 启动主流程是否启用对应路径。
   const isNonInteractive = hasPrintFlag || hasInitOnlyFlag || hasSdkUrl || !process.stdout.isTTY;
 
   // Stop capturing early input for non-interactive modes
+  // 满足 `isNonInteractive` 时，完整 CLI 启动主流程执行该分支。
   if (isNonInteractive) {
+    // 调用 stopCapturingEarlyInput，触发完整 CLI 启动主流程此处需要的副作用。
     stopCapturingEarlyInput();
   }
 
   // Set simplified tracking fields
+  // isInteractive标记完整 CLI 启动主流程是否启用对应路径。
   const isInteractive = !isNonInteractive;
+  // setIsInteractive 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
   setIsInteractive(isInteractive);
 
   // Initialize entrypoint based on mode - needs to be set before any event is logged
+  // 调用 initializeEntrypoint，触发完整 CLI 启动主流程此处需要的副作用。
   initializeEntrypoint(isNonInteractive);
 
   // Determine client type
+  // clientType封装成回调，供完整 CLI 启动主流程在事件触发或异步步骤中调用。
   const clientType = (() => {
+    // 满足 `isEnvTruthy(process.env.GITHUB_ACTIONS)` 时，完整 CLI 启动主流程执行该分支。
     if (isEnvTruthy(process.env.GITHUB_ACTIONS)) return 'github-action';
+    // 当 `process.env.CLAUDE_CODE_ENTRYPOINT` 匹配 `'sdk-ts'` 时，完整 CLI 启动主流程执行对应分支。
     if (process.env.CLAUDE_CODE_ENTRYPOINT === 'sdk-ts') return 'sdk-typescript';
+    // 当 `process.env.CLAUDE_CODE_ENTRYPOINT` 匹配 `'sdk-py'` 时，完整 CLI 启动主流程执行对应分支。
     if (process.env.CLAUDE_CODE_ENTRYPOINT === 'sdk-py') return 'sdk-python';
+    // 当 `process.env.CLAUDE_CODE_ENTRYPOINT` 匹配 `'sdk-cli'` 时，完整 CLI 启动主流程执行对应分支。
     if (process.env.CLAUDE_CODE_ENTRYPOINT === 'sdk-cli') return 'sdk-cli';
+    // 当 `process.env.CLAUDE_CODE_ENTRYPOINT` 匹配 `'claude-vscode'` 时，完整 CLI 启动主流程执行对应分支。
     if (process.env.CLAUDE_CODE_ENTRYPOINT === 'claude-vscode') return 'claude-vscode';
+    // 当 `process.env.CLAUDE_CODE_ENTRYPOINT` 匹配 `'local-agent'` 时，完整 CLI 启动主流程执行对应分支。
     if (process.env.CLAUDE_CODE_ENTRYPOINT === 'local-agent') return 'local-agent';
+    // 当 `process.env.CLAUDE_CODE_ENTRYPOINT` 匹配 `'claude-desktop'` 时，完整 CLI 启动主流程执行对应分支。
     if (process.env.CLAUDE_CODE_ENTRYPOINT === 'claude-desktop') return 'claude-desktop';
 
     // Check if session-ingress token is provided (indicates remote session)
+    // hasSessionIngressToken 会话数据 来自环境变量默认值，运行参数仍可在入口处覆盖。
     const hasSessionIngressToken = process.env.CLAUDE_CODE_SESSION_ACCESS_TOKEN || process.env.CLAUDE_CODE_WEBSOCKET_AUTH_FILE_DESCRIPTOR;
+    // 满足 `process.env.CLAUDE_CODE_ENTRYPOINT === 'remote' |` 时，完整 CLI 启动主流程执行该分支。
     if (process.env.CLAUDE_CODE_ENTRYPOINT === 'remote' || hasSessionIngressToken) {
+      // 返回 `'remote'`，作为完整 CLI 启动主流程这次计算的结果。
       return 'remote';
     }
+    // 返回 `'cli'`，作为完整 CLI 启动主流程这次计算的结果。
     return 'cli';
   })();
+  // setClientType 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
   setClientType(clientType);
+  // previewFormat 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const previewFormat = process.env.CLAUDE_CODE_QUESTION_PREVIEW_FORMAT;
+  // 组合条件 `previewFormat === 'markdown' || previewFormat ===` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (previewFormat === 'markdown' || previewFormat === 'html') {
+    // setQuestionPreviewFormat 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setQuestionPreviewFormat(previewFormat);
+  // 完整 CLI 启动主流程在这里处理 `} else if (!clientType.startsWith('sdk-') &&`，完成这一小步状态转换。
   } else if (!clientType.startsWith('sdk-') &&
   // Desktop and CCR pass previewFormat via toolConfig; when the feature is
   // gated off they pass undefined — don't override that with markdown.
   clientType !== 'claude-desktop' && clientType !== 'local-agent' && clientType !== 'remote') {
+    // setQuestionPreviewFormat 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setQuestionPreviewFormat('markdown');
   }
 
   // Tag sessions created via `claude remote-control` so the backend can identify them
+  // 满足 `process.env.CLAUDE_CODE_ENVIRONMENT_KIND === 'bri` 时，完整 CLI 启动主流程执行该分支。
   if (process.env.CLAUDE_CODE_ENVIRONMENT_KIND === 'bridge') {
+    // setSessionSource 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setSessionSource('remote-control');
   }
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('main_client_type_determined');
 
   // Parse and load settings flags early, before init()
+  // 调用 eagerLoadSettings，触发完整 CLI 启动主流程此处需要的副作用。
   eagerLoadSettings();
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('main_before_run');
+  // 等待 `run()` 完成，再继续完整 CLI 启动主流程的异步流程。
   await run();
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('main_after_run');
 }
+// getInputPrompt 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getInputPrompt(prompt: string, inputFormat: 'text' | 'stream-json'): Promise<string | AsyncIterable<string>> {
+  // 完整 CLI 启动主流程在这里进入条件判断，后续代码按实际状态分流。
   if (!process.stdin.isTTY &&
   // Input hijacking breaks MCP.
   !process.argv.includes('mcp')) {
+    // 当 `inputFormat` 匹配 `'stream-json'` 时，完整 CLI 启动主流程执行对应分支。
     if (inputFormat === 'stream-json') {
+      // 返回 `process.stdin`，作为完整 CLI 启动主流程这次计算的结果。
       return process.stdin;
     }
+    // process.stdin.setEncoding 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     process.stdin.setEncoding('utf8');
+    // data 命名 `''`，让后续代码直接表达这个值的用途。
     let data = '';
+    // onData封装成回调，供完整 CLI 启动主流程在事件触发或异步步骤中调用。
     const onData = (chunk: string) => {
+      // 完整 CLI 启动主流程在这里处理 `data += chunk`，完成这一小步状态转换。
       data += chunk;
     };
+    // 调用 process.stdin.on，触发完整 CLI 启动主流程此处需要的副作用。
     process.stdin.on('data', onData);
     // If no data arrives in 3s, stop waiting and warn. Stdin is likely an
     // inherited pipe from a parent that isn't writing (subprocess spawned
     // without explicit stdin handling). 3s covers slow producers like curl,
     // jq on large files, python with import overhead. The warning makes
     // silent data loss visible for the rare producer that's slower still.
+    // timedOut保存`peekForStdinData`，供完整 CLI 启动主流程后续处理使用。
     const timedOut = await peekForStdinData(process.stdin, 3000);
+    // 调用 process.stdin.off，触发完整 CLI 启动主流程此处需要的副作用。
     process.stdin.off('data', onData);
+    // 满足 `timedOut` 时，完整 CLI 启动主流程执行该分支。
     if (timedOut) {
+      // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
       process.stderr.write('Warning: no stdin data received in 3s, proceeding without it. ' + 'If piping from a slow command, redirect stdin explicitly: < /dev/null to skip, or wait longer.\n');
     }
+    // 返回列表结果，保留完整 CLI 启动主流程已经排好的条目顺序。
     return [prompt, data].filter(Boolean).join('\n');
   }
+  // 返回 `prompt`，作为完整 CLI 启动主流程这次计算的结果。
   return prompt;
 }
+// run 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function run(): Promise<CommanderCommand> {
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('run_function_start');
 
   // Create help config that sorts options by long option name.
   // Commander supports compareOptions at runtime but @commander-js/extra-typings
   // doesn't include it in the type definitions, so we use Object.assign to add it.
+  // createSortedHelpConfig 封装main的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function createSortedHelpConfig(): {
     sortSubcommands: true;
     sortOptions: true;
   } {
+    // getOptionSortKey格式化`replace`，供完整 CLI 启动主流程后续处理使用。
     const getOptionSortKey = (opt: Option): string => opt.long?.replace(/^--/, '') ?? opt.short?.replace(/^-/, '') ?? '';
+    // 返回 `Object.assign({`，作为完整 CLI 启动主流程这次计算的结果。
     return Object.assign({
       sortSubcommands: true,
       sortOptions: true
     } as const, {
+      // 这个回调绑定到 compareOptions: (a: Option, b: Option) => getOptionSortKey(a).localeCompare(getOptio…，负责完整 CLI 启动主流程在该局部场景下的响应。
       compareOptions: (a: Option, b: Option) => getOptionSortKey(a).localeCompare(getOptionSortKey(b))
     });
   }
+  // program保存`CommanderCommand`，供完整 CLI 启动主流程后续处理使用。
   const program = new CommanderCommand().configureHelp(createSortedHelpConfig()).enablePositionalOptions();
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('run_commander_initialized');
 
   // Use preAction hook to run initialization only when executing a command,
   // not when displaying help. This avoids the need for env variable signaling.
+  // 调用 program.hook，触发完整 CLI 启动主流程此处需要的副作用。
   program.hook('preAction', async thisCommand => {
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('preAction_start');
     // Await async subprocess loads started at module evaluation (lines 12-20).
     // Nearly free — subprocesses complete during the ~135ms of imports above.
     // Must resolve before init() which triggers the first settings read
     // (applySafeConfigEnvironmentVariables → getSettingsForSource('policySettings')
     // → isRemoteManagedSettingsEligible → sync keychain reads otherwise ~65ms).
+    // 等待 `Promise.all([ensureMdmSettingsLoaded(), ensureKeychainPrefetchCompleted...` 完成，再继续完整 CLI 启动主流程的异步流程。
     await Promise.all([ensureMdmSettingsLoaded(), ensureKeychainPrefetchCompleted()]);
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('preAction_after_mdm');
+    // 等待 `init()` 完成，再继续完整 CLI 启动主流程的异步流程。
     await init();
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('preAction_after_init');
 
     // process.title on Windows sets the console title directly; on POSIX,
     // terminal shell integration may mirror the process name to the tab.
     // After init() so settings.json env can also gate this (gh-4765).
+    // 满足 `!isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_TERMINAL_TITLE)` 时，完整 CLI 启动主流程执行该分支。
     if (!isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_TERMINAL_TITLE)) {
+      // title 标题更新为 `'claude'`，确保main后续读取最新状态。
       process.title = 'claude';
     }
 
@@ -928,10 +1431,13 @@ async function run(): Promise<CommanderCommand> {
     // a sink attaches. setup() attaches sinks for the default command, but
     // subcommands (doctor, mcp, plugin, auth) never call setup() and would
     // silently drop events on process.exit(). Both inits are idempotent.
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       initSinks
     } = await import('./utils/sinks.js');
+    // 调用 initSinks，触发完整 CLI 启动主流程此处需要的副作用。
     initSinks();
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('preAction_after_sinks');
 
     // gh-33508: --plugin-dir is a top-level program option. The default
@@ -942,89 +1448,135 @@ async function run(): Promise<CommanderCommand> {
     // before .option('--plugin-dir', ...) in the chain — extra-typings
     // builds the type as options are added. Narrow with a runtime guard;
     // the collect accumulator + [] default guarantee string[] in practice.
+    // pluginDir 插件数据读取`thisCommand.getOptionValue`，供完整 CLI 启动主流程后续处理使用。
     const pluginDir = thisCommand.getOptionValue('pluginDir');
+    // 组合条件 `Array.isArray(pluginDir) && pluginDir.length > 0 && pluginDir.every(p => typeof p...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (Array.isArray(pluginDir) && pluginDir.length > 0 && pluginDir.every(p => typeof p === 'string')) {
+      // setInlinePlugins 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setInlinePlugins(pluginDir);
+      // 清理相关缓存，确保完整 CLI 启动主流程下一次读取时重新加载最新数据。
       clearPluginCache('preAction: --plugin-dir inline plugins');
     }
+    // 调用 runMigrations，触发完整 CLI 启动主流程此处需要的副作用。
     runMigrations();
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('preAction_after_migrations');
 
     // Load remote managed settings for enterprise customers (non-blocking)
     // Fails open - if fetch fails, continues without remote settings
     // Settings are applied via hot-reload when they arrive
     // Must happen after init() to ensure config reading is allowed
+    // 显式忽略 `loadRemoteManagedSettings()` 的返回值，只保留它触发的副作用。
     void loadRemoteManagedSettings();
+    // 显式忽略 `loadPolicyLimits()` 的返回值，只保留它触发的副作用。
     void loadPolicyLimits();
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('preAction_after_remote_settings');
 
     // Load settings sync (non-blocking, fail-open)
     // CLI: uploads local settings to remote (CCR download is handled by print.ts)
+    // 满足 `feature('UPLOAD_USER_SETTINGS')` 时，完整 CLI 启动主流程执行该分支。
     if (feature('UPLOAD_USER_SETTINGS')) {
+      // 这个回调绑定到 void import('./services/settingsSync/index.js').then(m => m.uploadUserSettingsInBack…，负责完整 CLI 启动主流程在该局部场景下的响应。
       void import('./services/settingsSync/index.js').then(m => m.uploadUserSettingsInBackground());
     }
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('preAction_after_settings_sync');
   });
+  // 调用 program.name，触发完整 CLI 启动主流程此处需要的副作用。
   program.name('claude').description(`Claude Code - starts an interactive session by default, use -p/--print for non-interactive output`).argument('[prompt]', 'Your prompt', String)
   // Subcommands inherit helpOption via commander's copyInheritedSettings —
   // setting it once here covers mcp, plugin, auth, and all other subcommands.
+  // 链式调用 helpOption，继续加工上一行在完整 CLI 启动主流程中产生的数据。
   .helpOption('-h, --help', 'Display help for command').option('-d, --debug [filter]', 'Enable debug mode with optional category filtering (e.g., "api,hooks" or "!1p,!file")', (_value: string | true) => {
     // If value is provided, it will be the filter string
     // If not provided but flag is present, value will be true
     // The actual filtering is handled in debug.ts by parsing process.argv
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
+  // 这个回调绑定到 }).addOption(new Option('--debug-to-stderr', 'Enable debug mode (to stderr)').argPar…，负责完整 CLI 启动主流程在该局部场景下的响应。
   }).addOption(new Option('--debug-to-stderr', 'Enable debug mode (to stderr)').argParser(Boolean).hideHelp()).option('--debug-file <path>', 'Write debug logs to a specific file path (implicitly enables debug mode)', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).option('-p, --print', 'Print response and exit (useful for pipes). Note: The workspace trust dialog is skipped when Claude is run with the -p mode. Only use this flag in directories you trust.', () => true).option('--bare', 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and CLAUDE.md auto-discovery. Sets CLAUDE_CODE_SIMPLE=1. Anthropic auth is strictly ANTHROPIC_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read). 3P providers (Bedrock/Vertex/Foundry) use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir (CLAUDE.md dirs), --mcp-config, --settings, --agents, --plugin-dir.', () => true).addOption(new Option('--init', 'Run Setup hooks with init trigger, then continue').hideHelp()).addOption(new Option('--init-only', 'Run Setup and SessionStart:startup hooks, then exit').hideHelp()).addOption(new Option('--maintenance', 'Run Setup hooks with maintenance trigger, then continue').hideHelp()).addOption(new Option('--output-format <format>', 'Output format (only works with --print): "text" (default), "json" (single result), or "stream-json" (realtime streaming)').choices(['text', 'json', 'stream-json'])).addOption(new Option('--json-schema <schema>', 'JSON Schema for structured output validation. ' + 'Example: {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}').argParser(String)).option('--include-hook-events', 'Include all hook lifecycle events in the output stream (only works with --output-format=stream-json)', () => true).option('--include-partial-messages', 'Include partial message chunks as they arrive (only works with --print and --output-format=stream-json)', () => true).addOption(new Option('--input-format <format>', 'Input format (only works with --print): "text" (default), or "stream-json" (realtime streaming input)').choices(['text', 'stream-json'])).option('--mcp-debug', '[DEPRECATED. Use --debug instead] Enable MCP debug mode (shows MCP server errors)', () => true).option('--dangerously-skip-permissions', 'Bypass all permission checks. Recommended only for sandboxes with no internet access.', () => true).option('--allow-dangerously-skip-permissions', 'Enable bypassing all permission checks as an option, without it being enabled by default. Recommended only for sandboxes with no internet access.', () => true).addOption(new Option('--thinking <mode>', 'Thinking mode: enabled (equivalent to adaptive), disabled').choices(['enabled', 'adaptive', 'disabled']).hideHelp()).addOption(new Option('--max-thinking-tokens <tokens>', '[DEPRECATED. Use --thinking instead for newer models] Maximum number of thinking tokens (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-turns <turns>', 'Maximum number of agentic turns in non-interactive mode. This will early exit the conversation after the specified number of turns. (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-budget-usd <amount>', 'Maximum dollar amount to spend on API calls (only works with --print)').argParser(value => {
+    // amount保存`Number`，供完整 CLI 启动主流程后续处理使用。
     const amount = Number(value);
+    // 组合条件 `isNaN(amount) || amount <= 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (isNaN(amount) || amount <= 0) {
+      // 抛出 new Error('--max-budget-usd must be a positive number greater than 0');，阻止完整 CLI 启动主流程在无效状态下继续运行。
       throw new Error('--max-budget-usd must be a positive number greater than 0');
     }
+    // 返回 `amount`，作为完整 CLI 启动主流程这次计算的结果。
     return amount;
+  // 这个回调绑定到 })).addOption(new Option('--task-budget <tokens>', 'API-side task budget in tokens (…，负责完整 CLI 启动主流程在该局部场景下的响应。
   })).addOption(new Option('--task-budget <tokens>', 'API-side task budget in tokens (output_config.task_budget)').argParser(value => {
+    // token 列表保存`Number`，供完整 CLI 启动主流程后续处理使用。
     const tokens = Number(value);
+    // 组合条件 `isNaN(tokens) || tokens <= 0 || !Number.isInteger(tokens)` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (isNaN(tokens) || tokens <= 0 || !Number.isInteger(tokens)) {
+      // 抛出 new Error('--task-budget must be a positive integer');，阻止完整 CLI 启动主流程在无效状态下继续运行。
       throw new Error('--task-budget must be a positive integer');
     }
+    // 返回 `tokens`，作为完整 CLI 启动主流程这次计算的结果。
     return tokens;
+  // 这个回调绑定到 }).hideHelp()).option('--replay-user-messages', 'Re-emit user messages from stdin ba…，负责完整 CLI 启动主流程在该局部场景下的响应。
   }).hideHelp()).option('--replay-user-messages', 'Re-emit user messages from stdin back on stdout for acknowledgment (only works with --input-format=stream-json and --output-format=stream-json)', () => true).addOption(new Option('--enable-auth-status', 'Enable auth status messages in SDK mode').default(false).hideHelp()).option('--allowedTools, --allowed-tools <tools...>', 'Comma or space-separated list of tool names to allow (e.g. "Bash(git:*) Edit")').option('--tools <tools...>', 'Specify the list of available tools from the built-in set. Use "" to disable all tools, "default" to use all tools, or specify tool names (e.g. "Bash,Edit,Read").').option('--disallowedTools, --disallowed-tools <tools...>', 'Comma or space-separated list of tool names to deny (e.g. "Bash(git:*) Edit")').option('--mcp-config <configs...>', 'Load MCP servers from JSON files or strings (space-separated)').addOption(new Option('--permission-prompt-tool <tool>', 'MCP tool to use for permission prompts (only works with --print)').argParser(String).hideHelp()).addOption(new Option('--system-prompt <prompt>', 'System prompt to use for the session').argParser(String)).addOption(new Option('--system-prompt-file <file>', 'Read system prompt from a file').argParser(String).hideHelp()).addOption(new Option('--append-system-prompt <prompt>', 'Append a system prompt to the default system prompt').argParser(String)).addOption(new Option('--append-system-prompt-file <file>', 'Read system prompt from a file and append to the default system prompt').argParser(String).hideHelp()).addOption(new Option('--permission-mode <mode>', 'Permission mode to use for the session').argParser(String).choices(PERMISSION_MODES)).option('-c, --continue', 'Continue the most recent conversation in the current directory', () => true).option('-r, --resume [value]', 'Resume a conversation by session ID, or open interactive picker with optional search term', value => value || true).option('--fork-session', 'When resuming, create a new session ID instead of reusing the original (use with --resume or --continue)', () => true).addOption(new Option('--prefill <text>', 'Pre-fill the prompt input with text without submitting it').hideHelp()).addOption(new Option('--deep-link-origin', 'Signal that this session was launched from a deep link').hideHelp()).addOption(new Option('--deep-link-repo <slug>', 'Repo slug the deep link ?repo= parameter resolved to the current cwd').hideHelp()).addOption(new Option('--deep-link-last-fetch <ms>', 'FETCH_HEAD mtime in epoch ms, precomputed by the deep link trampoline').argParser(v => {
+    // n保存`Number`，供完整 CLI 启动主流程后续处理使用。
     const n = Number(v);
+    // 返回 `Number.isFinite(n) ? n : undefined`，作为完整 CLI 启动主流程这次计算的结果。
     return Number.isFinite(n) ? n : undefined;
+  // 这个回调绑定到 }).hideHelp()).option('--from-pr [value]', 'Resume a session linked to a PR by PR nu…，负责完整 CLI 启动主流程在该局部场景下的响应。
   }).hideHelp()).option('--from-pr [value]', 'Resume a session linked to a PR by PR number/URL, or open interactive picker with optional search term', value => value || true).option('--no-session-persistence', 'Disable session persistence - sessions will not be saved to disk and cannot be resumed (only works with --print)').addOption(new Option('--resume-session-at <message id>', 'When resuming, only messages up to and including the assistant message with <message.id> (use with --resume in print mode)').argParser(String).hideHelp()).addOption(new Option('--rewind-files <user-message-id>', 'Restore files to state at the specified user message and exit (requires --resume)').hideHelp())
   // @[MODEL LAUNCH]: Update the example model ID in the --model help text.
+  // 链式调用 option，继续加工上一行在完整 CLI 启动主流程中产生的数据。
   .option('--model <model>', `Model for the current session. Provide an alias for the latest model (e.g. 'sonnet' or 'opus') or a model's full name (e.g. 'claude-sonnet-4-6').`).addOption(new Option('--effort <level>', `Effort level for the current session (low, medium, high, max)`).argParser((rawValue: string) => {
+    // 取值保存`rawValue.toLowerCase`，供完整 CLI 启动主流程后续处理使用。
     const value = rawValue.toLowerCase();
+    // allowed 聚合成有序列表，保持后续遍历顺序稳定。
     const allowed = ['low', 'medium', 'high', 'max'];
+    // 满足 `!allowed.includes(value)` 时，完整 CLI 启动主流程执行该分支。
     if (!allowed.includes(value)) {
+      // 抛出 new InvalidArgumentError(`It must be one of: ${allowed.join(', ')}`);，阻止完整 CLI 启动主流程在无效状态下继续运行。
       throw new InvalidArgumentError(`It must be one of: ${allowed.join(', ')}`);
     }
+    // 返回 `value`，作为完整 CLI 启动主流程这次计算的结果。
     return value;
+  // 这个回调绑定到 })).option('--agent <agent>', `Agent for the current session. Overrides the 'agent' …，负责完整 CLI 启动主流程在该局部场景下的响应。
   })).option('--agent <agent>', `Agent for the current session. Overrides the 'agent' setting.`).option('--betas <betas...>', 'Beta headers to include in API requests (API key users only)').option('--fallback-model <model>', 'Enable automatic fallback to specified model when default model is overloaded (only works with --print)').addOption(new Option('--workload <tag>', 'Workload tag for billing-header attribution (cc_workload). Process-scoped; set by SDK daemon callers that spawn subprocesses for cron work. (only works with --print)').hideHelp()).option('--settings <file-or-json>', 'Path to a settings JSON file or a JSON string to load additional settings from').option('--add-dir <directories...>', 'Additional directories to allow tool access to').option('--ide', 'Automatically connect to IDE on startup if exactly one valid IDE is available', () => true).option('--strict-mcp-config', 'Only use MCP servers from --mcp-config, ignoring all other MCP configurations', () => true).option('--session-id <uuid>', 'Use a specific session ID for the conversation (must be a valid UUID)').option('-n, --name <name>', 'Set a display name for this session (shown in /resume and terminal title)').option('--agents <json>', 'JSON object defining custom agents (e.g. \'{"reviewer": {"description": "Reviews code", "prompt": "You are a code reviewer"}}\')').option('--setting-sources <sources>', 'Comma-separated list of setting sources to load (user, project, local).')
   // gh-33508: <paths...> (variadic) consumed everything until the next
   // --flag. `claude --plugin-dir /path mcp add --transport http` swallowed
   // `mcp` and `add` as paths, then choked on --transport as an unknown
   // top-level option. Single-value + collect accumulator means each
   // --plugin-dir takes exactly one arg; repeat the flag for multiple dirs.
+  // 链式调用 option，继续加工上一行在完整 CLI 启动主流程中产生的数据。
   .option('--plugin-dir <path>', 'Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B)', (val: string, prev: string[]) => [...prev, val], [] as string[]).option('--disable-slash-commands', 'Disable all skills', () => true).option('--chrome', 'Enable Claude in Chrome integration').option('--no-chrome', 'Disable Claude in Chrome integration').option('--file <specs...>', 'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)').action(async (prompt, options) => {
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('action_handler_start');
 
     // --bare = one-switch minimal mode. Sets SIMPLE so all the existing
     // gates fire (CLAUDE.md, skills, hooks inside executeHooks, agent
     // dir-walk). Must be set before setup() / any of the gated work runs.
+    // 完整 CLI 启动主流程在这里进入条件判断，后续代码按实际状态分流。
     if ((options as {
       bare?: boolean;
     }).bare) {
+      // CLAUDE_CODE_SIMPLE更新为 `'1'`，确保main后续读取最新状态。
       process.env.CLAUDE_CODE_SIMPLE = '1';
     }
 
     // Ignore "code" as a prompt - treat it the same as no prompt
+    // 当 `prompt` 匹配 `'code'` 时，完整 CLI 启动主流程执行对应分支。
     if (prompt === 'code') {
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_code_prompt_ignored', {});
       // biome-ignore lint/suspicious/noConsole:: intentional console output
+      // 调用 console.warn，触发完整 CLI 启动主流程此处需要的副作用。
       console.warn(chalk.yellow('Tip: You can launch Claude Code with just `claude`'));
+      // 提示词更新为 `undefined`，确保main后续读取最新状态。
       prompt = undefined;
     }
 
     // Log event for any single-word prompt
+    // 组合条件 `prompt && typeof prompt === 'string' && !/\s/.test(prompt) && prompt.length > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (prompt && typeof prompt === 'string' && !/\s/.test(prompt) && prompt.length > 0) {
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_single_word_prompt', {
         length: prompt.length
       });
@@ -1045,16 +1597,21 @@ async function run(): Promise<CommanderCommand> {
     // the trust dialog, and by then we've already appended
     // .claude/agents/assistant.md to the system prompt. Refuse to activate
     // until the directory has been explicitly trusted.
+    // kairosEnabled标记完整 CLI 启动主流程是否启用对应路径。
     let kairosEnabled = false;
+    // assistantTeamContext 先占位，稍后的条件分支会根据实际输入补齐它。
     let assistantTeamContext: Awaited<ReturnType<NonNullable<typeof assistantModule>['initializeAssistantTeam']>> | undefined;
+    // 满足 `feature('KAIROS'` 时，完整 CLI 启动主流程执行该分支。
     if (feature('KAIROS') && (options as {
       assistant?: boolean;
     }).assistant && assistantModule) {
       // --assistant (Agent SDK daemon mode): force the latch before
       // isAssistantMode() runs below. The daemon has already checked
       // entitlement — don't make the child re-check tengu_kairos.
+      // 调用 assistantModule.markAssistantForced，触发完整 CLI 启动主流程此处需要的副作用。
       assistantModule.markAssistantForced();
     }
+    // 组合条件 `feature('KAIROS') && assistantModule?.isAssistantMode(` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('KAIROS') && assistantModule?.isAssistantMode() &&
     // Spawned teammates share the leader's cwd + settings.json, so
     // isAssistantMode() is true for them too. --agent-id being set
@@ -1064,29 +1621,38 @@ async function run(): Promise<CommanderCommand> {
     !(options as {
       agentId?: unknown;
     }).agentId && kairosGate) {
+      // 满足 `!checkHasTrustDialogAccepted()` 时，完整 CLI 启动主流程执行该分支。
       if (!checkHasTrustDialogAccepted()) {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
+        // 调用 console.warn，触发完整 CLI 启动主流程此处需要的副作用。
         console.warn(chalk.yellow('Assistant mode disabled: directory is not trusted. Accept the trust dialog and restart.'));
       } else {
         // Blocking gate check — returns cached `true` instantly; if disk
         // cache is false/missing, lazily inits GrowthBook and fetches fresh
         // (max ~5s). --assistant skips the gate entirely (daemon is
         // pre-entitled).
+        // kairosEnabled更新为 `assistantModule.isAssistantForced() || (await kairosGate....`，确保main后续读取最新状态。
         kairosEnabled = assistantModule.isAssistantForced() || (await kairosGate.isKairosEnabled());
+        // 满足 `kairosEnabled` 时，完整 CLI 启动主流程执行该分支。
         if (kairosEnabled) {
+          // opts 集合保存`options as {`，供完整 CLI 启动主流程后续判断或输出使用。
           const opts = options as {
             brief?: boolean;
           };
+          // brief更新为 `true`，确保main后续读取最新状态。
           opts.brief = true;
+          // setKairosActive 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
           setKairosActive(true);
           // Pre-seed an in-process team so Agent(name: "foo") spawns
           // teammates without TeamCreate. Must run BEFORE setup() captures
           // the teammateMode snapshot (initializeAssistantTeam calls
           // setCliTeammateModeOverride internally).
+          // assistantTeamContext更新为 `await assistantModule.initializeAssistantTeam()`，确保main后续读取最新状态。
           assistantTeamContext = await assistantModule.initializeAssistantTeam();
         }
       }
     }
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       debug = false,
       debugToStderr = false,
@@ -1105,15 +1671,22 @@ async function run(): Promise<CommanderCommand> {
       includeHookEvents,
       includePartialMessages
     } = options;
+    // 满足 `options.prefill` 时，完整 CLI 启动主流程执行该分支。
     if (options.prefill) {
+      // 调用 seedEarlyInput，触发完整 CLI 启动主流程此处需要的副作用。
       seedEarlyInput(options.prefill);
     }
 
     // Promise for file downloads - started early, awaited before REPL renders
+    // fileDownloadPromise 异步任务 先占位，稍后的条件分支会根据实际输入补齐它。
     let fileDownloadPromise: Promise<DownloadResult[]> | undefined;
+    // agentsJson 命名 `options.agents`，让后续代码直接表达这个值的用途。
     const agentsJson = options.agents;
+    // agentCli保存`options.agent`，供完整 CLI 启动主流程后续判断或输出使用。
     const agentCli = options.agent;
+    // 组合条件 `feature('BG_SESSIONS') && agentCli` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('BG_SESSIONS') && agentCli) {
+      // CLAUDE_CODE_AGENT更新为 `agentCli`，确保main后续读取最新状态。
       process.env.CLAUDE_CODE_AGENT = agentCli;
     }
 
@@ -1122,84 +1695,127 @@ async function run(): Promise<CommanderCommand> {
     // executing code in untrusted directories before user consent.
 
     // Extract these separately so they can be modified if needed
+    // 输出格式保存`options.outputFormat`，供完整 CLI 启动主流程后续判断或输出使用。
     let outputFormat = options.outputFormat;
+    // inputFormat保存`options.inputFormat`，供完整 CLI 启动主流程后续判断或输出使用。
     let inputFormat = options.inputFormat;
+    // verbose读取`getGlobalConfig`，供完整 CLI 启动主流程后续处理使用。
     let verbose = options.verbose ?? getGlobalConfig().verbose;
+    // print保存`options.print`，供后续判断或组装使用。
     let print = options.print;
+    // init 命名 `options.init ?? false`，让后续代码直接表达这个值的用途。
     const init = options.init ?? false;
+    // initOnly 命名 `options.initOnly ?? false`，让后续代码直接表达这个值的用途。
     const initOnly = options.initOnly ?? false;
+    // maintenance保存`options.maintenance ?? false`，供完整 CLI 启动主流程后续判断或输出使用。
     const maintenance = options.maintenance ?? false;
 
     // Extract disable slash commands flag
+    // disableSlashCommands 命令数据标记完整 CLI 启动主流程是否启用对应路径。
     const disableSlashCommands = options.disableSlashCommands || false;
 
     // Extract tasks mode options (ant-only)
+    // tasksOption标记完整 CLI 启动主流程是否启用对应路径。
     const tasksOption = "external" === 'ant' && (options as {
       tasks?: boolean | string;
     }).tasks;
+    // taskListId 集合标记完整 CLI 启动主流程是否启用对应路径。
     const taskListId = tasksOption ? typeof tasksOption === 'string' ? tasksOption : DEFAULT_TASKS_MODE_TASK_LIST_ID : undefined;
+    // 组合条件 `"external" === 'ant' && taskListId` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if ("external" === 'ant' && taskListId) {
+      // CLAUDE_CODE_TASK_LIST_ID 集合更新为 `taskListId`，确保main后续读取最新状态。
       process.env.CLAUDE_CODE_TASK_LIST_ID = taskListId;
     }
 
     // Extract worktree option
     // worktree can be true (flag without value) or a string (custom name or PR reference)
+    // worktreeOption保存`isWorktreeModeEnabled`，供完整 CLI 启动主流程后续处理使用。
     const worktreeOption = isWorktreeModeEnabled() ? (options as {
       worktree?: boolean | string;
     }).worktree : undefined;
+    // worktreeName标记完整 CLI 启动主流程是否启用对应路径。
     let worktreeName = typeof worktreeOption === 'string' ? worktreeOption : undefined;
+    // worktreeEnabled标记完整 CLI 启动主流程是否启用对应路径。
     const worktreeEnabled = worktreeOption !== undefined;
 
     // Check if worktree name is a PR reference (#N or GitHub PR URL)
+    // worktreePRNumber 先占位，稍后的条件分支会根据实际输入补齐它。
     let worktreePRNumber: number | undefined;
+    // 满足 `worktreeName` 时，完整 CLI 启动主流程执行该分支。
     if (worktreeName) {
+      // prNum解析`parsePRReference`，供完整 CLI 启动主流程后续处理使用。
       const prNum = parsePRReference(worktreeName);
+      // `prNum` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (prNum !== null) {
+        // worktreePRNumber更新为 `prNum`，确保main后续读取最新状态。
         worktreePRNumber = prNum;
+        // worktreeName更新为 `undefined; // slug will be generated in setup()`，确保main后续读取最新状态。
         worktreeName = undefined; // slug will be generated in setup()
       }
     }
 
     // Extract tmux option (requires --worktree)
+    // tmuxEnabled保存`isWorktreeModeEnabled`，供完整 CLI 启动主流程后续处理使用。
     const tmuxEnabled = isWorktreeModeEnabled() && (options as {
       tmux?: boolean;
     }).tmux === true;
 
     // Validate tmux option
+    // 满足 `tmuxEnabled` 时，完整 CLI 启动主流程执行该分支。
     if (tmuxEnabled) {
+      // worktreeEnabled缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!worktreeEnabled) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: --tmux requires --worktree\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+      // 当 `getPlatform()` 匹配 `'windows'` 时，完整 CLI 启动主流程执行对应分支。
       if (getPlatform() === 'windows') {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: --tmux is not supported on Windows\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+      // 满足 `!(await isTmuxAvailable())` 时，完整 CLI 启动主流程执行该分支。
       if (!(await isTmuxAvailable())) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red(`Error: tmux is not installed.\n${getTmuxInstallInstructions()}\n`));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
     }
 
     // Extract teammate options (for tmux-spawned agents)
     // Declared outside the if block so it's accessible later for system prompt addendum
+    // storedTeammateOpts 集合 先占位，稍后的条件分支会根据实际输入补齐它。
     let storedTeammateOpts: TeammateOptions | undefined;
+    // 满足 `isAgentSwarmsEnabled()` 时，完整 CLI 启动主流程执行该分支。
     if (isAgentSwarmsEnabled()) {
       // Extract agent identity options (for tmux-spawned agents)
       // These replace the CLAUDE_CODE_* environment variables
+      // teammateOpts 集合保存`extractTeammateOptions`，供完整 CLI 启动主流程后续处理使用。
       const teammateOpts = extractTeammateOptions(options);
+      // storedTeammateOpts 集合更新为 `teammateOpts`，确保main后续读取最新状态。
       storedTeammateOpts = teammateOpts;
 
       // If any teammate identity option is provided, all three required ones must be present
+      // hasAnyTeammateOpt标记完整 CLI 启动主流程是否启用对应路径。
       const hasAnyTeammateOpt = teammateOpts.agentId || teammateOpts.agentName || teammateOpts.teamName;
+      // hasAllRequiredTeammateOpts 集合标记完整 CLI 启动主流程是否启用对应路径。
       const hasAllRequiredTeammateOpts = teammateOpts.agentId && teammateOpts.agentName && teammateOpts.teamName;
+      // 组合条件 `hasAnyTeammateOpt && !hasAllRequiredTeammateOpts` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (hasAnyTeammateOpt && !hasAllRequiredTeammateOpts) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: --agent-id, --agent-name, and --team-name must all be provided together\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
 
       // If teammate identity is provided via CLI, set up dynamicTeamContext
+      // 组合条件 `teammateOpts.agentId && teammateOpts.agentName &&` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (teammateOpts.agentId && teammateOpts.agentName && teammateOpts.teamName) {
+        // 调用 getTeammateUtils，触发完整 CLI 启动主流程此处需要的副作用。
         getTeammateUtils().setDynamicTeamContext?.({
           agentId: teammateOpts.agentId,
           agentName: teammateOpts.agentName,
@@ -1212,57 +1828,76 @@ async function run(): Promise<CommanderCommand> {
 
       // Set teammate mode CLI override if provided
       // This must be done before setup() captures the snapshot
+      // 满足 `teammateOpts.teammateMode` 时，完整 CLI 启动主流程执行该分支。
       if (teammateOpts.teammateMode) {
+        // 调用 getTeammateModeSnapshot，触发完整 CLI 启动主流程此处需要的副作用。
         getTeammateModeSnapshot().setCliTeammateModeOverride?.(teammateOpts.teammateMode);
       }
     }
 
     // Extract remote sdk options
+    // sdkUrl 命名 `(options as {`，让后续代码直接表达这个值的用途。
     const sdkUrl = (options as {
       sdkUrl?: string;
     }).sdkUrl ?? undefined;
 
     // Allow env var to enable partial messages (used by sandbox gateway for baku)
+    // effectiveIncludePartialMessages 消息数据保存`isEnvTruthy`，供完整 CLI 启动主流程后续处理使用。
     const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env.CLAUDE_CODE_INCLUDE_PARTIAL_MESSAGES);
 
     // Enable all hook event types when explicitly requested via SDK option
     // or when running in CLAUDE_CODE_REMOTE mode (CCR needs them).
     // Without this, only SessionStart and Setup events are emitted.
+    // 组合条件 `includeHookEvents || isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (includeHookEvents || isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
+      // setAllHookEventsEnabled 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setAllHookEventsEnabled(true);
     }
 
     // Auto-set input/output formats, verbose mode, and print mode when SDK URL is provided
+    // 满足 `sdkUrl` 时，完整 CLI 启动主流程执行该分支。
     if (sdkUrl) {
       // If SDK URL is provided, automatically use stream-json formats unless explicitly set
+      // inputFormat缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!inputFormat) {
+        // inputFormat更新为 `'stream-json'`，确保main后续读取最新状态。
         inputFormat = 'stream-json';
       }
+      // 输出格式缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!outputFormat) {
+        // 输出格式更新为 `'stream-json'`，确保main后续读取最新状态。
         outputFormat = 'stream-json';
       }
       // Auto-enable verbose mode unless explicitly disabled or already set
+      // 满足 `options.verbose === undefined` 时，完整 CLI 启动主流程执行该分支。
       if (options.verbose === undefined) {
+        // verbose更新为 `true`，确保main后续读取最新状态。
         verbose = true;
       }
       // Auto-enable print mode unless explicitly disabled
+      // options.print缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!options.print) {
+        // print更新为 `true`，确保main后续读取最新状态。
         print = true;
       }
     }
 
     // Extract teleport option
+    // teleport保存`(options as {`，供后续判断或组装使用。
     const teleport = (options as {
       teleport?: string | true;
     }).teleport ?? null;
 
     // Extract remote option (can be true if no description provided, or a string)
+    // remoteOption 命名 `(options as {`，让后续代码直接表达这个值的用途。
     const remoteOption = (options as {
       remote?: string | true;
     }).remote;
+    // remote标记完整 CLI 启动主流程是否启用对应路径。
     const remote = remoteOption === true ? '' : remoteOption ?? null;
 
     // Extract --remote-control / --rc flag (enable bridge in interactive session)
+    // remoteControlOption 命名 `(options as {`，让后续代码直接表达这个值的用途。
     const remoteControlOption = (options as {
       remoteControl?: string | true;
     }).remoteControl ?? (options as {
@@ -1270,55 +1905,79 @@ async function run(): Promise<CommanderCommand> {
     }).rc;
     // Actual bridge check is deferred to after showSetupScreens() so that
     // trust is established and GrowthBook has auth headers.
+    // remoteControl标记完整 CLI 启动主流程是否启用对应路径。
     let remoteControl = false;
+    // remoteControlName标记完整 CLI 启动主流程是否启用对应路径。
     const remoteControlName = typeof remoteControlOption === 'string' && remoteControlOption.length > 0 ? remoteControlOption : undefined;
 
     // Validate session ID if provided
+    // 满足 `sessionId` 时，完整 CLI 启动主流程执行该分支。
     if (sessionId) {
       // Check for conflicting flags
       // --session-id can be used with --continue or --resume when --fork-session is also provided
       // (to specify a custom ID for the forked session)
+      // 组合条件 `(options.continue || options.resume) && !options.forkSession` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if ((options.continue || options.resume) && !options.forkSession) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: --session-id can only be used with --continue or --resume if --fork-session is also specified.\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
 
       // When --sdk-url is provided (bridge/remote mode), the session ID is a
       // server-assigned tagged ID (e.g. "session_local_01...") rather than a
       // UUID. Skip UUID validation and local existence checks in that case.
+      // sdkUrl缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!sdkUrl) {
+        // validatedSessionId 会话数据读取`validateUuid`，供完整 CLI 启动主流程后续处理使用。
         const validatedSessionId = validateUuid(sessionId);
+        // validatedSessionId 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
         if (!validatedSessionId) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red('Error: Invalid session ID. Must be a valid UUID.\n'));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
 
         // Check if session ID already exists
+        // 满足 `sessionIdExists(validatedSessionId)` 时，完整 CLI 启动主流程执行该分支。
         if (sessionIdExists(validatedSessionId)) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red(`Error: Session ID ${validatedSessionId} is already in use.\n`));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
       }
     }
 
     // Download file resources if specified via --file flag
+    // fileSpecs 文件数据保存`(options as {`，供完整 CLI 启动主流程后续判断或输出使用。
     const fileSpecs = (options as {
       file?: string[];
     }).file;
+    // 组合条件 `fileSpecs && fileSpecs.length > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (fileSpecs && fileSpecs.length > 0) {
       // Get session ingress token (provided by EnvManager via CLAUDE_CODE_SESSION_ACCESS_TOKEN)
+      // sessionToken 会话数据读取`getSessionIngressAuthToken`，供完整 CLI 启动主流程后续处理使用。
       const sessionToken = getSessionIngressAuthToken();
+      // sessionToken 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!sessionToken) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: Session token required for file downloads. CLAUDE_CODE_SESSION_ACCESS_TOKEN must be set.\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
 
       // Resolve session ID: prefer remote session ID, fall back to internal session ID
+      // fileSessionId 会话数据读取`getSessionId`，供完整 CLI 启动主流程后续处理使用。
       const fileSessionId = process.env.CLAUDE_CODE_REMOTE_SESSION_ID || getSessionId();
+      // files 文件数据解析`parseFileSpecs`，供完整 CLI 启动主流程后续处理使用。
       const files = parseFileSpecs(fileSpecs);
+      // 满足 `files.length > 0` 时，完整 CLI 启动主流程执行该分支。
       if (files.length > 0) {
         // Use ANTHROPIC_BASE_URL if set (by EnvManager), otherwise use OAuth config
         // This ensures consistency with session ingress API in all environments
+        // 配置 集中保存完整 CLI 启动主流程要一起传递的字段。
         const config: FilesApiConfig = {
           baseUrl: process.env.ANTHROPIC_BASE_URL || getOauthConfig().BASE_API_URL,
           oauthToken: sessionToken,
@@ -1326,66 +1985,103 @@ async function run(): Promise<CommanderCommand> {
         };
 
         // Start download without blocking startup - await before REPL renders
+        // fileDownloadPromise 异步任务更新为 `downloadSessionFiles(files, config)`，确保main后续读取最新状态。
         fileDownloadPromise = downloadSessionFiles(files, config);
       }
     }
 
     // Get isNonInteractiveSession from state (was set before init())
+    // isNonInteractiveSession 会话数据记录 `getIsNonInteractiveSession` 是否成立，完整 CLI 启动主流程随后按该结果分支。
     const isNonInteractiveSession = getIsNonInteractiveSession();
 
     // Validate that fallback model is different from main model
+    // 组合条件 `fallbackModel && options.model && fallbackModel =` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (fallbackModel && options.model && fallbackModel === options.model) {
+      // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
       process.stderr.write(chalk.red('Error: Fallback model cannot be the same as the main model. Please specify a different model for --fallback-model.\n'));
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(1);
     }
 
     // Handle system prompt options
+    // 系统提示词 命名 `options.systemPrompt`，让后续代码直接表达这个值的用途。
     let systemPrompt = options.systemPrompt;
+    // 满足 `options.systemPromptFile` 时，完整 CLI 启动主流程执行该分支。
     if (options.systemPromptFile) {
+      // 满足 `options.systemPrompt` 时，完整 CLI 启动主流程执行该分支。
       if (options.systemPrompt) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: Cannot use both --system-prompt and --system-prompt-file. Please use only one.\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // 文件路径读取`resolve`，供完整 CLI 启动主流程后续处理使用。
         const filePath = resolve(options.systemPromptFile);
+        // 系统提示词更新为 `readFileSync(filePath, 'utf8')`，确保main后续读取最新状态。
         systemPrompt = readFileSync(filePath, 'utf8');
       } catch (error) {
+        // code读取`getErrnoCode`，供完整 CLI 启动主流程后续处理使用。
         const code = getErrnoCode(error);
+        // 当 `code` 匹配 `'ENOENT'` 时，完整 CLI 启动主流程执行对应分支。
         if (code === 'ENOENT') {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red(`Error: System prompt file not found: ${resolve(options.systemPromptFile)}\n`));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red(`Error reading system prompt file: ${errorMessage(error)}\n`));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
     }
 
     // Handle append system prompt options
+    // 追加系统提示词 命名 `options.appendSystemPrompt`，让后续代码直接表达这个值的用途。
     let appendSystemPrompt = options.appendSystemPrompt;
+    // 满足 `options.appendSystemPromptFile` 时，完整 CLI 启动主流程执行该分支。
     if (options.appendSystemPromptFile) {
+      // 满足 `options.appendSystemPrompt` 时，完整 CLI 启动主流程执行该分支。
       if (options.appendSystemPrompt) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('Error: Cannot use both --append-system-prompt and --append-system-prompt-file. Please use only one.\n'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // 文件路径读取`resolve`，供完整 CLI 启动主流程后续处理使用。
         const filePath = resolve(options.appendSystemPromptFile);
+        // 追加系统提示词更新为 `readFileSync(filePath, 'utf8')`，确保main后续读取最新状态。
         appendSystemPrompt = readFileSync(filePath, 'utf8');
       } catch (error) {
+        // code读取`getErrnoCode`，供完整 CLI 启动主流程后续处理使用。
         const code = getErrnoCode(error);
+        // 当 `code` 匹配 `'ENOENT'` 时，完整 CLI 启动主流程执行对应分支。
         if (code === 'ENOENT') {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red(`Error: Append system prompt file not found: ${resolve(options.appendSystemPromptFile)}\n`));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red(`Error reading append system prompt file: ${errorMessage(error)}\n`));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
     }
 
     // Add teammate-specific system prompt addendum for tmux teammates
+    // 组合条件 `isAgentSwarmsEnabled() && storedTeammateOpts?.agentId && storedTeammateOpts?.agen...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (isAgentSwarmsEnabled() && storedTeammateOpts?.agentId && storedTeammateOpts?.agentName && storedTeammateOpts?.teamName) {
+      // addendum读取`getTeammatePromptAddendum`，供完整 CLI 启动主流程后续处理使用。
       const addendum = getTeammatePromptAddendum().TEAMMATE_SYSTEM_PROMPT_ADDENDUM;
+      // 追加系统提示词更新为 `appendSystemPrompt ? `${appendSystemPrompt}\n\n${addendum...`，确保main后续读取最新状态。
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${addendum}` : addendum;
     }
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mode: permissionMode,
       notification: permissionModeNotification
@@ -1395,7 +2091,9 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // Store session bypass permissions mode for trust dialog check
+    // setSessionBypassPermissionsMode 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setSessionBypassPermissionsMode(permissionMode === 'bypassPermissions');
+    // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，完整 CLI 启动主流程执行该分支。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       // autoModeFlagCli is the "did the user intend auto this session" signal.
       // Set when: --enable-auto-mode, --permission-mode auto, resolved mode
@@ -1403,90 +2101,132 @@ async function run(): Promise<CommanderCommand> {
       // (permissionMode resolved to default with no explicit CLI override).
       // Used by verifyAutoModeGateAccess to decide whether to notify on
       // auto-unavailable, and by tengu_auto_mode_config opt-in carousel.
+      // 完整 CLI 启动主流程在这里进入条件判断，后续代码按实际状态分流。
       if ((options as {
         enableAutoMode?: boolean;
       }).enableAutoMode || permissionModeCli === 'auto' || permissionMode === 'auto' || !permissionModeCli && isDefaultPermissionModeAuto()) {
+        // 调用 autoModeStateModule?.setAutoModeFlagCli(true);，完成这一处局部操作。
         autoModeStateModule?.setAutoModeFlagCli(true);
       }
     }
 
     // Parse the MCP config files/strings if provided
+    // dynamicMcpConfig 配置 从空对象开始收集键值，后续按名称补齐内容。
     let dynamicMcpConfig: Record<string, ScopedMcpServerConfig> = {};
+    // 组合条件 `mcpConfig && mcpConfig.length > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (mcpConfig && mcpConfig.length > 0) {
       // Process mcpConfig array
+      // processedConfigs 配置派生`mcpConfig.map`，供完整 CLI 启动主流程后续处理使用。
       const processedConfigs = mcpConfig.map(config => config.trim()).filter(config => config.length > 0);
+      // allConfigs 配置 从空对象开始收集键值，后续按名称补齐内容。
       let allConfigs: Record<string, McpServerConfig> = {};
+      // allErrors 错误信息 从空数组开始收集，后续循环会按处理顺序追加条目。
       const allErrors: ValidationError[] = [];
+      // 按顺序遍历 `processedConfigs` 中的configItem 配置，逐个交给完整 CLI 启动主流程处理。
       for (const configItem of processedConfigs) {
+        // configs 配置 命名 `null`，让后续代码直接表达这个值的用途。
         let configs: Record<string, McpServerConfig> | null = null;
+        // 错误列表 从空数组开始收集，后续循环会按处理顺序追加条目。
         let errors: ValidationError[] = [];
 
         // First try to parse as JSON string
+        // parsedJson保存`safeParseJSON`，供完整 CLI 启动主流程后续处理使用。
         const parsedJson = safeParseJSON(configItem);
+        // 满足 `parsedJson` 时，完整 CLI 启动主流程执行该分支。
         if (parsedJson) {
+          // 结果解析`parseMcpConfig`，供完整 CLI 启动主流程后续处理使用。
           const result = parseMcpConfig({
             configObject: parsedJson,
             filePath: 'command line',
             expandVars: true,
             scope: 'dynamic'
           });
+          // 满足 `result.config` 时，完整 CLI 启动主流程执行该分支。
           if (result.config) {
+            // configs 配置更新为 `result.config.mcpServers`，确保main后续读取最新状态。
             configs = result.config.mcpServers;
           } else {
+            // 错误列表更新为 `result.errors`，确保main后续读取最新状态。
             errors = result.errors;
           }
         } else {
           // Try as file path
+          // configPath 路径数据读取`resolve`，供完整 CLI 启动主流程后续处理使用。
           const configPath = resolve(configItem);
+          // 结果解析`parseMcpConfigFromFilePath`，供完整 CLI 启动主流程后续处理使用。
           const result = parseMcpConfigFromFilePath({
             filePath: configPath,
             expandVars: true,
             scope: 'dynamic'
           });
+          // 满足 `result.config` 时，完整 CLI 启动主流程执行该分支。
           if (result.config) {
+            // configs 配置更新为 `result.config.mcpServers`，确保main后续读取最新状态。
             configs = result.config.mcpServers;
           } else {
+            // 错误列表更新为 `result.errors`，确保main后续读取最新状态。
             errors = result.errors;
           }
         }
+        // 满足 `errors.length > 0` 时，完整 CLI 启动主流程执行该分支。
         if (errors.length > 0) {
+          // allErrors 错误信息追加新条目，保持收集顺序与输入顺序一致。
           allErrors.push(...errors);
+        // 完整 CLI 启动主流程在这里处理 `} else if (configs) {`，完成这一小步状态转换。
         } else if (configs) {
           // Merge configs, later ones override earlier ones
+          // allConfigs 配置更新为 `{`，确保main后续读取最新状态。
           allConfigs = {
             ...allConfigs,
             ...configs
           };
         }
       }
+      // 满足 `allErrors.length > 0` 时，完整 CLI 启动主流程执行该分支。
       if (allErrors.length > 0) {
+        // formattedErrors 错误信息派生`allErrors.map`，供完整 CLI 启动主流程后续处理使用。
         const formattedErrors = allErrors.map(err => `${err.path ? err.path + ': ' : ''}${err.message}`).join('\n');
+        // logForDebugging 使用 `--mcp-config validation failed (${allErrors.leng… 完成完整 CLI 启动主流程里的对应操作。
         logForDebugging(`--mcp-config validation failed (${allErrors.length} errors): ${formattedErrors}`, {
           level: 'error'
         });
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(`Error: Invalid MCP configuration:\n${formattedErrors}\n`);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+      // 满足 `Object.keys(allConfigs).length > 0` 时，完整 CLI 启动主流程执行该分支。
       if (Object.keys(allConfigs).length > 0) {
         // SDK hosts (Nest/Desktop) own their server naming and may reuse
         // built-in names — skip reserved-name checks for type:'sdk'.
+        // nonSdkConfigNames 配置派生`Object.entries`，供完整 CLI 启动主流程后续处理使用。
         const nonSdkConfigNames = Object.entries(allConfigs).filter(([, config]) => config.type !== 'sdk').map(([name]) => name);
+        // reservedNameError 错误信息 命名 `null`，让后续代码直接表达这个值的用途。
         let reservedNameError: string | null = null;
+        // 满足 `nonSdkConfigNames.some(isClaudeInChromeMCPServer)` 时，完整 CLI 启动主流程执行该分支。
         if (nonSdkConfigNames.some(isClaudeInChromeMCPServer)) {
+          // reservedNameError 错误信息更新为 ``Invalid MCP configuration: "${CLAUDE_IN_CHROME_MCP_SERVE...`，确保main后续读取最新状态。
           reservedNameError = `Invalid MCP configuration: "${CLAUDE_IN_CHROME_MCP_SERVER_NAME}" is a reserved MCP name.`;
+        // 完整 CLI 启动主流程在这里处理 `} else if (feature('CHICAGO_MCP')) {`，完成这一小步状态转换。
         } else if (feature('CHICAGO_MCP')) {
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             isComputerUseMCPServer,
             COMPUTER_USE_MCP_SERVER_NAME
           } = await import('src/utils/computerUse/common.js');
+          // 满足 `nonSdkConfigNames.some(isComputerUseMCPServer)` 时，完整 CLI 启动主流程执行该分支。
           if (nonSdkConfigNames.some(isComputerUseMCPServer)) {
+            // reservedNameError 错误信息更新为 ``Invalid MCP configuration: "${COMPUTER_USE_MCP_SERVER_NA...`，确保main后续读取最新状态。
             reservedNameError = `Invalid MCP configuration: "${COMPUTER_USE_MCP_SERVER_NAME}" is a reserved MCP name.`;
           }
         }
+        // 满足 `reservedNameError` 时，完整 CLI 启动主流程执行该分支。
         if (reservedNameError) {
           // stderr+exit(1) — a throw here becomes a silent unhandled
           // rejection in stream-json mode (void main() in cli.tsx).
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(`Error: ${reservedNameError}\n`);
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
 
@@ -1497,6 +2237,7 @@ async function run(): Promise<CommanderCommand> {
         // broke Coworker (inc-5122). The policy filter below already exempts
         // type:'sdk', and the entries are inert without an SDK transport on
         // stdin, so there's no bypass risk from letting them through.
+        // scopedConfigs 配置派生`mapValues`，供完整 CLI 启动主流程后续处理使用。
         const scopedConfigs = mapValues(allConfigs, config => ({
           ...config,
           scope: 'dynamic' as const
@@ -1508,13 +2249,17 @@ async function run(): Promise<CommanderCommand> {
         // getClaudeCodeMcpConfigs — callers spread dynamicMcpConfig back on
         // top of filtered results. Filter here at the source so all
         // downstream consumers see the policy-filtered set.
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           allowed,
           blocked
         } = filterMcpServersByPolicy(scopedConfigs);
+        // 满足 `blocked.length > 0` 时，完整 CLI 启动主流程执行该分支。
         if (blocked.length > 0) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(`Warning: MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
         }
+        // dynamicMcpConfig 配置更新为 `{`，确保main后续读取最新状态。
         dynamicMcpConfig = {
           ...dynamicMcpConfig,
           ...allowed
@@ -1523,73 +2268,106 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // Extract Claude in Chrome option and enforce claude.ai subscriber check (unless user is ant)
+    // chromeOpts 集合 命名 `options as {`，让后续代码直接表达这个值的用途。
     const chromeOpts = options as {
       chrome?: boolean;
     };
     // Store the explicit CLI flag so teammates can inherit it
+    // setChromeFlagOverride 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setChromeFlagOverride(chromeOpts.chrome);
+    // enableClaudeInChrome保存`shouldEnableClaudeInChrome`，供完整 CLI 启动主流程后续处理使用。
     const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && ("external" === 'ant' || isClaudeAISubscriber());
+    // autoEnableClaudeInChrome保存`shouldAutoEnableClaudeInChrome`，供完整 CLI 启动主流程后续处理使用。
     const autoEnableClaudeInChrome = !enableClaudeInChrome && shouldAutoEnableClaudeInChrome();
+    // 满足 `enableClaudeInChrome` 时，完整 CLI 启动主流程执行该分支。
     if (enableClaudeInChrome) {
+      // platform读取`getPlatform`，供完整 CLI 启动主流程后续处理使用。
       const platform = getPlatform();
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_claude_in_chrome_setup', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           mcpConfig: chromeMcpConfig,
           allowedTools: chromeMcpTools,
           systemPrompt: chromeSystemPrompt
         } = setupClaudeInChrome();
+        // dynamicMcpConfig 配置更新为 `{`，确保main后续读取最新状态。
         dynamicMcpConfig = {
           ...dynamicMcpConfig,
           ...chromeMcpConfig
         };
+        // allowedTools 集合追加新条目，保持收集顺序与输入顺序一致。
         allowedTools.push(...chromeMcpTools);
+        // 满足 `chromeSystemPrompt` 时，完整 CLI 启动主流程执行该分支。
         if (chromeSystemPrompt) {
+          // 追加系统提示词更新为 `appendSystemPrompt ? `${chromeSystemPrompt}\n\n${appendSy...`，确保main后续读取最新状态。
           appendSystemPrompt = appendSystemPrompt ? `${chromeSystemPrompt}\n\n${appendSystemPrompt}` : chromeSystemPrompt;
         }
       } catch (error) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_claude_in_chrome_setup_failed', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[Claude in Chrome] Error: ${error}`);
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logError(error);
         // biome-ignore lint/suspicious/noConsole:: intentional console output
+        // 调用 console.error，触发完整 CLI 启动主流程此处需要的副作用。
         console.error(`Error: Failed to run with Claude in Chrome.`);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+    // 完整 CLI 启动主流程在这里处理 `} else if (autoEnableClaudeInChrome) {`，完成这一小步状态转换。
     } else if (autoEnableClaudeInChrome) {
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           mcpConfig: chromeMcpConfig
         } = setupClaudeInChrome();
+        // dynamicMcpConfig 配置更新为 `{`，确保main后续读取最新状态。
         dynamicMcpConfig = {
           ...dynamicMcpConfig,
           ...chromeMcpConfig
         };
+        // hint保存`feature`，供完整 CLI 启动主流程后续处理使用。
         const hint = feature('WEB_BROWSER_TOOL') && typeof Bun !== 'undefined' && 'WebView' in Bun ? CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER : CLAUDE_IN_CHROME_SKILL_HINT;
+        // 追加系统提示词更新为 `appendSystemPrompt ? `${appendSystemPrompt}\n\n${hint}` :...`，确保main后续读取最新状态。
         appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${hint}` : hint;
       } catch (error) {
         // Silently skip any errors for the auto-enable
+        // logForDebugging 使用 `[Claude in Chrome] Error (auto-enable 完成完整 CLI 启动主流程里的对应操作。
         logForDebugging(`[Claude in Chrome] Error (auto-enable): ${error}`);
       }
     }
 
     // Extract strict MCP config flag
+    // strictMcpConfig 配置标记完整 CLI 启动主流程是否启用对应路径。
     const strictMcpConfig = options.strictMcpConfig || false;
 
     // Check if enterprise MCP configuration exists. When it does, only allow dynamic MCP
     // configs that contain special server types (sdk)
+    // 满足 `doesEnterpriseMcpConfigExist()` 时，完整 CLI 启动主流程执行该分支。
     if (doesEnterpriseMcpConfigExist()) {
+      // 满足 `strictMcpConfig` 时，完整 CLI 启动主流程执行该分支。
       if (strictMcpConfig) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('You cannot use --strict-mcp-config when an enterprise MCP config is present'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
 
       // For --mcp-config, allow if all servers are internal types (sdk)
+      // 组合条件 `dynamicMcpConfig && !areMcpConfigsAllowedWithEnterpriseMcpConfig(dynamicMcpConfig)` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (dynamicMcpConfig && !areMcpConfigsAllowedWithEnterpriseMcpConfig(dynamicMcpConfig)) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(chalk.red('You cannot dynamically configure MCP servers when an enterprise MCP config is present'));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
     }
@@ -1605,31 +2383,41 @@ async function run(): Promise<CommanderCommand> {
     // `type: 'stdio'`. An enterprise-config ant with the GB gate on would
     // otherwise process.exit(1). Chrome has the same latent issue but has
     // shipped without incident; chicago places itself correctly.
+    // 组合条件 `feature('CHICAGO_MCP') && getPlatform() === 'macos' && !getIsNonInteractiveSessio...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('CHICAGO_MCP') && getPlatform() === 'macos' && !getIsNonInteractiveSession()) {
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           getChicagoEnabled
         } = await import('src/utils/computerUse/gates.js');
+        // 满足 `getChicagoEnabled()` 时，完整 CLI 启动主流程执行该分支。
         if (getChicagoEnabled()) {
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             setupComputerUseMCP
           } = await import('src/utils/computerUse/setup.js');
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             mcpConfig,
             allowedTools: cuTools
           } = setupComputerUseMCP();
+          // dynamicMcpConfig 配置更新为 `{`，确保main后续读取最新状态。
           dynamicMcpConfig = {
             ...dynamicMcpConfig,
             ...mcpConfig
           };
+          // allowedTools 集合追加新条目，保持收集顺序与输入顺序一致。
           allowedTools.push(...cuTools);
         }
       } catch (error) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[Computer Use MCP] Setup failed: ${errorMessage(error)}`);
       }
     }
 
     // Store additional directories for CLAUDE.md loading (controlled by env var)
+    // setAdditionalDirectoriesForClaudeMd 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setAdditionalDirectoriesForClaudeMd(addDir);
 
     // Channel server allowlist from --channels flag — servers whose
@@ -1638,7 +2426,9 @@ async function run(): Promise<CommanderCommand> {
     // on the options type — same pattern as --assistant at main.tsx:1824.
     // devChannels is deferred: showSetupScreens shows a confirmation dialog
     // and only appends to allowedChannels on accept.
+    // devChannels 集合 先占位，稍后的条件分支会根据实际输入补齐它。
     let devChannels: ChannelEntry[] | undefined;
+    // 组合条件 `feature('KAIROS') || feature('KAIROS_CHANNELS')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
       // Parse plugin:name@marketplace / server:Y tags into typed entries.
       // Tag decides trust model downstream: plugin-kind hits marketplace
@@ -1647,55 +2437,82 @@ async function run(): Promise<CommanderCommand> {
       // Untagged or marketplace-less plugin entries are hard errors —
       // silently not-matching in the gate would look like channels are
       // "on" but nothing ever fires.
+      // parseChannelEntries 集合封装成回调，供完整 CLI 启动主流程在事件触发或异步步骤中调用。
       const parseChannelEntries = (raw: string[], flag: string): ChannelEntry[] => {
+        // entries 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
         const entries: ChannelEntry[] = [];
+        // bad 从空数组开始收集，后续循环会按处理顺序追加条目。
         const bad: string[] = [];
+        // 按顺序遍历 `raw` 中的c，逐个交给完整 CLI 启动主流程处理。
         for (const c of raw) {
+          // 满足 `c.startsWith('plugin:')` 时，完整 CLI 启动主流程执行该分支。
           if (c.startsWith('plugin:')) {
+            // rest格式化`c.slice`，供完整 CLI 启动主流程后续处理使用。
             const rest = c.slice(7);
+            // at保存`rest.indexOf`，供完整 CLI 启动主流程后续处理使用。
             const at = rest.indexOf('@');
+            // 组合条件 `at <= 0 || at === rest.length - 1` 成立时，完整 CLI 启动主流程才启用这条专门路径。
             if (at <= 0 || at === rest.length - 1) {
+              // bad追加新条目，保持收集顺序与输入顺序一致。
               bad.push(c);
             } else {
+              // entries 集合追加新条目，保持收集顺序与输入顺序一致。
               entries.push({
                 kind: 'plugin',
                 name: rest.slice(0, at),
                 marketplace: rest.slice(at + 1)
               });
             }
+          // 完整 CLI 启动主流程在这里处理 `} else if (c.startsWith('server:') && c.length > 7) {`，完成这一小步状态转换。
           } else if (c.startsWith('server:') && c.length > 7) {
+            // entries 集合追加新条目，保持收集顺序与输入顺序一致。
             entries.push({
               kind: 'server',
               name: c.slice(7)
             });
           } else {
+            // bad追加新条目，保持收集顺序与输入顺序一致。
             bad.push(c);
           }
         }
+        // 满足 `bad.length > 0` 时，完整 CLI 启动主流程执行该分支。
         if (bad.length > 0) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red(`${flag} entries must be tagged: ${bad.join(', ')}\n` + `  plugin:<name>@<marketplace>  — plugin-provided channel (allowlist enforced)\n` + `  server:<name>                — manually configured MCP server\n`));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
+        // 返回 `entries`，作为完整 CLI 启动主流程这次计算的结果。
         return entries;
       };
+      // channelOpts 集合保存`options as {`，供完整 CLI 启动主流程后续判断或输出使用。
       const channelOpts = options as {
         channels?: string[];
         dangerouslyLoadDevelopmentChannels?: string[];
       };
+      // rawChannels 集合 命名 `channelOpts.channels`，让后续代码直接表达这个值的用途。
       const rawChannels = channelOpts.channels;
+      // rawDev保存`channelOpts.dangerouslyLoadDevelopmentChannels`，供完整 CLI 启动主流程后续判断或输出使用。
       const rawDev = channelOpts.dangerouslyLoadDevelopmentChannels;
       // Always parse + set. ChannelsNotice reads getAllowedChannels() and
       // renders the appropriate branch (disabled/noAuth/policyBlocked/
       // listening) in the startup screen. gateChannelServer() enforces.
       // --channels works in both interactive and print/SDK modes; dev-channels
       // stays interactive-only (requires a confirmation dialog).
+      // channelEntries 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
       let channelEntries: ChannelEntry[] = [];
+      // 组合条件 `rawChannels && rawChannels.length > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (rawChannels && rawChannels.length > 0) {
+        // channelEntries 集合更新为 `parseChannelEntries(rawChannels, '--channels')`，确保main后续读取最新状态。
         channelEntries = parseChannelEntries(rawChannels, '--channels');
+        // setAllowedChannels 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setAllowedChannels(channelEntries);
       }
+      // isNonInteractiveSession 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!isNonInteractiveSession) {
+        // 组合条件 `rawDev && rawDev.length > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
         if (rawDev && rawDev.length > 0) {
+          // devChannels 集合更新为 `parseChannelEntries(rawDev, '--dangerously-load-developme...`，确保main后续读取最新状态。
           devChannels = parseChannelEntries(rawDev, '--dangerously-load-development-channels');
         }
       }
@@ -1705,11 +2522,16 @@ async function run(): Promise<CommanderCommand> {
       // Per-server gate outcomes land in tengu_mcp_channel_gate once
       // servers connect. Dev entries go through a confirmation dialog after
       // this — dev_plugins captures what was typed, not what was accepted.
+      // 组合条件 `channelEntries.length > 0 || (devChannels?.length ?? 0) > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (channelEntries.length > 0 || (devChannels?.length ?? 0) > 0) {
+        // joinPluginIds 插件数据封装成回调，供完整 CLI 启动主流程在事件触发或异步步骤中调用。
         const joinPluginIds = (entries: ChannelEntry[]) => {
+          // ids 集合派生`entries.flatMap`，供完整 CLI 启动主流程后续处理使用。
           const ids = entries.flatMap(e => e.kind === 'plugin' ? [`${e.name}@${e.marketplace}`] : []);
+          // 返回 `ids.length > 0 ? ids.sort().join(',') as AnalyticsMetadata_I_VERIFIED_T...`，作为完整 CLI 启动主流程这次计算的结果。
           return ids.length > 0 ? ids.sort().join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS : undefined;
         };
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_mcp_channel_flags', {
           channels_count: channelEntries.length,
           dev_count: devChannels?.length ?? 0,
@@ -1725,18 +2547,24 @@ async function run(): Promise<CommanderCommand> {
     // the tool as enabled when computing the base-tools disallow filter.
     // Conditional require avoids leaking the tool-name string into
     // external builds.
+    // 组合条件 `(feature('KAIROS') || feature('KAIROS_BRIEF')) && baseTools.length > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if ((feature('KAIROS') || feature('KAIROS_BRIEF')) && baseTools.length > 0) {
       /* eslint-disable @typescript-eslint/no-require-imports */
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         BRIEF_TOOL_NAME,
         LEGACY_BRIEF_TOOL_NAME
       } = require('./tools/BriefTool/prompt.js') as typeof import('./tools/BriefTool/prompt.js');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         isBriefEntitled
       } = require('./tools/BriefTool/BriefTool.js') as typeof import('./tools/BriefTool/BriefTool.js');
       /* eslint-enable @typescript-eslint/no-require-imports */
+      // 解析结果解析`parseToolListFromCLI`，供完整 CLI 启动主流程后续处理使用。
       const parsed = parseToolListFromCLI(baseTools);
+      // 组合条件 `(parsed.includes(BRIEF_TOOL_NAME) || parsed.includes(LEGACY_BRIEF_TOOL_NAME)) && ...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if ((parsed.includes(BRIEF_TOOL_NAME) || parsed.includes(LEGACY_BRIEF_TOOL_NAME)) && isBriefEntitled()) {
+        // setUserMsgOptIn 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setUserMsgOptIn(true);
       }
     }
@@ -1744,6 +2572,7 @@ async function run(): Promise<CommanderCommand> {
     // This await replaces blocking existsSync/statSync calls that were already in
     // the startup path. Wall-clock time is unchanged; we just yield to the event
     // loop during the fs I/O instead of blocking it. See #19661.
+    // initResult保存`initializeToolPermissionContext`，供完整 CLI 启动主流程后续处理使用。
     const initResult = await initializeToolPermissionContext({
       allowedToolsCli: allowedTools,
       disallowedToolsCli: disallowedTools,
@@ -1752,7 +2581,9 @@ async function run(): Promise<CommanderCommand> {
       allowDangerouslySkipPermissions,
       addDirs: addDir
     });
+    // toolPermissionContext 权限数据保存`initResult.toolPermissionContext`，供后续判断或组装使用。
     let toolPermissionContext = initResult.toolPermissionContext;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       warnings,
       dangerousPermissions,
@@ -1760,39 +2591,54 @@ async function run(): Promise<CommanderCommand> {
     } = initResult;
 
     // Handle overly broad shell allow rules for ant users (Bash(*), PowerShell(*))
+    // 组合条件 `"external" === 'ant' && overlyBroadBashPermission` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if ("external" === 'ant' && overlyBroadBashPermissions.length > 0) {
+      // 按顺序遍历 `overlyBroadBashPermissions` 中的permission 权限数据，逐个交给完整 CLI 启动主流程处理。
       for (const permission of overlyBroadBashPermissions) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Ignoring overly broad shell permission ${permission.ruleDisplay} from ${permission.sourceDisplay}`);
       }
+      // toolPermissionContext 权限数据更新为 `removeDangerousPermissions(toolPermissionContext, overlyB...`，确保main后续读取最新状态。
       toolPermissionContext = removeDangerousPermissions(toolPermissionContext, overlyBroadBashPermissions);
     }
+    // 组合条件 `feature('TRANSCRIPT_CLASSIFIER') && dangerousPermissions.length > 0` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('TRANSCRIPT_CLASSIFIER') && dangerousPermissions.length > 0) {
+      // toolPermissionContext 权限数据更新为 `stripDangerousPermissionsForAutoMode(toolPermissionContex...`，确保main后续读取最新状态。
       toolPermissionContext = stripDangerousPermissionsForAutoMode(toolPermissionContext);
     }
 
     // Print any warnings from initialization
+    // 调用 warnings.forEach，触发完整 CLI 启动主流程此处需要的副作用。
     warnings.forEach(warning => {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
+      // 调用 console.error，触发完整 CLI 启动主流程此处需要的副作用。
       console.error(warning);
     });
+    // 显式忽略 `assertMinVersion()` 的返回值，只保留它触发的副作用。
     void assertMinVersion();
 
     // claude.ai config fetch: -p mode only (interactive uses useManageMCPConnections
     // two-phase loading). Kicked off here to overlap with setup(); awaited
     // before runHeadless so single-turn -p sees connectors. Skipped under
     // enterprise/strict MCP to preserve policy boundaries.
+    // claudeaiConfigPromise 异步任务标记完整 CLI 启动主流程是否启用对应路径。
     const claudeaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() &&
     // --bare / SIMPLE: skip claude.ai proxy servers (datadog, Gmail,
     // Slack, BigQuery, PubMed — 6-14s each to connect). Scripted calls
     // that need MCP pass --mcp-config explicitly.
+    // 这个回调绑定到 !isBareMode() ? fetchClaudeAIMcpConfigsIfEligible().then(configs => {，负责完整 CLI 启动主流程在该局部场景下的响应。
     !isBareMode() ? fetchClaudeAIMcpConfigsIfEligible().then(configs => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         allowed,
         blocked
       } = filterMcpServersByPolicy(configs);
+      // 满足 `blocked.length > 0` 时，完整 CLI 启动主流程执行该分支。
       if (blocked.length > 0) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(`Warning: claude.ai MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
       }
+      // 返回 `allowed`，作为完整 CLI 启动主流程这次计算的结果。
       return allowed;
     }) : Promise.resolve({});
 
@@ -1800,100 +2646,146 @@ async function run(): Promise<CommanderCommand> {
     // Both interactive and -p use getClaudeCodeMcpConfigs (local file reads only).
     // The local promise is awaited later (before prefetchAllMcpResources) to
     // overlap config I/O with setup(), commands loading, and trust dialog.
+    // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
     logForDebugging('[STARTUP] Loading MCP configs...');
+    // mcpConfigStart 配置记录时间`Date.now`，供完整 CLI 启动主流程后续处理使用。
     const mcpConfigStart = Date.now();
+    // mcpConfigResolvedMs 配置 先占位，稍后的条件分支会根据实际输入补齐它。
     let mcpConfigResolvedMs: number | undefined;
     // --bare skips auto-discovered MCP (.mcp.json, user settings, plugins) —
     // only explicit --mcp-config works. dynamicMcpConfig is spread onto
     // allMcpConfigs downstream so it survives this skip.
+    // mcpConfigPromise 异步任务保存 `isBareMode` 启动的异步任务，稍后再决定等待还是后台完成。
     const mcpConfigPromise = (strictMcpConfig || isBareMode() ? Promise.resolve({
       servers: {} as Record<string, ScopedMcpServerConfig>
+    // 这个回调绑定到 }) : getClaudeCodeMcpConfigs(dynamicMcpConfig)).then(result => {，负责完整 CLI 启动主流程在该局部场景下的响应。
     }) : getClaudeCodeMcpConfigs(dynamicMcpConfig)).then(result => {
+      // mcpConfigResolvedMs 配置更新为 `Date.now() - mcpConfigStart`，确保main后续读取最新状态。
       mcpConfigResolvedMs = Date.now() - mcpConfigStart;
+      // 返回 `result`，作为完整 CLI 启动主流程这次计算的结果。
       return result;
     });
 
     // NOTE: We do NOT call prefetchAllMcpResources here - that's deferred until after trust dialog
 
+    // `inputFormat && inputFormat` 与 `'text' && inputFor` 不一致时刷新派生状态，避免使用过期结果。
     if (inputFormat && inputFormat !== 'text' && inputFormat !== 'stream-json') {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
+      // 调用 console.error，触发完整 CLI 启动主流程此处需要的副作用。
       console.error(`Error: Invalid input format "${inputFormat}".`);
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(1);
     }
+    // 组合条件 `inputFormat === 'stream-json' && outputFormat !==` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (inputFormat === 'stream-json' && outputFormat !== 'stream-json') {
       // biome-ignore lint/suspicious/noConsole:: intentional console output
+      // 调用 console.error，触发完整 CLI 启动主流程此处需要的副作用。
       console.error(`Error: --input-format=stream-json requires output-format=stream-json.`);
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(1);
     }
 
     // Validate sdkUrl is only used with appropriate formats (formats are auto-set above)
+    // 满足 `sdkUrl` 时，完整 CLI 启动主流程执行该分支。
     if (sdkUrl) {
+      // `inputFormat` 与 `'stream-json' || outputFormat !...` 不一致时刷新派生状态，避免使用过期结果。
       if (inputFormat !== 'stream-json' || outputFormat !== 'stream-json') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
+        // 调用 console.error，触发完整 CLI 启动主流程此处需要的副作用。
         console.error(`Error: --sdk-url requires both --input-format=stream-json and --output-format=stream-json.`);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
     }
 
     // Validate replayUserMessages is only used with stream-json formats
+    // 满足 `options.replayUserMessages` 时，完整 CLI 启动主流程执行该分支。
     if (options.replayUserMessages) {
+      // `inputFormat` 与 `'stream-json' || outputFormat !...` 不一致时刷新派生状态，避免使用过期结果。
       if (inputFormat !== 'stream-json' || outputFormat !== 'stream-json') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
+        // 调用 console.error，触发完整 CLI 启动主流程此处需要的副作用。
         console.error(`Error: --replay-user-messages requires both --input-format=stream-json and --output-format=stream-json.`);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
     }
 
     // Validate includePartialMessages is only used with print mode and stream-json output
+    // 满足 `effectiveIncludePartialMessages` 时，完整 CLI 启动主流程执行该分支。
     if (effectiveIncludePartialMessages) {
+      // `!isNonInteractiveSession || outputFormat` 与 `'str` 不一致时刷新派生状态，避免使用过期结果。
       if (!isNonInteractiveSession || outputFormat !== 'stream-json') {
+        // 调用 writeToStderr，触发完整 CLI 启动主流程此处需要的副作用。
         writeToStderr(`Error: --include-partial-messages requires --print and --output-format=stream-json.`);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
     }
 
     // Validate --no-session-persistence is only used with print mode
+    // 组合条件 `options.sessionPersistence === false && !isNonInt` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (options.sessionPersistence === false && !isNonInteractiveSession) {
+      // 调用 writeToStderr，触发完整 CLI 启动主流程此处需要的副作用。
       writeToStderr(`Error: --no-session-persistence can only be used with --print mode.`);
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(1);
     }
+    // effectivePrompt标记完整 CLI 启动主流程是否启用对应路径。
     const effectivePrompt = prompt || '';
+    // inputPrompt读取`getInputPrompt`，供完整 CLI 启动主流程后续处理使用。
     let inputPrompt = await getInputPrompt(effectivePrompt, (inputFormat ?? 'text') as 'text' | 'stream-json');
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('action_after_input_prompt');
 
     // Activate proactive mode BEFORE getTools() so SleepTool.isEnabled()
     // (which returns isProactiveActive()) passes and Sleep is included.
     // The later REPL-path maybeActivateProactive() calls are idempotent.
+    // 调用 maybeActivateProactive，触发完整 CLI 启动主流程此处需要的副作用。
     maybeActivateProactive(options);
+    // tools 集合读取`getTools`，供完整 CLI 启动主流程后续处理使用。
     let tools = getTools(toolPermissionContext);
 
     // Apply coordinator mode tool filtering for headless path
     // (mirrors useMergedTools.ts filtering for REPL/interactive path)
+    // 组合条件 `feature('COORDINATOR_MODE') && isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MO...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE)) {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         applyCoordinatorToolFilter
       } = await import('./utils/toolPool.js');
+      // tools 集合更新为 `applyCoordinatorToolFilter(tools)`，确保main后续读取最新状态。
       tools = applyCoordinatorToolFilter(tools);
     }
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('action_tools_loaded');
+    // jsonSchema 先占位，稍后的条件分支会根据实际输入补齐它。
     let jsonSchema: ToolInputJSONSchema | undefined;
+    // 完整 CLI 启动主流程在这里进入条件判断，后续代码按实际状态分流。
     if (isSyntheticOutputToolEnabled({
       isNonInteractiveSession
     }) && options.jsonSchema) {
+      // jsonSchema更新为 `jsonParse(options.jsonSchema) as ToolInputJSONSchema`，确保main后续读取最新状态。
       jsonSchema = jsonParse(options.jsonSchema) as ToolInputJSONSchema;
     }
+    // 满足 `jsonSchema` 时，完整 CLI 启动主流程执行该分支。
     if (jsonSchema) {
+      // syntheticOutputResult构建`createSyntheticOutputTool`，供完整 CLI 启动主流程后续处理使用。
       const syntheticOutputResult = createSyntheticOutputTool(jsonSchema);
+      // 满足 `'tool' in syntheticOutputResult` 时，完整 CLI 启动主流程执行该分支。
       if ('tool' in syntheticOutputResult) {
         // Add SyntheticOutputTool to the tools array AFTER getTools() filtering.
         // This tool is excluded from normal filtering (see tools.ts) because it's
         // an implementation detail for structured output, not a user-controlled tool.
+        // tools 集合更新为 `[...tools, syntheticOutputResult.tool]`，确保main后续读取最新状态。
         tools = [...tools, syntheticOutputResult.tool];
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_structured_output_enabled', {
           schema_property_count: Object.keys(jsonSchema.properties as Record<string, unknown> || {}).length as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           has_required_fields: Boolean(jsonSchema.required) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       } else {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_structured_output_failure', {
           error: 'Invalid JSON schema' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
@@ -1901,9 +2793,13 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // IMPORTANT: setup() must be called before any other code that depends on the cwd or worktree setup
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('action_before_setup');
+    // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
     logForDebugging('[STARTUP] Running setup()...');
+    // setupStart记录时间`Date.now`，供完整 CLI 启动主流程后续处理使用。
     const setupStart = Date.now();
+    // messagingSocketPath 路径数据保存`feature`，供完整 CLI 启动主流程后续处理使用。
     const messagingSocketPath = feature('UDS_INBOX') ? (options as {
       messagingSocketPath?: string;
     }).messagingSocketPath : undefined;
@@ -1912,33 +2808,51 @@ async function run(): Promise<CommanderCommand> {
     // doesn't contend with getCommands' file reads. Gated on !worktreeEnabled
     // since --worktree makes setup() process.chdir() (setup.ts:203), and
     // commands/agents need the post-chdir cwd.
+    // preSetupCwd读取`getCwd`，供完整 CLI 启动主流程后续处理使用。
     const preSetupCwd = getCwd();
     // Register bundled skills/plugins before kicking getCommands() — they're
     // pure in-memory array pushes (<1ms, zero I/O) that getBundledSkills()
     // reads synchronously. Previously ran inside setup() after ~20ms of
     // await points, so the parallel getCommands() memoized an empty list.
+    // `process.env.CLAUDE_CODE_ENTRYPOINT` 与 `'local-age` 不一致时刷新派生状态，避免使用过期结果。
     if (process.env.CLAUDE_CODE_ENTRYPOINT !== 'local-agent') {
+      // 调用 initBuiltinPlugins，触发完整 CLI 启动主流程此处需要的副作用。
       initBuiltinPlugins();
+      // 调用 initBundledSkills，触发完整 CLI 启动主流程此处需要的副作用。
       initBundledSkills();
     }
+    // setupPromise 异步任务保存 `async` 启动的异步任务，稍后再决定等待还是后台完成。
     const setupPromise = process.env.CLAUDE_CODE_LOCAL_RECOVERY === '1' ? (async () => {
+      // setOriginalCwd 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setOriginalCwd(preSetupCwd);
+      // setProjectRoot 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setProjectRoot(preSetupCwd);
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logForDebugging('[STARTUP] setup() skipped in local recovery mode');
+    // 这个回调绑定到 })() : (async () => {，负责完整 CLI 启动主流程在该局部场景下的响应。
     })() : (async () => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         setup
       } = await import('./setup.js');
+      // 等待 `setup(preSetupCwd, permissionMode, allowDangerouslySkipPermissions, wor...` 完成，再继续完整 CLI 启动主流程的异步流程。
       await setup(preSetupCwd, permissionMode, allowDangerouslySkipPermissions, worktreeEnabled, worktreeName, tmuxEnabled, sessionId ? validateUuid(sessionId) : undefined, worktreePRNumber, messagingSocketPath);
     })();
+    // commandsPromise 异步任务保存 `getCommands` 启动的异步任务，稍后再决定等待还是后台完成。
     const commandsPromise = worktreeEnabled ? null : getCommands(preSetupCwd);
+    // agentDefsPromise 异步任务保存 `getAgentDefinitionsWithOverrides` 启动的异步任务，稍后再决定等待还是后台完成。
     const agentDefsPromise = worktreeEnabled ? null : getAgentDefinitionsWithOverrides(preSetupCwd);
     // Suppress transient unhandledRejection if these reject during the
     // ~28ms setupPromise await before Promise.all joins them below.
+    // 这个回调绑定到 commandsPromise?.catch(() => {});，负责完整 CLI 启动主流程在该局部场景下的响应。
     commandsPromise?.catch(() => {});
+    // 这个回调绑定到 agentDefsPromise?.catch(() => {});，负责完整 CLI 启动主流程在该局部场景下的响应。
     agentDefsPromise?.catch(() => {});
+    // 等待 `setupPromise` 完成，再继续完整 CLI 启动主流程的异步流程。
     await setupPromise;
+    // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[STARTUP] setup() completed in ${Date.now() - setupStart}ms`);
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('action_after_setup');
 
     // Replay user messages into stream-json only when the socket was
@@ -1947,14 +2861,19 @@ async function run(): Promise<CommanderCommand> {
     // shouldn't reshape stream-json for SDK consumers who never touch it.
     // Callers who inject and also want those injections visible in the
     // stream pass --messaging-socket-path explicitly (or --replay-user-messages).
+    // effectiveReplayUserMessages 消息数据标记完整 CLI 启动主流程是否启用对应路径。
     let effectiveReplayUserMessages = !!options.replayUserMessages;
+    // 满足 `feature('UDS_INBOX')` 时，完整 CLI 启动主流程执行该分支。
     if (feature('UDS_INBOX')) {
+      // 组合条件 `!effectiveReplayUserMessages && outputFormat ===` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (!effectiveReplayUserMessages && outputFormat === 'stream-json') {
+        // effectiveReplayUserMessages 消息数据更新为 `!!(options as {`，确保main后续读取最新状态。
         effectiveReplayUserMessages = !!(options as {
           messagingSocketPath?: string;
         }).messagingSocketPath;
       }
     }
+    // 满足 `getIsNonInteractiveSession()` 时，完整 CLI 启动主流程执行该分支。
     if (getIsNonInteractiveSession()) {
       // Apply full merged settings env now (including project-scoped
       // .claude/settings.json PATH/GIT_DIR/GIT_WORK_TREE) so gitExe() and
@@ -1968,6 +2887,7 @@ async function run(): Promise<CommanderCommand> {
       // applySafeConfigEnvironmentVariables in init() called
       // getSettings_DEPRECATED at managedEnv.ts:86 which merges all enabled
       // sources including projectSettings/localSettings.
+      // 调用 applyConfigEnvironmentVariables，触发完整 CLI 启动主流程此处需要的副作用。
       applyConfigEnvironmentVariables();
 
       // Spawn git status/log/branch now so the subprocess execution overlaps
@@ -1980,18 +2900,21 @@ async function run(): Promise<CommanderCommand> {
       // a cache hit. The microtask from await getIsGit() drains at the
       // getCommands Promise.all await below. Trust is implicit in -p mode
       // (same gate as prefetchSystemContextIfSafe).
+      // 显式忽略 `getSystemContext()` 的返回值，只保留它触发的副作用。
       void getSystemContext();
       // Kick getUserContext now too — its first await (fs.readFile in
       // getMemoryFiles) yields naturally, so the CLAUDE.md directory walk
       // runs during the ~280ms overlap window before the context
       // Promise.all join in print.ts. The void getUserContext() in
       // startDeferredPrefetches becomes a memoize cache-hit.
+      // 显式忽略 `getUserContext()` 的返回值，只保留它触发的副作用。
       void getUserContext();
       // Kick ensureModelStringsInitialized now — for Bedrock this triggers
       // a 100-200ms profile fetch that was awaited serially at
       // print.ts:739. updateBedrockModelStrings is sequential()-wrapped so
       // the await joins the in-flight fetch. Non-Bedrock is a sync
       // early-return (zero-cost).
+      // 显式忽略 `ensureModelStringsInitialized()` 的返回值，只保留它触发的副作用。
       void ensureModelStringsInitialized();
     }
 
@@ -1999,8 +2922,11 @@ async function run(): Promise<CommanderCommand> {
     // session ID is finalized by --continue/--resume. materializeSessionFile
     // persists it on the first user message; REPL's useTerminalTitle reads it
     // via getCurrentSessionTitle.
+    // sessionNameArg 会话数据格式化`trim`，供完整 CLI 启动主流程后续处理使用。
     const sessionNameArg = options.name?.trim();
+    // 满足 `sessionNameArg` 时，完整 CLI 启动主流程执行该分支。
     if (sessionNameArg) {
+      // 调用 cacheSessionTitle，触发完整 CLI 启动主流程此处需要的副作用。
       cacheSessionTitle(sessionNameArg);
     }
 
@@ -2015,42 +2941,62 @@ async function run(): Promise<CommanderCommand> {
     //  - explicit model via --model or ANTHROPIC_MODEL (both feed alias resolution)
     //  - no env override (which short-circuits _CACHED_MAY_BE_STALE before disk)
     //  - flag absent from disk (== null also catches pre-#22279 poisoned null)
+    // explicitModel 来自环境变量默认值，运行参数仍可在入口处覆盖。
     const explicitModel = options.model || process.env.ANTHROPIC_MODEL;
+    // `"external" === 'ant' && explicitModel && ex...` 与 `'default' && !hasGrowthBookEnvO...` 不一致时刷新派生状态，避免使用过期结果。
     if ("external" === 'ant' && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
+      // 等待 `initializeGrowthBook()` 完成，再继续完整 CLI 启动主流程的异步流程。
       await initializeGrowthBook();
     }
 
     // Special case the default model with the null keyword
     // NOTE: Model resolution happens after setup() to ensure trust is established before AWS auth
+    // userSpecifiedModel读取`getDefaultMainLoopModel`，供完整 CLI 启动主流程后续处理使用。
     const userSpecifiedModel = options.model === 'default' ? getDefaultMainLoopModel() : options.model;
+    // userSpecifiedFallbackModel读取`getDefaultMainLoopModel`，供完整 CLI 启动主流程后续处理使用。
     const userSpecifiedFallbackModel = fallbackModel === 'default' ? getDefaultMainLoopModel() : fallbackModel;
 
     // Reuse preSetupCwd unless setup() chdir'd (worktreeEnabled). Saves a
     // getCwd() syscall in the common path.
+    // currentCwd读取`getCwd`，供完整 CLI 启动主流程后续处理使用。
     const currentCwd = worktreeEnabled ? getCwd() : preSetupCwd;
+    // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
     logForDebugging('[STARTUP] Loading commands and agents...');
+    // commandsStart 命令数据记录时间`Date.now`，供完整 CLI 启动主流程后续处理使用。
     const commandsStart = Date.now();
     // Join the promises kicked before setup() (or start fresh if
     // worktreeEnabled gated the early kick). Both memoized by cwd.
+    // 并行获取 commands、agentDefinitionsResult，缩短完整 CLI 启动主流程等待多个独立异步任务的时间。
     const [commands, agentDefinitionsResult] = await Promise.all([commandsPromise ?? getCommands(currentCwd), agentDefsPromise ?? getAgentDefinitionsWithOverrides(currentCwd)]);
+    // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[STARTUP] Commands and agents loaded in ${Date.now() - commandsStart}ms`);
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('action_commands_loaded');
 
     // Parse CLI agents if provided via --agents flag
+    // cliAgents 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     let cliAgents: typeof agentDefinitionsResult.activeAgents = [];
+    // 满足 `agentsJson` 时，完整 CLI 启动主流程执行该分支。
     if (agentsJson) {
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // parsedAgents 集合保存`safeParseJSON`，供完整 CLI 启动主流程后续处理使用。
         const parsedAgents = safeParseJSON(agentsJson);
+        // 满足 `parsedAgents` 时，完整 CLI 启动主流程执行该分支。
         if (parsedAgents) {
+          // cliAgents 集合更新为 `parseAgentsFromJson(parsedAgents, 'flagSettings')`，确保main后续读取最新状态。
           cliAgents = parseAgentsFromJson(parsedAgents, 'flagSettings');
         }
       } catch (error) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logError(error);
       }
     }
 
     // Merge CLI agents with existing ones
+    // allAgents 集合 聚合成有序列表，保持后续遍历顺序稳定。
     const allAgents = [...agentDefinitionsResult.allAgents, ...cliAgents];
+    // agentDefinitions 集合 集中保存完整 CLI 启动主流程要一起传递的字段。
     const agentDefinitions = {
       ...agentDefinitionsResult,
       allAgents,
@@ -2058,20 +3004,29 @@ async function run(): Promise<CommanderCommand> {
     };
 
     // Look up main thread agent from CLI flag or settings
+    // agentSetting读取`getInitialSettings`，供完整 CLI 启动主流程后续处理使用。
     const agentSetting = agentCli ?? getInitialSettings().agent;
+    // mainThreadAgentDefinition 先占位，稍后的条件分支会根据实际输入补齐它。
     let mainThreadAgentDefinition: (typeof agentDefinitions.activeAgents)[number] | undefined;
+    // 满足 `agentSetting` 时，完整 CLI 启动主流程执行该分支。
     if (agentSetting) {
+      // mainThreadAgentDefinition更新为 `agentDefinitions.activeAgents.find(agent => agent.agentTy...`，确保main后续读取最新状态。
       mainThreadAgentDefinition = agentDefinitions.activeAgents.find(agent => agent.agentType === agentSetting);
+      // mainThreadAgentDefinition缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!mainThreadAgentDefinition) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Warning: agent "${agentSetting}" not found. ` + `Available agents: ${agentDefinitions.activeAgents.map(a => a.agentType).join(', ')}. ` + `Using default behavior.`);
       }
     }
 
     // Store the main thread agent type in bootstrap state so hooks can access it
+    // setMainThreadAgentType 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setMainThreadAgentType(mainThreadAgentDefinition?.agentType);
 
     // Log agent flag usage — only log agent name for built-in agents to avoid leaking custom agent names
+    // 满足 `mainThreadAgentDefinition` 时，完整 CLI 启动主流程执行该分支。
     if (mainThreadAgentDefinition) {
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_agent_flag', {
         agentType: isBuiltInAgent(mainThreadAgentDefinition) ? mainThreadAgentDefinition.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS : 'custom' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         ...(agentCli && {
@@ -2081,15 +3036,21 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // Persist agent setting to session transcript for resume view display and restoration
+    // 满足 `mainThreadAgentDefinition?.agentType` 时，完整 CLI 启动主流程执行该分支。
     if (mainThreadAgentDefinition?.agentType) {
+      // 调用 saveAgentSetting，触发完整 CLI 启动主流程此处需要的副作用。
       saveAgentSetting(mainThreadAgentDefinition.agentType);
     }
 
     // Apply the agent's system prompt for non-interactive sessions
     // (interactive mode uses buildEffectiveSystemPrompt instead)
+    // 组合条件 `isNonInteractiveSession && mainThreadAgentDefinition && !systemPrompt && !isBuilt...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (isNonInteractiveSession && mainThreadAgentDefinition && !systemPrompt && !isBuiltInAgent(mainThreadAgentDefinition)) {
+      // agentSystemPrompt读取`mainThreadAgentDefinition.getSystemPrompt`，供完整 CLI 启动主流程后续处理使用。
       const agentSystemPrompt = mainThreadAgentDefinition.getSystemPrompt();
+      // 满足 `agentSystemPrompt` 时，完整 CLI 启动主流程执行该分支。
       if (agentSystemPrompt) {
+        // 系统提示词更新为 `agentSystemPrompt`，确保main后续读取最新状态。
         systemPrompt = agentSystemPrompt;
       }
     }
@@ -2100,67 +3061,103 @@ async function run(): Promise<CommanderCommand> {
     // AsyncIterable (SDK stream-json mode), template interpolation would
     // call .toString() producing "[object Object]". The AsyncIterable case
     // is handled in print.ts via structuredIO.prependUserMessage().
+    // 满足 `mainThreadAgentDefinition?.initialPrompt` 时，完整 CLI 启动主流程执行该分支。
     if (mainThreadAgentDefinition?.initialPrompt) {
+      // 当 `typeof inputPrompt` 匹配 `'string'` 时，完整 CLI 启动主流程执行对应分支。
       if (typeof inputPrompt === 'string') {
+        // inputPrompt更新为 `inputPrompt ? `${mainThreadAgentDefinition.initialPrompt}...`，确保main后续读取最新状态。
         inputPrompt = inputPrompt ? `${mainThreadAgentDefinition.initialPrompt}\n\n${inputPrompt}` : mainThreadAgentDefinition.initialPrompt;
+      // 完整 CLI 启动主流程在这里处理 `} else if (!inputPrompt) {`，完成这一小步状态转换。
       } else if (!inputPrompt) {
+        // inputPrompt更新为 `mainThreadAgentDefinition.initialPrompt`，确保main后续读取最新状态。
         inputPrompt = mainThreadAgentDefinition.initialPrompt;
       }
     }
 
     // Compute effective model early so hooks can run in parallel with MCP
     // If user didn't specify a model but agent has one, use the agent's model
+    // effectiveModel保存`userSpecifiedModel`，供完整 CLI 启动主流程后续判断或输出使用。
     let effectiveModel = userSpecifiedModel;
+    // 组合条件 `!effectiveModel && mainThreadAgentDefinition?.mod` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (!effectiveModel && mainThreadAgentDefinition?.model && mainThreadAgentDefinition.model !== 'inherit') {
+      // effectiveModel更新为 `parseUserSpecifiedModel(mainThreadAgentDefinition.model)`，确保main后续读取最新状态。
       effectiveModel = parseUserSpecifiedModel(mainThreadAgentDefinition.model);
     }
+    // setMainLoopModelOverride 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setMainLoopModelOverride(effectiveModel);
 
     // Compute resolved model for hooks (use user-specified model at launch)
+    // setInitialMainLoopModel 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setInitialMainLoopModel(getUserSpecifiedModelSetting() || null);
+    // initialMainLoopModel读取`getInitialMainLoopModel`，供完整 CLI 启动主流程后续处理使用。
     const initialMainLoopModel = getInitialMainLoopModel();
+    // resolvedInitialModel解析`parseUserSpecifiedModel`，供完整 CLI 启动主流程后续处理使用。
     const resolvedInitialModel = parseUserSpecifiedModel(initialMainLoopModel ?? getDefaultMainLoopModel());
+    // advisorModel 先占位，稍后的条件分支会根据实际输入补齐它。
     let advisorModel: string | undefined;
+    // 满足 `isAdvisorEnabled()` 时，完整 CLI 启动主流程执行该分支。
     if (isAdvisorEnabled()) {
+      // advisorOption保存`canUserConfigureAdvisor`，供完整 CLI 启动主流程后续处理使用。
       const advisorOption = canUserConfigureAdvisor() ? (options as {
         advisor?: string;
       }).advisor : undefined;
+      // 满足 `advisorOption` 时，完整 CLI 启动主流程执行该分支。
       if (advisorOption) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[AdvisorTool] --advisor ${advisorOption}`);
+        // 满足 `!modelSupportsAdvisor(resolvedInitialModel)` 时，完整 CLI 启动主流程执行该分支。
         if (!modelSupportsAdvisor(resolvedInitialModel)) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red(`Error: The model "${resolvedInitialModel}" does not support the advisor tool.\n`));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
+        // normalizedAdvisorModel保存`normalizeModelStringForAPI`，供完整 CLI 启动主流程后续处理使用。
         const normalizedAdvisorModel = normalizeModelStringForAPI(parseUserSpecifiedModel(advisorOption));
+        // 满足 `!isValidAdvisorModel(normalizedAdvisorModel)` 时，完整 CLI 启动主流程执行该分支。
         if (!isValidAdvisorModel(normalizedAdvisorModel)) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.red(`Error: The model "${advisorOption}" cannot be used as an advisor.\n`));
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(1);
         }
       }
+      // advisorModel更新为 `canUserConfigureAdvisor() ? advisorOption ?? getInitialAd...`，确保main后续读取最新状态。
       advisorModel = canUserConfigureAdvisor() ? advisorOption ?? getInitialAdvisorSetting() : advisorOption;
+      // 满足 `advisorModel` 时，完整 CLI 启动主流程执行该分支。
       if (advisorModel) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[AdvisorTool] Advisor model: ${advisorModel}`);
       }
     }
 
     // For tmux teammates with --agent-type, append the custom agent's prompt
+    // 组合条件 `isAgentSwarmsEnabled() && storedTeammateOpts?.agentId && storedTeammateOpts?.agen...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (isAgentSwarmsEnabled() && storedTeammateOpts?.agentId && storedTeammateOpts?.agentName && storedTeammateOpts?.teamName && storedTeammateOpts?.agentType) {
       // Look up the custom agent definition
+      // customAgent筛选`activeAgents.find`，供完整 CLI 启动主流程后续处理使用。
       const customAgent = agentDefinitions.activeAgents.find(a => a.agentType === storedTeammateOpts.agentType);
+      // 满足 `customAgent` 时，完整 CLI 启动主流程执行该分支。
       if (customAgent) {
         // Get the prompt - need to handle both built-in and custom agents
+        // customPrompt 先占位，稍后的条件分支会根据实际输入补齐它。
         let customPrompt: string | undefined;
+        // 当 `customAgent.source` 匹配 `'built-in'` 时，完整 CLI 启动主流程执行对应分支。
         if (customAgent.source === 'built-in') {
           // Built-in agents have getSystemPrompt that takes toolUseContext
           // We can't access full toolUseContext here, so skip for now
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`[teammate] Built-in agent ${storedTeammateOpts.agentType} - skipping custom prompt (not supported)`);
         } else {
           // Custom agents have getSystemPrompt that takes no args
+          // customPrompt更新为 `customAgent.getSystemPrompt()`，确保main后续读取最新状态。
           customPrompt = customAgent.getSystemPrompt();
         }
 
         // Log agent memory loaded event for tmux teammates
+        // 满足 `customAgent.memory` 时，完整 CLI 启动主流程执行该分支。
         if (customAgent.memory) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_agent_memory_loaded', {
             ...("external" === 'ant' && {
               agent_type: customAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -2169,14 +3166,19 @@ async function run(): Promise<CommanderCommand> {
             source: 'teammate' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
         }
+        // 满足 `customPrompt` 时，完整 CLI 启动主流程执行该分支。
         if (customPrompt) {
+          // customInstructions 集合固定为 ``\n# Custom Agent Instructions\n${customPrompt}``，作为完整 CLI 启动主流程后续展示或比较的基准。
           const customInstructions = `\n# Custom Agent Instructions\n${customPrompt}`;
+          // 追加系统提示词更新为 `appendSystemPrompt ? `${appendSystemPrompt}\n\n${customIn...`，确保main后续读取最新状态。
           appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${customInstructions}` : customInstructions;
         }
       } else {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[teammate] Custom agent ${storedTeammateOpts.agentType} not found in available agents`);
       }
     }
+    // 调用 maybeActivateBrief，触发完整 CLI 启动主流程此处需要的副作用。
     maybeActivateBrief(options);
     // defaultView: 'chat' is a persisted opt-in — check entitlement and set
     // userMsgOptIn so the tool + prompt section activate. Interactive-only:
@@ -2187,117 +3189,168 @@ async function run(): Promise<CommanderCommand> {
     // BEFORE any isBriefEnabled() read below (proactive prompt's
     // briefVisibility). A persisted 'chat' after a GB kill-switch falls
     // through (entitlement fails).
+    // 组合条件 `(feature('KAIROS') || feature('KAIROS_BRIEF')) && !getIsNonInteractiveSession() &...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if ((feature('KAIROS') || feature('KAIROS_BRIEF')) && !getIsNonInteractiveSession() && !getUserMsgOptIn() && getInitialSettings().defaultView === 'chat') {
       /* eslint-disable @typescript-eslint/no-require-imports */
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         isBriefEntitled
       } = require('./tools/BriefTool/BriefTool.js') as typeof import('./tools/BriefTool/BriefTool.js');
       /* eslint-enable @typescript-eslint/no-require-imports */
+      // 满足 `isBriefEntitled()` 时，完整 CLI 启动主流程执行该分支。
       if (isBriefEntitled()) {
+        // setUserMsgOptIn 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setUserMsgOptIn(true);
       }
     }
     // Coordinator mode has its own system prompt and filters out Sleep, so
     // the generic proactive prompt would tell it to call a tool it can't
     // access and conflict with delegation instructions.
+    // 组合条件 `(feature('PROACTIVE') || feature('KAIROS')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
       proactive?: boolean;
     }).proactive || isEnvTruthy(process.env.CLAUDE_CODE_PROACTIVE)) && !coordinatorModeModule?.isCoordinatorMode()) {
       /* eslint-disable @typescript-eslint/no-require-imports */
+      // briefVisibility保存`feature`，供完整 CLI 启动主流程后续处理使用。
       const briefVisibility = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('./tools/BriefTool/BriefTool.js') as typeof import('./tools/BriefTool/BriefTool.js')).isBriefEnabled() ? 'Call SendUserMessage at checkpoints to mark where things stand.' : 'The user will see any text you output.' : 'The user will see any text you output.';
       /* eslint-enable @typescript-eslint/no-require-imports */
+      // proactivePrompt 命名 ``\n# Proactive Mode\n\nYou are in proactive mode. Take in...`，让后续代码直接表达这个值的用途。
       const proactivePrompt = `\n# Proactive Mode\n\nYou are in proactive mode. Take initiative — explore, act, and make progress without waiting for instructions.\n\nStart by briefly greeting the user.\n\nYou will receive periodic <tick> prompts. These are check-ins. Do whatever seems most useful, or call Sleep if there's nothing to do. ${briefVisibility}`;
+      // 追加系统提示词更新为 `appendSystemPrompt ? `${appendSystemPrompt}\n\n${proactiv...`，确保main后续读取最新状态。
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${proactivePrompt}` : proactivePrompt;
     }
+    // 组合条件 `feature('KAIROS') && kairosEnabled && assistantModule` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('KAIROS') && kairosEnabled && assistantModule) {
+      // assistantAddendum读取`assistantModule.getAssistantSystemPromptAddendum`，供完整 CLI 启动主流程后续处理使用。
       const assistantAddendum = assistantModule.getAssistantSystemPromptAddendum();
+      // 追加系统提示词更新为 `appendSystemPrompt ? `${appendSystemPrompt}\n\n${assistan...`，确保main后续读取最新状态。
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${assistantAddendum}` : assistantAddendum;
     }
 
     // Ink root is only needed for interactive sessions — patchConsole in the
     // Ink constructor would swallow console output in headless mode.
+    // 完整 CLI 启动主流程先整理这一处局部数据，后续分支可以直接读取。
     let root!: Root;
+    // 这个回调绑定到 let getFpsMetrics!: () => FpsMetrics | undefined;，负责完整 CLI 启动主流程在该局部场景下的响应。
     let getFpsMetrics!: () => FpsMetrics | undefined;
+    // 完整 CLI 启动主流程先整理这一处局部数据，后续分支可以直接读取。
     let stats!: StatsStore;
 
     // Show setup screens after commands are loaded
+    // isNonInteractiveSession 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
     if (!isNonInteractiveSession) {
+      // ctx读取`getRenderContext`，供完整 CLI 启动主流程后续处理使用。
       const ctx = getRenderContext(false);
+      // getFpsMetrics 集合更新为 `ctx.getFpsMetrics`，确保main后续读取最新状态。
       getFpsMetrics = ctx.getFpsMetrics;
+      // stats 集合更新为 `ctx.stats`，确保main后续读取最新状态。
       stats = ctx.stats;
       // Install asciicast recorder before Ink mounts (ant-only, opt-in via CLAUDE_CODE_TERMINAL_RECORDING=1)
+      // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
       if ("external" === 'ant') {
+        // 调用 installAsciicastRecorder，触发完整 CLI 启动主流程此处需要的副作用。
         installAsciicastRecorder();
       }
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         createRoot
       } = await import('./ink.js');
+      // root更新为 `await createRoot(ctx.renderOptions)`，确保main后续读取最新状态。
       root = await createRoot(ctx.renderOptions);
 
       // Log startup time now, before any blocking dialog renders. Logging
       // from REPL's first render (the old location) included however long
       // the user sat on trust/OAuth/onboarding/resume-picker — p99 was ~70s
       // dominated by dialog-wait time, not code-path startup.
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_timer', {
         event: 'startup' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         durationMs: Math.round(process.uptime() * 1000)
       });
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logForDebugging('[STARTUP] Running showSetupScreens()...');
+      // setupScreensStart记录时间`Date.now`，供完整 CLI 启动主流程后续处理使用。
       const setupScreensStart = Date.now();
+      // onboardingShown保存`showSetupScreens`，供完整 CLI 启动主流程后续处理使用。
       const onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableClaudeInChrome, devChannels);
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`);
 
       // Now that trust is established and GrowthBook has auth headers,
       // resolve the --remote-control / --rc entitlement gate.
+      // `feature('BRIDGE_MODE') && remoteControlOpti...` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (feature('BRIDGE_MODE') && remoteControlOption !== undefined) {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           getBridgeDisabledReason
         } = await import('./bridge/bridgeEnabled.js');
+        // disabledReason读取`getBridgeDisabledReason`，供完整 CLI 启动主流程后续处理使用。
         const disabledReason = await getBridgeDisabledReason();
+        // remoteControl更新为 `disabledReason === null`，确保main后续读取最新状态。
         remoteControl = disabledReason === null;
+        // 满足 `disabledReason` 时，完整 CLI 启动主流程执行该分支。
         if (disabledReason) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(chalk.yellow(`${disabledReason}\n--rc flag ignored.\n`));
         }
       }
 
       // Check for pending agent memory snapshot updates (only for --agent mode, ant-only)
+      // 组合条件 `feature('AGENT_MEMORY_SNAPSHOT') && mainThreadAgentDefinition && isCustomAgent(ma...` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (feature('AGENT_MEMORY_SNAPSHOT') && mainThreadAgentDefinition && isCustomAgent(mainThreadAgentDefinition) && mainThreadAgentDefinition.memory && mainThreadAgentDefinition.pendingSnapshotUpdate) {
+        // agentDef 命名 `mainThreadAgentDefinition`，让后续代码直接表达这个值的用途。
         const agentDef = mainThreadAgentDefinition;
+        // choice保存`launchSnapshotUpdateDialog`，供完整 CLI 启动主流程后续处理使用。
         const choice = await launchSnapshotUpdateDialog(root, {
           agentType: agentDef.agentType,
           scope: agentDef.memory!,
           snapshotTimestamp: agentDef.pendingSnapshotUpdate!.snapshotTimestamp
         });
+        // 当 `choice` 匹配 `'merge'` 时，完整 CLI 启动主流程执行对应分支。
         if (choice === 'merge') {
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             buildMergePrompt
           } = await import('./components/agents/SnapshotUpdateDialog.js');
+          // mergePrompt构建`buildMergePrompt`，供完整 CLI 启动主流程后续处理使用。
           const mergePrompt = buildMergePrompt(agentDef.agentType, agentDef.memory!);
+          // inputPrompt更新为 `inputPrompt ? `${mergePrompt}\n\n${inputPrompt}` : mergeP...`，确保main后续读取最新状态。
           inputPrompt = inputPrompt ? `${mergePrompt}\n\n${inputPrompt}` : mergePrompt;
         }
+        // pendingSnapshotUpdate更新为 `undefined`，确保main后续读取最新状态。
         agentDef.pendingSnapshotUpdate = undefined;
       }
 
       // Skip executing /login if we just completed onboarding for it
+      // 当 `onboardingShown && prompt?.trim().toLowerCa...` 匹配 `'/login'` 时，完整 CLI 启动主流程执行对应分支。
       if (onboardingShown && prompt?.trim().toLowerCase() === '/login') {
+        // 提示词更新为 `''`，确保main后续读取最新状态。
         prompt = '';
       }
+      // 满足 `onboardingShown` 时，完整 CLI 启动主流程执行该分支。
       if (onboardingShown) {
         // Refresh auth-dependent services now that the user has logged in during onboarding.
         // Keep in sync with the post-login logic in src/commands/login.tsx
+        // 显式忽略 `refreshRemoteManagedSettings()` 的返回值，只保留它触发的副作用。
         void refreshRemoteManagedSettings();
+        // 显式忽略 `refreshPolicyLimits()` 的返回值，只保留它触发的副作用。
         void refreshPolicyLimits();
         // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
+        // 调用 resetUserCache，触发完整 CLI 启动主流程此处需要的副作用。
         resetUserCache();
         // Refresh GrowthBook after login to get updated feature flags (e.g., for claude.ai MCPs)
+        // 调用 refreshGrowthBookAfterAuthChange，触发完整 CLI 启动主流程此处需要的副作用。
         refreshGrowthBookAfterAuthChange();
         // Clear any stale trusted device token then enroll for Remote Control.
         // Both self-gate on tengu_sessions_elevated_auth_enforcement internally
         // — enrollTrustedDevice() via checkGate_CACHED_OR_BLOCKING (awaits
         // the GrowthBook reinit above), clearTrustedDeviceToken() via the
         // sync cached check (acceptable since clear is idempotent).
+        // 这个回调绑定到 void import('./bridge/trustedDevice.js').then(m => {，负责完整 CLI 启动主流程在该局部场景下的响应。
         void import('./bridge/trustedDevice.js').then(m => {
+          // 调用 m.clearTrustedDeviceToken，触发完整 CLI 启动主流程此处需要的副作用。
           m.clearTrustedDeviceToken();
+          // 返回 `m.enrollTrustedDevice()`，作为完整 CLI 启动主流程这次计算的结果。
           return m.enrollTrustedDevice();
         });
       }
@@ -2305,8 +3358,11 @@ async function run(): Promise<CommanderCommand> {
       // Validate that the active token's org matches forceLoginOrgUUID (if set
       // in managed settings). Runs after onboarding so managed settings and
       // login state are fully loaded.
+      // orgValidation读取`validateForceLoginOrg`，供完整 CLI 启动主流程后续处理使用。
       const orgValidation = await validateForceLoginOrg();
+      // orgValidation.valid缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!orgValidation.valid) {
+        // 等待 `exitWithError(root, orgValidation.message)` 完成，再继续完整 CLI 启动主流程的异步流程。
         await exitWithError(root, orgValidation.message);
       }
     }
@@ -2315,8 +3371,11 @@ async function run(): Promise<CommanderCommand> {
     // process.exitCode will be set. Skip all subsequent operations that could
     // trigger code execution before the process exits (e.g. we don't want apiKeyHelper
     // to run if trust was not established).
+    // `process.exitCode` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (process.exitCode !== undefined) {
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logForDebugging('Graceful shutdown initiated, skipping further initialization');
+      // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
@@ -2324,18 +3383,25 @@ async function run(): Promise<CommanderCommand> {
     // where trust is implicit). This prevents plugin LSP servers from executing
     // code in untrusted directories before user consent.
     // Must be after inline plugins are set (if any) so --plugin-dir LSP servers are included.
+    // 调用 initializeLspServerManager，触发完整 CLI 启动主流程此处需要的副作用。
     initializeLspServerManager();
 
     // Show settings validation errors after trust is established
     // MCP config errors don't block settings from loading, so exclude them
+    // isNonInteractiveSession 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
     if (!isNonInteractiveSession) {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         errors
       } = getSettingsWithErrors();
+      // nonMcpErrors 错误信息筛选`errors.filter`，供完整 CLI 启动主流程后续处理使用。
       const nonMcpErrors = errors.filter(e => !e.mcpErrorMetadata);
+      // 满足 `nonMcpErrors.length > 0` 时，完整 CLI 启动主流程执行该分支。
       if (nonMcpErrors.length > 0) {
+        // 等待 `launchInvalidSettingsDialog(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
         await launchInvalidSettingsDialog(root, {
           settingsErrors: nonMcpErrors,
+          // 这个回调绑定到 onExit: () => gracefulShutdownSync(1)，负责完整 CLI 启动主流程在该局部场景下的响应。
           onExit: () => gracefulShutdownSync(1)
         });
       }
@@ -2347,79 +3413,111 @@ async function run(): Promise<CommanderCommand> {
     // --bare / SIMPLE: skip — these are cache-warms for the REPL's
     // first-turn responsiveness (quota, passes, fastMode, bootstrap data). Fast
     // mode doesn't apply to the Agent SDK anyway (see getFastModeUnavailableReason).
+    // bgRefreshThrottleMs 集合读取`getFeatureValue_CACHED_MAY_BE_STALE`，供完整 CLI 启动主流程后续处理使用。
     const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('tengu_cicada_nap_ms', 0);
+    // lastPrefetched读取`getGlobalConfig`，供完整 CLI 启动主流程后续处理使用。
     const lastPrefetched = getGlobalConfig().startupPrefetchedAt ?? 0;
+    // skipStartupPrefetches 集合保存`isBareMode`，供完整 CLI 启动主流程后续处理使用。
     const skipStartupPrefetches = isBareMode() || bgRefreshThrottleMs > 0 && Date.now() - lastPrefetched < bgRefreshThrottleMs;
+    // skipStartupPrefetches 集合缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
     if (!skipStartupPrefetches) {
+      // lastPrefetchedInfo保存`Math.round`，供完整 CLI 启动主流程后续处理使用。
       const lastPrefetchedInfo = lastPrefetched > 0 ? ` last ran ${Math.round((Date.now() - lastPrefetched) / 1000)}s ago` : '';
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Starting background startup prefetches${lastPrefetchedInfo}`);
+      // 调用 checkQuotaStatus，触发完整 CLI 启动主流程此处需要的副作用。
       checkQuotaStatus().catch(error => logError(error));
 
       // Fetch bootstrap data from the server and update all cache values.
+      // 显式忽略 `fetchBootstrapData()` 的返回值，只保留它触发的副作用。
       void fetchBootstrapData();
 
       // TODO: Consolidate other prefetches into a single bootstrap request.
+      // 显式忽略 `prefetchPassesEligibility()` 的返回值，只保留它触发的副作用。
       void prefetchPassesEligibility();
+      // 满足 `!getFeatureValue_CACHED_MAY_BE_STALE('tengu_miraculo_the_bard', false)` 时，完整 CLI 启动主流程执行该分支。
       if (!getFeatureValue_CACHED_MAY_BE_STALE('tengu_miraculo_the_bard', false)) {
+        // 显式忽略 `prefetchFastModeStatus()` 的返回值，只保留它触发的副作用。
         void prefetchFastModeStatus();
       } else {
         // Kill switch skips the network call, not org-policy enforcement.
         // Resolve from cache so orgStatus doesn't stay 'pending' (which
         // getFastModeUnavailableReason treats as permissive).
+        // resolveFastModeStatusFromCache 结算当前 Promise，唤醒等待这个异步结果的调用方。
         resolveFastModeStatusFromCache();
       }
+      // 满足 `bgRefreshThrottleMs > 0` 时，完整 CLI 启动主流程执行该分支。
       if (bgRefreshThrottleMs > 0) {
+        // 调用 saveGlobalConfig，触发完整 CLI 启动主流程此处需要的副作用。
         saveGlobalConfig(current => ({
           ...current,
           startupPrefetchedAt: Date.now()
         }));
       }
     } else {
+      // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Skipping startup prefetches, last ran ${Math.round((Date.now() - lastPrefetched) / 1000)}s ago`);
       // Resolve fast mode org status from cache (no network)
+      // resolveFastModeStatusFromCache 结算当前 Promise，唤醒等待这个异步结果的调用方。
       resolveFastModeStatusFromCache();
     }
+    // isNonInteractiveSession 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
     if (!isNonInteractiveSession) {
+      // 显式忽略 `refreshExampleCommands(); // Pre-fetch example commands (runs g...` 的返回值，只保留它触发的副作用。
       void refreshExampleCommands(); // Pre-fetch example commands (runs git log, no API call)
     }
 
     // Resolve MCP configs (started early, overlaps with setup/trust dialog work)
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       servers: existingMcpConfigs
     } = await mcpConfigPromise;
+    // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[STARTUP] MCP configs resolved in ${mcpConfigResolvedMs}ms (awaited at +${Date.now() - mcpConfigStart}ms)`);
     // CLI flag (--mcp-config) should override file-based configs, matching settings precedence
+    // allMcpConfigs 配置 集中保存完整 CLI 启动主流程要一起传递的字段。
     const allMcpConfigs = {
       ...existingMcpConfigs,
       ...dynamicMcpConfig
     };
 
     // Separate SDK configs from regular MCP configs
+    // sdkMcpConfigs 配置 从空对象开始收集键值，后续按名称补齐内容。
     const sdkMcpConfigs: Record<string, McpSdkServerConfig> = {};
+    // regularMcpConfigs 配置 从空对象开始收集键值，后续按名称补齐内容。
     const regularMcpConfigs: Record<string, ScopedMcpServerConfig> = {};
+    // 循环处理 `const [name, config] of Object.entries(allMcpConfigs)`，让完整 CLI 启动主流程把同类条目按顺序走完。
     for (const [name, config] of Object.entries(allMcpConfigs)) {
+      // typedConfig 配置保存`config as ScopedMcpServerConfig | McpSdkServerConfig`，供完整 CLI 启动主流程后续判断或输出使用。
       const typedConfig = config as ScopedMcpServerConfig | McpSdkServerConfig;
+      // 当 `typedConfig.type` 匹配 `'sdk'` 时，完整 CLI 启动主流程执行对应分支。
       if (typedConfig.type === 'sdk') {
+        // sdkMcpConfigs[name 配置更新为 `typedConfig as McpSdkServerConfig`，确保完整 CLI 启动主流程后续读取最新状态。
         sdkMcpConfigs[name] = typedConfig as McpSdkServerConfig;
       } else {
+        // regularMcpConfigs[name 配置更新为 `typedConfig as ScopedMcpServerConfig`，确保完整 CLI 启动主流程后续读取最新状态。
         regularMcpConfigs[name] = typedConfig as ScopedMcpServerConfig;
       }
     }
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('action_mcp_configs_loaded');
 
     // Prefetch MCP resources after trust dialog (this is where execution happens).
     // Interactive mode only: print mode defers connects until headlessStore exists
     // and pushes per-server (below), so ToolSearch's pending-client handling works
     // and one slow server doesn't block the batch.
+    // localMcpPromise 异步任务保存 `Promise.resolve` 启动的异步任务，稍后再决定等待还是后台完成。
     const localMcpPromise = isNonInteractiveSession ? Promise.resolve({
       clients: [],
       tools: [],
       commands: []
     }) : prefetchAllMcpResources(regularMcpConfigs);
+    // claudeaiMcpPromise 异步任务保存 `Promise.resolve` 启动的异步任务，稍后再决定等待还是后台完成。
     const claudeaiMcpPromise = isNonInteractiveSession ? Promise.resolve({
       clients: [],
       tools: [],
       commands: []
+    // 这个回调绑定到 }) : claudeaiConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetc…，负责完整 CLI 启动主流程在该局部场景下的响应。
     }) : claudeaiConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
       clients: [],
       tools: [],
@@ -2429,6 +3527,7 @@ async function run(): Promise<CommanderCommand> {
     // adds helper tools (ListMcpResourcesTool, ReadMcpResourceTool) via
     // local dedup flags, so merging two calls can yield duplicates. print.ts
     // already uniqBy's the final tool pool, but dedup here keeps appState clean.
+    // mcpPromise 异步任务保存 `Promise.all` 启动的异步任务，稍后再决定等待还是后台完成。
     const mcpPromise = Promise.all([localMcpPromise, claudeaiMcpPromise]).then(([local, claudeai]) => ({
       clients: [...local.clients, ...claudeai.clients],
       tools: uniqBy([...local.tools, ...claudeai.tools], 'name'),
@@ -2440,6 +3539,7 @@ async function run(): Promise<CommanderCommand> {
     // (handled via setupTrigger), and resume/continue (conversationRecovery.ts
     // fires 'resume' instead — without this guard, hooks fire TWICE on /resume
     // and the second systemMessage clobbers the first. gh-30825)
+    // hooksPromise 异步任务保存 `processSessionStartHooks` 启动的异步任务，稍后再决定等待还是后台完成。
     const hooksPromise = initOnly || init || maintenance || isNonInteractiveSession || options.continue || options.resume ? null : processSessionStartHooks('startup', {
       agentType: mainThreadAgentDefinition?.agentType,
       model: resolvedInitialModel
@@ -2452,53 +3552,78 @@ async function run(): Promise<CommanderCommand> {
     // computeTools(), so turn 1 sees whatever's connected by query time.
     // Slow servers populate for turn 2+. Matches interactive-no-prompt
     // behavior. Print mode: per-server push into headlessStore (below).
+    // hookMessages 消息数据 从空数组开始收集，后续循环会按处理顺序追加条目。
     const hookMessages: Awaited<NonNullable<typeof hooksPromise>> = [];
     // Suppress transient unhandledRejection — the prefetch warms the
     // memoized connectToServer cache but nobody awaits it in interactive.
+    // 调用 mcpPromise.catch，触发完整 CLI 启动主流程此处需要的副作用。
     mcpPromise.catch(() => {});
+    // mcpClients 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     const mcpClients: Awaited<typeof mcpPromise>['clients'] = [];
+    // mcpTools 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     const mcpTools: Awaited<typeof mcpPromise>['tools'] = [];
+    // mcpCommands 命令数据 从空数组开始收集，后续循环会按处理顺序追加条目。
     const mcpCommands: Awaited<typeof mcpPromise>['commands'] = [];
+    // thinkingEnabled保存`shouldEnableThinkingByDefault`，供完整 CLI 启动主流程后续处理使用。
     let thinkingEnabled = shouldEnableThinkingByDefault();
+    // thinkingConfig 配置标记完整 CLI 启动主流程是否启用对应路径。
     let thinkingConfig: ThinkingConfig = thinkingEnabled !== false ? {
       type: 'adaptive'
     } : {
       type: 'disabled'
     };
+    // 组合条件 `options.thinking === 'adaptive' || options.thinki` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (options.thinking === 'adaptive' || options.thinking === 'enabled') {
+      // thinkingEnabled更新为 `true`，确保main后续读取最新状态。
       thinkingEnabled = true;
+      // thinkingConfig 配置更新为 `{`，确保main后续读取最新状态。
       thinkingConfig = {
         type: 'adaptive'
       };
+    // 完整 CLI 启动主流程在这里处理 `} else if (options.thinking === 'disabled') {`，完成这一小步状态转换。
     } else if (options.thinking === 'disabled') {
+      // thinkingEnabled更新为 `false`，确保main后续读取最新状态。
       thinkingEnabled = false;
+      // thinkingConfig 配置更新为 `{`，确保main后续读取最新状态。
       thinkingConfig = {
         type: 'disabled'
       };
     } else {
+      // maxThinkingTokens 集合解析`parseInt`，供完整 CLI 启动主流程后续处理使用。
       const maxThinkingTokens = process.env.MAX_THINKING_TOKENS ? parseInt(process.env.MAX_THINKING_TOKENS, 10) : options.maxThinkingTokens;
+      // `maxThinkingTokens` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (maxThinkingTokens !== undefined) {
+        // 满足 `maxThinkingTokens > 0` 时，完整 CLI 启动主流程执行该分支。
         if (maxThinkingTokens > 0) {
+          // thinkingEnabled更新为 `true`，确保main后续读取最新状态。
           thinkingEnabled = true;
+          // thinkingConfig 配置更新为 `{`，确保main后续读取最新状态。
           thinkingConfig = {
             type: 'enabled',
             budgetTokens: maxThinkingTokens
           };
+        // 完整 CLI 启动主流程在这里处理 `} else if (maxThinkingTokens === 0) {`，完成这一小步状态转换。
         } else if (maxThinkingTokens === 0) {
+          // thinkingEnabled更新为 `false`，确保main后续读取最新状态。
           thinkingEnabled = false;
+          // thinkingConfig 配置更新为 `{`，确保main后续读取最新状态。
           thinkingConfig = {
             type: 'disabled'
           };
         }
       }
     }
+    // 调用 logForDiagnosticsNoPII，触发完整 CLI 启动主流程此处需要的副作用。
     logForDiagnosticsNoPII('info', 'started', {
       version: MACRO.VERSION,
       is_native_binary: isInBundledMode()
     });
+    // 调用 registerCleanup，触发完整 CLI 启动主流程此处需要的副作用。
     registerCleanup(async () => {
+      // 调用 logForDiagnosticsNoPII，触发完整 CLI 启动主流程此处需要的副作用。
       logForDiagnosticsNoPII('info', 'exited');
     });
+    // 显式忽略 `logTenguInit({` 的返回值，只保留它触发的副作用。
     void logTenguInit({
       hasInitialPrompt: Boolean(prompt),
       hasStdin: Boolean(inputPrompt),
@@ -2525,21 +3650,31 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // Log context metrics once at initialization
+    // 显式忽略 `logContextMetrics(regularMcpConfigs, toolPermissionContext)` 的返回值，只保留它触发的副作用。
     void logContextMetrics(regularMcpConfigs, toolPermissionContext);
+    // 显式忽略 `logPermissionContextForAnts(null, 'initialization')` 的返回值，只保留它触发的副作用。
     void logPermissionContextForAnts(null, 'initialization');
+    // 调用 logManagedSettings，触发完整 CLI 启动主流程此处需要的副作用。
     logManagedSettings();
 
     // Register PID file for concurrent-session detection (~/.claude/sessions/)
     // and fire multi-clauding telemetry. Lives here (not init.ts) so only the
     // REPL path registers — not subcommands like `claude doctor`. Chained:
     // count must run after register's write completes or it misses our own file.
+    // 这个回调绑定到 void registerSession().then(registered => {，负责完整 CLI 启动主流程在该局部场景下的响应。
     void registerSession().then(registered => {
+      // registered缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!registered) return;
+      // 满足 `sessionNameArg` 时，完整 CLI 启动主流程执行该分支。
       if (sessionNameArg) {
+        // 显式忽略 `updateSessionName(sessionNameArg)` 的返回值，只保留它触发的副作用。
         void updateSessionName(sessionNameArg);
       }
+      // 这个回调绑定到 void countConcurrentSessions().then(count => {，负责完整 CLI 启动主流程在该局部场景下的响应。
       void countConcurrentSessions().then(count => {
+        // 满足 `count >= 2` 时，完整 CLI 启动主流程执行该分支。
         if (count >= 2) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_concurrent_sessions', {
             num_sessions: count
           });
@@ -2558,48 +3693,69 @@ async function run(): Promise<CommanderCommand> {
     // are install/upgrade bookkeeping that scripted calls don't need —
     // the next interactive session will reconcile. The await here was
     // blocking -p on a marketplace round-trip.
+    // 满足 `isBareMode()` 时，完整 CLI 启动主流程执行该分支。
     if (isBareMode()) {
       // skip — no-op
+    // 完整 CLI 启动主流程在这里处理 `} else if (isNonInteractiveSession) {`，完成这一小步状态转换。
     } else if (isNonInteractiveSession) {
       // In headless mode, await to ensure plugin sync completes before CLI exits
+      // 等待 `initializeVersionedPlugins()` 完成，再继续完整 CLI 启动主流程的异步流程。
       await initializeVersionedPlugins();
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('action_after_plugins_init');
+      // 这个回调绑定到 void cleanupOrphanedPluginVersionsInBackground().then(() => getGlobExclusionsForPlug…，负责完整 CLI 启动主流程在该局部场景下的响应。
       void cleanupOrphanedPluginVersionsInBackground().then(() => getGlobExclusionsForPluginCache());
     } else {
       // In interactive mode, fire-and-forget — this is purely bookkeeping
       // that doesn't affect runtime behavior of the current session
+      // 这个回调绑定到 void initializeVersionedPlugins().then(async () => {，负责完整 CLI 启动主流程在该局部场景下的响应。
       void initializeVersionedPlugins().then(async () => {
+        // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
         profileCheckpoint('action_after_plugins_init');
+        // 等待 `cleanupOrphanedPluginVersionsInBackground()` 完成，再继续完整 CLI 启动主流程的异步流程。
         await cleanupOrphanedPluginVersionsInBackground();
+        // 显式忽略 `getGlobExclusionsForPluginCache()` 的返回值，只保留它触发的副作用。
         void getGlobExclusionsForPluginCache();
       });
     }
+    // setupTrigger标记完整 CLI 启动主流程是否启用对应路径。
     const setupTrigger = initOnly || init ? 'init' : maintenance ? 'maintenance' : null;
+    // 满足 `initOnly` 时，完整 CLI 启动主流程执行该分支。
     if (initOnly) {
+      // 调用 applyConfigEnvironmentVariables，触发完整 CLI 启动主流程此处需要的副作用。
       applyConfigEnvironmentVariables();
+      // 等待 `processSetupHooks('init', {` 完成，再继续完整 CLI 启动主流程的异步流程。
       await processSetupHooks('init', {
         forceSyncExecution: true
       });
+      // 等待 `processSessionStartHooks('startup', {` 完成，再继续完整 CLI 启动主流程的异步流程。
       await processSessionStartHooks('startup', {
         forceSyncExecution: true
       });
+      // 调用 gracefulShutdownSync，触发完整 CLI 启动主流程此处需要的副作用。
       gracefulShutdownSync(0);
+      // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // --print mode
+    // 满足 `isNonInteractiveSession` 时，完整 CLI 启动主流程执行该分支。
     if (isNonInteractiveSession) {
+      // 组合条件 `outputFormat === 'stream-json' || outputFormat ==` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (outputFormat === 'stream-json' || outputFormat === 'json') {
+        // setHasFormattedOutput 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setHasFormattedOutput(true);
       }
 
       // Apply full environment variables in print mode since trust dialog is bypassed
       // This includes potentially dangerous environment variables from untrusted sources
       // but print mode is considered trusted (as documented in help text)
+      // 调用 applyConfigEnvironmentVariables，触发完整 CLI 启动主流程此处需要的副作用。
       applyConfigEnvironmentVariables();
 
       // Initialize telemetry after env vars are applied so OTEL endpoint env vars and
       // otelHeadersHelper (which requires trust to execute) are available.
+      // 调用 initializeTelemetryAfterTrust，触发完整 CLI 启动主流程此处需要的副作用。
       initializeTelemetryAfterTrust();
 
       // Kick SessionStart hooks now so the subprocess spawn overlaps with
@@ -2610,23 +3766,33 @@ async function run(): Promise<CommanderCommand> {
       // undefined and the ?? fallback runs). Also skip when setupTrigger is
       // set — those paths run setup hooks first (print.ts:544), and session
       // start hooks must wait until setup completes.
+      // sessionStartHooksPromise 异步任务保存 `processSessionStartHooks` 启动的异步任务，稍后再决定等待还是后台完成。
       const sessionStartHooksPromise = options.continue || options.resume || teleport || setupTrigger ? undefined : processSessionStartHooks('startup');
       // Suppress transient unhandledRejection if this rejects before
       // loadInitialMessages awaits it. Downstream await still observes the
       // rejection — this just prevents the spurious global handler fire.
+      // 这个回调绑定到 sessionStartHooksPromise?.catch(() => {});，负责完整 CLI 启动主流程在该局部场景下的响应。
       sessionStartHooksPromise?.catch(() => {});
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('before_validateForceLoginOrg');
       // Validate org restriction for non-interactive sessions
+      // orgValidation读取`validateForceLoginOrg`，供完整 CLI 启动主流程后续处理使用。
       const orgValidation = await validateForceLoginOrg();
+      // orgValidation.valid缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!orgValidation.valid) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(orgValidation.message + '\n');
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
 
       // Headless mode supports all prompt commands and some local commands
       // If disableSlashCommands is true, return empty array
+      // commandsHeadless 命令数据筛选`commands.filter`，供完整 CLI 启动主流程后续处理使用。
       const commandsHeadless = disableSlashCommands ? [] : commands.filter(command => command.type === 'prompt' && !command.disableNonInteractive || command.type === 'local' && command.supportsNonInteractive);
+      // defaultState 状态读取`getDefaultAppState`，供完整 CLI 启动主流程后续处理使用。
       const defaultState = getDefaultAppState();
+      // headlessInitialState 状态 集中保存完整 CLI 启动主流程要一起传递的字段。
       const headlessInitialState: AppState = {
         ...defaultState,
         mcp: {
@@ -2656,23 +3822,32 @@ async function run(): Promise<CommanderCommand> {
       };
 
       // Init app state
+      // headlessStore构建`createStore`，供完整 CLI 启动主流程后续处理使用。
       const headlessStore = createStore(headlessInitialState, onChangeAppState);
 
       // Check if bypassPermissions should be disabled based on Statsig gate
       // This runs in parallel to the code below, to avoid blocking the main loop.
+      // 满足 `toolPermissionContext.mode === 'bypassPermissions` 时，完整 CLI 启动主流程执行该分支。
       if (toolPermissionContext.mode === 'bypassPermissions' || allowDangerouslySkipPermissions) {
+        // 显式忽略 `checkAndDisableBypassPermissions(toolPermissionContext)` 的返回值，只保留它触发的副作用。
         void checkAndDisableBypassPermissions(toolPermissionContext);
       }
 
       // Async check of auto mode gate — corrects state and disables auto if needed.
       // Gated on TRANSCRIPT_CLASSIFIER (not USER_TYPE) so GrowthBook kill switch runs for external builds too.
+      // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，完整 CLI 启动主流程执行该分支。
       if (feature('TRANSCRIPT_CLASSIFIER')) {
+        // 显式忽略 `verifyAutoModeGateAccess(toolPermissionContext, headlessStore.g...` 的返回值，只保留它触发的副作用。
         void verifyAutoModeGateAccess(toolPermissionContext, headlessStore.getState().fastMode).then(({
           updateContext
         }) => {
+          // headlessStore.setState 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
           headlessStore.setState(prev => {
+            // nextCtx保存`updateContext`，供完整 CLI 启动主流程后续处理使用。
             const nextCtx = updateContext(prev.toolPermissionContext);
+            // 满足 `nextCtx === prev.toolPermissionContext` 时，完整 CLI 启动主流程执行该分支。
             if (nextCtx === prev.toolPermissionContext) return prev;
+            // 返回结构化结果，集中表达完整 CLI 启动主流程已经整理出的状态。
             return {
               ...prev,
               toolPermissionContext: nextCtx
@@ -2682,24 +3857,31 @@ async function run(): Promise<CommanderCommand> {
       }
 
       // Set global state for session persistence
+      // 满足 `options.sessionPersistence === false` 时，完整 CLI 启动主流程执行该分支。
       if (options.sessionPersistence === false) {
+        // setSessionPersistenceDisabled 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setSessionPersistenceDisabled(true);
       }
 
       // Store SDK betas in global state for context window calculation
       // Only store allowed betas (filters by allowlist and subscriber status)
+      // setSdkBetas 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setSdkBetas(filterAllowedSdkBetas(betas));
 
       // Print-mode MCP: per-server incremental push into headlessStore.
       // Mirrors useManageMCPConnections — push pending first (so ToolSearch's
       // pending-check at ToolSearchTool.ts:334 sees them), then replace with
       // connected/failed as each server settles.
+      // connectMcpBatch 命名 `(configs: Record<string, ScopedMcpServerConfig>, label: s...`，让后续代码直接表达这个值的用途。
       const connectMcpBatch = (configs: Record<string, ScopedMcpServerConfig>, label: string): Promise<void> => {
+        // 满足 `Object.keys(configs).length === 0) return Promise.resolve(` 时，完整 CLI 启动主流程执行该分支。
         if (Object.keys(configs).length === 0) return Promise.resolve();
+        // headlessStore.setState 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         headlessStore.setState(prev => ({
           ...prev,
           mcp: {
             ...prev.mcp,
+            // 这个回调绑定到 clients: [...prev.mcp.clients, ...Object.entries(configs).map(([name, config]) => ({，负责完整 CLI 启动主流程在该局部场景下的响应。
             clients: [...prev.mcp.clients, ...Object.entries(configs).map(([name, config]) => ({
               name,
               type: 'pending' as const,
@@ -2707,20 +3889,24 @@ async function run(): Promise<CommanderCommand> {
             }))]
           }
         }));
+        // 返回 `getMcpToolsCommandsAndResources(({`，作为完整 CLI 启动主流程这次计算的结果。
         return getMcpToolsCommandsAndResources(({
           client,
           tools,
           commands
         }) => {
+          // headlessStore.setState 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
           headlessStore.setState(prev => ({
             ...prev,
             mcp: {
               ...prev.mcp,
+              // 这个回调绑定到 clients: prev.mcp.clients.some(c => c.name === client.name) ? prev.mcp.clients.map(c…，负责完整 CLI 启动主流程在该局部场景下的响应。
               clients: prev.mcp.clients.some(c => c.name === client.name) ? prev.mcp.clients.map(c => c.name === client.name ? client : c) : [...prev.mcp.clients, client],
               tools: uniqBy([...prev.mcp.tools, ...tools], 'name'),
               commands: uniqBy([...prev.mcp.commands, ...commands], 'name')
             }
           }));
+        // 这个回调绑定到 }, configs).catch(err => logForDebugging(`[MCP] ${label} connect error: ${err}`));，负责完整 CLI 启动主流程在该局部场景下的响应。
         }, configs).catch(err => logForDebugging(`[MCP] ${label} connect error: ${err}`));
       };
       // Await all MCP configs — print mode is often single-turn, so
@@ -2731,8 +3917,11 @@ async function run(): Promise<CommanderCommand> {
       // (processBatched with Promise.all). claude.ai is awaited too — its
       // fetch was kicked off early (line ~2558) so only residual time blocks
       // here. --bare skips claude.ai entirely for perf-sensitive scripts.
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('before_connectMcp');
+      // 等待 `connectMcpBatch(regularMcpConfigs, 'regular')` 完成，再继续完整 CLI 启动主流程的异步流程。
       await connectMcpBatch(regularMcpConfigs, 'regular');
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('after_connectMcp');
       // Dedup: suppress plugin MCP servers that duplicate a claude.ai
       // connector (connector wins), then connect claude.ai servers.
@@ -2741,44 +3930,70 @@ async function run(): Promise<CommanderCommand> {
       // climbed to 76s. If fetch+connect doesn't finish in time, proceed;
       // the promise keeps running and updates headlessStore in the
       // background so turn 2+ still sees connectors.
+      // CLAUDE_AI_MCP_TIMEOUT_MS 集合 命名 `5_000`，让后续代码直接表达这个值的用途。
       const CLAUDE_AI_MCP_TIMEOUT_MS = 5_000;
+      // claudeaiConnect保存`claudeaiConfigPromise.then`，供完整 CLI 启动主流程后续处理使用。
       const claudeaiConnect = claudeaiConfigPromise.then(claudeaiConfigs => {
+        // 满足 `Object.keys(claudeaiConfigs).length > 0` 时，完整 CLI 启动主流程执行该分支。
         if (Object.keys(claudeaiConfigs).length > 0) {
+          // claudeaiSigs 集合构建`new Set<string>()` 整理出中间结果，供完整 CLI 启动主流程后续步骤使用。
           const claudeaiSigs = new Set<string>();
+          // 逐项读取 `Object.values(claudeaiConfigs)` 中的配置，按输入顺序推进完整 CLI 启动主流程。
           for (const config of Object.values(claudeaiConfigs)) {
+            // sig读取`getMcpServerSignature`，供完整 CLI 启动主流程后续处理使用。
             const sig = getMcpServerSignature(config);
+            // 满足 `sig) claudeaiSigs.add(sig` 时，完整 CLI 启动主流程执行该分支。
             if (sig) claudeaiSigs.add(sig);
           }
+          // suppressed构建`new Set<string>()` 整理出中间结果，供完整 CLI 启动主流程后续步骤使用。
           const suppressed = new Set<string>();
+          // 循环处理 `const [name, config] of Object.entries(regularMcpConfigs)`，让完整 CLI 启动主流程把同类条目按顺序走完。
           for (const [name, config] of Object.entries(regularMcpConfigs)) {
+            // 满足 `!name.startsWith('plugin:')` 时，完整 CLI 启动主流程执行该分支。
             if (!name.startsWith('plugin:')) continue;
+            // sig读取`getMcpServerSignature`，供完整 CLI 启动主流程后续处理使用。
             const sig = getMcpServerSignature(config);
+            // 组合条件 `sig && claudeaiSigs.has(sig)) suppressed.add(name` 成立时，完整 CLI 启动主流程才启用这条专门路径。
             if (sig && claudeaiSigs.has(sig)) suppressed.add(name);
           }
+          // 满足 `suppressed.size > 0` 时，完整 CLI 启动主流程执行该分支。
           if (suppressed.size > 0) {
+            // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
             logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate claude.ai connectors: ${[...suppressed].join(', ')}`);
             // Disconnect before filtering from state. Only connected
             // servers need cleanup — clearServerCache on a never-connected
             // server triggers a real connect just to kill it (memoize
             // cache-miss path, see useManageMCPConnections.ts:870).
+            // 逐项读取 `headlessStore.getState().mcp.clients` 中的c，按输入顺序推进完整 CLI 启动主流程。
             for (const c of headlessStore.getState().mcp.clients) {
+              // `!suppressed.has(c.name) || c.type` 与 `'connected'` 不一致时刷新派生状态，避免使用过期结果。
               if (!suppressed.has(c.name) || c.type !== 'connected') continue;
+              // onclose更新为 `undefined`，确保main后续读取最新状态。
               c.client.onclose = undefined;
+              // 这个回调绑定到 void clearServerCache(c.name, c.config).catch(() => {});，负责完整 CLI 启动主流程在该局部场景下的响应。
               void clearServerCache(c.name, c.config).catch(() => {});
             }
+            // headlessStore.setState 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
             headlessStore.setState(prev => {
+              // 完整 CLI 启动主流程先整理这一处局部数据，后续分支可以直接读取。
               let {
                 clients,
                 tools,
                 commands,
                 resources
               } = prev.mcp;
+              // clients 集合更新为 `clients.filter(c => !suppressed.has(c.name))`，确保main后续读取最新状态。
               clients = clients.filter(c => !suppressed.has(c.name));
+              // tools 集合更新为 `tools.filter(t => !t.mcpInfo || !suppressed.has(t.mcpInfo...`，确保main后续读取最新状态。
               tools = tools.filter(t => !t.mcpInfo || !suppressed.has(t.mcpInfo.serverName));
+              // 按顺序遍历 `suppressed` 中的名称，逐个交给完整 CLI 启动主流程处理。
               for (const name of suppressed) {
+                // commands 命令数据更新为 `excludeCommandsByServer(commands, name)`，确保main后续读取最新状态。
                 commands = excludeCommandsByServer(commands, name);
+                // resources 集合更新为 `excludeResourcesByServer(resources, name)`，确保main后续读取最新状态。
                 resources = excludeResourcesByServer(resources, name);
               }
+              // 返回结构化结果，集中表达完整 CLI 启动主流程已经整理出的状态。
               return {
                 ...prev,
                 mcp: {
@@ -2798,20 +4013,30 @@ async function run(): Promise<CommanderCommand> {
         // plugin:* must be excluded here — step 1 already suppressed
         // those (claude.ai wins); leaving them in suppresses the
         // connector too, and neither survives (gh-39974).
+        // nonPluginConfigs 插件数据保存`pickBy`，供完整 CLI 启动主流程后续处理使用。
         const nonPluginConfigs = pickBy(regularMcpConfigs, (_, n) => !n.startsWith('plugin:'));
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           servers: dedupedClaudeAi
         } = dedupClaudeAiMcpServers(claudeaiConfigs, nonPluginConfigs);
+        // 返回 `connectMcpBatch(dedupedClaudeAi, 'claudeai')`，作为完整 CLI 启动主流程这次计算的结果。
         return connectMcpBatch(dedupedClaudeAi, 'claudeai');
       });
+      // claudeaiTimer 先占位，稍后的条件分支会根据实际输入补齐它。
       let claudeaiTimer: ReturnType<typeof setTimeout> | undefined;
+      // claudeaiTimedOut保存`Promise.race`，供完整 CLI 启动主流程后续处理使用。
       const claudeaiTimedOut = await Promise.race([claudeaiConnect.then(() => false), new Promise<boolean>(resolve => {
+        // claudeaiTimer更新为 `setTimeout(r => r(true), CLAUDE_AI_MCP_TIMEOUT_MS, resolv...`，确保main后续读取最新状态。
         claudeaiTimer = setTimeout(r => r(true), CLAUDE_AI_MCP_TIMEOUT_MS, resolve);
       })]);
+      // 满足 `claudeaiTimer) clearTimeout(claudeaiTimer` 时，完整 CLI 启动主流程执行该分支。
       if (claudeaiTimer) clearTimeout(claudeaiTimer);
+      // 满足 `claudeaiTimedOut` 时，完整 CLI 启动主流程执行该分支。
       if (claudeaiTimedOut) {
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`[MCP] claude.ai connectors not ready after ${CLAUDE_AI_MCP_TIMEOUT_MS}ms — proceeding; background connection continues`);
       }
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('after_connectMcp_claudeai');
 
       // In headless mode, start deferred prefetches immediately (no user typing delay)
@@ -2819,19 +4044,29 @@ async function run(): Promise<CommanderCommand> {
       // backgroundHousekeeping (initExtractMemories, pruneShellSnapshots,
       // cleanupOldMessageFiles) and sdkHeapDumpMonitor are all bookkeeping
       // that scripted calls don't need — the next interactive session reconciles.
+      // 满足 `!isBareMode()` 时，完整 CLI 启动主流程执行该分支。
       if (!isBareMode()) {
+        // 调用 startDeferredPrefetches，触发完整 CLI 启动主流程此处需要的副作用。
         startDeferredPrefetches();
+        // 这个回调绑定到 void import('./utils/backgroundHousekeeping.js').then(m => m.startBackgroundHousekee…，负责完整 CLI 启动主流程在该局部场景下的响应。
         void import('./utils/backgroundHousekeeping.js').then(m => m.startBackgroundHousekeeping());
+        // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
         if ("external" === 'ant') {
+          // 这个回调绑定到 void import('./utils/sdkHeapDumpMonitor.js').then(m => m.startSdkMemoryMonitor());，负责完整 CLI 启动主流程在该局部场景下的响应。
           void import('./utils/sdkHeapDumpMonitor.js').then(m => m.startSdkMemoryMonitor());
         }
       }
+      // 调用 logSessionTelemetry，触发完整 CLI 启动主流程此处需要的副作用。
       logSessionTelemetry();
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('before_print_import');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         runHeadless
       } = await import('src/cli/print.js');
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('after_print_import');
+      // 这个回调绑定到 void runHeadless(inputPrompt, () => headlessStore.getState(), headlessStore.setState…，负责完整 CLI 启动主流程在该局部场景下的响应。
       void runHeadless(inputPrompt, () => headlessStore.getState(), headlessStore.setState, commandsHeadless, tools, sdkMcpConfigs, agentDefinitions.activeAgents, {
         continue: options.continue,
         resume: options.resume,
@@ -2863,10 +4098,12 @@ async function run(): Promise<CommanderCommand> {
         setupTrigger: setupTrigger ?? undefined,
         sessionStartHooksPromise
       });
+      // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Log model config at startup
+    // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_startup_manual_model_config', {
       cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       env_var: process.env.ANTHROPIC_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2876,23 +4113,29 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // Get deprecation warning for the initial model (resolvedInitialModel computed earlier for hooks parallelization)
+    // deprecationWarning 警告信息读取`getModelDeprecationWarning`，供完整 CLI 启动主流程后续处理使用。
     const deprecationWarning = getModelDeprecationWarning(resolvedInitialModel);
 
     // Build initial notification queue
+    // initialNotifications 集合 先占位，稍后的条件分支会根据实际输入补齐它。
     const initialNotifications: Array<{
       key: string;
       text: string;
       color?: 'warning';
       priority: 'high';
     }> = [];
+    // 满足 `permissionModeNotification` 时，完整 CLI 启动主流程执行该分支。
     if (permissionModeNotification) {
+      // initialNotifications 集合追加新条目，保持收集顺序与输入顺序一致。
       initialNotifications.push({
         key: 'permission-mode-notification',
         text: permissionModeNotification,
         priority: 'high'
       });
     }
+    // 满足 `deprecationWarning` 时，完整 CLI 启动主流程执行该分支。
     if (deprecationWarning) {
+      // initialNotifications 集合追加新条目，保持收集顺序与输入顺序一致。
       initialNotifications.push({
         key: 'model-deprecation-warning',
         text: deprecationWarning,
@@ -2900,11 +4143,17 @@ async function run(): Promise<CommanderCommand> {
         priority: 'high'
       });
     }
+    // 满足 `overlyBroadBashPermissions.length > 0` 时，完整 CLI 启动主流程执行该分支。
     if (overlyBroadBashPermissions.length > 0) {
+      // displayList 集合保存`uniq`，供完整 CLI 启动主流程后续处理使用。
       const displayList = uniq(overlyBroadBashPermissions.map(p => p.ruleDisplay));
+      // displays 集合格式化`displayList.join`，供完整 CLI 启动主流程后续处理使用。
       const displays = displayList.join(', ');
+      // sources 集合保存`uniq`，供完整 CLI 启动主流程后续处理使用。
       const sources = uniq(overlyBroadBashPermissions.map(p => p.sourceDisplay)).join(', ');
+      // n 命名 `displayList.length`，让后续代码直接表达这个值的用途。
       const n = displayList.length;
+      // initialNotifications 集合追加新条目，保持收集顺序与输入顺序一致。
       initialNotifications.push({
         key: 'overly-broad-bash-notification',
         text: `${displays} allow ${plural(n, 'rule')} from ${sources} ${plural(n, 'was', 'were')} ignored \u2014 not available for Ants, please use auto-mode instead`,
@@ -2912,23 +4161,31 @@ async function run(): Promise<CommanderCommand> {
         priority: 'high'
       });
     }
+    // effectiveToolPermissionContext 权限数据 集中保存完整 CLI 启动主流程要一起传递的字段。
     const effectiveToolPermissionContext = {
       ...toolPermissionContext,
       mode: isAgentSwarmsEnabled() && getTeammateUtils().isPlanModeRequired() ? 'plan' as const : toolPermissionContext.mode
     };
     // All startup opt-in paths (--tools, --brief, defaultView) have fired
     // above; initialIsBriefOnly just reads the resulting state.
+    // initialIsBriefOnly保存`feature`，供完整 CLI 启动主流程后续处理使用。
     const initialIsBriefOnly = feature('KAIROS') || feature('KAIROS_BRIEF') ? getUserMsgOptIn() : false;
+    // fullRemoteControl读取`getRemoteControlAtStartup`，供完整 CLI 启动主流程后续处理使用。
     const fullRemoteControl = remoteControl || getRemoteControlAtStartup() || kairosEnabled;
+    // ccrMirrorEnabled标记完整 CLI 启动主流程是否启用对应路径。
     let ccrMirrorEnabled = false;
+    // 组合条件 `feature('CCR_MIRROR') && !fullRemoteControl` 成立时，完整 CLI 启动主流程才启用这条专门路径。
     if (feature('CCR_MIRROR') && !fullRemoteControl) {
       /* eslint-disable @typescript-eslint/no-require-imports */
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         isCcrMirrorEnabled
       } = require('./bridge/bridgeEnabled.js') as typeof import('./bridge/bridgeEnabled.js');
       /* eslint-enable @typescript-eslint/no-require-imports */
+      // ccrMirrorEnabled更新为 `isCcrMirrorEnabled()`，确保main后续读取最新状态。
       ccrMirrorEnabled = isCcrMirrorEnabled();
     }
+    // initialState 状态 集中保存完整 CLI 启动主流程要一起传递的字段。
     const initialState: AppState = {
       settings: getInitialSettings(),
       tasks: {},
@@ -3042,20 +4299,27 @@ async function run(): Promise<CommanderCommand> {
     };
 
     // Add CLI initial prompt to history
+    // 满足 `inputPrompt` 时，完整 CLI 启动主流程执行该分支。
     if (inputPrompt) {
+      // 调用 addToHistory，触发完整 CLI 启动主流程此处需要的副作用。
       addToHistory(String(inputPrompt));
     }
+    // initialTools 集合 命名 `mcpTools`，让后续代码直接表达这个值的用途。
     const initialTools = mcpTools;
 
     // Increment numStartups synchronously — first-render readers like
     // shouldShowEffortCallout (via useState initializer) need the updated
     // value before setImmediate fires. Defer only telemetry.
+    // 调用 saveGlobalConfig，触发完整 CLI 启动主流程此处需要的副作用。
     saveGlobalConfig(current => ({
       ...current,
       numStartups: (current.numStartups ?? 0) + 1
     }));
+    // setImmediate 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
     setImmediate(() => {
+      // 显式忽略 `logStartupTelemetry()` 的返回值，只保留它触发的副作用。
       void logStartupTelemetry();
+      // 调用 logSessionTelemetry，触发完整 CLI 启动主流程此处需要的副作用。
       logSessionTelemetry();
     });
 
@@ -3067,13 +4331,16 @@ async function run(): Promise<CommanderCommand> {
     //   - Runtime: uploader checks github.com/anthropics/* remote + gcloud auth.
     //   - Safety: CLAUDE_CODE_DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
     // Import is dynamic + async to avoid adding startup latency.
+    // sessionUploaderPromise 异步任务保存 `import` 启动的异步任务，稍后再决定等待还是后台完成。
     const sessionUploaderPromise = "external" === 'ant' ? import('./utils/sessionDataUploader.js') : null;
 
     // Defer session uploader resolution to the onTurnComplete callback to avoid
     // adding a new top-level await in main.tsx (performance-critical path).
     // The per-turn auth logic in sessionDataUploader.ts handles unauthenticated
     // state gracefully (re-checks each turn, so auth recovery mid-session works).
+    // uploaderReady读取`sessionUploaderPromise.then`，供完整 CLI 启动主流程后续处理使用。
     const uploaderReady = sessionUploaderPromise ? sessionUploaderPromise.then(mod => mod.createSessionTurnUploader()).catch(() => null) : null;
+    // sessionConfig 会话数据 集中保存完整 CLI 启动主流程要一起传递的字段。
     const sessionConfig = {
       debug: debug || debugToStderr,
       commands: [...commands, ...mcpCommands],
@@ -3089,13 +4356,16 @@ async function run(): Promise<CommanderCommand> {
       taskListId,
       thinkingConfig,
       ...(uploaderReady && {
+        // 这个回调绑定到 onTurnComplete: (messages: MessageType[]) => {，负责完整 CLI 启动主流程在该局部场景下的响应。
         onTurnComplete: (messages: MessageType[]) => {
+          // 这个回调绑定到 void uploaderReady.then(uploader => uploader?.(messages));，负责完整 CLI 启动主流程在该局部场景下的响应。
           void uploaderReady.then(uploader => uploader?.(messages));
         }
       })
     };
 
     // Shared context for processResumedConversation calls
+    // resumeContext 集中保存完整 CLI 启动主流程要一起传递的字段。
     const resumeContext = {
       modeApi: coordinatorModeModule,
       mainThreadAgentDefinition,
@@ -3104,39 +4374,57 @@ async function run(): Promise<CommanderCommand> {
       cliAgents,
       initialState
     };
+    // 满足 `options.continue` 时，完整 CLI 启动主流程执行该分支。
     if (options.continue) {
       // Continue the most recent conversation directly
+      // resumeSucceeded标记完整 CLI 启动主流程是否启用对应路径。
       let resumeSucceeded = false;
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // resumeStart记录时间`performance.now`，供完整 CLI 启动主流程后续处理使用。
         const resumeStart = performance.now();
 
         // Clear stale caches before resuming to ensure fresh file/skill discovery
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           clearSessionCaches
         } = await import('./commands/clear/caches.js');
+        // 清理相关缓存，确保完整 CLI 启动主流程下一次读取时重新加载最新数据。
         clearSessionCaches();
+        // 结果读取`loadConversationForResume`，供完整 CLI 启动主流程后续处理使用。
         const result = await loadConversationForResume(undefined /* sessionId */, undefined /* sourceFile */);
+        // 结果缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
         if (!result) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_continue', {
             success: false
           });
+          // 等待并返回 `exitWithError(root, 'No conversation found to continue')`，调用方直接接收异步结果。
           return await exitWithError(root, 'No conversation found to continue');
         }
+        // loaded保存`processResumedConversation`，供完整 CLI 启动主流程后续处理使用。
         const loaded = await processResumedConversation(result, {
           forkSession: !!options.forkSession,
           includeAttribution: true,
           transcriptPath: result.fullPath
         }, resumeContext);
+        // 满足 `loaded.restoredAgentDef` 时，完整 CLI 启动主流程执行该分支。
         if (loaded.restoredAgentDef) {
+          // mainThreadAgentDefinition更新为 `loaded.restoredAgentDef`，确保main后续读取最新状态。
           mainThreadAgentDefinition = loaded.restoredAgentDef;
         }
+        // 调用 maybeActivateProactive，触发完整 CLI 启动主流程此处需要的副作用。
         maybeActivateProactive(options);
+        // 调用 maybeActivateBrief，触发完整 CLI 启动主流程此处需要的副作用。
         maybeActivateBrief(options);
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_continue', {
           success: true,
           resume_duration_ms: Math.round(performance.now() - resumeStart)
         });
+        // resumeSucceeded更新为 `true`，确保main后续读取最新状态。
         resumeSucceeded = true;
+        // 等待 `launchRepl(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
         await launchRepl(root, {
           getFpsMetrics,
           stats,
@@ -3151,34 +4439,50 @@ async function run(): Promise<CommanderCommand> {
           initialAgentColor: loaded.agentColor
         }, renderAndRun);
       } catch (error) {
+        // resumeSucceeded缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
         if (!resumeSucceeded) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_continue', {
             success: false
           });
         }
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logError(error);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+    // 完整 CLI 启动主流程在这里处理 `} else if (feature('DIRECT_CONNECT') && _pendingConnect?.url) {`，完成这一小步状态转换。
     } else if (feature('DIRECT_CONNECT') && _pendingConnect?.url) {
       // `claude connect <url>` — full interactive TUI connected to a remote server
+      // directConnectConfig 配置 先占位，稍后的条件分支会根据实际输入补齐它。
       let directConnectConfig;
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // session 会话数据构建`createDirectConnectSession`，供完整 CLI 启动主流程后续处理使用。
         const session = await createDirectConnectSession({
           serverUrl: _pendingConnect.url,
           authToken: _pendingConnect.authToken,
           cwd: getOriginalCwd(),
           dangerouslySkipPermissions: _pendingConnect.dangerouslySkipPermissions
         });
+        // 满足 `session.workDir` 时，完整 CLI 启动主流程执行该分支。
         if (session.workDir) {
+          // setOriginalCwd 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
           setOriginalCwd(session.workDir);
+          // setCwdState 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
           setCwdState(session.workDir);
         }
+        // setDirectConnectServerUrl 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setDirectConnectServerUrl(_pendingConnect.url);
+        // directConnectConfig 配置更新为 `session.config`，确保main后续读取最新状态。
         directConnectConfig = session.config;
       } catch (err) {
+        // 等待并返回 `exitWithError(root, err instanceof DirectConnectError ? err.m...`，调用方直接接收异步结果。
         return await exitWithError(root, err instanceof DirectConnectError ? err.message : String(err), () => gracefulShutdown(1));
       }
+      // connectInfoMessage 消息数据构建`createSystemMessage`，供完整 CLI 启动主流程后续处理使用。
       const connectInfoMessage = createSystemMessage(`Connected to server at ${_pendingConnect.url}\nSession: ${directConnectConfig.sessionId}`, 'info');
+      // 等待 `launchRepl(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
       await launchRepl(root, {
         getFpsMetrics,
         stats,
@@ -3195,34 +4499,46 @@ async function run(): Promise<CommanderCommand> {
         directConnectConfig,
         thinkingConfig
       }, renderAndRun);
+      // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
+    // 完整 CLI 启动主流程在这里处理 `} else if (feature('SSH_REMOTE') && _pendingSSH?.host) {`，完成这一小步状态转换。
     } else if (feature('SSH_REMOTE') && _pendingSSH?.host) {
       // `claude ssh <host> [dir]` — probe remote, deploy binary if needed,
       // spawn ssh with unix-socket -R forward to a local auth proxy, hand
       // the REPL an SSHSession. Tools run remotely, UI renders locally.
       // `--local` skips probe/deploy/ssh and spawns the current binary
       // directly with the same env — e2e test of the proxy/auth plumbing.
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         createSSHSession,
         createLocalSSHSession,
         SSHSessionError
       } = await import('./ssh/createSSHSession.js');
+      // sshSession 会话数据 先占位，稍后的条件分支会根据实际输入补齐它。
       let sshSession;
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // 满足 `_pendingSSH.local` 时，完整 CLI 启动主流程执行该分支。
         if (_pendingSSH.local) {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write('Starting local ssh-proxy test session...\n');
+          // sshSession 会话数据更新为 `createLocalSSHSession({`，确保main后续读取最新状态。
           sshSession = createLocalSSHSession({
             cwd: _pendingSSH.cwd,
             permissionMode: _pendingSSH.permissionMode,
             dangerouslySkipPermissions: _pendingSSH.dangerouslySkipPermissions
           });
         } else {
+          // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
           process.stderr.write(`Connecting to ${_pendingSSH.host}…\n`);
           // In-place progress: \r + EL0 (erase to end of line). Final \n on
           // success so the next message lands on a fresh line. No-op when
           // stderr isn't a TTY (piped/redirected) — \r would just emit noise.
+          // isTTY标记完整 CLI 启动主流程是否启用对应路径。
           const isTTY = process.stderr.isTTY;
+          // hadProgress 集合标记完整 CLI 启动主流程是否启用对应路径。
           let hadProgress = false;
+          // sshSession 会话数据更新为 `await createSSHSession({`，确保main后续读取最新状态。
           sshSession = await createSSHSession({
             host: _pendingSSH.host,
             cwd: _pendingSSH.cwd,
@@ -3231,20 +4547,30 @@ async function run(): Promise<CommanderCommand> {
             dangerouslySkipPermissions: _pendingSSH.dangerouslySkipPermissions,
             extraCliArgs: _pendingSSH.extraCliArgs
           }, isTTY ? {
+            // 这个回调绑定到 onProgress: msg => {，负责完整 CLI 启动主流程在该局部场景下的响应。
             onProgress: msg => {
+              // hadProgress 集合更新为 `true`，确保main后续读取最新状态。
               hadProgress = true;
+              // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
               process.stderr.write(`\r  ${msg}\x1b[K`);
             }
           } : {});
+          // 满足 `hadProgress) process.stderr.write('\n'` 时，完整 CLI 启动主流程执行该分支。
           if (hadProgress) process.stderr.write('\n');
         }
+        // setOriginalCwd 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setOriginalCwd(sshSession.remoteCwd);
+        // setCwdState 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setCwdState(sshSession.remoteCwd);
+        // setDirectConnectServerUrl 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setDirectConnectServerUrl(_pendingSSH.local ? 'local' : _pendingSSH.host);
       } catch (err) {
+        // 等待并返回 `exitWithError(root, err instanceof SSHSessionError ? err.mess...`，调用方直接接收异步结果。
         return await exitWithError(root, err instanceof SSHSessionError ? err.message : String(err), () => gracefulShutdown(1));
       }
+      // sshInfoMessage 消息数据构建`createSystemMessage`，供完整 CLI 启动主流程后续处理使用。
       const sshInfoMessage = createSystemMessage(_pendingSSH.local ? `Local ssh-proxy test session\ncwd: ${sshSession.remoteCwd}\nAuth: unix socket → local proxy` : `SSH session to ${_pendingSSH.host}\nRemote cwd: ${sshSession.remoteCwd}\nAuth: unix socket -R → local proxy`, 'info');
+      // 等待 `launchRepl(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
       await launchRepl(root, {
         getFpsMetrics,
         stats,
@@ -3261,86 +4587,127 @@ async function run(): Promise<CommanderCommand> {
         sshSession,
         thinkingConfig
       }, renderAndRun);
+      // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
+    // 完整 CLI 启动主流程在这里处理 `} else if (feature('KAIROS') && _pendingAssistantChat && (_pendingAssis...`，完成这一小步状态转换。
     } else if (feature('KAIROS') && _pendingAssistantChat && (_pendingAssistantChat.sessionId || _pendingAssistantChat.discover)) {
       // `claude assistant [sessionId]` — REPL as a pure viewer client
       // of a remote assistant session. The agentic loop runs remotely; this
       // process streams live events and POSTs messages. History is lazy-
       // loaded by useAssistantHistory on scroll-up (no blocking fetch here).
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         discoverAssistantSessions
       } = await import('./assistant/sessionDiscovery.js');
+      // targetSessionId 会话数据保存`_pendingAssistantChat.sessionId`，供完整 CLI 启动主流程后续判断或输出使用。
       let targetSessionId = _pendingAssistantChat.sessionId;
 
       // Discovery flow — list bridge environments, filter sessions
+      // targetSessionId 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
       if (!targetSessionId) {
+        // sessions 会话数据 先占位，稍后的条件分支会根据实际输入补齐它。
         let sessions;
+        // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
         try {
+          // sessions 会话数据更新为 `await discoverAssistantSessions()`，确保main后续读取最新状态。
           sessions = await discoverAssistantSessions();
         } catch (e) {
+          // 等待并返回 `exitWithError(root, `Failed to discover sessions: ${e instanc...`，调用方直接接收异步结果。
           return await exitWithError(root, `Failed to discover sessions: ${e instanceof Error ? e.message : e}`, () => gracefulShutdown(1));
         }
+        // sessions 会话数据为空时立即返回或跳过，避免完整 CLI 启动主流程把空集合当成可处理内容。
         if (sessions.length === 0) {
+          // installedDir 先占位，稍后的条件分支会根据实际输入补齐它。
           let installedDir: string | null;
+          // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
           try {
+            // installedDir更新为 `await launchAssistantInstallWizard(root)`，确保main后续读取最新状态。
             installedDir = await launchAssistantInstallWizard(root);
           } catch (e) {
+            // 等待并返回 `exitWithError(root, `Assistant installation failed: ${e insta...`，调用方直接接收异步结果。
             return await exitWithError(root, `Assistant installation failed: ${e instanceof Error ? e.message : e}`, () => gracefulShutdown(1));
           }
+          // 满足 `installedDir === null` 时，完整 CLI 启动主流程执行该分支。
           if (installedDir === null) {
+            // 等待 `gracefulShutdown(0)` 完成，再继续完整 CLI 启动主流程的异步流程。
             await gracefulShutdown(0);
+            // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
             process.exit(0);
           }
           // The daemon needs a few seconds to spin up its worker and
           // establish a bridge session before discovery will find it.
+          // 等待并返回 `exitWithMessage(root, `Assistant installed in ${installedDir}...`，调用方直接接收异步结果。
           return await exitWithMessage(root, `Assistant installed in ${installedDir}. The daemon is starting up — run \`claude assistant\` again in a few seconds to connect.`, {
             exitCode: 0,
+            // 这个回调绑定到 beforeExit: () => gracefulShutdown(0)，负责完整 CLI 启动主流程在该局部场景下的响应。
             beforeExit: () => gracefulShutdown(0)
           });
         }
+        // 满足 `sessions.length === 1` 时，完整 CLI 启动主流程执行该分支。
         if (sessions.length === 1) {
+          // targetSessionId 会话数据更新为 `sessions[0]!.id`，确保main后续读取最新状态。
           targetSessionId = sessions[0]!.id;
         } else {
+          // picked保存`launchAssistantSessionChooser`，供完整 CLI 启动主流程后续处理使用。
           const picked = await launchAssistantSessionChooser(root, {
             sessions
           });
+          // picked缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
           if (!picked) {
+            // 等待 `gracefulShutdown(0)` 完成，再继续完整 CLI 启动主流程的异步流程。
             await gracefulShutdown(0);
+            // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
             process.exit(0);
           }
+          // targetSessionId 会话数据更新为 `picked`，确保main后续读取最新状态。
           targetSessionId = picked;
         }
       }
 
       // Auth — call prepareApiRequest() once for orgUUID, but use a
       // getAccessToken closure for the token so reconnects get fresh tokens.
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         checkAndRefreshOAuthTokenIfNeeded,
         getClaudeAIOAuthTokens
       } = await import('./utils/auth.js');
+      // 等待 `checkAndRefreshOAuthTokenIfNeeded()` 完成，再继续完整 CLI 启动主流程的异步流程。
       await checkAndRefreshOAuthTokenIfNeeded();
+      // apiCreds 集合 先占位，稍后的条件分支会根据实际输入补齐它。
       let apiCreds;
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // apiCreds 集合更新为 `await prepareApiRequest()`，确保main后续读取最新状态。
         apiCreds = await prepareApiRequest();
       } catch (e) {
+        // 等待并返回 `exitWithError(root, `Error: ${e instanceof Error ? e.message ...`，调用方直接接收异步结果。
         return await exitWithError(root, `Error: ${e instanceof Error ? e.message : 'Failed to authenticate'}`, () => gracefulShutdown(1));
       }
+      // getAccessToken读取`getClaudeAIOAuthTokens`，供完整 CLI 启动主流程后续处理使用。
       const getAccessToken = (): string => getClaudeAIOAuthTokens()?.accessToken ?? apiCreds.accessToken;
 
       // Brief mode activation: setKairosActive(true) satisfies BOTH opt-in
       // and entitlement for isBriefEnabled() (BriefTool.ts:124-132).
+      // setKairosActive 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setKairosActive(true);
+      // setUserMsgOptIn 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setUserMsgOptIn(true);
+      // setIsRemoteMode 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
       setIsRemoteMode(true);
+      // remoteSessionConfig 会话数据构建`createRemoteSessionConfig`，供完整 CLI 启动主流程后续处理使用。
       const remoteSessionConfig = createRemoteSessionConfig(targetSessionId, getAccessToken, apiCreds.orgUUID, /* hasInitialPrompt */false, /* viewerOnly */true);
+      // infoMessage 消息数据构建`createSystemMessage`，供完整 CLI 启动主流程后续处理使用。
       const infoMessage = createSystemMessage(`Attached to assistant session ${targetSessionId.slice(0, 8)}…`, 'info');
+      // assistantInitialState 状态 集中保存完整 CLI 启动主流程要一起传递的字段。
       const assistantInitialState: AppState = {
         ...initialState,
         isBriefOnly: true,
         kairosEnabled: false,
         replBridgeEnabled: false
       };
+      // remoteCommands 命令数据筛选`filterCommandsForRemoteMode`，供完整 CLI 启动主流程后续处理使用。
       const remoteCommands = filterCommandsForRemoteMode(commands);
+      // 等待 `launchRepl(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
       await launchRepl(root, {
         getFpsMetrics,
         stats,
@@ -3357,48 +4724,71 @@ async function run(): Promise<CommanderCommand> {
         remoteSessionConfig,
         thinkingConfig
       }, renderAndRun);
+      // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
+    // 完整 CLI 启动主流程在这里处理 `} else if (options.resume || options.fromPr || teleport || remote !== n...`，完成这一小步状态转换。
     } else if (options.resume || options.fromPr || teleport || remote !== null) {
       // Handle resume flow - from file (ant-only), session ID, or interactive selector
 
       // Clear stale caches before resuming to ensure fresh file/skill discovery
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         clearSessionCaches
       } = await import('./commands/clear/caches.js');
+      // 清理相关缓存，确保完整 CLI 启动主流程下一次读取时重新加载最新数据。
       clearSessionCaches();
+      // 对话消息保存`null`，作为后续空值处理的输入。
       let messages: MessageType[] | null = null;
+      // processedResume 命名 `undefined`，让后续代码直接表达这个值的用途。
       let processedResume: ProcessedResume | undefined = undefined;
+      // maybeSessionId 会话数据读取`validateUuid`，供完整 CLI 启动主流程后续处理使用。
       let maybeSessionId = validateUuid(options.resume);
+      // searchTerm 命名 `undefined`，让后续代码直接表达这个值的用途。
       let searchTerm: string | undefined = undefined;
       // Store full LogOption when found by custom title (for cross-worktree resume)
+      // matchedLog初始化为空值，后续分支会在有数据时补齐。
       let matchedLog: LogOption | null = null;
       // PR filter for --from-pr flag
+      // filterByPr 命名 `undefined`，让后续代码直接表达这个值的用途。
       let filterByPr: boolean | number | string | undefined = undefined;
 
       // Handle --from-pr flag
+      // 满足 `options.fromPr` 时，完整 CLI 启动主流程执行该分支。
       if (options.fromPr) {
+        // 满足 `options.fromPr === true` 时，完整 CLI 启动主流程执行该分支。
         if (options.fromPr === true) {
           // Show all sessions with linked PRs
+          // filterByPr更新为 `true`，确保main后续读取最新状态。
           filterByPr = true;
+        // 完整 CLI 启动主流程在这里处理 `} else if (typeof options.fromPr === 'string') {`，完成这一小步状态转换。
         } else if (typeof options.fromPr === 'string') {
           // Could be a PR number or URL
+          // filterByPr更新为 `options.fromPr`，确保main后续读取最新状态。
           filterByPr = options.fromPr;
         }
       }
 
       // If resume value is not a UUID, try exact match by custom title first
+      // 组合条件 `options.resume && typeof options.resume === 'stri` 成立时，完整 CLI 启动主流程才启用这条专门路径。
       if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
+        // trimmedValue格式化`resume.trim`，供完整 CLI 启动主流程后续处理使用。
         const trimmedValue = options.resume.trim();
+        // 满足 `trimmedValue` 时，完整 CLI 启动主流程执行该分支。
         if (trimmedValue) {
+          // matches 集合保存`searchSessionsByCustomTitle`，供完整 CLI 启动主流程后续处理使用。
           const matches = await searchSessionsByCustomTitle(trimmedValue, {
             exact: true
           });
+          // 满足 `matches.length === 1` 时，完整 CLI 启动主流程执行该分支。
           if (matches.length === 1) {
             // Exact match found - store full LogOption for cross-worktree resume
+            // matchedLog更新为 `matches[0]!`，确保main后续读取最新状态。
             matchedLog = matches[0]!;
+            // maybeSessionId 会话数据更新为 `getSessionIdFromLog(matchedLog) ?? null`，确保main后续读取最新状态。
             maybeSessionId = getSessionIdFromLog(matchedLog) ?? null;
           } else {
             // No match or multiple matches - use as search term for picker
+            // searchTerm更新为 `trimmedValue`，确保main后续读取最新状态。
             searchTerm = trimmedValue;
           }
         }
@@ -3406,82 +4796,118 @@ async function run(): Promise<CommanderCommand> {
 
       // --remote and --teleport both create/resume Claude Code Web (CCR) sessions.
       // Remote Control (--rc) is a separate feature gated in initReplBridge.ts.
+      // `remote` 与 `null || teleport` 不一致时刷新派生状态，避免使用过期结果。
       if (remote !== null || teleport) {
+        // 等待 `waitForPolicyLimitsToLoad()` 完成，再继续完整 CLI 启动主流程的异步流程。
         await waitForPolicyLimitsToLoad();
+        // 满足 `!isPolicyAllowed('allow_remote_sessions')` 时，完整 CLI 启动主流程执行该分支。
         if (!isPolicyAllowed('allow_remote_sessions')) {
+          // 等待并返回 `exitWithError(root, "Error: Remote sessions are disabled by y...`，调用方直接接收异步结果。
           return await exitWithError(root, "Error: Remote sessions are disabled by your organization's policy.", () => gracefulShutdown(1));
         }
       }
+      // `remote` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (remote !== null) {
         // Create remote session (optionally with initial prompt)
+        // hasInitialPrompt标记完整 CLI 启动主流程是否启用对应路径。
         const hasInitialPrompt = remote.length > 0;
 
         // Check if TUI mode is enabled - description is only optional in TUI mode
+        // isRemoteTuiEnabled记录 `getFeatureValue_CACHED_MAY_BE_STALE` 是否成立，完整 CLI 启动主流程随后按该结果分支。
         const isRemoteTuiEnabled = getFeatureValue_CACHED_MAY_BE_STALE('tengu_remote_backend', false);
+        // 组合条件 `!isRemoteTuiEnabled && !hasInitialPrompt` 成立时，完整 CLI 启动主流程才启用这条专门路径。
         if (!isRemoteTuiEnabled && !hasInitialPrompt) {
+          // 等待并返回 `exitWithError(root, 'Error: --remote requires a description.\...`，调用方直接接收异步结果。
           return await exitWithError(root, 'Error: --remote requires a description.\nUsage: claude --remote "your task description"', () => gracefulShutdown(1));
         }
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_remote_create_session', {
           has_initial_prompt: String(hasInitialPrompt) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
 
         // Pass current branch so CCR clones the repo at the right revision
+        // currentBranch读取`getBranch`，供完整 CLI 启动主流程后续处理使用。
         const currentBranch = await getBranch();
+        // createdSession 会话数据保存`teleportToRemoteWithErrorHandling`，供完整 CLI 启动主流程后续处理使用。
         const createdSession = await teleportToRemoteWithErrorHandling(root, hasInitialPrompt ? remote : null, new AbortController().signal, currentBranch || undefined);
+        // createdSession 会话数据缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
         if (!createdSession) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_remote_create_session_error', {
             error: 'unable_to_create_session' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
+          // 等待并返回 `exitWithError(root, 'Error: Unable to create remote session',...`，调用方直接接收异步结果。
           return await exitWithError(root, 'Error: Unable to create remote session', () => gracefulShutdown(1));
         }
+        // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_remote_create_session_success', {
           session_id: createdSession.id as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
 
         // Check if new remote TUI mode is enabled via feature gate
+        // isRemoteTuiEnabled缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
         if (!isRemoteTuiEnabled) {
           // Original behavior: print session info and exit
+          // 向标准输出写入完整 CLI 启动主流程要展示给用户的文本。
           process.stdout.write(`Created remote session: ${createdSession.title}\n`);
+          // 向标准输出写入完整 CLI 启动主流程要展示给用户的文本。
           process.stdout.write(`View: ${getRemoteSessionUrl(createdSession.id)}?m=0\n`);
+          // 向标准输出写入完整 CLI 启动主流程要展示给用户的文本。
           process.stdout.write(`Resume with: claude --teleport ${createdSession.id}\n`);
+          // 等待 `gracefulShutdown(0)` 完成，再继续完整 CLI 启动主流程的异步流程。
           await gracefulShutdown(0);
+          // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
           process.exit(0);
         }
 
         // New behavior: start local TUI with CCR engine
         // Mark that we're in remote mode for command visibility
+        // setIsRemoteMode 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setIsRemoteMode(true);
+        // 调用 switchSession，触发完整 CLI 启动主流程此处需要的副作用。
         switchSession(asSessionId(createdSession.id));
 
         // Get OAuth credentials for remote session
+        // apiCreds 集合 先占位，稍后的条件分支会根据实际输入补齐它。
         let apiCreds: {
           accessToken: string;
           orgUUID: string;
         };
+        // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
         try {
+          // apiCreds 集合更新为 `await prepareApiRequest()`，确保main后续读取最新状态。
           apiCreds = await prepareApiRequest();
         } catch (error) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logError(toError(error));
+          // 等待并返回 `exitWithError(root, `Error: ${errorMessage(error) || 'Failed ...`，调用方直接接收异步结果。
           return await exitWithError(root, `Error: ${errorMessage(error) || 'Failed to authenticate'}`, () => gracefulShutdown(1));
         }
 
         // Create remote session config for the REPL
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           getClaudeAIOAuthTokens: getTokensForRemote
         } = await import('./utils/auth.js');
+        // getAccessTokenForRemote读取`getTokensForRemote`，供完整 CLI 启动主流程后续处理使用。
         const getAccessTokenForRemote = (): string => getTokensForRemote()?.accessToken ?? apiCreds.accessToken;
+        // remoteSessionConfig 会话数据构建`createRemoteSessionConfig`，供完整 CLI 启动主流程后续处理使用。
         const remoteSessionConfig = createRemoteSessionConfig(createdSession.id, getAccessTokenForRemote, apiCreds.orgUUID, hasInitialPrompt);
 
         // Add remote session info as initial system message
+        // remoteSessionUrl 会话数据读取`getRemoteSessionUrl`，供完整 CLI 启动主流程后续处理使用。
         const remoteSessionUrl = `${getRemoteSessionUrl(createdSession.id)}?m=0`;
+        // remoteInfoMessage 消息数据构建`createSystemMessage`，供完整 CLI 启动主流程后续处理使用。
         const remoteInfoMessage = createSystemMessage(`/remote-control is active. Code in CLI or at ${remoteSessionUrl}`, 'info');
 
         // Create initial user message from the prompt if provided (CCR echoes it back but we ignore that)
+        // initialUserMessage 消息数据构建`createUserMessage`，供完整 CLI 启动主流程后续处理使用。
         const initialUserMessage = hasInitialPrompt ? createUserMessage({
           content: remote
         }) : null;
 
         // Set remote session URL in app state for footer indicator
+        // remoteInitialState 状态 集中保存完整 CLI 启动主流程要一起传递的字段。
         const remoteInitialState = {
           ...initialState,
           remoteSessionUrl
@@ -3489,7 +4915,9 @@ async function run(): Promise<CommanderCommand> {
 
         // Pre-filter commands to only include remote-safe ones.
         // CCR's init response may further refine the list (via handleRemoteInit in REPL).
+        // remoteCommands 命令数据筛选`filterCommandsForRemoteMode`，供完整 CLI 启动主流程后续处理使用。
         const remoteCommands = filterCommandsForRemoteMode(commands);
+        // 等待 `launchRepl(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
         await launchRepl(root, {
           getFpsMetrics,
           stats,
@@ -3506,152 +4934,226 @@ async function run(): Promise<CommanderCommand> {
           remoteSessionConfig,
           thinkingConfig
         }, renderAndRun);
+        // 完整 CLI 启动主流程在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
+      // 完整 CLI 启动主流程在这里处理 `} else if (teleport) {`，完成这一小步状态转换。
       } else if (teleport) {
+        // 组合条件 `teleport === true || teleport === ''` 成立时，完整 CLI 启动主流程才启用这条专门路径。
         if (teleport === true || teleport === '') {
           // Interactive mode: show task selector and handle resume
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_teleport_interactive_mode', {});
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logForDebugging('selectAndResumeTeleportTask: Starting teleport flow...');
+          // teleportResult保存`launchTeleportResumeWrapper`，供完整 CLI 启动主流程后续处理使用。
           const teleportResult = await launchTeleportResumeWrapper(root);
+          // teleportResult缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
           if (!teleportResult) {
             // User cancelled or error occurred
+            // 等待 `gracefulShutdown(0)` 完成，再继续完整 CLI 启动主流程的异步流程。
             await gracefulShutdown(0);
+            // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
             process.exit(0);
           }
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             branchError
           } = await checkOutTeleportedSessionBranch(teleportResult.branch);
+          // 对话消息更新为 `processMessagesForTeleportResume(teleportResult.log, bran...`，确保main后续读取最新状态。
           messages = processMessagesForTeleportResume(teleportResult.log, branchError);
+        // 完整 CLI 启动主流程在这里处理 `} else if (typeof teleport === 'string') {`，完成这一小步状态转换。
         } else if (typeof teleport === 'string') {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_teleport_resume_session', {
             mode: 'direct' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
+          // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
           try {
             // First, fetch session and validate repository before checking git state
+            // sessionData 会话数据读取`fetchSession`，供完整 CLI 启动主流程后续处理使用。
             const sessionData = await fetchSession(teleport);
+            // repoValidation读取`validateSessionRepository`，供完整 CLI 启动主流程后续处理使用。
             const repoValidation = await validateSessionRepository(sessionData);
 
             // Handle repo mismatch or not in repo cases
+            // 组合条件 `repoValidation.status === 'mismatch' || repoValid` 成立时，完整 CLI 启动主流程才启用这条专门路径。
             if (repoValidation.status === 'mismatch' || repoValidation.status === 'not_in_repo') {
+              // sessionRepo 会话数据保存`repoValidation.sessionRepo`，供完整 CLI 启动主流程后续判断或输出使用。
               const sessionRepo = repoValidation.sessionRepo;
+              // 满足 `sessionRepo` 时，完整 CLI 启动主流程执行该分支。
               if (sessionRepo) {
                 // Check for known paths
+                // knownPaths 路径数据读取`getKnownPathsForRepo`，供完整 CLI 启动主流程后续处理使用。
                 const knownPaths = getKnownPathsForRepo(sessionRepo);
+                // existingPaths 路径数据筛选`filterExistingPaths`，供完整 CLI 启动主流程后续处理使用。
                 const existingPaths = await filterExistingPaths(knownPaths);
+                // 满足 `existingPaths.length > 0` 时，完整 CLI 启动主流程执行该分支。
                 if (existingPaths.length > 0) {
                   // Show directory switch dialog
+                  // selectedPath 路径数据保存`launchTeleportRepoMismatchDialog`，供完整 CLI 启动主流程后续处理使用。
                   const selectedPath = await launchTeleportRepoMismatchDialog(root, {
                     targetRepo: sessionRepo,
                     initialPaths: existingPaths
                   });
+                  // 满足 `selectedPath` 时，完整 CLI 启动主流程执行该分支。
                   if (selectedPath) {
                     // Change to the selected directory
+                    // 调用 process.chdir，触发完整 CLI 启动主流程此处需要的副作用。
                     process.chdir(selectedPath);
+                    // setCwd 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
                     setCwd(selectedPath);
+                    // setOriginalCwd 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
                     setOriginalCwd(selectedPath);
                   } else {
                     // User cancelled
+                    // 等待 `gracefulShutdown(0)` 完成，再继续完整 CLI 启动主流程的异步流程。
                     await gracefulShutdown(0);
                   }
                 } else {
                   // No known paths - show original error
+                  // 抛出 new TeleportOperationError(`You must run claude --teleport ${teleport} from a checkout of…，阻止完整 CLI 启动主流程在无效状态下继续运行。
                   throw new TeleportOperationError(`You must run claude --teleport ${teleport} from a checkout of ${sessionRepo}.`, chalk.red(`You must run claude --teleport ${teleport} from a checkout of ${chalk.bold(sessionRepo)}.\n`));
                 }
               }
+            // 完整 CLI 启动主流程在这里处理 `} else if (repoValidation.status === 'error') {`，完成这一小步状态转换。
             } else if (repoValidation.status === 'error') {
+              // 抛出 new TeleportOperationError(repoValidation.errorMessage || 'Failed to validate session', c…，阻止完整 CLI 启动主流程在无效状态下继续运行。
               throw new TeleportOperationError(repoValidation.errorMessage || 'Failed to validate session', chalk.red(`Error: ${repoValidation.errorMessage || 'Failed to validate session'}\n`));
             }
+            // 等待 `validateGitState()` 完成，再继续完整 CLI 启动主流程的异步流程。
             await validateGitState();
 
             // Use progress UI for teleport
+            // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
             const {
               teleportWithProgress
             } = await import('./components/TeleportProgress.js');
+            // 结果保存`teleportWithProgress`，供完整 CLI 启动主流程后续处理使用。
             const result = await teleportWithProgress(root, teleport);
             // Track teleported session for reliability logging
+            // setTeleportedSessionInfo 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
             setTeleportedSessionInfo({
               sessionId: teleport
             });
+            // 对话消息更新为 `result.messages`，确保main后续读取最新状态。
             messages = result.messages;
           } catch (error) {
+            // 满足 `error instanceof TeleportOperationError` 时，完整 CLI 启动主流程执行该分支。
             if (error instanceof TeleportOperationError) {
+              // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
               process.stderr.write(error.formattedMessage + '\n');
             } else {
+              // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
               logError(error);
+              // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
               process.stderr.write(chalk.red(`Error: ${errorMessage(error)}\n`));
             }
+            // 等待 `gracefulShutdown(1)` 完成，再继续完整 CLI 启动主流程的异步流程。
             await gracefulShutdown(1);
           }
         }
       }
+      // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
       if ("external" === 'ant') {
+        // 组合条件 `options.resume && typeof options.resume === 'stri` 成立时，完整 CLI 启动主流程才启用这条专门路径。
         if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
           // Check for ccshare URL (e.g. https://go/ccshare/boris-20260311-211036)
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             parseCcshareId,
             loadCcshare
           } = await import('./utils/ccshareResume.js');
+          // ccshareId解析`parseCcshareId`，供完整 CLI 启动主流程后续处理使用。
           const ccshareId = parseCcshareId(options.resume);
+          // 满足 `ccshareId` 时，完整 CLI 启动主流程执行该分支。
           if (ccshareId) {
+            // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
             try {
+              // resumeStart记录时间`performance.now`，供完整 CLI 启动主流程后续处理使用。
               const resumeStart = performance.now();
+              // logOption读取`loadCcshare`，供完整 CLI 启动主流程后续处理使用。
               const logOption = await loadCcshare(ccshareId);
+              // 结果读取`loadConversationForResume`，供完整 CLI 启动主流程后续处理使用。
               const result = await loadConversationForResume(logOption, undefined);
+              // 满足 `result` 时，完整 CLI 启动主流程执行该分支。
               if (result) {
+                // processedResume更新为 `await processResumedConversation(result, {`，确保main后续读取最新状态。
                 processedResume = await processResumedConversation(result, {
                   forkSession: true,
                   transcriptPath: result.fullPath
                 }, resumeContext);
+                // 满足 `processedResume.restoredAgentDef` 时，完整 CLI 启动主流程执行该分支。
                 if (processedResume.restoredAgentDef) {
+                  // mainThreadAgentDefinition更新为 `processedResume.restoredAgentDef`，确保main后续读取最新状态。
                   mainThreadAgentDefinition = processedResume.restoredAgentDef;
                 }
+                // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
                 logEvent('tengu_session_resumed', {
                   entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                   success: true,
                   resume_duration_ms: Math.round(performance.now() - resumeStart)
                 });
               } else {
+                // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
                 logEvent('tengu_session_resumed', {
                   entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                   success: false
                 });
               }
             } catch (error) {
+              // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
               logEvent('tengu_session_resumed', {
                 entrypoint: 'ccshare' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 success: false
               });
+              // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
               logError(error);
+              // 这个回调绑定到 await exitWithError(root, `Unable to resume from ccshare: ${errorMessage(error)}`, (…，负责完整 CLI 启动主流程在该局部场景下的响应。
               await exitWithError(root, `Unable to resume from ccshare: ${errorMessage(error)}`, () => gracefulShutdown(1));
             }
           } else {
+            // resolvedPath 路径数据读取`resolve`，供完整 CLI 启动主流程后续处理使用。
             const resolvedPath = resolve(options.resume);
+            // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
             try {
+              // resumeStart记录时间`performance.now`，供完整 CLI 启动主流程后续处理使用。
               const resumeStart = performance.now();
+              // logOption 先占位，稍后的条件分支会根据实际输入补齐它。
               let logOption;
+              // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
               try {
                 // Attempt to load as a transcript file; ENOENT falls through to session-ID handling
+                // logOption更新为 `await loadTranscriptFromFile(resolvedPath)`，确保main后续读取最新状态。
                 logOption = await loadTranscriptFromFile(resolvedPath);
               } catch (error) {
+                // 满足 `!isENOENT(error)` 时，完整 CLI 启动主流程执行该分支。
                 if (!isENOENT(error)) throw error;
                 // ENOENT: not a file path — fall through to session-ID handling
               }
+              // 满足 `logOption` 时，完整 CLI 启动主流程执行该分支。
               if (logOption) {
+                // 结果读取`loadConversationForResume`，供完整 CLI 启动主流程后续处理使用。
                 const result = await loadConversationForResume(logOption, undefined /* sourceFile */);
+                // 满足 `result` 时，完整 CLI 启动主流程执行该分支。
                 if (result) {
+                  // processedResume更新为 `await processResumedConversation(result, {`，确保main后续读取最新状态。
                   processedResume = await processResumedConversation(result, {
                     forkSession: !!options.forkSession,
                     transcriptPath: result.fullPath
                   }, resumeContext);
+                  // 满足 `processedResume.restoredAgentDef` 时，完整 CLI 启动主流程执行该分支。
                   if (processedResume.restoredAgentDef) {
+                    // mainThreadAgentDefinition更新为 `processedResume.restoredAgentDef`，确保main后续读取最新状态。
                     mainThreadAgentDefinition = processedResume.restoredAgentDef;
                   }
+                  // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
                   logEvent('tengu_session_resumed', {
                     entrypoint: 'file' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     success: true,
                     resume_duration_ms: Math.round(performance.now() - resumeStart)
                   });
                 } else {
+                  // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
                   logEvent('tengu_session_resumed', {
                     entrypoint: 'file' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     success: false
@@ -3659,11 +5161,14 @@ async function run(): Promise<CommanderCommand> {
                 }
               }
             } catch (error) {
+              // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
               logEvent('tengu_session_resumed', {
                 entrypoint: 'file' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 success: false
               });
+              // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
               logError(error);
+              // 这个回调绑定到 await exitWithError(root, `Unable to load transcript from file: ${options.resume}`, …，负责完整 CLI 启动主流程在该局部场景下的响应。
               await exitWithError(root, `Unable to load transcript from file: ${options.resume}`, () => gracefulShutdown(1));
             }
           }
@@ -3671,59 +5176,83 @@ async function run(): Promise<CommanderCommand> {
       }
 
       // If not loaded as a file, try as session ID
+      // 满足 `maybeSessionId` 时，完整 CLI 启动主流程执行该分支。
       if (maybeSessionId) {
         // Resume specific session by ID
+        // sessionId 会话数据保存`maybeSessionId`，供完整 CLI 启动主流程后续判断或输出使用。
         const sessionId = maybeSessionId;
+        // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
         try {
+          // resumeStart记录时间`performance.now`，供完整 CLI 启动主流程后续处理使用。
           const resumeStart = performance.now();
           // Use matchedLog if available (for cross-worktree resume by custom title)
           // Otherwise fall back to sessionId string (for direct UUID resume)
+          // 结果读取`loadConversationForResume`，供完整 CLI 启动主流程后续处理使用。
           const result = await loadConversationForResume(matchedLog ?? sessionId, undefined);
+          // 结果缺失时提前走兜底路径，避免完整 CLI 启动主流程继续依赖无效输入。
           if (!result) {
+            // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
             logEvent('tengu_session_resumed', {
               entrypoint: 'cli_flag' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
               success: false
             });
+            // 等待并返回 `exitWithError(root, `No conversation found with session ID: $...`，调用方直接接收异步结果。
             return await exitWithError(root, `No conversation found with session ID: ${sessionId}`);
           }
+          // fullPath 路径数据 命名 `matchedLog?.fullPath ?? result.fullPath`，让后续代码直接表达这个值的用途。
           const fullPath = matchedLog?.fullPath ?? result.fullPath;
+          // processedResume更新为 `await processResumedConversation(result, {`，确保main后续读取最新状态。
           processedResume = await processResumedConversation(result, {
             forkSession: !!options.forkSession,
             sessionIdOverride: sessionId,
             transcriptPath: fullPath
           }, resumeContext);
+          // 满足 `processedResume.restoredAgentDef` 时，完整 CLI 启动主流程执行该分支。
           if (processedResume.restoredAgentDef) {
+            // mainThreadAgentDefinition更新为 `processedResume.restoredAgentDef`，确保main后续读取最新状态。
             mainThreadAgentDefinition = processedResume.restoredAgentDef;
           }
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_session_resumed', {
             entrypoint: 'cli_flag' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             success: true,
             resume_duration_ms: Math.round(performance.now() - resumeStart)
           });
         } catch (error) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_session_resumed', {
             entrypoint: 'cli_flag' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
             success: false
           });
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logError(error);
+          // 等待 `exitWithError(root, `Failed to resume session ${sessionId}`)` 完成，再继续完整 CLI 启动主流程的异步流程。
           await exitWithError(root, `Failed to resume session ${sessionId}`);
         }
       }
 
       // Await file downloads before rendering REPL (files must be available)
+      // 满足 `fileDownloadPromise` 时，完整 CLI 启动主流程执行该分支。
       if (fileDownloadPromise) {
+        // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
         try {
+          // 结果列表 等待 `fileDownloadPromise`，确保继续执行前已有结果。
           const results = await fileDownloadPromise;
+          // failedCount 数量统计`count`，供完整 CLI 启动主流程后续处理使用。
           const failedCount = count(results, r => !r.success);
+          // 满足 `failedCount > 0` 时，完整 CLI 启动主流程执行该分支。
           if (failedCount > 0) {
+            // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
             process.stderr.write(chalk.yellow(`Warning: ${failedCount}/${results.length} file(s) failed to download.\n`));
           }
         } catch (error) {
+          // 等待并返回 `exitWithError(root, `Error downloading files: ${errorMessage(...`，调用方直接接收异步结果。
           return await exitWithError(root, `Error downloading files: ${errorMessage(error)}`);
         }
       }
 
       // If we have a processed resume or teleport messages, render the REPL
+      // resumeData保存`Array.isArray`，供完整 CLI 启动主流程后续处理使用。
       const resumeData = processedResume ?? (Array.isArray(messages) ? {
         messages,
         fileHistorySnapshots: undefined,
@@ -3733,9 +5262,13 @@ async function run(): Promise<CommanderCommand> {
         initialState,
         contentReplacements: undefined
       } : undefined);
+      // 满足 `resumeData` 时，完整 CLI 启动主流程执行该分支。
       if (resumeData) {
+        // 调用 maybeActivateProactive，触发完整 CLI 启动主流程此处需要的副作用。
         maybeActivateProactive(options);
+        // 调用 maybeActivateBrief，触发完整 CLI 启动主流程此处需要的副作用。
         maybeActivateBrief(options);
+        // 等待 `launchRepl(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
         await launchRepl(root, {
           getFpsMetrics,
           stats,
@@ -3752,6 +5285,7 @@ async function run(): Promise<CommanderCommand> {
       } else {
         // Show interactive selector (includes same-repo worktrees)
         // Note: ResumeConversation loads logs internally to ensure proper GC after selection
+        // 等待 `launchResumeChooser(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
         await launchResumeChooser(root, {
           getFpsMetrics,
           stats,
@@ -3768,12 +5302,18 @@ async function run(): Promise<CommanderCommand> {
       // instead of blocking ~500ms waiting for SessionStart hooks to finish.
       // REPL will inject hook messages when they resolve and await them before
       // the first API call so the model always sees hook context.
+      // pendingHookMessages 消息数据标记完整 CLI 启动主流程是否启用对应路径。
       const pendingHookMessages = hooksPromise && hookMessages.length === 0 ? hooksPromise : undefined;
+      // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
       profileCheckpoint('action_after_hooks');
+      // 调用 maybeActivateProactive，触发完整 CLI 启动主流程此处需要的副作用。
       maybeActivateProactive(options);
+      // 调用 maybeActivateBrief，触发完整 CLI 启动主流程此处需要的副作用。
       maybeActivateBrief(options);
       // Persist the current mode for fresh sessions so future resumes know what mode was used
+      // 满足 `feature('COORDINATOR_MODE')` 时，完整 CLI 启动主流程执行该分支。
       if (feature('COORDINATOR_MODE')) {
+        // 调用 saveMode，触发完整 CLI 启动主流程此处需要的副作用。
         saveMode(coordinatorModeModule?.isCoordinatorMode() ? 'coordinator' : 'normal');
       }
 
@@ -3783,24 +5323,33 @@ async function run(): Promise<CommanderCommand> {
       // confirmation, so this is the only signal the user gets that the
       // prompt — and the working directory / CLAUDE.md it implies — came
       // from an external source rather than something they typed.
+      // deepLinkBanner保存`null`，作为后续空值处理的输入。
       let deepLinkBanner: ReturnType<typeof createSystemMessage> | null = null;
+      // 满足 `feature('LODESTONE')` 时，完整 CLI 启动主流程执行该分支。
       if (feature('LODESTONE')) {
+        // 满足 `options.deepLinkOrigin` 时，完整 CLI 启动主流程执行该分支。
         if (options.deepLinkOrigin) {
+          // 记录完整 CLI 启动主流程运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_deep_link_opened', {
             has_prefill: Boolean(options.prefill),
             has_repo: Boolean(options.deepLinkRepo)
           });
+          // deepLinkBanner更新为 `createSystemMessage(buildDeepLinkBanner({`，确保main后续读取最新状态。
           deepLinkBanner = createSystemMessage(buildDeepLinkBanner({
             cwd: getCwd(),
             prefillLength: options.prefill?.length,
             repo: options.deepLinkRepo,
             lastFetch: options.deepLinkLastFetch !== undefined ? new Date(options.deepLinkLastFetch) : undefined
           }), 'warning');
+        // 完整 CLI 启动主流程在这里处理 `} else if (options.prefill) {`，完成这一小步状态转换。
         } else if (options.prefill) {
+          // deepLinkBanner更新为 `createSystemMessage('Launched with a pre-filled prompt — ...`，确保main后续读取最新状态。
           deepLinkBanner = createSystemMessage('Launched with a pre-filled prompt — review it before pressing Enter.', 'warning');
         }
       }
+      // initialMessages 消息数据 命名 `deepLinkBanner ? [deepLinkBanner, ...hookMessages] : hook...`，让后续代码直接表达这个值的用途。
       const initialMessages = deepLinkBanner ? [deepLinkBanner, ...hookMessages] : hookMessages.length > 0 ? hookMessages : undefined;
+      // 等待 `launchRepl(root, {` 完成，再继续完整 CLI 启动主流程的异步流程。
       await launchRepl(root, {
         getFpsMetrics,
         stats,
@@ -3814,68 +5363,108 @@ async function run(): Promise<CommanderCommand> {
   }).version(`${MACRO.VERSION} (Claude Code)`, '-v, --version', 'Output the version number');
 
   // Worktree flags
+  // 调用 program.option，触发完整 CLI 启动主流程此处需要的副作用。
   program.option('-w, --worktree [name]', 'Create a new git worktree for this session (optionally specify a name)');
+  // 调用 program.option，触发完整 CLI 启动主流程此处需要的副作用。
   program.option('--tmux', 'Create a tmux session for the worktree (requires --worktree). Uses iTerm2 native panes when available; use --tmux=classic for traditional tmux.');
+  // 满足 `canUserConfigureAdvisor()` 时，完整 CLI 启动主流程执行该分支。
   if (canUserConfigureAdvisor()) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--advisor <model>', 'Enable the server-side advisor tool with the specified model (alias or full ID).').hideHelp());
   }
+  // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
   if ("external" === 'ant') {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--delegate-permissions', '[ANT-ONLY] Alias for --permission-mode auto.').implies({
       permissionMode: 'auto'
     }));
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--dangerously-skip-permissions-with-classifiers', '[ANT-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
       permissionMode: 'auto'
     }));
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--afk', '[ANT-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
       permissionMode: 'auto'
     }));
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--tasks [id]', '[ANT-ONLY] Tasks mode: watch for tasks and auto-process them. Optional id is used as both the task list ID and agent ID (defaults to "tasklist").').argParser(String).hideHelp());
+    // 调用 program.option，触发完整 CLI 启动主流程此处需要的副作用。
     program.option('--agent-teams', '[ANT-ONLY] Force Claude to use multi-agent mode for solving problems', () => true);
   }
+  // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('TRANSCRIPT_CLASSIFIER')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--enable-auto-mode', 'Opt in to auto mode').hideHelp());
   }
+  // 组合条件 `feature('PROACTIVE') || feature('KAIROS')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (feature('PROACTIVE') || feature('KAIROS')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--proactive', 'Start in proactive autonomous mode'));
   }
+  // 满足 `feature('UDS_INBOX')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('UDS_INBOX')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--messaging-socket-path <path>', 'Unix domain socket path for the UDS messaging server (defaults to a tmp path)'));
   }
+  // 组合条件 `feature('KAIROS') || feature('KAIROS_BRIEF')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (feature('KAIROS') || feature('KAIROS_BRIEF')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--brief', 'Enable SendUserMessage tool for agent-to-user communication'));
   }
+  // 满足 `feature('KAIROS')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('KAIROS')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--assistant', 'Force assistant mode (Agent SDK daemon use)').hideHelp());
   }
+  // 组合条件 `feature('KAIROS') || feature('KAIROS_CHANNELS')` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--channels <servers...>', 'MCP servers whose channel notifications (inbound push) should register this session. Space-separated server names.').hideHelp());
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--dangerously-load-development-channels <servers...>', 'Load channel servers not on the approved allowlist. For local channel development only. Shows a confirmation dialog at startup.').hideHelp());
   }
 
   // Teammate identity options (set by leader when spawning tmux teammates)
   // These replace the CLAUDE_CODE_* environment variables
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--agent-id <id>', 'Teammate agent ID').hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--agent-name <name>', 'Teammate display name').hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--team-name <name>', 'Team name for swarm coordination').hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--agent-color <color>', 'Teammate UI color').hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--plan-mode-required', 'Require plan mode before implementation').hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--parent-session-id <id>', 'Parent session ID for analytics correlation').hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--teammate-mode <mode>', 'How to spawn teammates: "tmux", "in-process", or "auto"').choices(['auto', 'tmux', 'in-process']).hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--agent-type <type>', 'Custom agent type for this teammate').hideHelp());
 
   // Enable SDK URL for all builds but hide from help
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--sdk-url <url>', 'Use remote WebSocket endpoint for SDK I/O streaming (only with -p and stream-json format)').hideHelp());
 
   // Enable teleport/remote flags for all builds but keep them undocumented until GA
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--teleport [session]', 'Resume a teleport session, optionally specify session ID').hideHelp());
+  // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
   program.addOption(new Option('--remote [description]', 'Create a remote session with the given description').hideHelp());
+  // 满足 `feature('BRIDGE_MODE')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('BRIDGE_MODE')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--remote-control [name]', 'Start an interactive session with Remote Control enabled (optionally named)').argParser(value => value || true).hideHelp());
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--rc [name]', 'Alias for --remote-control').argParser(value => value || true).hideHelp());
   }
+  // 满足 `feature('HARD_FAIL')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('HARD_FAIL')) {
+    // 调用 program.addOption，触发完整 CLI 启动主流程此处需要的副作用。
     program.addOption(new Option('--hard-fail', 'Crash on logError calls instead of silently logging').hideHelp());
   }
+  // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
   profileCheckpoint('run_main_options_built');
 
   // -p/--print mode: skip subcommand registration. The 52 subcommands
@@ -3886,18 +5475,27 @@ async function run(): Promise<CommanderCommand> {
   // + 40ms sync keychain subprocess), both hidden by the try/catch that
   // always returns false before enableConfigs(). cc:// URLs are rewritten to
   // `open` at main() line ~851 BEFORE this runs, so argv check is safe here.
+  // isPrintMode记录 `argv.includes` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const isPrintMode = process.argv.includes('-p') || process.argv.includes('--print');
+  // isCcUrl记录 `argv.some` 是否成立，完整 CLI 启动主流程随后按该结果分支。
   const isCcUrl = process.argv.some(a => a.startsWith('cc://') || a.startsWith('cc+unix://'));
+  // 组合条件 `isPrintMode && !isCcUrl` 成立时，完整 CLI 启动主流程才启用这条专门路径。
   if (isPrintMode && !isCcUrl) {
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('run_before_parse');
+    // 等待 `program.parseAsync(process.argv)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await program.parseAsync(process.argv);
+    // 调用 profileCheckpoint，触发完整 CLI 启动主流程此处需要的副作用。
     profileCheckpoint('run_after_parse');
+    // 返回 `program`，作为完整 CLI 启动主流程这次计算的结果。
     return program;
   }
 
   // claude mcp
 
+  // mcp保存`program.command`，供完整 CLI 启动主流程后续处理使用。
   const mcp = program.command('mcp').description('Configure and manage MCP servers').configureHelp(createSortedHelpConfig()).enablePositionalOptions();
+  // 调用 mcp.command，触发完整 CLI 启动主流程此处需要的副作用。
   mcp.command('serve').description(`Start the Claude Code MCP server`).option('-d, --debug', 'Enable debug mode', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).action(async ({
     debug,
     verbose
@@ -3905,9 +5503,11 @@ async function run(): Promise<CommanderCommand> {
     debug?: boolean;
     verbose?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mcpServeHandler
     } = await import('./cli/handlers/mcp.js');
+    // 等待 `mcpServeHandler({` 完成，再继续完整 CLI 启动主流程的异步流程。
     await mcpServeHandler({
       debug,
       verbose
@@ -3915,56 +5515,79 @@ async function run(): Promise<CommanderCommand> {
   });
 
   // Register the mcp add subcommand (extracted for testability)
+  // 调用 registerMcpAddCommand，触发完整 CLI 启动主流程此处需要的副作用。
   registerMcpAddCommand(mcp);
+  // 满足 `isXaaEnabled()` 时，完整 CLI 启动主流程执行该分支。
   if (isXaaEnabled()) {
+    // 调用 registerMcpXaaIdpCommand，触发完整 CLI 启动主流程此处需要的副作用。
     registerMcpXaaIdpCommand(mcp);
   }
+  // 调用 mcp.command，触发完整 CLI 启动主流程此处需要的副作用。
   mcp.command('remove <name>').description('Remove an MCP server').option('-s, --scope <scope>', 'Configuration scope (local, user, or project) - if not specified, removes from whichever scope it exists in').action(async (name: string, options: {
     scope?: string;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mcpRemoveHandler
     } = await import('./cli/handlers/mcp.js');
+    // 等待 `mcpRemoveHandler(name, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await mcpRemoveHandler(name, options);
   });
+  // 调用 mcp.command，触发完整 CLI 启动主流程此处需要的副作用。
   mcp.command('list').description('List configured MCP servers. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async () => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mcpListHandler
     } = await import('./cli/handlers/mcp.js');
+    // 等待 `mcpListHandler()` 完成，再继续完整 CLI 启动主流程的异步流程。
     await mcpListHandler();
   });
+  // 调用 mcp.command，触发完整 CLI 启动主流程此处需要的副作用。
   mcp.command('get <name>').description('Get details about an MCP server. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async (name: string) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mcpGetHandler
     } = await import('./cli/handlers/mcp.js');
+    // 等待 `mcpGetHandler(name)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await mcpGetHandler(name);
   });
+  // 调用 mcp.command，触发完整 CLI 启动主流程此处需要的副作用。
   mcp.command('add-json <name> <json>').description('Add an MCP server (stdio or SSE) with a JSON string').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').option('--client-secret', 'Prompt for OAuth client secret (or set MCP_CLIENT_SECRET env var)').action(async (name: string, json: string, options: {
     scope?: string;
     clientSecret?: true;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mcpAddJsonHandler
     } = await import('./cli/handlers/mcp.js');
+    // 等待 `mcpAddJsonHandler(name, json, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await mcpAddJsonHandler(name, json, options);
   });
+  // 调用 mcp.command，触发完整 CLI 启动主流程此处需要的副作用。
   mcp.command('add-from-claude-desktop').description('Import MCP servers from Claude Desktop (Mac and WSL only)').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
     scope?: string;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mcpAddFromDesktopHandler
     } = await import('./cli/handlers/mcp.js');
+    // 等待 `mcpAddFromDesktopHandler(options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await mcpAddFromDesktopHandler(options);
   });
+  // 调用 mcp.command，触发完整 CLI 启动主流程此处需要的副作用。
   mcp.command('reset-project-choices').description('Reset all approved and rejected project-scoped (.mcp.json) servers within this project').action(async () => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       mcpResetChoicesHandler
     } = await import('./cli/handlers/mcp.js');
+    // 等待 `mcpResetChoicesHandler()` 完成，再继续完整 CLI 启动主流程的异步流程。
     await mcpResetChoicesHandler();
   });
 
   // claude server
+  // 满足 `feature('DIRECT_CONNECT')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('DIRECT_CONNECT')) {
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('server').description('Start a Claude Code session server').option('--port <number>', 'HTTP port', '0').option('--host <string>', 'Bind address', '0.0.0.0').option('--auth-token <token>', 'Bearer token for auth').option('--unix <path>', 'Listen on a unix domain socket').option('--workspace <dir>', 'Default working directory for sessions that do not specify cwd').option('--idle-timeout <ms>', 'Idle timeout for detached sessions in ms (0 = never expire)', '600000').option('--max-sessions <n>', 'Maximum concurrent sessions (0 = unlimited)', '32').action(async (opts: {
       port: string;
       host: string;
@@ -3974,35 +5597,48 @@ async function run(): Promise<CommanderCommand> {
       idleTimeout: string;
       maxSessions: string;
     }) => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         randomBytes
       } = await import('crypto');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         startServer
       } = await import('./server/server.js');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         SessionManager
       } = await import('./server/sessionManager.js');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         DangerousBackend
       } = await import('./server/backends/dangerousBackend.js');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         printBanner
       } = await import('./server/serverBanner.js');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         createServerLogger
       } = await import('./server/serverLog.js');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         writeServerLock,
         removeServerLock,
         probeRunningServer
       } = await import('./server/lockfile.js');
+      // existing保存`probeRunningServer`，供完整 CLI 启动主流程后续处理使用。
       const existing = await probeRunningServer();
+      // 满足 `existing` 时，完整 CLI 启动主流程执行该分支。
       if (existing) {
+        // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
         process.stderr.write(`A claude server is already running (pid ${existing.pid}) at ${existing.httpUrl}\n`);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+      // 认证令牌保存`randomBytes`，供完整 CLI 启动主流程后续处理使用。
       const authToken = opts.authToken ?? `sk-ant-cc-${randomBytes(16).toString('base64url')}`;
+      // 配置 集中保存完整 CLI 启动主流程要一起传递的字段。
       const config = {
         port: parseInt(opts.port, 10),
         host: opts.host,
@@ -4012,15 +5648,22 @@ async function run(): Promise<CommanderCommand> {
         idleTimeoutMs: parseInt(opts.idleTimeout, 10),
         maxSessions: parseInt(opts.maxSessions, 10)
       };
+      // backend保存`DangerousBackend`，供完整 CLI 启动主流程后续处理使用。
       const backend = new DangerousBackend();
+      // sessionManager 会话数据保存`SessionManager`，供完整 CLI 启动主流程后续处理使用。
       const sessionManager = new SessionManager(backend, {
         idleTimeoutMs: config.idleTimeoutMs,
         maxSessions: config.maxSessions
       });
+      // logger构建`createServerLogger`，供完整 CLI 启动主流程后续处理使用。
       const logger = createServerLogger();
+      // server保存`startServer`，供完整 CLI 启动主流程后续处理使用。
       const server = startServer(config, sessionManager, logger);
+      // actualPort保存`server.port ?? config.port`，供完整 CLI 启动主流程后续判断或输出使用。
       const actualPort = server.port ?? config.port;
+      // 调用 printBanner，触发完整 CLI 启动主流程此处需要的副作用。
       printBanner(config, authToken, actualPort);
+      // 等待 `writeServerLock({` 完成，再继续完整 CLI 启动主流程的异步流程。
       await writeServerLock({
         pid: process.pid,
         port: actualPort,
@@ -4028,17 +5671,27 @@ async function run(): Promise<CommanderCommand> {
         httpUrl: config.unix ? `unix:${config.unix}` : `http://${config.host}:${actualPort}`,
         startedAt: Date.now()
       });
+      // shuttingDown标记完整 CLI 启动主流程是否启用对应路径。
       let shuttingDown = false;
+      // shutdown保存`async`，供完整 CLI 启动主流程后续处理使用。
       const shutdown = async () => {
+        // 满足 `shuttingDown` 时，完整 CLI 启动主流程执行该分支。
         if (shuttingDown) return;
+        // shuttingDown更新为 `true`，确保main后续读取最新状态。
         shuttingDown = true;
         // Stop accepting new connections before tearing down sessions.
+        // 调用 server.stop，触发完整 CLI 启动主流程此处需要的副作用。
         server.stop(true);
+        // 等待 `sessionManager.destroyAll()` 完成，再继续完整 CLI 启动主流程的异步流程。
         await sessionManager.destroyAll();
+        // 等待 `removeServerLock()` 完成，再继续完整 CLI 启动主流程的异步流程。
         await removeServerLock();
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(0);
       };
+      // 调用 process.once，触发完整 CLI 启动主流程此处需要的副作用。
       process.once('SIGINT', () => void shutdown());
+      // 调用 process.once，触发完整 CLI 启动主流程此处需要的副作用。
       process.once('SIGTERM', () => void shutdown());
     });
   }
@@ -4048,12 +5701,16 @@ async function run(): Promise<CommanderCommand> {
   // (parallels the DIRECT_CONNECT/cc:// pattern above). If commander reaches
   // this action it means the argv rewrite didn't fire (e.g. user ran
   // `claude ssh` with no host) — just print usage.
+  // 满足 `feature('SSH_REMOTE')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('SSH_REMOTE')) {
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('ssh <host> [dir]').description('Run Claude Code on a remote host over SSH. Deploys the binary and ' + 'tunnels API auth back through your local machine — no remote setup needed.').option('--permission-mode <mode>', 'Permission mode for the remote session').option('--dangerously-skip-permissions', 'Skip all permission prompts on the remote (dangerous)').option('--local', 'e2e test mode — spawn the child CLI locally (skip ssh/deploy). ' + 'Exercises the auth proxy and unix-socket plumbing without a remote host.').action(async () => {
       // Argv rewriting in main() should have consumed `ssh <host>` before
       // commander runs. Reaching here means host was missing or the
       // rewrite predicate didn't match.
+      // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
       process.stderr.write('Usage: claude ssh <user@host | ssh-config-alias> [dir]\n\n' + "Runs Claude Code on a remote Linux host. You don't need to install\n" + 'anything on the remote or run `claude auth login` there — the binary is\n' + 'deployed over SSH and API auth tunnels back through your local machine.\n');
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(1);
     });
   }
@@ -4061,49 +5718,69 @@ async function run(): Promise<CommanderCommand> {
   // claude connect — subcommand only handles -p (headless) mode.
   // Interactive mode (without -p) is handled by early argv rewriting in main()
   // which redirects to the main command with full TUI support.
+  // 满足 `feature('DIRECT_CONNECT')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('DIRECT_CONNECT')) {
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('open <cc-url>').description('Connect to a Claude Code server (internal — use cc:// URLs)').option('-p, --print [prompt]', 'Print mode (headless)').option('--output-format <format>', 'Output format: text, json, stream-json', 'text').action(async (ccUrl: string, opts: {
       print?: string | boolean;
       outputFormat: string;
     }) => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         parseConnectUrl
       } = await import('./server/parseConnectUrl.js');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         serverUrl,
         authToken
       } = parseConnectUrl(ccUrl);
+      // connectConfig 配置 先占位，稍后的条件分支会根据实际输入补齐它。
       let connectConfig;
+      // 保护这一段可能失败的完整 CLI 启动主流程操作，确保异常能进入相邻错误处理。
       try {
+        // session 会话数据构建`createDirectConnectSession`，供完整 CLI 启动主流程后续处理使用。
         const session = await createDirectConnectSession({
           serverUrl,
           authToken,
           cwd: getOriginalCwd(),
           dangerouslySkipPermissions: _pendingConnect?.dangerouslySkipPermissions
         });
+        // 满足 `session.workDir` 时，完整 CLI 启动主流程执行该分支。
         if (session.workDir) {
+          // setOriginalCwd 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
           setOriginalCwd(session.workDir);
+          // setCwdState 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
           setCwdState(session.workDir);
         }
+        // setDirectConnectServerUrl 写入新的状态值，使完整 CLI 启动主流程后续读取保持一致。
         setDirectConnectServerUrl(serverUrl);
+        // connectConfig 配置更新为 `session.config`，确保main后续读取最新状态。
         connectConfig = session.config;
       } catch (err) {
         // biome-ignore lint/suspicious/noConsole: intentional error output
+        // 调用 console.error，触发完整 CLI 启动主流程此处需要的副作用。
         console.error(err instanceof DirectConnectError ? err.message : String(err));
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(1);
       }
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         runConnectHeadless
       } = await import('./server/connectHeadless.js');
+      // 提示词标记完整 CLI 启动主流程是否启用对应路径。
       const prompt = typeof opts.print === 'string' ? opts.print : '';
+      // interactive标记完整 CLI 启动主流程是否启用对应路径。
       const interactive = opts.print === true;
+      // 等待 `runConnectHeadless(connectConfig, prompt, opts.outputFormat, interactiv...` 完成，再继续完整 CLI 启动主流程的异步流程。
       await runConnectHeadless(connectConfig, prompt, opts.outputFormat, interactive);
     });
   }
 
   // claude auth
 
+  // auth保存`program.command`，供完整 CLI 启动主流程后续处理使用。
   const auth = program.command('auth').description('Manage authentication').configureHelp(createSortedHelpConfig());
+  // 调用 auth.command，触发完整 CLI 启动主流程此处需要的副作用。
   auth.command('login').description('Sign in to your Anthropic account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use Anthropic Console (API usage billing) instead of Claude subscription').option('--claudeai', 'Use Claude subscription (default)').action(async ({
     email,
     sso,
@@ -4115,9 +5792,11 @@ async function run(): Promise<CommanderCommand> {
     console?: boolean;
     claudeai?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       authLogin
     } = await import('./cli/handlers/auth.js');
+    // 等待 `authLogin({` 完成，再继续完整 CLI 启动主流程的异步流程。
     await authLogin({
       email,
       sso,
@@ -4125,19 +5804,25 @@ async function run(): Promise<CommanderCommand> {
       claudeai
     });
   });
+  // 调用 auth.command，触发完整 CLI 启动主流程此处需要的副作用。
   auth.command('status').description('Show authentication status').option('--json', 'Output as JSON (default)').option('--text', 'Output as human-readable text').action(async (opts: {
     json?: boolean;
     text?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       authStatus
     } = await import('./cli/handlers/auth.js');
+    // 等待 `authStatus(opts)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await authStatus(opts);
   });
+  // 调用 auth.command，触发完整 CLI 启动主流程此处需要的副作用。
   auth.command('logout').description('Log out from your Anthropic account').action(async () => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       authLogout
     } = await import('./cli/handlers/auth.js');
+    // 等待 `authLogout()` 完成，再继续完整 CLI 启动主流程的异步流程。
     await authLogout();
   });
 
@@ -4148,170 +5833,229 @@ async function run(): Promise<CommanderCommand> {
    * @param action Description of the action that failed
    */
   // Hidden flag on all plugin/marketplace subcommands to target cowork_plugins.
+  // coworkOption保存`Option`，供完整 CLI 启动主流程后续处理使用。
   const coworkOption = () => new Option('--cowork', 'Use cowork_plugins directory').hideHelp();
 
   // Plugin validate command
+  // pluginCmd 命令数据保存`program.command`，供完整 CLI 启动主流程后续处理使用。
   const pluginCmd = program.command('plugin').alias('plugins').description('Manage Claude Code plugins').configureHelp(createSortedHelpConfig());
+  // 调用 pluginCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   pluginCmd.command('validate <path>').description('Validate a plugin or marketplace manifest').addOption(coworkOption()).action(async (manifestPath: string, options: {
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginValidateHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `pluginValidateHandler(manifestPath, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await pluginValidateHandler(manifestPath, options);
   });
 
   // Plugin list command
+  // 调用 pluginCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   pluginCmd.command('list').description('List installed plugins').option('--json', 'Output as JSON').option('--available', 'Include available plugins from marketplaces (requires --json)').addOption(coworkOption()).action(async (options: {
     json?: boolean;
     available?: boolean;
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginListHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `pluginListHandler(options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await pluginListHandler(options);
   });
 
   // Marketplace subcommands
+  // marketplaceCmd 命令数据保存`pluginCmd.command`，供完整 CLI 启动主流程后续处理使用。
   const marketplaceCmd = pluginCmd.command('marketplace').description('Manage Claude Code marketplaces').configureHelp(createSortedHelpConfig());
+  // 调用 marketplaceCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   marketplaceCmd.command('add <source>').description('Add a marketplace from a URL, path, or GitHub repo').addOption(coworkOption()).option('--sparse <paths...>', 'Limit checkout to specific directories via git sparse-checkout (for monorepos). Example: --sparse .claude-plugin plugins').option('--scope <scope>', 'Where to declare the marketplace: user (default), project, or local').action(async (source: string, options: {
     cowork?: boolean;
     sparse?: string[];
     scope?: string;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       marketplaceAddHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `marketplaceAddHandler(source, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await marketplaceAddHandler(source, options);
   });
+  // 调用 marketplaceCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   marketplaceCmd.command('list').description('List all configured marketplaces').option('--json', 'Output as JSON').addOption(coworkOption()).action(async (options: {
     json?: boolean;
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       marketplaceListHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `marketplaceListHandler(options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await marketplaceListHandler(options);
   });
+  // 调用 marketplaceCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   marketplaceCmd.command('remove <name>').alias('rm').description('Remove a configured marketplace').addOption(coworkOption()).action(async (name: string, options: {
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       marketplaceRemoveHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `marketplaceRemoveHandler(name, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await marketplaceRemoveHandler(name, options);
   });
+  // 调用 marketplaceCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   marketplaceCmd.command('update [name]').description('Update marketplace(s) from their source - updates all if no name specified').addOption(coworkOption()).action(async (name: string | undefined, options: {
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       marketplaceUpdateHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `marketplaceUpdateHandler(name, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await marketplaceUpdateHandler(name, options);
   });
 
   // Plugin install command
+  // 调用 pluginCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   pluginCmd.command('install <plugin>').alias('i').description('Install a plugin from available marketplaces (use plugin@marketplace for specific marketplace)').option('-s, --scope <scope>', 'Installation scope: user, project, or local', 'user').addOption(coworkOption()).action(async (plugin: string, options: {
     scope?: string;
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginInstallHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `pluginInstallHandler(plugin, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await pluginInstallHandler(plugin, options);
   });
 
   // Plugin uninstall command
+  // 调用 pluginCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   pluginCmd.command('uninstall <plugin>').alias('remove').alias('rm').description('Uninstall an installed plugin').option('-s, --scope <scope>', 'Uninstall from scope: user, project, or local', 'user').option('--keep-data', "Preserve the plugin's persistent data directory (~/.claude/plugins/data/{id}/)").addOption(coworkOption()).action(async (plugin: string, options: {
     scope?: string;
     cowork?: boolean;
     keepData?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginUninstallHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `pluginUninstallHandler(plugin, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await pluginUninstallHandler(plugin, options);
   });
 
   // Plugin enable command
+  // 调用 pluginCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   pluginCmd.command('enable <plugin>').description('Enable a disabled plugin').option('-s, --scope <scope>', `Installation scope: ${VALID_INSTALLABLE_SCOPES.join(', ')} (default: auto-detect)`).addOption(coworkOption()).action(async (plugin: string, options: {
     scope?: string;
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginEnableHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `pluginEnableHandler(plugin, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await pluginEnableHandler(plugin, options);
   });
 
   // Plugin disable command
+  // 调用 pluginCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   pluginCmd.command('disable [plugin]').description('Disable an enabled plugin').option('-a, --all', 'Disable all enabled plugins').option('-s, --scope <scope>', `Installation scope: ${VALID_INSTALLABLE_SCOPES.join(', ')} (default: auto-detect)`).addOption(coworkOption()).action(async (plugin: string | undefined, options: {
     scope?: string;
     cowork?: boolean;
     all?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginDisableHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `pluginDisableHandler(plugin, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await pluginDisableHandler(plugin, options);
   });
 
   // Plugin update command
+  // 调用 pluginCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
   pluginCmd.command('update <plugin>').description('Update a plugin to the latest version (restart required to apply)').option('-s, --scope <scope>', `Installation scope: ${VALID_UPDATE_SCOPES.join(', ')} (default: user)`).addOption(coworkOption()).action(async (plugin: string, options: {
     scope?: string;
     cowork?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginUpdateHandler
     } = await import('./cli/handlers/plugins.js');
+    // 等待 `pluginUpdateHandler(plugin, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await pluginUpdateHandler(plugin, options);
   });
   // END ANT-ONLY
 
   // Setup token command
+  // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
   program.command('setup-token').description('Set up a long-lived authentication token (requires Claude subscription)').action(async () => {
+    // 完整 CLI 启动主流程先整理这一处局部数据，后续分支可以直接读取。
     const [{
       setupTokenHandler
     }, {
       createRoot
     }] = await Promise.all([import('./cli/handlers/util.js'), import('./ink.js')]);
+    // root构建`createRoot`，供完整 CLI 启动主流程后续处理使用。
     const root = await createRoot(getBaseRenderOptions(false));
+    // 等待 `setupTokenHandler(root)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await setupTokenHandler(root);
   });
 
   // Agents command - list configured agents
+  // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
   program.command('agents').description('List configured agents').option('--setting-sources <sources>', 'Comma-separated list of setting sources to load (user, project, local).').action(async () => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       agentsHandler
     } = await import('./cli/handlers/agents.js');
+    // 等待 `agentsHandler()` 完成，再继续完整 CLI 启动主流程的异步流程。
     await agentsHandler();
+    // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
     process.exit(0);
   });
+  // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     // Skip when tengu_auto_mode_config.enabled === 'disabled' (circuit breaker).
     // Reads from disk cache — GrowthBook isn't initialized at registration time.
+    // `getAutoModeEnabledStateIfCached()` 与 `'disabled'` 不一致时刷新派生状态，避免使用过期结果。
     if (getAutoModeEnabledStateIfCached() !== 'disabled') {
+      // autoModeCmd 命令数据保存`program.command`，供完整 CLI 启动主流程后续处理使用。
       const autoModeCmd = program.command('auto-mode').description('Inspect auto mode classifier configuration');
+      // 调用 autoModeCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
       autoModeCmd.command('defaults').description('Print the default auto mode environment, allow, and deny rules as JSON').action(async () => {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           autoModeDefaultsHandler
         } = await import('./cli/handlers/autoMode.js');
+        // 调用 autoModeDefaultsHandler，触发完整 CLI 启动主流程此处需要的副作用。
         autoModeDefaultsHandler();
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(0);
       });
+      // 调用 autoModeCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
       autoModeCmd.command('config').description('Print the effective auto mode config as JSON: your settings where set, defaults otherwise').action(async () => {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           autoModeConfigHandler
         } = await import('./cli/handlers/autoMode.js');
+        // 调用 autoModeConfigHandler，触发完整 CLI 启动主流程此处需要的副作用。
         autoModeConfigHandler();
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit(0);
       });
+      // 调用 autoModeCmd.command，触发完整 CLI 启动主流程此处需要的副作用。
       autoModeCmd.command('critique').description('Get AI feedback on your custom auto mode rules').option('--model <model>', 'Override which model is used').action(async options => {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           autoModeCritiqueHandler
         } = await import('./cli/handlers/autoMode.js');
+        // 等待 `autoModeCritiqueHandler(options)` 完成，再继续完整 CLI 启动主流程的异步流程。
         await autoModeCritiqueHandler(options);
+        // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
         process.exit();
       });
     }
@@ -4325,37 +6069,50 @@ async function run(): Promise<CommanderCommand> {
   // false via the try/catch — but not before paying ~65ms of side effects
   // (25ms settings Zod parse + 40ms sync `security` keychain subprocess).
   // The dynamic visibility never worked; the command was always hidden.
+  // 满足 `feature('BRIDGE_MODE')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('BRIDGE_MODE')) {
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('remote-control', {
       hidden: true
+    // 这个回调绑定到 }).alias('rc').description('Connect your local environment for remote-control sessio…，负责完整 CLI 启动主流程在该局部场景下的响应。
     }).alias('rc').description('Connect your local environment for remote-control sessions via claude.ai/code').action(async () => {
       // Unreachable — cli.tsx fast-path handles this command before main.tsx loads.
       // If somehow reached, delegate to bridgeMain.
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         bridgeMain
       } = await import('./bridge/bridgeMain.js');
+      // 等待 `bridgeMain(process.argv.slice(3))` 完成，再继续完整 CLI 启动主流程的异步流程。
       await bridgeMain(process.argv.slice(3));
     });
   }
+  // 满足 `feature('KAIROS')` 时，完整 CLI 启动主流程执行该分支。
   if (feature('KAIROS')) {
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('assistant [sessionId]').description('Attach the REPL as a client to a running bridge session. Discovers sessions via API if no sessionId given.').action(() => {
       // Argv rewriting above should have consumed `assistant [id]`
       // before commander runs. Reaching here means a root flag came first
       // (e.g. `--debug assistant`) and the position-0 predicate
       // didn't match. Print usage like the ssh stub does.
+      // 向标准错误写入诊断信息，便于脚本调用方识别失败原因。
       process.stderr.write('Usage: claude assistant [sessionId]\n\n' + 'Attach the REPL as a viewer client to a running bridge session.\n' + 'Omit sessionId to discover and pick from available sessions.\n');
+      // 调用 process.exit，触发完整 CLI 启动主流程此处需要的副作用。
       process.exit(1);
     });
   }
 
   // Doctor command - check installation health
+  // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
   program.command('doctor').description('Check the health of your Claude Code auto-updater. Note: The workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.').action(async () => {
+    // 完整 CLI 启动主流程先整理这一处局部数据，后续分支可以直接读取。
     const [{
       doctorHandler
     }, {
       createRoot
     }] = await Promise.all([import('./cli/handlers/util.js'), import('./ink.js')]);
+    // root构建`createRoot`，供完整 CLI 启动主流程后续处理使用。
     const root = await createRoot(getBaseRenderOptions(false));
+    // 等待 `doctorHandler(root)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await doctorHandler(root);
   });
 
@@ -4365,72 +6122,98 @@ async function run(): Promise<CommanderCommand> {
   // - We perform exact string comparison (including SHA) to detect any change
   // - This ensures users always get the latest build, even when only the SHA changes
   // - UI shows both versions including build metadata for clarity
+  // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
   program.command('update').alias('upgrade').description('Check for updates and install if available').action(async () => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       update
     } = await import('src/cli/update.js');
+    // 等待 `update()` 完成，再继续完整 CLI 启动主流程的异步流程。
     await update();
   });
 
   // claude up — run the project's CLAUDE.md "# claude up" setup instructions.
+  // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
   if ("external" === 'ant') {
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the "# claude up" section of the nearest CLAUDE.md').action(async () => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         up
       } = await import('src/cli/up.js');
+      // 等待 `up()` 完成，再继续完整 CLI 启动主流程的异步流程。
       await up();
     });
   }
 
   // claude rollback (ant-only)
   // Rolls back to previous releases
+  // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
   if ("external" === 'ant') {
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  claude rollback                                    Go 1 version back from current\n  claude rollback 3                                  Go 3 versions back from current\n  claude rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
       list?: boolean;
       dryRun?: boolean;
       safe?: boolean;
     }) => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         rollback
       } = await import('src/cli/rollback.js');
+      // 等待 `rollback(target, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
       await rollback(target, options);
     });
   }
 
   // claude install
+  // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
   program.command('install [target]').description('Install Claude Code native build. Use [target] to specify version (stable, latest, or specific version)').option('--force', 'Force installation even if already installed').action(async (target: string | undefined, options: {
     force?: boolean;
   }) => {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       installHandler
     } = await import('./cli/handlers/util.js');
+    // 等待 `installHandler(target, options)` 完成，再继续完整 CLI 启动主流程的异步流程。
     await installHandler(target, options);
   });
 
   // ant-only commands
+  // 当 `"external"` 匹配 `'ant'` 时，完整 CLI 启动主流程执行对应分支。
   if ("external" === 'ant') {
+    // validateLogId封装成回调，供完整 CLI 启动主流程在事件触发或异步步骤中调用。
     const validateLogId = (value: string) => {
+      // maybeSessionId 会话数据读取`validateUuid`，供完整 CLI 启动主流程后续处理使用。
       const maybeSessionId = validateUuid(value);
+      // 满足 `maybeSessionId` 时，完整 CLI 启动主流程执行该分支。
       if (maybeSessionId) return maybeSessionId;
+      // 返回 `Number(value)`，作为完整 CLI 启动主流程这次计算的结果。
       return Number(value);
     };
     // claude log
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('log').description('[ANT-ONLY] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         logHandler
       } = await import('./cli/handlers/ant.js');
+      // 等待 `logHandler(logId)` 完成，再继续完整 CLI 启动主流程的异步流程。
       await logHandler(logId);
     });
 
     // claude error
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('error').description('[ANT-ONLY] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         errorHandler
       } = await import('./cli/handlers/ant.js');
+      // 等待 `errorHandler(number)` 完成，再继续完整 CLI 启动主流程的异步流程。
       await errorHandler(number);
     });
 
     // claude export
+    // 调用 program.command，触发完整 CLI 启动主流程此处需要的副作用。
     program.command('export').description('[ANT-ONLY] Export a conversation to a text file.').usage('<source> <outputFile>').argument('<source>', 'Session ID, log index (0, 1, 2...), or path to a .json/.jsonl log file').argument('<outputFile>', 'Output file path for the exported text').addHelpText('after', `
 Examples:
   $ claude export 0 conversation.txt                Export conversation at log index 0

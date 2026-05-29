@@ -1,38 +1,66 @@
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+// 复用 getSubscriptionType 工具函数，把通用处理留在 ../../utils/auth.js 中维护。
 import { getSubscriptionType } from '../../utils/auth.js'
+// 复用 hasEmbeddedSearchTools 工具函数，把通用处理留在 ../../utils/embeddedTools.js 中维护。
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
+// 复用 isEnvDefinedFalsy、isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
+// 复用 isTeammate 工具函数，把通用处理留在 ../../utils/teammate.js 中维护。
 import { isTeammate } from '../../utils/teammate.js'
+// 复用 isInProcessTeammate 工具函数，把通用处理留在 ../../utils/teammateContext.js 中维护。
 import { isInProcessTeammate } from '../../utils/teammateContext.js'
+// 引入 FILE_READ_TOOL_NAME，将 ../FileReadTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
+// 引入 FILE_WRITE_TOOL_NAME，将 ../FileWriteTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
+// 引入 GLOB_TOOL_NAME，将 ../GlobTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { GLOB_TOOL_NAME } from '../GlobTool/prompt.js'
+// 引入 SEND_MESSAGE_TOOL_NAME，将 ../SendMessageTool/constants.js 中已经封装好的能力接到本文件流程里。
 import { SEND_MESSAGE_TOOL_NAME } from '../SendMessageTool/constants.js'
+// 引入 AGENT_TOOL_NAME，将 ./constants.js 中已经封装好的能力接到本文件流程里。
 import { AGENT_TOOL_NAME } from './constants.js'
+// 引入 isForkSubagentEnabled，将 ./forkSubagent.js 中已经封装好的能力接到本文件流程里。
 import { isForkSubagentEnabled } from './forkSubagent.js'
+// 类型依赖 { AgentDefinition } 来自 ./loadAgentsDir.js，用于校准工具调用的数据契约。
 import type { AgentDefinition } from './loadAgentsDir.js'
 
+// getToolsDescription 封装Agent 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getToolsDescription(agent: AgentDefinition): string {
+  // 从 `agent` 解构 tools、disallowedTools，减少Agent 工具 prompt对同一对象的重复访问。
   const { tools, disallowedTools } = agent
+  // hasAllowlist 集合标记工具调用Agent 工具 prompt是否启用对应路径。
   const hasAllowlist = tools && tools.length > 0
+  // hasDenylist 集合标记工具调用Agent 工具 prompt是否启用对应路径。
   const hasDenylist = disallowedTools && disallowedTools.length > 0
 
+  // 只有 `hasAllowlist && hasDenylist` 满足时，工具调用才执行该分支。
   if (hasAllowlist && hasDenylist) {
     // Both defined: filter allowlist by denylist to match runtime behavior
+    // denySet保存`Set`，供工具调用后续处理使用。
     const denySet = new Set(disallowedTools)
+    // effectiveTools 集合筛选`tools.filter`，供工具调用后续处理使用。
     const effectiveTools = tools.filter(t => !denySet.has(t))
+    // effectiveTools 集合为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
     if (effectiveTools.length === 0) {
+      // 返回 `'None'`，作为工具调用这次计算的结果。
       return 'None'
     }
+    // 返回 `effectiveTools.join(', ')`，作为工具调用这次计算的结果。
     return effectiveTools.join(', ')
+  // Agent 工具 prompt在这里处理 `} else if (hasAllowlist) {`，完成这一小步状态转换。
   } else if (hasAllowlist) {
     // Allowlist only: show the specific tools available
+    // 返回 `tools.join(', ')`，作为工具调用这次计算的结果。
     return tools.join(', ')
+  // Agent 工具 prompt在这里处理 `} else if (hasDenylist) {`，完成这一小步状态转换。
   } else if (hasDenylist) {
     // Denylist only: show "All tools except X, Y, Z"
+    // 返回 ``All tools except ${disallowedTools.join(', ')}``，作为工具调用这次计算的结果。
     return `All tools except ${disallowedTools.join(', ')}`
   }
   // No restrictions
+  // 返回 `'All tools'`，作为工具调用这次计算的结果。
   return 'All tools'
 }
 
@@ -40,8 +68,11 @@ function getToolsDescription(agent: AgentDefinition): string {
  * Format one agent line for the agent_listing_delta attachment message:
  * `- type: whenToUse (Tools: ...)`.
  */
+// formatAgentLine 封装Agent 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function formatAgentLine(agent: AgentDefinition): string {
+  // toolsDescription读取`getToolsDescription`，供工具调用后续处理使用。
   const toolsDescription = getToolsDescription(agent)
+  // 返回 ``- ${agent.agentType}: ${agent.whenToUse} (Tools: ${toolsDescription})``，作为工具调用这次计算的结果。
   return `- ${agent.agentType}: ${agent.whenToUse} (Tools: ${toolsDescription})`
 }
 
@@ -56,27 +87,37 @@ export function formatAgentLine(agent: AgentDefinition): string {
  *
  * Override with CLAUDE_CODE_AGENT_LIST_IN_MESSAGES=true/false for testing.
  */
+// shouldInjectAgentListInMessages 封装Agent 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldInjectAgentListInMessages(): boolean {
+  // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_AGENT_LIST_IN_MESSAGES)` 时，工具调用执行该分支。
   if (isEnvTruthy(process.env.CLAUDE_CODE_AGENT_LIST_IN_MESSAGES)) return true
+  // 满足 `isEnvDefinedFalsy(process.env.CLAUDE_CODE_AGENT_LIST_IN_MESSAGES)` 时，工具调用执行该分支。
   if (isEnvDefinedFalsy(process.env.CLAUDE_CODE_AGENT_LIST_IN_MESSAGES))
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
+  // 返回 `getFeatureValue_CACHED_MAY_BE_STALE('tengu_agent_list_attach', false)`，作为工具调用这次计算的结果。
   return getFeatureValue_CACHED_MAY_BE_STALE('tengu_agent_list_attach', false)
 }
 
+// getPrompt 封装Agent 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function getPrompt(
   agentDefinitions: AgentDefinition[],
   isCoordinator?: boolean,
   allowedAgentTypes?: string[],
 ): Promise<string> {
   // Filter agents by allowed types when Agent(x,y) restricts which agents can be spawned
+  // effectiveAgents 集合保存`allowedAgentTypes`，供工具调用Agent 工具 prompt后续判断或输出使用。
   const effectiveAgents = allowedAgentTypes
+    // 这个回调绑定到 ? agentDefinitions.filter(a => allowedAgentTypes.includes(a.agentType))，负责工具调用在该局部场景下的响应。
     ? agentDefinitions.filter(a => allowedAgentTypes.includes(a.agentType))
     : agentDefinitions
 
   // Fork subagent feature: when enabled, insert the "When to fork" section
   // (fork semantics, directive-style prompts) and swap in fork-aware examples.
+  // forkEnabled保存`isForkSubagentEnabled`，供工具调用后续处理使用。
   const forkEnabled = isForkSubagentEnabled()
 
+  // whenToForkSection 命名 `forkEnabled`，让后续代码直接表达这个值的用途。
   const whenToForkSection = forkEnabled
     ? `
 
@@ -96,6 +137,7 @@ Forks are cheap because they share your prompt cache. Don't set \`model\` on a f
 `
     : ''
 
+  // writingThePromptSection保存```，作为后续固定文本处理的输入。
   const writingThePromptSection = `
 
 ## Writing the prompt
@@ -112,6 +154,7 @@ ${forkEnabled ? 'For fresh agents, terse' : 'Terse'} command-style prompts produ
 **Never delegate understanding.** Don't write "based on your findings, fix the bug" or "based on the research, implement it." Those phrases push synthesis onto the agent instead of doing it yourself. Write prompts that prove you understood: include file paths, line numbers, what specifically to change.
 `
 
+  // forkExamples 集合固定为 ``Example usage:`，作为工具调用Agent 工具 prompt后续展示或比较的基准。
   const forkExamples = `Example usage:
 
 <example>
@@ -153,6 +196,7 @@ ${AGENT_TOOL_NAME}({
 </example>
 `
 
+  // currentExamples 集合固定为 ``Example usage:`，作为工具调用Agent 工具 prompt后续展示或比较的基准。
   const currentExamples = `Example usage:
 
 <example_agent_descriptions>
@@ -191,8 +235,10 @@ assistant: "I'm going to use the ${AGENT_TOOL_NAME} tool to launch the greeting-
   // attachment (see attachments.ts) instead of inline here. This keeps the
   // tool description static across MCP/plugin/permission changes so the
   // tools-block prompt cache doesn't bust every time an agent loads.
+  // listViaAttachment 集合保存`shouldInjectAgentListInMessages`，供工具调用后续处理使用。
   const listViaAttachment = shouldInjectAgentListInMessages()
 
+  // agentListSection 集合保存`listViaAttachment`，供工具调用Agent 工具 prompt后续判断或输出使用。
   const agentListSection = listViaAttachment
     ? `Available agent types are listed in <system-reminder> messages in the conversation.`
     : `Available agent types and the tools they have access to:
@@ -213,22 +259,28 @@ ${
 
   // Coordinator mode gets the slim prompt -- the coordinator system prompt
   // already covers usage notes, examples, and when-not-to-use guidance.
+  // 满足 `isCoordinator` 时，工具调用执行该分支。
   if (isCoordinator) {
+    // 返回 `shared`，作为工具调用这次计算的结果。
     return shared
   }
 
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
   // dedicated Glob/Grep tools, so point at find via Bash instead.
+  // embedded保存`hasEmbeddedSearchTools`，供工具调用后续处理使用。
   const embedded = hasEmbeddedSearchTools()
+  // fileSearchHint 文件数据保存`embedded`，供工具调用Agent 工具 prompt后续判断或输出使用。
   const fileSearchHint = embedded
     ? '`find` via the Bash tool'
     : `the ${GLOB_TOOL_NAME} tool`
   // The "class Foo" example is about content search. Non-embedded stays Glob
   // (original intent: find-the-file-containing). Embedded gets grep because
   // find -name doesn't look at file contents.
+  // contentSearchHint 命名 `embedded`，让后续代码直接表达这个值的用途。
   const contentSearchHint = embedded
     ? '`grep` via the Bash tool'
     : `the ${GLOB_TOOL_NAME} tool`
+  // whenNotToUseSection保存`forkEnabled`，供后续判断或组装使用。
   const whenNotToUseSection = forkEnabled
     ? ''
     : `
@@ -242,6 +294,7 @@ When NOT to use the ${AGENT_TOOL_NAME} tool:
   // When listing via attachment, the "launch multiple agents" note is in the
   // attachment message (conditioned on subscription there). When inline, keep
   // the existing per-call getSubscriptionType() check.
+  // concurrencyNote 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const concurrencyNote =
     !listViaAttachment && getSubscriptionType() !== 'pro'
       ? `
@@ -249,6 +302,7 @@ When NOT to use the ${AGENT_TOOL_NAME} tool:
       : ''
 
   // Non-coordinator gets the full prompt with all sections
+  // 返回 ``${shared}`，作为工具调用这次计算的结果。
   return `${shared}
 ${whenNotToUseSection}
 

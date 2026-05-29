@@ -1,18 +1,34 @@
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { join } from 'path';
+// 引入 React、useCallback、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useState } from 'react';
+// 类型依赖 { ExitState } 来自 ../hooks/useExitOnCtrlCDWithKeybindings.js，用于校准终端渲染的数据契约。
 import type { ExitState } from '../hooks/useExitOnCtrlCDWithKeybindings.js';
+// 引入 useTerminalSize，将 ../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+// 复用 setClipboard 终端界面组件，避免在这里重复拼装显示逻辑。
 import { setClipboard } from '../ink/termio/osc.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 引入 useKeybinding，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../keybindings/useKeybinding.js';
+// 复用 getCwd 工具函数，把通用处理留在 ../utils/cwd.js 中维护。
 import { getCwd } from '../utils/cwd.js';
+// 复用 writeFileSync_DEPRECATED 工具函数，把通用处理留在 ../utils/slowOperations.js 中维护。
 import { writeFileSync_DEPRECATED } from '../utils/slowOperations.js';
+// 引入 ConfigurableShortcutHint，将 ./ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
+// 引入 Select，将 ./CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from './CustomSelect/select.js';
+// 引入 Byline，将 ./design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from './design-system/Byline.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// 引入 KeyboardShortcutHint，将 ./design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
+// 引入 TextInput，将 ./TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from './TextInput.js';
+// ExportDialogProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type ExportDialogProps = {
   content: string;
   defaultFilename: string;
@@ -21,52 +37,77 @@ type ExportDialogProps = {
     message: string;
   }) => void;
 };
+// ExportOption 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type ExportOption = 'clipboard' | 'file';
+// ExportDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function ExportDialog({
   content,
   defaultFilename,
   onDone
 }: ExportDialogProps): React.ReactNode {
+  // 状态 由 React state 持有，setSelectedOption 会在用户操作或异步结果返回时触发刷新。
   const [, setSelectedOption] = useState<ExportOption | null>(null);
+  // filename 文件数据 由 React state 持有，setFilename 会在用户操作或异步结果返回时触发刷新。
   const [filename, setFilename] = useState<string>(defaultFilename);
+  // 光标偏移 由 React state 持有，setCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [cursorOffset, setCursorOffset] = useState<number>(defaultFilename.length);
+  // showFilenameInput 文件数据 由 React state 持有，setShowFilenameInput 会在用户操作或异步结果返回时触发刷新。
   const [showFilenameInput, setShowFilenameInput] = useState(false);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns
   } = useTerminalSize();
 
   // Handle going back from filename input to option selection
+  // handleGoBack保存`useCallback`，供终端渲染后续处理使用。
   const handleGoBack = useCallback(() => {
+    // setShowFilenameInput 写入新的状态值，使终端渲染后续读取保持一致。
     setShowFilenameInput(false);
+    // setSelectedOption 写入新的状态值，使终端渲染后续读取保持一致。
     setSelectedOption(null);
   }, []);
+  // handleSelectOption保存`async`，供终端渲染后续处理使用。
   const handleSelectOption = async (value: string): Promise<void> => {
+    // 当 `value` 匹配 `'clipboard'` 时，终端渲染执行对应分支。
     if (value === 'clipboard') {
       // Copy to clipboard immediately
+      // 原始文本保存`setClipboard`，供终端渲染后续处理使用。
       const raw = await setClipboard(content);
+      // 满足 `raw) process.stdout.write(raw` 时，终端渲染执行该分支。
       if (raw) process.stdout.write(raw);
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone({
         success: true,
         message: 'Conversation copied to clipboard'
       });
+    // 终端 UI 组件 Export Dialog在这里处理 `} else if (value === 'file') {`，完成这一小步状态转换。
     } else if (value === 'file') {
+      // setSelectedOption 写入新的状态值，使终端渲染后续读取保持一致。
       setSelectedOption('file');
+      // setShowFilenameInput 写入新的状态值，使终端渲染后续读取保持一致。
       setShowFilenameInput(true);
     }
   };
+  // handleFilenameSubmit 文件数据封装成回调，供终端 UI Export Dialog在事件触发或异步步骤中调用。
   const handleFilenameSubmit = () => {
+    // finalFilename 文件数据保存`filename.endsWith`，供终端渲染后续处理使用。
     const finalFilename = filename.endsWith('.txt') ? filename : filename.replace(/\.[^.]+$/, '') + '.txt';
+    // filepath 路径数据格式化`join`，供终端渲染后续处理使用。
     const filepath = join(getCwd(), finalFilename);
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // 调用 writeFileSync_DEPRECATED，触发终端渲染此处需要的副作用。
       writeFileSync_DEPRECATED(filepath, content, {
         encoding: 'utf-8',
         flush: true
       });
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone({
         success: true,
         message: `Conversation exported to: ${filepath}`
       });
     } catch (error) {
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone({
         success: false,
         message: `Failed to export conversation: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -76,16 +117,21 @@ export function ExportDialog({
 
   // Dialog calls onCancel when Escape is pressed. If we are in the filename
   // input sub-screen, go back to the option list instead of closing entirely.
+  // handleCancel保存`useCallback`，供终端渲染后续处理使用。
   const handleCancel = useCallback(() => {
+    // 满足 `showFilenameInput` 时，终端渲染执行该分支。
     if (showFilenameInput) {
+      // 调用 handleGoBack，触发终端渲染此处需要的副作用。
       handleGoBack();
     } else {
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone({
         success: false,
         message: 'Export cancelled'
       });
     }
   }, [showFilenameInput, handleGoBack, onDone]);
+  // 选项 聚合成有序列表，保持后续遍历顺序稳定。
   const options = [{
     label: 'Copy to clipboard',
     value: 'clipboard',
@@ -97,24 +143,32 @@ export function ExportDialog({
   }];
 
   // Custom input guide that changes based on dialog state
+  // renderInputGuide 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function renderInputGuide(exitState: ExitState): React.ReactNode {
+    // 满足 `showFilenameInput` 时，终端渲染执行该分支。
     if (showFilenameInput) {
+      // 返回 `<Byline>`，作为终端渲染这次计算的结果。
       return <Byline>
           <KeyboardShortcutHint shortcut="Enter" action="save" />
           <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
         </Byline>;
     }
+    // 满足 `exitState.pending` 时，终端渲染执行该分支。
     if (exitState.pending) {
+      // 返回 `<Text>Press {exitState.keyName} again to exit</Text>`，作为终端渲染这次计算的结果。
       return <Text>Press {exitState.keyName} again to exit</Text>;
     }
+    // 返回 `<ConfigurableShortcutHint action="confirm:no" context="Confirmation" fa...`，作为终端渲染这次计算的结果。
     return <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />;
   }
 
   // Use Settings context so 'n' key doesn't cancel (allows typing 'n' in filename input)
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleCancel, {
     context: 'Settings',
     isActive: showFilenameInput
   });
+  // 返回 `<Dialog title="Export Conversation" subtitle="Select export method:" co...`，作为终端渲染这次计算的结果。
   return <Dialog title="Export Conversation" subtitle="Select export method:" color="permission" onCancel={handleCancel} inputGuide={renderInputGuide} isCancelActive={!showFilenameInput}>
       {!showFilenameInput ? <Select options={options} onChange={handleSelectOption} onCancel={handleCancel} /> : <Box flexDirection="column">
           <Text>Enter filename:</Text>

@@ -1,39 +1,71 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useMemo、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useMemo, useState } from 'react';
+// 类型依赖 { SDKMessage } 来自 src/entrypoints/agentSdkTypes.js，用于校准终端渲染的数据契约。
 import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js';
+// 类型依赖 { ToolUseContext } 来自 src/Tool.js，用于校准终端渲染的数据契约。
 import type { ToolUseContext } from 'src/Tool.js';
+// 类型依赖 { DeepImmutable } 来自 src/types/utils.js，用于校准终端渲染的数据契约。
 import type { DeepImmutable } from 'src/types/utils.js';
+// 类型依赖 { CommandResultDisplay } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../../commands.js';
+// 引入 DIAMOND_FILLED、DIAMOND_OPEN，将 ../../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js';
+// 引入 useElapsedTime，将 ../../hooks/useElapsedTime.js 中已经封装好的能力接到本文件流程里。
 import { useElapsedTime } from '../../hooks/useElapsedTime.js';
+// 类型依赖 { KeyboardEvent } 来自 ../../ink/events/keyboard-event.js，用于校准终端渲染的数据契约。
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
+// 引入 Box、Link、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Link, Text } from '../../ink.js';
+// 类型依赖 { RemoteAgentTaskState } 来自 ../../tasks/RemoteAgentTask/RemoteAgentTask.js，用于校准终端渲染的数据契约。
 import type { RemoteAgentTaskState } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js';
+// 引入 getRemoteTaskSessionUrl，将 ../../tasks/RemoteAgentTask/RemoteAgentTask.js 中已经封装好的能力接到本文件流程里。
 import { getRemoteTaskSessionUrl } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js';
+// 接入 AGENT_TOOL_NAME、LEGACY_AGENT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js';
+// 接入 ASK_USER_QUESTION_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js';
+// 接入 EXIT_PLAN_MODE_V2_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js';
+// 复用 openBrowser 工具函数，把通用处理留在 ../../utils/browser.js 中维护。
 import { openBrowser } from '../../utils/browser.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { errorMessage } from '../../utils/errors.js';
+// 复用 formatDuration、truncateToWidth 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { formatDuration, truncateToWidth } from '../../utils/format.js';
+// 复用 toInternalMessages 工具函数，把通用处理留在 ../../utils/messages/mappers.js 中维护。
 import { toInternalMessages } from '../../utils/messages/mappers.js';
+// 复用 EMPTY_LOOKUPS、normalizeMessages 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { EMPTY_LOOKUPS, normalizeMessages } from '../../utils/messages.js';
+// 复用 plural 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { plural } from '../../utils/stringUtils.js';
+// 复用 teleportResumeCodeSession 工具函数，把通用处理留在 ../../utils/teleport.js 中维护。
 import { teleportResumeCodeSession } from '../../utils/teleport.js';
+// 引入 Select，将 ../CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../CustomSelect/select.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 Dialog，将 ../design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from '../design-system/Dialog.js';
+// 引入 KeyboardShortcutHint，将 ../design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
+// 引入 Message，将 ../Message.js 中已经封装好的能力接到本文件流程里。
 import { Message } from '../Message.js';
+// 引入 formatReviewStageCounts、RemoteSessionProgress，将 ./RemoteSessionProgress.js 中已经封装好的能力接到本文件流程里。
 import { formatReviewStageCounts, RemoteSessionProgress } from './RemoteSessionProgress.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   session: DeepImmutable<RemoteAgentTaskState>;
   toolUseContext: ToolUseContext;
   onDone: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
+  // 这个回调绑定到 onBack?: () => void;，负责终端渲染在该局部场景下的响应。
   onBack?: () => void;
+  // 这个回调绑定到 onKill?: () => void;，负责终端渲染在该局部场景下的响应。
   onKill?: () => void;
 };
 
@@ -41,375 +73,619 @@ type Props = {
 // Lighter than tool.renderToolUseMessage (no registry lookup / schema parse).
 // Collapses whitespace so multi-line inputs (e.g. Bash command text)
 // render on one line.
+// formatToolUseSummary 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function formatToolUseSummary(name: string, input: unknown): string {
   // plan_ready phase is only reached via ExitPlanMode tool
+  // 满足 `name === EXIT_PLAN_MODE_V2_TOOL_NAME` 时，终端渲染执行该分支。
   if (name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
+    // 返回 `'Review the plan in Claude Code on the web'`，作为终端渲染这次计算的结果。
     return 'Review the plan in Claude Code on the web';
   }
+  // `!input || typeof input` 与 `'object'` 不一致时刷新派生状态，避免使用过期结果。
   if (!input || typeof input !== 'object') return name;
   // AskUserQuestion: show the question text as a CTA, not the tool name.
   // Input shape is {questions: [{question, header, options}]}.
+  // 只有 `name === ASK_USER_QUESTION_TOOL_NAME && 'question` 满足时，终端渲染才执行该分支。
   if (name === ASK_USER_QUESTION_TOOL_NAME && 'questions' in input) {
+    // qs 集合 命名 `input.questions`，让后续代码直接表达这个值的用途。
     const qs = input.questions;
+    // 当 `Array.isArray(qs) && qs[0] && typeof qs[0]` 匹配 `'object'` 时，终端渲染执行对应分支。
     if (Array.isArray(qs) && qs[0] && typeof qs[0] === 'object') {
       // Prefer question (full text) over header (max-12-char tag). header
       // is a required schema field so checking it first would make the
       // question fallback dead code.
+      // q标记终端 UI Remote Session Detai...是否启用对应路径。
       const q = 'question' in qs[0] && typeof qs[0].question === 'string' && qs[0].question ? qs[0].question : 'header' in qs[0] && typeof qs[0].header === 'string' ? qs[0].header : null;
+      // 满足 `q` 时，终端渲染执行该分支。
       if (q) {
+        // oneLine格式化`q.replace`，供终端渲染后续处理使用。
         const oneLine = q.replace(/\s+/g, ' ').trim();
+        // 返回 ``Answer in browser: ${truncateToWidth(oneLine, 50)}``，作为终端渲染这次计算的结果。
         return `Answer in browser: ${truncateToWidth(oneLine, 50)}`;
       }
     }
   }
+  // 逐项读取 `Object.values(input)` 中的v，按输入顺序推进终端渲染。
   for (const v of Object.values(input)) {
+    // 只有 `typeof v === 'string' && v.trim()` 满足时，终端渲染才执行该分支。
     if (typeof v === 'string' && v.trim()) {
+      // oneLine格式化`v.replace`，供终端渲染后续处理使用。
       const oneLine = v.replace(/\s+/g, ' ').trim();
+      // 返回 ``${name} ${truncateToWidth(oneLine, 60)}``，作为终端渲染这次计算的结果。
       return `${name} ${truncateToWidth(oneLine, 60)}`;
     }
   }
+  // 返回 `name`，作为终端渲染这次计算的结果。
   return name;
 }
+// PHASE_LABEL集中保存终端 UI Remote Session Detai...要一起传递的字段。
 const PHASE_LABEL = {
   needs_input: 'input required',
   plan_ready: 'ready'
 } as const;
+// AGENT_VERB集中保存终端 UI Remote Session Detai...要一起传递的字段。
 const AGENT_VERB = {
   needs_input: 'waiting',
   plan_ready: 'done'
 } as const;
+// UltraplanSessionDetail 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function UltraplanSessionDetail(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(70);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     session,
     onDone,
     onBack,
     onKill
   } = t0;
+  // running标记终端 UI Remote Session Detai...是否启用对应路径。
   const running = session.status === "running" || session.status === "pending";
+  // phase 命名 `session.ultraplanPhase`，让后续代码直接表达这个值的用途。
   const phase = session.ultraplanPhase;
+  // statusText 命名 `running ? phase ? PHASE_LABEL[phase] : "running" : sessio...`，让后续代码直接表达这个值的用途。
   const statusText = running ? phase ? PHASE_LABEL[phase] : "running" : session.status;
+  // elapsedTime保存`useElapsedTime`，供终端渲染后续处理使用。
   const elapsedTime = useElapsedTime(session.startTime, running, 1000, 0, session.endTime);
+  // spawns 集合保存`0`，供终端 UI Remote Session Detai...后续判断或输出使用。
   let spawns = 0;
+  // calls 集合保存`0`，供后续判断或组装使用。
   let calls = 0;
+  // lastBlock 命名 `null`，让后续代码直接表达这个值的用途。
   let lastBlock = null;
+  // 按顺序遍历 `session.log` 中的消息，逐个交给终端渲染处理。
   for (const msg of session.log) {
+    // `msg.type` 与 `"assistant"` 不一致时刷新派生状态，避免使用过期结果。
     if (msg.type !== "assistant") {
+      // 跳过当前项，继续处理终端渲染中的下一轮循环。
       continue;
     }
+    // 按顺序遍历 `msg.message.content` 中的block，逐个交给终端渲染处理。
     for (const block of msg.message.content) {
+      // `block.type` 与 `"tool_use"` 不一致时刷新派生状态，避免使用过期结果。
       if (block.type !== "tool_use") {
+        // 跳过当前项，继续处理终端渲染中的下一轮循环。
         continue;
       }
+      // 终端 UI 组件 Remote Session Detail Dial...在这里处理 `calls++`，完成这一小步状态转换。
       calls++;
+      // lastBlock更新为 `block`，确保任务详情界面后续读取最新状态。
       lastBlock = block;
+      // 只有 `block.name === AGENT_TOOL_NAME || block.name ===` 满足时，终端渲染才执行该分支。
       if (block.name === AGENT_TOOL_NAME || block.name === LEGACY_AGENT_TOOL_NAME) {
+        // 终端 UI 组件 Remote Session Detail Dial...在这里处理 `spawns++`，完成这一小步状态转换。
         spawns++;
       }
     }
   }
+  // t1保存`1 + spawns`，供终端 UI Remote Session Detai...后续判断或输出使用。
   const t1 = 1 + spawns;
+  // t2 暂存 `lastBlock ? formatToolUseSummary(lastBlock.name, lastBloc...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== lastBlock) {
+    // t2 暂存 `lastBlock ? formatToolUseSummary(lastBlock.name, lastBloc...` 生成的渲染片段，后续返回路径直接复用。
     t2 = lastBlock ? formatToolUseSummary(lastBlock.name, lastBlock.input) : null;
+    // $[0] 缓存 `lastBlock`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = lastBlock;
+    // $[1] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[1];
   }
+  // t3 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== calls || $[3] !== t1 || $[4] !== t2) {
+    // t3 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t3 = {
       agentsWorking: t1,
       toolCalls: calls,
       lastToolCall: t2
     };
+    // $[2] 缓存 `calls`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = calls;
+    // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t1;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
+    // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[5];
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     agentsWorking,
     toolCalls,
     lastToolCall
   } = t3;
+  // t4 暂存 `getRemoteTaskSessionUrl(session.sessionId)` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[6] !== session.sessionId) {
+    // t4 暂存 `getRemoteTaskSessionUrl(session.sessionId)` 生成的渲染片段，后续返回路径直接复用。
     t4 = getRemoteTaskSessionUrl(session.sessionId);
+    // $[6] 缓存 `session.sessionId`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = session.sessionId;
+    // $[7] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[7];
   }
+  // sessionUrl 会话数据 命名 `t4`，让后续代码直接表达这个值的用途。
   const sessionUrl = t4;
+  // t5 暂存 `onBack ?? (() => onDone("Remote session details dismissed...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[8] !== onBack || $[9] !== onDone) {
+    // t5 暂存 `onBack ?? (() => onDone("Remote session details dismissed...` 生成的渲染片段，后续返回路径直接复用。
     t5 = onBack ?? (() => onDone("Remote session details dismissed", {
       display: "system"
     }));
+    // $[8] 缓存 `onBack`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = onBack;
+    // $[9] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = onDone;
+    // $[10] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[10];
   }
+  // goBackOrClose沿用 `t5` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const goBackOrClose = t5;
+  // confirmingStop 由 React state 持有，setConfirmingStop 会在用户操作或异步结果返回时触发刷新。
   const [confirmingStop, setConfirmingStop] = useState(false);
+  // 满足 `confirmingStop` 时，终端渲染执行该分支。
   if (confirmingStop) {
+    // t6 暂存 `() => setConfirmingStop(false)` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
+      // t6 暂存 `() => setConfirmingStop(false)` 生成的渲染片段，后续返回路径直接复用。
       t6 = () => setConfirmingStop(false);
+      // $[11] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[11] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[11];
     }
+    // t7 暂存 `<Text dimColor={true}>This will terminate the Claude Code...` 的派生结果，便于缓存命中时直接复用。
     let t7;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+      // t7 暂存 `<Text dimColor={true}>This will terminate the Claude Code...` 生成的渲染片段，后续返回路径直接复用。
       t7 = <Text dimColor={true}>This will terminate the Claude Code on the web session.</Text>;
+      // $[12] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
       $[12] = t7;
     } else {
+      // t7 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
       t7 = $[12];
     }
+    // t8 暂存 `{` 的派生结果，便于缓存命中时直接复用。
     let t8;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
+      // t8 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
       t8 = {
         label: "Terminate session",
         value: "stop" as const
       };
+      // $[13] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
       $[13] = t8;
     } else {
+      // t8 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
       t8 = $[13];
     }
+    // t9 暂存 `[t8, {` 的派生结果，便于缓存命中时直接复用。
     let t9;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
+      // t9 暂存 `[t8, {` 生成的渲染片段，后续返回路径直接复用。
       t9 = [t8, {
         label: "Back",
         value: "back" as const
       }];
+      // $[14] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
       $[14] = t9;
     } else {
+      // t9 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
       t9 = $[14];
     }
+    // t10 暂存 `<Dialog title="Stop ultraplan?" onCancel={t6} color="back...` 的派生结果，便于缓存命中时直接复用。
     let t10;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[15] !== goBackOrClose || $[16] !== onKill) {
+      // t10 暂存 `<Dialog title="Stop ultraplan?" onCancel={t6} color="back...` 生成的渲染片段，后续返回路径直接复用。
       t10 = <Dialog title="Stop ultraplan?" onCancel={t6} color="background"><Box flexDirection="column" gap={1}>{t7}<Select options={t9} onChange={v => {
+            // 当 `v` 匹配 `"stop"` 时，终端渲染执行对应分支。
             if (v === "stop") {
+              // 调用 onKill?.();，完成这一处局部操作。
               onKill?.();
+              // 调用 goBackOrClose，触发终端渲染此处需要的副作用。
               goBackOrClose();
             } else {
+              // setConfirmingStop 写入新的状态值，使终端渲染后续读取保持一致。
               setConfirmingStop(false);
             }
           }} /></Box></Dialog>;
+      // $[15] 缓存 `goBackOrClose`，下次依赖未变时 React 编译产物可直接复用。
       $[15] = goBackOrClose;
+      // $[16] 缓存 `onKill`，下次依赖未变时 React 编译产物可直接复用。
       $[16] = onKill;
+      // $[17] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
       $[17] = t10;
     } else {
+      // t10 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
       t10 = $[17];
     }
+    // 返回 `t10`，作为终端渲染这次计算的结果。
     return t10;
   }
+  // t6标记终端 UI Remote Session Detai...是否启用对应路径。
   const t6 = phase === "plan_ready" ? DIAMOND_FILLED : DIAMOND_OPEN;
+  // t7 暂存 `<Text color="background">{t6}{" "}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[18] !== t6) {
+    // t7 暂存 `<Text color="background">{t6}{" "}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Text color="background">{t6}{" "}</Text>;
+    // $[18] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t6;
+    // $[19] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[19];
   }
+  // t8 暂存 `<Text bold={true}>ultraplan</Text>` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[20] === Symbol.for("react.memo_cache_sentinel")) {
+    // t8 暂存 `<Text bold={true}>ultraplan</Text>` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Text bold={true}>ultraplan</Text>;
+    // $[20] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[20] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[20];
   }
+  // t9 暂存 `<Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{s...` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[21] !== elapsedTime || $[22] !== statusText) {
+    // t9 暂存 `<Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{s...` 生成的渲染片段，后续返回路径直接复用。
     t9 = <Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{statusText}</Text>;
+    // $[21] 缓存 `elapsedTime`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = elapsedTime;
+    // $[22] 缓存 `statusText`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = statusText;
+    // $[23] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[23] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[23];
   }
+  // t10 暂存 `<Text>{t7}{t8}{t9}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[24] !== t7 || $[25] !== t9) {
+    // t10 暂存 `<Text>{t7}{t8}{t9}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t10 = <Text>{t7}{t8}{t9}</Text>;
+    // $[24] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = t7;
+    // $[25] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = t9;
+    // $[26] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[26] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[26];
   }
+  // t11 暂存 `phase === "plan_ready" && <Text color="success">{figures....` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[27] !== phase) {
+    // t11 暂存 `phase === "plan_ready" && <Text color="success">{figures....` 生成的渲染片段，后续返回路径直接复用。
     t11 = phase === "plan_ready" && <Text color="success">{figures.tick} </Text>;
+    // $[27] 缓存 `phase`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = phase;
+    // $[28] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[28] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[28];
   }
+  // t12 暂存 `plural(agentsWorking, "agent")` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[29] !== agentsWorking) {
+    // t12 暂存 `plural(agentsWorking, "agent")` 生成的渲染片段，后续返回路径直接复用。
     t12 = plural(agentsWorking, "agent");
+    // $[29] 缓存 `agentsWorking`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = agentsWorking;
+    // $[30] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = t12;
   } else {
+    // t12 从 React 编译缓存槽 $[30] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[30];
   }
+  // t13读取 `phase ? AGENT_VERB[phase] : "working"` 对应条目，后续围绕该成员继续处理。
   const t13 = phase ? AGENT_VERB[phase] : "working";
+  // t14 暂存 `plural(toolCalls, "call")` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[31] !== toolCalls) {
+    // t14 暂存 `plural(toolCalls, "call")` 生成的渲染片段，后续返回路径直接复用。
     t14 = plural(toolCalls, "call");
+    // $[31] 缓存 `toolCalls`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = toolCalls;
+    // $[32] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = t14;
   } else {
+    // t14 从 React 编译缓存槽 $[32] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[32];
   }
+  // t15 暂存 `<Text>{t11}{agentsWorking} {t12}{" "}{t13} · {toolCalls} ...` 的派生结果，便于缓存命中时直接复用。
   let t15;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[33] !== agentsWorking || $[34] !== t11 || $[35] !== t12 || $[36] !== t13 || $[37] !== t14 || $[38] !== toolCalls) {
+    // t15 暂存 `<Text>{t11}{agentsWorking} {t12}{" "}{t13} · {toolCalls} ...` 生成的渲染片段，后续返回路径直接复用。
     t15 = <Text>{t11}{agentsWorking} {t12}{" "}{t13} · {toolCalls} tool{" "}{t14}</Text>;
+    // $[33] 缓存 `agentsWorking`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = agentsWorking;
+    // $[34] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = t11;
+    // $[35] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = t12;
+    // $[36] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = t13;
+    // $[37] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = t14;
+    // $[38] 缓存 `toolCalls`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = toolCalls;
+    // $[39] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = t15;
   } else {
+    // t15 从 React 编译缓存槽 $[39] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[39];
   }
+  // t16 暂存 `lastToolCall && <Text dimColor={true}>{lastToolCall}</Tex...` 的派生结果，便于缓存命中时直接复用。
   let t16;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[40] !== lastToolCall) {
+    // t16 暂存 `lastToolCall && <Text dimColor={true}>{lastToolCall}</Tex...` 生成的渲染片段，后续返回路径直接复用。
     t16 = lastToolCall && <Text dimColor={true}>{lastToolCall}</Text>;
+    // $[40] 缓存 `lastToolCall`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = lastToolCall;
+    // $[41] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = t16;
   } else {
+    // t16 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
     t16 = $[41];
   }
+  // t17 暂存 `<Text dimColor={true}>{sessionUrl}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t17;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[42] !== sessionUrl) {
+    // t17 暂存 `<Text dimColor={true}>{sessionUrl}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t17 = <Text dimColor={true}>{sessionUrl}</Text>;
+    // $[42] 缓存 `sessionUrl`，下次依赖未变时 React 编译产物可直接复用。
     $[42] = sessionUrl;
+    // $[43] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[43] = t17;
   } else {
+    // t17 从 React 编译缓存槽 $[43] 取回渲染片段，避免依赖未变时重建 JSX。
     t17 = $[43];
   }
+  // t18 暂存 `<Link url={sessionUrl}>{t17}</Link>` 的派生结果，便于缓存命中时直接复用。
   let t18;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[44] !== sessionUrl || $[45] !== t17) {
+    // t18 暂存 `<Link url={sessionUrl}>{t17}</Link>` 生成的渲染片段，后续返回路径直接复用。
     t18 = <Link url={sessionUrl}>{t17}</Link>;
+    // $[44] 缓存 `sessionUrl`，下次依赖未变时 React 编译产物可直接复用。
     $[44] = sessionUrl;
+    // $[45] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[45] = t17;
+    // $[46] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = t18;
   } else {
+    // t18 从 React 编译缓存槽 $[46] 取回渲染片段，避免依赖未变时重建 JSX。
     t18 = $[46];
   }
+  // t19 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t19;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[47] === Symbol.for("react.memo_cache_sentinel")) {
+    // t19 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t19 = {
       label: "Review in Claude Code on the web",
       value: "open" as const
     };
+    // $[47] 缓存 `t19`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = t19;
   } else {
+    // t19 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
     t19 = $[47];
   }
+  // t20 暂存 `onKill && running ? [{` 的派生结果，便于缓存命中时直接复用。
   let t20;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[48] !== onKill || $[49] !== running) {
+    // t20 暂存 `onKill && running ? [{` 生成的渲染片段，后续返回路径直接复用。
     t20 = onKill && running ? [{
       label: "Stop ultraplan",
       value: "stop" as const
     }] : [];
+    // $[48] 缓存 `onKill`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = onKill;
+    // $[49] 缓存 `running`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = running;
+    // $[50] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = t20;
   } else {
+    // t20 从 React 编译缓存槽 $[50] 取回渲染片段，避免依赖未变时重建 JSX。
     t20 = $[50];
   }
+  // t21 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t21;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[51] === Symbol.for("react.memo_cache_sentinel")) {
+    // t21 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t21 = {
       label: "Back",
       value: "back" as const
     };
+    // $[51] 缓存 `t21`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = t21;
   } else {
+    // t21 从 React 编译缓存槽 $[51] 取回渲染片段，避免依赖未变时重建 JSX。
     t21 = $[51];
   }
+  // t22 暂存 `[t19, ...t20, t21]` 的派生结果，便于缓存命中时直接复用。
   let t22;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[52] !== t20) {
+    // t22 暂存 `[t19, ...t20, t21]` 生成的渲染片段，后续返回路径直接复用。
     t22 = [t19, ...t20, t21];
+    // $[52] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = t20;
+    // $[53] 缓存 `t22`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = t22;
   } else {
+    // t22 从 React 编译缓存槽 $[53] 取回渲染片段，避免依赖未变时重建 JSX。
     t22 = $[53];
   }
+  // t23 暂存 `v_0 => {` 的派生结果，便于缓存命中时直接复用。
   let t23;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[54] !== goBackOrClose || $[55] !== onDone || $[56] !== sessionUrl) {
+    // t23 暂存 `v_0 => {` 生成的渲染片段，后续返回路径直接复用。
     t23 = v_0 => {
+      // 按照 v_0 的取值选择终端渲染的具体处理分支。
       switch (v_0) {
         case "open":
           {
+            // 调用 openBrowser，触发终端渲染此处需要的副作用。
             openBrowser(sessionUrl);
+            // 调用 onDone，触发终端渲染此处需要的副作用。
             onDone();
+            // 终端 UI 组件 Remote Session Detail Dial...在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
         case "stop":
           {
+            // setConfirmingStop 写入新的状态值，使终端渲染后续读取保持一致。
             setConfirmingStop(true);
+            // 终端 UI 组件 Remote Session Detail Dial...在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
         case "back":
           {
+            // 调用 goBackOrClose，触发终端渲染此处需要的副作用。
             goBackOrClose();
+            // 终端 UI 组件 Remote Session Detail Dial...在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
       }
     };
+    // $[54] 缓存 `goBackOrClose`，下次依赖未变时 React 编译产物可直接复用。
     $[54] = goBackOrClose;
+    // $[55] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[55] = onDone;
+    // $[56] 缓存 `sessionUrl`，下次依赖未变时 React 编译产物可直接复用。
     $[56] = sessionUrl;
+    // $[57] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
     $[57] = t23;
   } else {
+    // t23 从 React 编译缓存槽 $[57] 取回渲染片段，避免依赖未变时重建 JSX。
     t23 = $[57];
   }
+  // t24 暂存 `<Select options={t22} onChange={t23} />` 的派生结果，便于缓存命中时直接复用。
   let t24;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[58] !== t22 || $[59] !== t23) {
+    // t24 暂存 `<Select options={t22} onChange={t23} />` 生成的渲染片段，后续返回路径直接复用。
     t24 = <Select options={t22} onChange={t23} />;
+    // $[58] 缓存 `t22`，下次依赖未变时 React 编译产物可直接复用。
     $[58] = t22;
+    // $[59] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
     $[59] = t23;
+    // $[60] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
     $[60] = t24;
   } else {
+    // t24 从 React 编译缓存槽 $[60] 取回渲染片段，避免依赖未变时重建 JSX。
     t24 = $[60];
   }
+  // t25 暂存 `<Box flexDirection="column" gap={1}>{t15}{t16}{t18}{t24}<...` 的派生结果，便于缓存命中时直接复用。
   let t25;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[61] !== t15 || $[62] !== t16 || $[63] !== t18 || $[64] !== t24) {
+    // t25 暂存 `<Box flexDirection="column" gap={1}>{t15}{t16}{t18}{t24}<...` 生成的渲染片段，后续返回路径直接复用。
     t25 = <Box flexDirection="column" gap={1}>{t15}{t16}{t18}{t24}</Box>;
+    // $[61] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[61] = t15;
+    // $[62] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[62] = t16;
+    // $[63] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[63] = t18;
+    // $[64] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
     $[64] = t24;
+    // $[65] 缓存 `t25`，下次依赖未变时 React 编译产物可直接复用。
     $[65] = t25;
   } else {
+    // t25 从 React 编译缓存槽 $[65] 取回渲染片段，避免依赖未变时重建 JSX。
     t25 = $[65];
   }
+  // t26 暂存 `<Dialog title={t10} onCancel={goBackOrClose} color="backg...` 的派生结果，便于缓存命中时直接复用。
   let t26;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[66] !== goBackOrClose || $[67] !== t10 || $[68] !== t25) {
+    // t26 暂存 `<Dialog title={t10} onCancel={goBackOrClose} color="backg...` 生成的渲染片段，后续返回路径直接复用。
     t26 = <Dialog title={t10} onCancel={goBackOrClose} color="background">{t25}</Dialog>;
+    // $[66] 缓存 `goBackOrClose`，下次依赖未变时 React 编译产物可直接复用。
     $[66] = goBackOrClose;
+    // $[67] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[67] = t10;
+    // $[68] 缓存 `t25`，下次依赖未变时 React 编译产物可直接复用。
     $[68] = t25;
+    // $[69] 缓存 `t26`，下次依赖未变时 React 编译产物可直接复用。
     $[69] = t26;
   } else {
+    // t26 从 React 编译缓存槽 $[69] 取回渲染片段，避免依赖未变时重建 JSX。
     t26 = $[69];
   }
+  // 返回 `t26`，作为终端渲染这次计算的结果。
   return t26;
 }
+// STAGES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const STAGES = ['finding', 'verifying', 'synthesizing'] as const;
+// STAGE_LABELS 集合 集中保存终端 UI 组件 Remote Session Detail Dial...要一起传递的字段。
 const STAGE_LABELS: Record<(typeof STAGES)[number], string> = {
   finding: 'Find',
   verifying: 'Verify',
@@ -421,179 +697,296 @@ const STAGE_LABELS: Record<(typeof STAGES)[number], string> = {
 // "Setup" label shows before the orchestrator writes its first progress
 // snapshot (container boot + repo clone), so the 0-found display doesn't
 // look like a hung finder.
+// StagePipeline 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function StagePipeline(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(15);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     stage,
     completed,
     hasProgress
   } = t0;
+  // t1 暂存 `stage ? STAGES.indexOf(stage) : -1` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== stage) {
+    // t1 暂存 `stage ? STAGES.indexOf(stage) : -1` 生成的渲染片段，后续返回路径直接复用。
     t1 = stage ? STAGES.indexOf(stage) : -1;
+    // $[0] 缓存 `stage`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = stage;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // currentIdx沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const currentIdx = t1;
+  // inSetup标记终端 UI Remote Session Detai...是否启用对应路径。
   const inSetup = !completed && !hasProgress;
+  // t2 暂存 `inSetup ? <Text color="background">Setup</Text> : <Text d...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== inSetup) {
+    // t2 暂存 `inSetup ? <Text color="background">Setup</Text> : <Text d...` 生成的渲染片段，后续返回路径直接复用。
     t2 = inSetup ? <Text color="background">Setup</Text> : <Text dimColor={true}>Setup</Text>;
+    // $[2] 缓存 `inSetup`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = inSetup;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[3];
   }
+  // t3 暂存 `<Text dimColor={true}> → </Text>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+    // t3 暂存 `<Text dimColor={true}> → </Text>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text dimColor={true}> → </Text>;
+    // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[4];
   }
+  // t4 暂存 `STAGES.map((s, i) => {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== completed || $[6] !== currentIdx || $[7] !== inSetup) {
+    // t4 暂存 `STAGES.map((s, i) => {` 生成的渲染片段，后续返回路径直接复用。
     t4 = STAGES.map((s, i) => {
+      // isCurrent标记终端 UI Remote Session Detai...是否启用对应路径。
       const isCurrent = !completed && !inSetup && i === currentIdx;
+      // 返回 `<React.Fragment key={s}>{i > 0 && <Text dimColor={true}> → </Text>}{isC...`，作为终端渲染这次计算的结果。
       return <React.Fragment key={s}>{i > 0 && <Text dimColor={true}> → </Text>}{isCurrent ? <Text color="background">{STAGE_LABELS[s]}</Text> : <Text dimColor={true}>{STAGE_LABELS[s]}</Text>}</React.Fragment>;
     });
+    // $[5] 缓存 `completed`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = completed;
+    // $[6] 缓存 `currentIdx`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = currentIdx;
+    // $[7] 缓存 `inSetup`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = inSetup;
+    // $[8] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[8];
   }
+  // t5 暂存 `completed && <Text color="success"> ✓</Text>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== completed) {
+    // t5 暂存 `completed && <Text color="success"> ✓</Text>` 生成的渲染片段，后续返回路径直接复用。
     t5 = completed && <Text color="success"> ✓</Text>;
+    // $[9] 缓存 `completed`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = completed;
+    // $[10] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[10];
   }
+  // t6 暂存 `<Text>{t2}{t3}{t4}{t5}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[11] !== t2 || $[12] !== t4 || $[13] !== t5) {
+    // t6 暂存 `<Text>{t2}{t3}{t4}{t5}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Text>{t2}{t3}{t4}{t5}</Text>;
+    // $[11] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t2;
+    // $[12] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t4;
+    // $[13] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t5;
+    // $[14] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[14];
   }
+  // 返回 `t6`，作为终端渲染这次计算的结果。
   return t6;
 }
 
 // Stage-appropriate counts line. Running-state formatting delegates to
 // formatReviewStageCounts (shared with the pill) so the two views can't
 // drift; completed state is dialog-specific (findings summary).
+// reviewCountsLine 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function reviewCountsLine(session: DeepImmutable<RemoteAgentTaskState>): string {
+  // p保存`session.reviewProgress`，供终端 UI Remote Session Detai...后续判断或输出使用。
   const p = session.reviewProgress;
   // No progress data — the orchestrator never wrote a snapshot. Don't
   // claim "0 findings" when completed; we just don't know.
+  // p缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!p) return session.status === 'completed' ? 'done' : 'setting up';
+  // verified保存`p.bugsVerified`，供终端 UI Remote Session Detai...后续判断或输出使用。
   const verified = p.bugsVerified;
+  // refuted保存`p.bugsRefuted ?? 0`，供终端 UI Remote Session Detai...后续判断或输出使用。
   const refuted = p.bugsRefuted ?? 0;
+  // 当 `session.status` 匹配 `'completed'` 时，终端渲染执行对应分支。
   if (session.status === 'completed') {
+    // 片段列表保存`plural`，供终端渲染后续处理使用。
     const parts = [`${verified} ${plural(verified, 'finding')}`];
+    // 满足 `refuted > 0) parts.push(`${refuted} refuted`` 时，终端渲染执行该分支。
     if (refuted > 0) parts.push(`${refuted} refuted`);
+    // 返回 `parts.join(' · ')`，作为终端渲染这次计算的结果。
     return parts.join(' · ');
   }
+  // 返回 `formatReviewStageCounts(p.stage, p.bugsFound, verified, refuted)`，作为终端渲染这次计算的结果。
   return formatReviewStageCounts(p.stage, p.bugsFound, verified, refuted);
 }
+// MenuAction 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type MenuAction = 'open' | 'stop' | 'back' | 'dismiss';
+// ReviewSessionDetail 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ReviewSessionDetail(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(56);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     session,
     onDone,
     onBack,
     onKill
   } = t0;
+  // completed标记终端 UI Remote Session Detai...是否启用对应路径。
   const completed = session.status === "completed";
+  // running标记终端 UI Remote Session Detai...是否启用对应路径。
   const running = session.status === "running" || session.status === "pending";
+  // confirmingStop 由 React state 持有，setConfirmingStop 会在用户操作或异步结果返回时触发刷新。
   const [confirmingStop, setConfirmingStop] = useState(false);
+  // elapsedTime保存`useElapsedTime`，供终端渲染后续处理使用。
   const elapsedTime = useElapsedTime(session.startTime, running, 1000, 0, session.endTime);
+  // t1 暂存 `() => onDone("Remote session details dismissed", {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== onDone) {
+    // t1 暂存 `() => onDone("Remote session details dismissed", {` 生成的渲染片段，后续返回路径直接复用。
     t1 = () => onDone("Remote session details dismissed", {
       display: "system"
     });
+    // $[0] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = onDone;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // handleClose沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const handleClose = t1;
+  // goBackOrClose保存`onBack ?? handleClose`，供终端 UI Remote Session Detai...后续判断或输出使用。
   const goBackOrClose = onBack ?? handleClose;
+  // t2 暂存 `getRemoteTaskSessionUrl(session.sessionId)` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== session.sessionId) {
+    // t2 暂存 `getRemoteTaskSessionUrl(session.sessionId)` 生成的渲染片段，后续返回路径直接复用。
     t2 = getRemoteTaskSessionUrl(session.sessionId);
+    // $[2] 缓存 `session.sessionId`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = session.sessionId;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[3];
   }
+  // sessionUrl 会话数据沿用 `t2` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const sessionUrl = t2;
+  // statusLabel 命名 `completed ? "ready" : running ? "running" : session.status`，让后续代码直接表达这个值的用途。
   const statusLabel = completed ? "ready" : running ? "running" : session.status;
+  // 满足 `confirmingStop` 时，终端渲染执行该分支。
   if (confirmingStop) {
+    // t3 暂存 `() => setConfirmingStop(false)` 的派生结果，便于缓存命中时直接复用。
     let t3;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+      // t3 暂存 `() => setConfirmingStop(false)` 生成的渲染片段，后续返回路径直接复用。
       t3 = () => setConfirmingStop(false);
+      // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
       $[4] = t3;
     } else {
+      // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
       t3 = $[4];
     }
+    // t4 暂存 `<Text dimColor={true}>This archives the remote session an...` 的派生结果，便于缓存命中时直接复用。
     let t4;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+      // t4 暂存 `<Text dimColor={true}>This archives the remote session an...` 生成的渲染片段，后续返回路径直接复用。
       t4 = <Text dimColor={true}>This archives the remote session and stops local tracking. The review will not complete and any findings so far are discarded.</Text>;
+      // $[5] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[5] = t4;
     } else {
+      // t4 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
       t4 = $[5];
     }
+    // t5 暂存 `{` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+      // t5 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
       t5 = {
         label: "Stop ultrareview",
         value: "stop" as const
       };
+      // $[6] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[6] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[6];
     }
+    // t6 暂存 `[t5, {` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+      // t6 暂存 `[t5, {` 生成的渲染片段，后续返回路径直接复用。
       t6 = [t5, {
         label: "Back",
         value: "back" as const
       }];
+      // $[7] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[7] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[7];
     }
+    // t7 暂存 `<Dialog title="Stop ultrareview?" onCancel={t3} color="ba...` 的派生结果，便于缓存命中时直接复用。
     let t7;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[8] !== goBackOrClose || $[9] !== onKill) {
+      // t7 暂存 `<Dialog title="Stop ultrareview?" onCancel={t3} color="ba...` 生成的渲染片段，后续返回路径直接复用。
       t7 = <Dialog title="Stop ultrareview?" onCancel={t3} color="background"><Box flexDirection="column" gap={1}>{t4}<Select options={t6} onChange={v => {
+            // 当 `v` 匹配 `"stop"` 时，终端渲染执行对应分支。
             if (v === "stop") {
+              // 调用 onKill?.();，完成这一处局部操作。
               onKill?.();
+              // 调用 goBackOrClose，触发终端渲染此处需要的副作用。
               goBackOrClose();
             } else {
+              // setConfirmingStop 写入新的状态值，使终端渲染后续读取保持一致。
               setConfirmingStop(false);
             }
           }} /></Box></Dialog>;
+      // $[8] 缓存 `goBackOrClose`，下次依赖未变时 React 编译产物可直接复用。
       $[8] = goBackOrClose;
+      // $[9] 缓存 `onKill`，下次依赖未变时 React 编译产物可直接复用。
       $[9] = onKill;
+      // $[10] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
       $[10] = t7;
     } else {
+      // t7 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
       t7 = $[10];
     }
+    // 返回 `t7`，作为终端渲染这次计算的结果。
     return t7;
   }
+  // t3 暂存 `completed ? [{` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[11] !== completed || $[12] !== onKill || $[13] !== running) {
+    // t3 暂存 `completed ? [{` 生成的渲染片段，后续返回路径直接复用。
     t3 = completed ? [{
       label: "Open in Claude Code on the web",
       value: "open"
@@ -610,171 +1003,291 @@ function ReviewSessionDetail(t0) {
       label: "Back",
       value: "back"
     }];
+    // $[11] 缓存 `completed`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = completed;
+    // $[12] 缓存 `onKill`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = onKill;
+    // $[13] 缓存 `running`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = running;
+    // $[14] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[14];
   }
+  // 选项 命名 `t3`，让后续代码直接表达这个值的用途。
   const options = t3;
+  // t4 暂存 `action => {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[15] !== goBackOrClose || $[16] !== handleClose || $[17] !== onDone || $[18] !== sessionUrl) {
+    // t4 暂存 `action => {` 生成的渲染片段，后续返回路径直接复用。
     t4 = action => {
+      // 终端 UI 组件 Remote Session Detail Dial...在这里处理 `bb45: switch (action) {`，完成这一小步状态转换。
       bb45: switch (action) {
         case "open":
           {
+            // 调用 openBrowser，触发终端渲染此处需要的副作用。
             openBrowser(sessionUrl);
+            // 调用 onDone，触发终端渲染此处需要的副作用。
             onDone();
+            // 结束这个分支或循环，避免终端渲染继续落入后续路径。
             break bb45;
           }
         case "stop":
           {
+            // setConfirmingStop 写入新的状态值，使终端渲染后续读取保持一致。
             setConfirmingStop(true);
+            // 结束这个分支或循环，避免终端渲染继续落入后续路径。
             break bb45;
           }
         case "back":
           {
+            // 调用 goBackOrClose，触发终端渲染此处需要的副作用。
             goBackOrClose();
+            // 结束这个分支或循环，避免终端渲染继续落入后续路径。
             break bb45;
           }
         case "dismiss":
           {
+            // 调用 handleClose，触发终端渲染此处需要的副作用。
             handleClose();
           }
       }
     };
+    // $[15] 缓存 `goBackOrClose`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = goBackOrClose;
+    // $[16] 缓存 `handleClose`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = handleClose;
+    // $[17] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = onDone;
+    // $[18] 缓存 `sessionUrl`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = sessionUrl;
+    // $[19] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[19];
   }
+  // handleSelect 命名 `t4`，让后续代码直接表达这个值的用途。
   const handleSelect = t4;
+  // t5保存`completed ? DIAMOND_FILLED : DIAMOND_OPEN`，供后续判断或组装使用。
   const t5 = completed ? DIAMOND_FILLED : DIAMOND_OPEN;
+  // t6 暂存 `<Text color="background">{t5}{" "}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[20] !== t5) {
+    // t6 暂存 `<Text color="background">{t5}{" "}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Text color="background">{t5}{" "}</Text>;
+    // $[20] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t5;
+    // $[21] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[21];
   }
+  // t7 暂存 `<Text bold={true}>ultrareview</Text>` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[22] === Symbol.for("react.memo_cache_sentinel")) {
+    // t7 暂存 `<Text bold={true}>ultrareview</Text>` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Text bold={true}>ultrareview</Text>;
+    // $[22] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[22] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[22];
   }
+  // t8 暂存 `<Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{s...` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[23] !== elapsedTime || $[24] !== statusLabel) {
+    // t8 暂存 `<Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{s...` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Text dimColor={true}>{" \xB7 "}{elapsedTime}{" \xB7 "}{statusLabel}</Text>;
+    // $[23] 缓存 `elapsedTime`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = elapsedTime;
+    // $[24] 缓存 `statusLabel`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = statusLabel;
+    // $[25] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[25] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[25];
   }
+  // t9 暂存 `<Text>{t6}{t7}{t8}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[26] !== t6 || $[27] !== t8) {
+    // t9 暂存 `<Text>{t6}{t7}{t8}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t9 = <Text>{t6}{t7}{t8}</Text>;
+    // $[26] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = t6;
+    // $[27] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = t8;
+    // $[28] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[28] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[28];
   }
+  // t10保存`session.reviewProgress?.stage`，供后续判断或组装使用。
   const t10 = session.reviewProgress?.stage;
+  // t11标记终端 UI Remote Session Detai...是否启用对应路径。
   const t11 = !!session.reviewProgress;
+  // t12 暂存 `<StagePipeline stage={t10} completed={completed} hasProgr...` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[29] !== completed || $[30] !== t10 || $[31] !== t11) {
+    // t12 暂存 `<StagePipeline stage={t10} completed={completed} hasProgr...` 生成的渲染片段，后续返回路径直接复用。
     t12 = <StagePipeline stage={t10} completed={completed} hasProgress={t11} />;
+    // $[29] 缓存 `completed`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = completed;
+    // $[30] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = t10;
+    // $[31] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = t11;
+    // $[32] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = t12;
   } else {
+    // t12 从 React 编译缓存槽 $[32] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[32];
   }
+  // t13 暂存 `reviewCountsLine(session)` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[33] !== session) {
+    // t13 暂存 `reviewCountsLine(session)` 生成的渲染片段，后续返回路径直接复用。
     t13 = reviewCountsLine(session);
+    // $[33] 缓存 `session`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = session;
+    // $[34] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = t13;
   } else {
+    // t13 从 React 编译缓存槽 $[34] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[34];
   }
+  // t14 暂存 `<Text>{t13}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[35] !== t13) {
+    // t14 暂存 `<Text>{t13}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t14 = <Text>{t13}</Text>;
+    // $[35] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = t13;
+    // $[36] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = t14;
   } else {
+    // t14 从 React 编译缓存槽 $[36] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[36];
   }
+  // t15 暂存 `<Text dimColor={true}>{sessionUrl}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t15;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[37] !== sessionUrl) {
+    // t15 暂存 `<Text dimColor={true}>{sessionUrl}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t15 = <Text dimColor={true}>{sessionUrl}</Text>;
+    // $[37] 缓存 `sessionUrl`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = sessionUrl;
+    // $[38] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = t15;
   } else {
+    // t15 从 React 编译缓存槽 $[38] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[38];
   }
+  // t16 暂存 `<Link url={sessionUrl}>{t15}</Link>` 的派生结果，便于缓存命中时直接复用。
   let t16;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[39] !== sessionUrl || $[40] !== t15) {
+    // t16 暂存 `<Link url={sessionUrl}>{t15}</Link>` 生成的渲染片段，后续返回路径直接复用。
     t16 = <Link url={sessionUrl}>{t15}</Link>;
+    // $[39] 缓存 `sessionUrl`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = sessionUrl;
+    // $[40] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = t15;
+    // $[41] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = t16;
   } else {
+    // t16 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
     t16 = $[41];
   }
+  // t17 暂存 `<Box flexDirection="column">{t14}{t16}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t17;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[42] !== t14 || $[43] !== t16) {
+    // t17 暂存 `<Box flexDirection="column">{t14}{t16}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t17 = <Box flexDirection="column">{t14}{t16}</Box>;
+    // $[42] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[42] = t14;
+    // $[43] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[43] = t16;
+    // $[44] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[44] = t17;
   } else {
+    // t17 从 React 编译缓存槽 $[44] 取回渲染片段，避免依赖未变时重建 JSX。
     t17 = $[44];
   }
+  // t18 暂存 `<Select options={options} onChange={handleSelect} />` 的派生结果，便于缓存命中时直接复用。
   let t18;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[45] !== handleSelect || $[46] !== options) {
+    // t18 暂存 `<Select options={options} onChange={handleSelect} />` 生成的渲染片段，后续返回路径直接复用。
     t18 = <Select options={options} onChange={handleSelect} />;
+    // $[45] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[45] = handleSelect;
+    // $[46] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = options;
+    // $[47] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = t18;
   } else {
+    // t18 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
     t18 = $[47];
   }
+  // t19 暂存 `<Box flexDirection="column" gap={1}>{t12}{t17}{t18}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t19;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[48] !== t12 || $[49] !== t17 || $[50] !== t18) {
+    // t19 暂存 `<Box flexDirection="column" gap={1}>{t12}{t17}{t18}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t19 = <Box flexDirection="column" gap={1}>{t12}{t17}{t18}</Box>;
+    // $[48] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = t12;
+    // $[49] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = t17;
+    // $[50] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = t18;
+    // $[51] 缓存 `t19`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = t19;
   } else {
+    // t19 从 React 编译缓存槽 $[51] 取回渲染片段，避免依赖未变时重建 JSX。
     t19 = $[51];
   }
+  // t20 暂存 `<Dialog title={t9} onCancel={goBackOrClose} color="backgr...` 的派生结果，便于缓存命中时直接复用。
   let t20;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[52] !== goBackOrClose || $[53] !== t19 || $[54] !== t9) {
+    // t20 暂存 `<Dialog title={t9} onCancel={goBackOrClose} color="backgr...` 生成的渲染片段，后续返回路径直接复用。
     t20 = <Dialog title={t9} onCancel={goBackOrClose} color="background" inputGuide={_temp}>{t19}</Dialog>;
+    // $[52] 缓存 `goBackOrClose`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = goBackOrClose;
+    // $[53] 缓存 `t19`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = t19;
+    // $[54] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[54] = t9;
+    // $[55] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[55] = t20;
   } else {
+    // t20 从 React 编译缓存槽 $[55] 取回渲染片段，避免依赖未变时重建 JSX。
     t20 = $[55];
   }
+  // 返回 `t20`，作为终端渲染这次计算的结果。
   return t20;
 }
+// _temp 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(exitState) {
+  // 返回 `exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text...`，作为终端渲染这次计算的结果。
   return exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut="Enter" action="select" /><KeyboardShortcutHint shortcut="Esc" action="go back" /></Byline>;
 }
+// RemoteSessionDetailDialog 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function RemoteSessionDetailDialog({
   session,
   toolUseContext,
@@ -782,7 +1295,9 @@ export function RemoteSessionDetailDialog({
   onBack,
   onKill
 }: Props): React.ReactNode {
+  // isTeleporting 由 React state 持有，setIsTeleporting 会在用户操作或异步结果返回时触发刷新。
   const [isTeleporting, setIsTeleporting] = useState(false);
+  // teleportError 错误信息 由 React state 持有，setTeleportError 会在用户操作或异步结果返回时触发刷新。
   const [teleportError, setTeleportError] = useState<string | null>(null);
 
   // Get last few messages from remote session for display.
@@ -790,61 +1305,92 @@ export function RemoteSessionDetailDialog({
   // the log is often thinking-only blocks that normalise to 'progress' type.
   // Placed before the early returns so hook call order is stable (Rules of Hooks).
   // Ultraplan/review sessions never read this — skip the normalize work for them.
+  // lastMessages 消息数据保存`useMemo`，供终端渲染后续处理使用。
   const lastMessages = useMemo(() => {
+    // 只有 `session.isUltraplan || session.isRemoteReview` 满足时，终端渲染才执行该分支。
     if (session.isUltraplan || session.isRemoteReview) return [];
+    // 返回 `normalizeMessages(toInternalMessages(session.log as SDKMessage[])).filt...`，作为终端渲染这次计算的结果。
     return normalizeMessages(toInternalMessages(session.log as SDKMessage[])).filter(_ => _.type !== 'progress').slice(-3);
   }, [session]);
+  // 满足 `session.isUltraplan` 时，终端渲染执行该分支。
   if (session.isUltraplan) {
+    // 返回 `<UltraplanSessionDetail session={session} onDone={onDone} onBack={onBac...`，作为终端渲染这次计算的结果。
     return <UltraplanSessionDetail session={session} onDone={onDone} onBack={onBack} onKill={onKill} />;
   }
 
   // Review sessions get the stage-pipeline view; everything else keeps the
   // generic label/value + recent-messages dialog below.
+  // 满足 `session.isRemoteReview` 时，终端渲染执行该分支。
   if (session.isRemoteReview) {
+    // 返回 `<ReviewSessionDetail session={session} onDone={onDone} onBack={onBack} ...`，作为终端渲染这次计算的结果。
     return <ReviewSessionDetail session={session} onDone={onDone} onBack={onBack} onKill={onKill} />;
   }
+  // handleClose保存`onDone`，供终端渲染后续处理使用。
   const handleClose = () => onDone('Remote session details dismissed', {
     display: 'system'
   });
 
   // Component-specific shortcuts shown in UI hints (t=teleport, space=dismiss,
   // left=back). These are state-dependent actions, not standard dialog keybindings.
+  // handleKeyDown封装成回调，供终端 UI Remote Session Detai...在事件触发或异步步骤中调用。
   const handleKeyDown = (e: KeyboardEvent) => {
+    // 当 `e.key` 匹配 `' '` 时，终端渲染执行对应分支。
     if (e.key === ' ') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone('Remote session details dismissed', {
         display: 'system'
       });
+    // 终端 UI 组件 Remote Session Detail Dial...在这里处理 `} else if (e.key === 'left' && onBack) {`，完成这一小步状态转换。
     } else if (e.key === 'left' && onBack) {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 调用 onBack，触发终端渲染此处需要的副作用。
       onBack();
+    // 终端 UI 组件 Remote Session Detail Dial...在这里处理 `} else if (e.key === 't' && !isTeleporting) {`，完成这一小步状态转换。
     } else if (e.key === 't' && !isTeleporting) {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 显式忽略 `handleTeleport()` 的返回值，只保留它触发的副作用。
       void handleTeleport();
+    // 终端 UI 组件 Remote Session Detail Dial...在这里处理 `} else if (e.key === 'return') {`，完成这一小步状态转换。
     } else if (e.key === 'return') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 调用 handleClose，触发终端渲染此处需要的副作用。
       handleClose();
     }
   };
 
   // Handle teleporting to remote session
+  // handleTeleport 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   async function handleTeleport(): Promise<void> {
+    // setIsTeleporting 写入新的状态值，使终端渲染后续读取保持一致。
     setIsTeleporting(true);
+    // setTeleportError 写入新的状态值，使终端渲染后续读取保持一致。
     setTeleportError(null);
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // 等待 `teleportResumeCodeSession(session.sessionId)` 完成，再继续终端 UI 组件 Remote Session Detail Dial...的异步流程。
       await teleportResumeCodeSession(session.sessionId);
     } catch (err) {
+      // setTeleportError 写入新的状态值，使终端渲染后续读取保持一致。
       setTeleportError(errorMessage(err));
     } finally {
+      // setIsTeleporting 写入新的状态值，使终端渲染后续读取保持一致。
       setIsTeleporting(false);
     }
   }
 
   // Truncate title if too long (for display purposes)
+  // displayTitle 标题保存`truncateToWidth`，供终端渲染后续处理使用。
   const displayTitle = truncateToWidth(session.title, 50);
 
   // Map TaskStatus to display status (handle 'pending')
+  // displayStatus 集合标记终端 UI Remote Session Detai...是否启用对应路径。
   const displayStatus = session.status === 'pending' ? 'starting' : session.status;
+  // 返回 `<Box flexDirection="column" tabIndex={0} autoFocus onKeyDown={handleKey...`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
       <Dialog title="Remote session details" onCancel={handleClose} color="background" inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
               {onBack && <KeyboardShortcutHint shortcut="←" action="go back" />}
@@ -876,11 +1422,13 @@ export function RemoteSessionDetailDialog({
         </Box>
 
         {/* Remote session messages section */}
+        {/* 终端 UI 组件 Remote Session Detail Di...处理 `{session.log.length > 0 && <Box flexDirection="column" marginTop={1}>`，完成这一小步状态转换。 */}
         {session.log.length > 0 && <Box flexDirection="column" marginTop={1}>
             <Text>
               <Text bold>Recent messages</Text>:
             </Text>
             <Box flexDirection="column" height={10} overflowY="hidden">
+              {/* 这个回调绑定到 {lastMessages.map((msg, i) => <Message key={i} message={msg} lookups={EMPTY_LOOKUPS}…，负责终端渲染在该局部场景下的响应。 */}
               {lastMessages.map((msg, i) => <Message key={i} message={msg} lookups={EMPTY_LOOKUPS} addMargin={i > 0} tools={toolUseContext.options.tools} commands={toolUseContext.options.commands} verbose={toolUseContext.options.verbose} inProgressToolUseIDs={new Set()} progressMessagesForMessage={[]} shouldAnimate={false} shouldShowDot={false} style="condensed" isTranscriptMode={false} isStatic={true} />)}
             </Box>
             <Box marginTop={1}>

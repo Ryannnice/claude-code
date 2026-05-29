@@ -1,6 +1,10 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 类型依赖 { Input } 来自 ./TeamCreateTool.js，用于校准工具调用的数据契约。
 import type { Input } from './TeamCreateTool.js';
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
+  // 返回 ``create team: ${input.team_name}``，作为工具调用这次计算的结果。
   return `create team: ${input.team_name}`;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIklucHV0IiwicmVuZGVyVG9vbFVzZU1lc3NhZ2UiLCJpbnB1dCIsIlBhcnRpYWwiLCJSZWFjdE5vZGUiLCJ0ZWFtX25hbWUiXSwic291cmNlcyI6WyJVSS50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IFJlYWN0IGZyb20gJ3JlYWN0J1xuaW1wb3J0IHR5cGUgeyBJbnB1dCB9IGZyb20gJy4vVGVhbUNyZWF0ZVRvb2wuanMnXG5cbmV4cG9ydCBmdW5jdGlvbiByZW5kZXJUb29sVXNlTWVzc2FnZShpbnB1dDogUGFydGlhbDxJbnB1dD4pOiBSZWFjdC5SZWFjdE5vZGUge1xuICByZXR1cm4gYGNyZWF0ZSB0ZWFtOiAke2lucHV0LnRlYW1fbmFtZX1gXG59XG4iXSwibWFwcGluZ3MiOiJBQUFBLE9BQU9BLEtBQUssTUFBTSxPQUFPO0FBQ3pCLGNBQWNDLEtBQUssUUFBUSxxQkFBcUI7QUFFaEQsT0FBTyxTQUFTQyxvQkFBb0JBLENBQUNDLEtBQUssRUFBRUMsT0FBTyxDQUFDSCxLQUFLLENBQUMsQ0FBQyxFQUFFRCxLQUFLLENBQUNLLFNBQVMsQ0FBQztFQUMzRSxPQUFPLGdCQUFnQkYsS0FBSyxDQUFDRyxTQUFTLEVBQUU7QUFDMUMiLCJpZ25vcmVMaXN0IjpbXX0=

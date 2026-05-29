@@ -3,9 +3,11 @@
  * Inspired by https://github.com/nas5w/random-word-slugs
  * with Claude-flavored words
  */
+// 使用 Node/Bun 的 crypto 能力处理本地运行时资源。
 import { randomBytes } from 'crypto'
 
 // Adjectives for slug generation - whimsical and delightful
+// ADJECTIVES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const ADJECTIVES = [
   // Classic pleasant adjectives
   'abundant',
@@ -232,6 +234,7 @@ const ADJECTIVES = [
 ] as const
 
 // Nouns for slug generation - whimsical creatures, nature, and fun objects
+// NOUNS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const NOUNS = [
   // Nature & cosmic
   'aurora',
@@ -649,6 +652,7 @@ const NOUNS = [
 ] as const
 
 // Verbs for the middle word - whimsical action words
+// VERBS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const VERBS = [
   'baking',
   'beaming',
@@ -764,17 +768,23 @@ const VERBS = [
 /**
  * Generate a cryptographically random integer in the range [0, max)
  */
+// randomInt 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function randomInt(max: number): number {
   // Use crypto.randomBytes for better randomness than Math.random
+  // bytes 集合保存`randomBytes`，供共享工具后续处理使用。
   const bytes = randomBytes(4)
+  // 取值读取`bytes.readUInt32BE`，供共享工具后续处理使用。
   const value = bytes.readUInt32BE(0)
+  // 返回 `value % max`，作为共享工具这次计算的结果。
   return value % max
 }
 
 /**
  * Pick a random element from an array
  */
+// pickRandom 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function pickRandom<T>(array: readonly T[]): T {
+  // 返回 `array[randomInt(array.length)]!`，作为共享工具这次计算的结果。
   return array[randomInt(array.length)]!
 }
 
@@ -782,10 +792,15 @@ function pickRandom<T>(array: readonly T[]): T {
  * Generate a random word slug in the format "adjective-verb-noun"
  * Example: "gleaming-brewing-phoenix", "cosmic-pondering-lighthouse"
  */
+// generateWordSlug 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function generateWordSlug(): string {
+  // adjective保存`pickRandom`，供共享工具后续处理使用。
   const adjective = pickRandom(ADJECTIVES)
+  // verb保存`pickRandom`，供共享工具后续处理使用。
   const verb = pickRandom(VERBS)
+  // noun保存`pickRandom`，供共享工具后续处理使用。
   const noun = pickRandom(NOUNS)
+  // 返回 ``${adjective}-${verb}-${noun}``，作为共享工具这次计算的结果。
   return `${adjective}-${verb}-${noun}`
 }
 
@@ -793,8 +808,12 @@ export function generateWordSlug(): string {
  * Generate a shorter random word slug in the format "adjective-noun"
  * Example: "graceful-unicorn", "cosmic-lighthouse"
  */
+// generateShortWordSlug 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function generateShortWordSlug(): string {
+  // adjective保存`pickRandom`，供共享工具后续处理使用。
   const adjective = pickRandom(ADJECTIVES)
+  // noun保存`pickRandom`，供共享工具后续处理使用。
   const noun = pickRandom(NOUNS)
+  // 返回 ``${adjective}-${noun}``，作为共享工具这次计算的结果。
   return `${adjective}-${noun}`
 }

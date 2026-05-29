@@ -1,8 +1,11 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 // External stub for ExitPlanModeTool prompt - excludes Ant-only allowedPrompts section
 
 // Hardcoded to avoid relative import issues in stub
+// ASK_USER_QUESTION_TOOL_NAME保存`'AskUserQuestion'`，作为后续固定文本处理的输入。
 const ASK_USER_QUESTION_TOOL_NAME = 'AskUserQuestion'
 
+// EXIT_PLAN_MODE_V2_TOOL_PROMPT保存``Use this tool when you are in plan mode and have finishe...`，作为后续固定文本处理的输入。
 export const EXIT_PLAN_MODE_V2_TOOL_PROMPT = `Use this tool when you are in plan mode and have finished writing your plan to the plan file and are ready for user approval.
 
 ## How This Tool Works

@@ -1,12 +1,22 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { LocalJSXCommandContext } 来自 ../../commands.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandContext } from '../../commands.js';
+// 复用 ContextVisualization 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ContextVisualization } from '../../components/ContextVisualization.js';
+// 接入 microcompactMessages 服务层能力，把外部通信或共享状态交给 ../../services/compact/microCompact.js 处理。
 import { microcompactMessages } from '../../services/compact/microCompact.js';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准命令处理的数据契约。
 import type { Message } from '../../types/message.js';
+// 复用 analyzeContextUsage 工具函数，把通用处理留在 ../../utils/analyzeContext.js 中维护。
 import { analyzeContextUsage } from '../../utils/analyzeContext.js';
+// 复用 getMessagesAfterCompactBoundary 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js';
+// 复用 renderToAnsiString 工具函数，把通用处理留在 ../../utils/staticRender.js 中维护。
 import { renderToAnsiString } from '../../utils/staticRender.js';
 
 /**
@@ -15,19 +25,27 @@ import { renderToAnsiString } from '../../utils/staticRender.js';
  * history. Without projectView the token count overcounts by however much
  * was collapsed — user sees "180k, 3 spans collapsed" when the API sees 120k.
  */
+// toApiView 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function toApiView(messages: Message[]): Message[] {
+  // view读取`getMessagesAfterCompactBoundary`，供命令处理后续处理使用。
   let view = getMessagesAfterCompactBoundary(messages);
+  // 满足 `feature('CONTEXT_COLLAPSE')` 时，命令处理执行该分支。
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       projectView
     } = require('../../services/contextCollapse/operations.js') as typeof import('../../services/contextCollapse/operations.js');
     /* eslint-enable @typescript-eslint/no-require-imports */
+    // view更新为 `projectView(view)`，确保斜杠命令后续读取最新状态。
     view = projectView(view);
   }
+  // 返回 `view`，作为命令处理这次计算的结果。
   return view;
 }
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     messages,
     getAppState,
@@ -36,19 +54,24 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
       tools
     }
   } = context;
+  // apiView保存`toApiView`，供命令处理后续处理使用。
   const apiView = toApiView(messages);
 
   // Apply microcompact to get accurate representation of messages sent to API
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     messages: compactedMessages
   } = await microcompactMessages(apiView);
 
   // Get terminal width for responsive sizing
+  // terminalWidth标记命令处理斜杠命令 context是否启用对应路径。
   const terminalWidth = process.stdout.columns || 80;
+  // appState 状态读取`getAppState`，供命令处理后续处理使用。
   const appState = getAppState();
 
   // Analyze context with compacted messages
   // Pass original messages as last parameter for accurate API usage extraction
+  // data保存`analyzeContextUsage`，供命令处理后续处理使用。
   const data = await analyzeContextUsage(compactedMessages, mainLoopModel, async () => appState.toolPermissionContext, tools, appState.agentDefinitions, terminalWidth, context,
   // Pass full context for system prompt calculation
   undefined,
@@ -57,8 +80,11 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
   );
 
   // Render to ANSI string to preserve colors and pass to onDone like local commands do
+  // output保存`renderToAnsiString`，供命令处理后续处理使用。
   const output = await renderToAnsiString(<ContextVisualization data={data} />);
+  // 调用 onDone，触发命令处理此处需要的副作用。
   onDone(output);
+  // 返回 `null`，作为命令处理这次计算的结果。
   return null;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJmZWF0dXJlIiwiUmVhY3QiLCJMb2NhbEpTWENvbW1hbmRDb250ZXh0IiwiQ29udGV4dFZpc3VhbGl6YXRpb24iLCJtaWNyb2NvbXBhY3RNZXNzYWdlcyIsIkxvY2FsSlNYQ29tbWFuZE9uRG9uZSIsIk1lc3NhZ2UiLCJhbmFseXplQ29udGV4dFVzYWdlIiwiZ2V0TWVzc2FnZXNBZnRlckNvbXBhY3RCb3VuZGFyeSIsInJlbmRlclRvQW5zaVN0cmluZyIsInRvQXBpVmlldyIsIm1lc3NhZ2VzIiwidmlldyIsInByb2plY3RWaWV3IiwicmVxdWlyZSIsImNhbGwiLCJvbkRvbmUiLCJjb250ZXh0IiwiUHJvbWlzZSIsIlJlYWN0Tm9kZSIsImdldEFwcFN0YXRlIiwib3B0aW9ucyIsIm1haW5Mb29wTW9kZWwiLCJ0b29scyIsImFwaVZpZXciLCJjb21wYWN0ZWRNZXNzYWdlcyIsInRlcm1pbmFsV2lkdGgiLCJwcm9jZXNzIiwic3Rkb3V0IiwiY29sdW1ucyIsImFwcFN0YXRlIiwiZGF0YSIsInRvb2xQZXJtaXNzaW9uQ29udGV4dCIsImFnZW50RGVmaW5pdGlvbnMiLCJ1bmRlZmluZWQiLCJvdXRwdXQiXSwic291cmNlcyI6WyJjb250ZXh0LnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBmZWF0dXJlIH0gZnJvbSAnYnVuOmJ1bmRsZSdcbmltcG9ydCAqIGFzIFJlYWN0IGZyb20gJ3JlYWN0J1xuaW1wb3J0IHR5cGUgeyBMb2NhbEpTWENvbW1hbmRDb250ZXh0IH0gZnJvbSAnLi4vLi4vY29tbWFuZHMuanMnXG5pbXBvcnQgeyBDb250ZXh0VmlzdWFsaXphdGlvbiB9IGZyb20gJy4uLy4uL2NvbXBvbmVudHMvQ29udGV4dFZpc3VhbGl6YXRpb24uanMnXG5pbXBvcnQgeyBtaWNyb2NvbXBhY3RNZXNzYWdlcyB9IGZyb20gJy4uLy4uL3NlcnZpY2VzL2NvbXBhY3QvbWljcm9Db21wYWN0LmpzJ1xuaW1wb3J0IHR5cGUgeyBMb2NhbEpTWENvbW1hbmRPbkRvbmUgfSBmcm9tICcuLi8uLi90eXBlcy9jb21tYW5kLmpzJ1xuaW1wb3J0IHR5cGUgeyBNZXNzYWdlIH0gZnJvbSAnLi4vLi4vdHlwZXMvbWVzc2FnZS5qcydcbmltcG9ydCB7IGFuYWx5emVDb250ZXh0VXNhZ2UgfSBmcm9tICcuLi8uLi91dGlscy9hbmFseXplQ29udGV4dC5qcydcbmltcG9ydCB7IGdldE1lc3NhZ2VzQWZ0ZXJDb21wYWN0Qm91bmRhcnkgfSBmcm9tICcuLi8uLi91dGlscy9tZXNzYWdlcy5qcydcbmltcG9ydCB7IHJlbmRlclRvQW5zaVN0cmluZyB9IGZyb20gJy4uLy4uL3V0aWxzL3N0YXRpY1JlbmRlci5qcydcblxuLyoqXG4gKiBBcHBseSB0aGUgc2FtZSBjb250ZXh0IHRyYW5zZm9ybXMgcXVlcnkudHMgZG9lcyBiZWZvcmUgdGhlIEFQSSBjYWxsLCBzb1xuICogL2NvbnRleHQgc2hvd3Mgd2hhdCB0aGUgbW9kZWwgYWN0dWFsbHkgc2VlcyByYXRoZXIgdGhhbiB0aGUgUkVQTCdzIHJhd1xuICogaGlzdG9yeS4gV2l0aG91dCBwcm9qZWN0VmlldyB0aGUgdG9rZW4gY291bnQgb3ZlcmNvdW50cyBieSBob3dldmVyIG11Y2hcbiAqIHdhcyBjb2xsYXBzZWQg4oCUIHVzZXIgc2VlcyBcIjE4MGssIDMgc3BhbnMgY29sbGFwc2VkXCIgd2hlbiB0aGUgQVBJIHNlZXMgMTIway5cbiAqL1xuZnVuY3Rpb24gdG9BcGlWaWV3KG1lc3NhZ2VzOiBNZXNzYWdlW10pOiBNZXNzYWdlW10ge1xuICBsZXQgdmlldyA9IGdldE1lc3NhZ2VzQWZ0ZXJDb21wYWN0Qm91bmRhcnkobWVzc2FnZXMpXG4gIGlmIChmZWF0dXJlKCdDT05URVhUX0NPTExBUFNFJykpIHtcbiAgICAvKiBlc2xpbnQtZGlzYWJsZSBAdHlwZXNjcmlwdC1lc2xpbnQvbm8tcmVxdWlyZS1pbXBvcnRzICovXG4gICAgY29uc3QgeyBwcm9qZWN0VmlldyB9ID1cbiAgICAgIHJlcXVpcmUoJy4uLy4uL3NlcnZpY2VzL2NvbnRleHRDb2xsYXBzZS9vcGVyYXRpb25zLmpzJykgYXMgdHlwZW9mIGltcG9ydCgnLi4vLi4vc2VydmljZXMvY29udGV4dENvbGxhcHNlL29wZXJhdGlvbnMuanMnKVxuICAgIC8qIGVzbGludC1lbmFibGUgQHR5cGVzY3JpcHQtZXNsaW50L25vLXJlcXVpcmUtaW1wb3J0cyAqL1xuICAgIHZpZXcgPSBwcm9qZWN0Vmlldyh2aWV3KVxuICB9XG4gIHJldHVybiB2aWV3XG59XG5cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBjYWxsKFxuICBvbkRvbmU6IExvY2FsSlNYQ29tbWFuZE9uRG9uZSxcbiAgY29udGV4dDogTG9jYWxKU1hDb21tYW5kQ29udGV4dCxcbik6IFByb21pc2U8UmVhY3QuUmVhY3ROb2RlPiB7XG4gIGNvbnN0IHtcbiAgICBtZXNzYWdlcyxcbiAgICBnZXRBcHBTdGF0ZSxcbiAgICBvcHRpb25zOiB7IG1haW5Mb29wTW9kZWwsIHRvb2xzIH0sXG4gIH0gPSBjb250ZXh0XG5cbiAgY29uc3QgYXBpVmlldyA9IHRvQXBpVmlldyhtZXNzYWdlcylcblxuICAvLyBBcHBseSBtaWNyb2NvbXBhY3QgdG8gZ2V0IGFjY3VyYXRlIHJlcHJlc2VudGF0aW9uIG9mIG1lc3NhZ2VzIHNlbnQgdG8gQVBJXG4gIGNvbnN0IHsgbWVzc2FnZXM6IGNvbXBhY3RlZE1lc3NhZ2VzIH0gPSBhd2FpdCBtaWNyb2NvbXBhY3RNZXNzYWdlcyhhcGlWaWV3KVxuXG4gIC8vIEdldCB0ZXJtaW5hbCB3aWR0aCBmb3IgcmVzcG9uc2l2ZSBzaXppbmdcbiAgY29uc3QgdGVybWluYWxXaWR0aCA9IHByb2Nlc3Muc3Rkb3V0LmNvbHVtbnMgfHwgODBcblxuICBjb25zdCBhcHBTdGF0ZSA9IGdldEFwcFN0YXRlKClcblxuICAvLyBBbmFseXplIGNvbnRleHQgd2l0aCBjb21wYWN0ZWQgbWVzc2FnZXNcbiAgLy8gUGFzcyBvcmlnaW5hbCBtZXNzYWdlcyBhcyBsYXN0IHBhcmFtZXRlciBmb3IgYWNjdXJhdGUgQVBJIHVzYWdlIGV4dHJhY3Rpb25cbiAgY29uc3QgZGF0YSA9IGF3YWl0IGFuYWx5emVDb250ZXh0VXNhZ2UoXG4gICAgY29tcGFjdGVkTWVzc2FnZXMsXG4gICAgbWFpbkxvb3BNb2RlbCxcbiAgICBhc3luYyAoKSA9PiBhcHBTdGF0ZS50b29sUGVybWlzc2lvbkNvbnRleHQsXG4gICAgdG9vbHMsXG4gICAgYXBwU3RhdGUuYWdlbnREZWZpbml0aW9ucyxcbiAgICB0ZXJtaW5hbFdpZHRoLFxuICAgIGNvbnRleHQsIC8vIFBhc3MgZnVsbCBjb250ZXh0IGZvciBzeXN0ZW0gcHJvbXB0IGNhbGN1bGF0aW9uXG4gICAgdW5kZWZpbmVkLCAvLyBtYWluVGhyZWFkQWdlbnREZWZpbml0aW9uXG4gICAgYXBpVmlldywgLy8gT3JpZ2luYWwgbWVzc2FnZXMgZm9yIEFQSSB1c2FnZSBleHRyYWN0aW9uXG4gIClcblxuICAvLyBSZW5kZXIgdG8gQU5TSSBzdHJpbmcgdG8gcHJlc2VydmUgY29sb3JzIGFuZCBwYXNzIHRvIG9uRG9uZSBsaWtlIGxvY2FsIGNvbW1hbmRzIGRvXG4gIGNvbnN0IG91dHB1dCA9IGF3YWl0IHJlbmRlclRvQW5zaVN0cmluZyg8Q29udGV4dFZpc3VhbGl6YXRpb24gZGF0YT17ZGF0YX0gLz4pXG4gIG9uRG9uZShvdXRwdXQpXG4gIHJldHVybiBudWxsXG59XG4iXSwibWFwcGluZ3MiOiJBQUFBLFNBQVNBLE9BQU8sUUFBUSxZQUFZO0FBQ3BDLE9BQU8sS0FBS0MsS0FBSyxNQUFNLE9BQU87QUFDOUIsY0FBY0Msc0JBQXNCLFFBQVEsbUJBQW1CO0FBQy9ELFNBQVNDLG9CQUFvQixRQUFRLDBDQUEwQztBQUMvRSxTQUFTQyxvQkFBb0IsUUFBUSx3Q0FBd0M7QUFDN0UsY0FBY0MscUJBQXFCLFFBQVEsd0JBQXdCO0FBQ25FLGNBQWNDLE9BQU8sUUFBUSx3QkFBd0I7QUFDckQsU0FBU0MsbUJBQW1CLFFBQVEsK0JBQStCO0FBQ25FLFNBQVNDLCtCQUErQixRQUFRLHlCQUF5QjtBQUN6RSxTQUFTQyxrQkFBa0IsUUFBUSw2QkFBNkI7O0FBRWhFO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLFNBQVNDLFNBQVNBLENBQUNDLFFBQVEsRUFBRUwsT0FBTyxFQUFFLENBQUMsRUFBRUEsT0FBTyxFQUFFLENBQUM7RUFDakQsSUFBSU0sSUFBSSxHQUFHSiwrQkFBK0IsQ0FBQ0csUUFBUSxDQUFDO0VBQ3BELElBQUlYLE9BQU8sQ0FBQyxrQkFBa0IsQ0FBQyxFQUFFO0lBQy9CO0lBQ0EsTUFBTTtNQUFFYTtJQUFZLENBQUMsR0FDbkJDLE9BQU8sQ0FBQyw4Q0FBOEMsQ0FBQyxJQUFJLE9BQU8sT0FBTyw4Q0FBOEMsQ0FBQztJQUMxSDtJQUNBRixJQUFJLEdBQUdDLFdBQVcsQ0FBQ0QsSUFBSSxDQUFDO0VBQzFCO0VBQ0EsT0FBT0EsSUFBSTtBQUNiO0FBRUEsT0FBTyxlQUFlRyxJQUFJQSxDQUN4QkMsTUFBTSxFQUFFWCxxQkFBcUIsRUFDN0JZLE9BQU8sRUFBRWYsc0JBQXNCLENBQ2hDLEVBQUVnQixPQUFPLENBQUNqQixLQUFLLENBQUNrQixTQUFTLENBQUMsQ0FBQztFQUMxQixNQUFNO0lBQ0pSLFFBQVE7SUFDUlMsV0FBVztJQUNYQyxPQUFPLEVBQUU7TUFBRUMsYUFBYTtNQUFFQztJQUFNO0VBQ2xDLENBQUMsR0FBR04sT0FBTztFQUVYLE1BQU1PLE9BQU8sR0FBR2QsU0FBUyxDQUFDQyxRQUFRLENBQUM7O0VBRW5DO0VBQ0EsTUFBTTtJQUFFQSxRQUFRLEVBQUVjO0VBQWtCLENBQUMsR0FBRyxNQUFNckIsb0JBQW9CLENBQUNvQixPQUFPLENBQUM7O0VBRTNFO0VBQ0EsTUFBTUUsYUFBYSxHQUFHQyxPQUFPLENBQUNDLE1BQU0sQ0FBQ0MsT0FBTyxJQUFJLEVBQUU7RUFFbEQsTUFBTUMsUUFBUSxHQUFHVixXQUFXLENBQUMsQ0FBQzs7RUFFOUI7RUFDQTtFQUNBLE1BQU1XLElBQUksR0FBRyxNQUFNeEIsbUJBQW1CLENBQ3BDa0IsaUJBQWlCLEVBQ2pCSCxhQUFhLEVBQ2IsWUFBWVEsUUFBUSxDQUFDRSxxQkFBcUIsRUFDMUNULEtBQUssRUFDTE8sUUFBUSxDQUFDRyxnQkFBZ0IsRUFDekJQLGFBQWEsRUFDYlQsT0FBTztFQUFFO0VBQ1RpQixTQUFTO0VBQUU7RUFDWFYsT0FBTyxDQUFFO0VBQ1gsQ0FBQzs7RUFFRDtFQUNBLE1BQU1XLE1BQU0sR0FBRyxNQUFNMUIsa0JBQWtCLENBQUMsQ0FBQyxvQkFBb0IsQ0FBQyxJQUFJLENBQUMsQ0FBQ3NCLElBQUksQ0FBQyxHQUFHLENBQUM7RUFDN0VmLE1BQU0sQ0FBQ21CLE1BQU0sQ0FBQztFQUNkLE9BQU8sSUFBSTtBQUNiIiwiaWdub3JlTGlzdCI6W119

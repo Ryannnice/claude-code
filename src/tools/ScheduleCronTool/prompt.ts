@@ -1,10 +1,16 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 接入 getFeatureValue_CACHED_WITH_REFRESH 服务层能力，把外部通信或共享状态交给 ../../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
+// 复用 DEFAULT_CRON_JITTER_CONFIG 工具函数，把通用处理留在 ../../utils/cronTasks.js 中维护。
 import { DEFAULT_CRON_JITTER_CONFIG } from '../../utils/cronTasks.js'
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js'
 
+// KAIROS_CRON_REFRESH_MS 集合保存`5 * 60 * 1000`，供工具实现 prompt后续判断或输出使用。
 const KAIROS_CRON_REFRESH_MS = 5 * 60 * 1000
 
+// DEFAULT_MAX_AGE_DAYS 集合 先占位，稍后的条件分支会根据实际输入补齐它。
 export const DEFAULT_MAX_AGE_DAYS =
   DEFAULT_CRON_JITTER_CONFIG.recurringMaxAgeMs / (24 * 60 * 60 * 1000)
 
@@ -33,7 +39,9 @@ export const DEFAULT_MAX_AGE_DAYS =
  *
  * `CLAUDE_CODE_DISABLE_CRON` is a local override that wins over GB.
  */
+// isKairosCronEnabled 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isKairosCronEnabled(): boolean {
+  // 返回 `feature('AGENT_TRIGGERS')`，作为工具调用这次计算的结果。
   return feature('AGENT_TRIGGERS')
     ? !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_CRON) &&
         getFeatureValue_CACHED_WITH_REFRESH(
@@ -53,7 +61,9 @@ export function isKairosCronEnabled(): boolean {
  * durable cron. Does NOT consult CLAUDE_CODE_DISABLE_CRON (that kills the whole
  * scheduler via isKairosCronEnabled).
  */
+// isDurableCronEnabled 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isDurableCronEnabled(): boolean {
+  // 返回 `getFeatureValue_CACHED_WITH_REFRESH(`，作为工具调用这次计算的结果。
   return getFeatureValue_CACHED_WITH_REFRESH(
     'tengu_kairos_cron_durable',
     true,
@@ -61,17 +71,24 @@ export function isDurableCronEnabled(): boolean {
   )
 }
 
+// CRON_CREATE_TOOL_NAME保存`'CronCreate'`，作为后续固定文本处理的输入。
 export const CRON_CREATE_TOOL_NAME = 'CronCreate'
+// CRON_DELETE_TOOL_NAME固定为 `'CronDelete'`，作为工具实现 prompt后续展示或比较的基准。
 export const CRON_DELETE_TOOL_NAME = 'CronDelete'
+// CRON_LIST_TOOL_NAME 集合保存`'CronList'`，作为后续固定文本处理的输入。
 export const CRON_LIST_TOOL_NAME = 'CronList'
 
+// buildCronCreateDescription 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildCronCreateDescription(durableEnabled: boolean): string {
+  // 返回 `durableEnabled`，作为工具调用这次计算的结果。
   return durableEnabled
     ? 'Schedule a prompt to run at a future time — either recurring on a cron schedule, or once at a specific time. Pass durable: true to persist to .claude/scheduled_tasks.json; otherwise session-only.'
     : 'Schedule a prompt to run at a future time within this Claude session — either recurring on a cron schedule, or once at a specific time.'
 }
 
+// buildCronCreatePrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildCronCreatePrompt(durableEnabled: boolean): string {
+  // durabilitySection保存`durableEnabled`，供后续判断或组装使用。
   const durabilitySection = durableEnabled
     ? `## Durability
 
@@ -80,10 +97,12 @@ By default (durable: false) the job lives only in this Claude session — nothin
 
 Jobs live only in this Claude session — nothing is written to disk, and the job is gone when Claude exits.`
 
+  // durableRuntimeNote 命名 `durableEnabled`，让后续代码直接表达这个值的用途。
   const durableRuntimeNote = durableEnabled
     ? 'Durable jobs persist to .claude/scheduled_tasks.json and survive session restarts — on next launch they resume automatically. One-shot durable tasks that were missed while the REPL was closed are surfaced for catch-up. Session-only jobs die with the process. '
     : ''
 
+  // 返回 ``Schedule a prompt to be enqueued at a future time. Use for both recurr...`，作为工具调用这次计算的结果。
   return `Schedule a prompt to be enqueued at a future time. Use for both recurring schedules and one-shot reminders.
 
 Uses standard 5-field cron in the user's local timezone: minute hour day-of-month month day-of-week. "0 9 * * *" means 9am local — no timezone conversion needed.
@@ -120,15 +139,21 @@ Recurring tasks auto-expire after ${DEFAULT_MAX_AGE_DAYS} days — they fire one
 Returns a job ID you can pass to ${CRON_DELETE_TOOL_NAME}.`
 }
 
+// CRON_DELETE_DESCRIPTION 命名 `'Cancel a scheduled cron job by ID'`，让后续代码直接表达这个值的用途。
 export const CRON_DELETE_DESCRIPTION = 'Cancel a scheduled cron job by ID'
+// buildCronDeletePrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildCronDeletePrompt(durableEnabled: boolean): string {
+  // 返回 `durableEnabled`，作为工具调用这次计算的结果。
   return durableEnabled
     ? `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from .claude/scheduled_tasks.json (durable jobs) or the in-memory session store (session-only jobs).`
     : `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from the in-memory session store.`
 }
 
+// CRON_LIST_DESCRIPTION 集合保存`'List scheduled cron jobs'`，作为后续固定文本处理的输入。
 export const CRON_LIST_DESCRIPTION = 'List scheduled cron jobs'
+// buildCronListPrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildCronListPrompt(durableEnabled: boolean): string {
+  // 返回 `durableEnabled`，作为工具调用这次计算的结果。
   return durableEnabled
     ? `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME}, both durable (.claude/scheduled_tasks.json) and session-only.`
     : `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME} in this session.`

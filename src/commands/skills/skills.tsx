@@ -1,8 +1,14 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { LocalJSXCommandContext } 来自 ../../commands.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandContext } from '../../commands.js';
+// 复用 SkillsMenu 终端界面组件，避免在这里重复拼装显示逻辑。
 import { SkillsMenu } from '../../components/skills/SkillsMenu.js';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode> {
+  // 返回 `<SkillsMenu onExit={onDone} commands={context.options.commands} />`，作为命令处理这次计算的结果。
   return <SkillsMenu onExit={onDone} commands={context.options.commands} />;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIkxvY2FsSlNYQ29tbWFuZENvbnRleHQiLCJTa2lsbHNNZW51IiwiTG9jYWxKU1hDb21tYW5kT25Eb25lIiwiY2FsbCIsIm9uRG9uZSIsImNvbnRleHQiLCJQcm9taXNlIiwiUmVhY3ROb2RlIiwib3B0aW9ucyIsImNvbW1hbmRzIl0sInNvdXJjZXMiOlsic2tpbGxzLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgKiBhcyBSZWFjdCBmcm9tICdyZWFjdCdcbmltcG9ydCB0eXBlIHsgTG9jYWxKU1hDb21tYW5kQ29udGV4dCB9IGZyb20gJy4uLy4uL2NvbW1hbmRzLmpzJ1xuaW1wb3J0IHsgU2tpbGxzTWVudSB9IGZyb20gJy4uLy4uL2NvbXBvbmVudHMvc2tpbGxzL1NraWxsc01lbnUuanMnXG5pbXBvcnQgdHlwZSB7IExvY2FsSlNYQ29tbWFuZE9uRG9uZSB9IGZyb20gJy4uLy4uL3R5cGVzL2NvbW1hbmQuanMnXG5cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBjYWxsKFxuICBvbkRvbmU6IExvY2FsSlNYQ29tbWFuZE9uRG9uZSxcbiAgY29udGV4dDogTG9jYWxKU1hDb21tYW5kQ29udGV4dCxcbik6IFByb21pc2U8UmVhY3QuUmVhY3ROb2RlPiB7XG4gIHJldHVybiA8U2tpbGxzTWVudSBvbkV4aXQ9e29uRG9uZX0gY29tbWFuZHM9e2NvbnRleHQub3B0aW9ucy5jb21tYW5kc30gLz5cbn1cbiJdLCJtYXBwaW5ncyI6IkFBQUEsT0FBTyxLQUFLQSxLQUFLLE1BQU0sT0FBTztBQUM5QixjQUFjQyxzQkFBc0IsUUFBUSxtQkFBbUI7QUFDL0QsU0FBU0MsVUFBVSxRQUFRLHVDQUF1QztBQUNsRSxjQUFjQyxxQkFBcUIsUUFBUSx3QkFBd0I7QUFFbkUsT0FBTyxlQUFlQyxJQUFJQSxDQUN4QkMsTUFBTSxFQUFFRixxQkFBcUIsRUFDN0JHLE9BQU8sRUFBRUwsc0JBQXNCLENBQ2hDLEVBQUVNLE9BQU8sQ0FBQ1AsS0FBSyxDQUFDUSxTQUFTLENBQUMsQ0FBQztFQUMxQixPQUFPLENBQUMsVUFBVSxDQUFDLE1BQU0sQ0FBQyxDQUFDSCxNQUFNLENBQUMsQ0FBQyxRQUFRLENBQUMsQ0FBQ0MsT0FBTyxDQUFDRyxPQUFPLENBQUNDLFFBQVEsQ0FBQyxHQUFHO0FBQzNFIiwiaWdub3JlTGlzdCI6W119

@@ -11,6 +11,7 @@
  */
 
 // prettier-ignore
+// SEARCH_TOOLS 集合保存`Set`，供工具调用后续处理使用。
 const SEARCH_TOOLS = new Set([
   // Slack (hosted + @modelcontextprotocol/server-slack)
   'slack_search_public',
@@ -139,6 +140,7 @@ const SEARCH_TOOLS = new Set([
 ])
 
 // prettier-ignore
+// READ_TOOLS 集合保存`Set`，供工具调用后续处理使用。
 const READ_TOOLS = new Set([
   // Slack (hosted + @modelcontextprotocol/server-slack)
   'slack_read_channel',
@@ -585,18 +587,23 @@ const READ_TOOLS = new Set([
   'resources_list',
 ])
 
+// normalize 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function normalize(name: string): string {
+  // 返回 `name`，作为工具调用这次计算的结果。
   return name
     .replace(/([a-z])([A-Z])/g, '$1_$2')
     .replace(/-/g, '_')
     .toLowerCase()
 }
 
+// classifyMcpToolForCollapse 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function classifyMcpToolForCollapse(
   _serverName: string,
   toolName: string,
 ): { isSearch: boolean; isRead: boolean } {
+  // normalized保存`normalize`，供工具调用后续处理使用。
   const normalized = normalize(toolName)
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     isSearch: SEARCH_TOOLS.has(normalized),
     isRead: READ_TOOLS.has(normalized),

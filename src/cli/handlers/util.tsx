@@ -1,3 +1,4 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
 /**
  * Miscellaneous subcommand handlers — extracted from main.tsx for lazy loading.
@@ -5,25 +6,43 @@ import { c as _c } from "react/compiler-runtime";
  */
 /* eslint-disable custom-rules/no-process-exit -- CLI subcommand handlers intentionally exit */
 
+// 引入 cwd，将 process 中已经封装好的能力接到本文件流程里。
 import { cwd } from 'process';
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 WelcomeV2 终端界面组件，避免在这里重复拼装显示逻辑。
 import { WelcomeV2 } from '../../components/LogoV2/WelcomeV2.js';
+// 引入 useManagePlugins，将 ../../hooks/useManagePlugins.js 中已经封装好的能力接到本文件流程里。
 import { useManagePlugins } from '../../hooks/useManagePlugins.js';
+// 类型依赖 { Root } 来自 ../../ink.js，用于校准util的数据契约。
 import type { Root } from '../../ink.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 引入 KeybindingSetup，将 ../../keybindings/KeybindingProviderSetup.js 中已经封装好的能力接到本文件流程里。
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { logEvent } from '../../services/analytics/index.js';
+// 接入 MCPConnectionManager 服务层能力，把外部通信或共享状态交给 ../../services/mcp/MCPConnectionManager.js 处理。
 import { MCPConnectionManager } from '../../services/mcp/MCPConnectionManager.js';
+// 引入 AppStateProvider，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { AppStateProvider } from '../../state/AppState.js';
+// 引入 onChangeAppState，将 ../../state/onChangeAppState.js 中已经封装好的能力接到本文件流程里。
 import { onChangeAppState } from '../../state/onChangeAppState.js';
+// 复用 isAnthropicAuthEnabled 工具函数，把通用处理留在 ../../utils/auth.js 中维护。
 import { isAnthropicAuthEnabled } from '../../utils/auth.js';
+// setupTokenHandler 封装CLI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function setupTokenHandler(root: Root): Promise<void> {
+  // 记录util运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_setup_token_command', {});
+  // showAuthWarning 警告信息保存`isAnthropicAuthEnabled`，供util后续处理使用。
   const showAuthWarning = !isAnthropicAuthEnabled();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     ConsoleOAuthFlow
   } = await import('../../components/ConsoleOAuthFlow.js');
+  // 这个回调绑定到 await new Promise<void>(resolve => {，负责util在该局部场景下的响应。
   await new Promise<void>(resolve => {
+    // 调用 root.render，触发util此处需要的副作用。
     root.render(<AppStateProvider onChangeAppState={onChangeAppState}>
         <KeybindingSetup>
           <Box flexDirection="column" gap={1}>
@@ -38,71 +57,106 @@ export async function setupTokenHandler(root: Root): Promise<void> {
                   you can use instead.
                 </Text>
               </Box>}
+            {/* 这个回调绑定到 <ConsoleOAuthFlow onDone={() => {，负责util在该局部场景下的响应。 */}
             <ConsoleOAuthFlow onDone={() => {
+            // 显式忽略 `resolve()` 的返回值，只保留它触发的副作用。
             void resolve();
           }} mode="setup-token" startingMessage="This will guide you through long-lived (1-year) auth token setup for your Claude account. Claude subscription required." />
           </Box>
         </KeybindingSetup>
       </AppStateProvider>);
   });
+  // 调用 root.unmount，触发util此处需要的副作用。
   root.unmount();
+  // 调用 process.exit，触发util此处需要的副作用。
   process.exit(0);
 }
 
 // DoctorWithPlugins wrapper + doctor handler
+// DoctorLazy保存`React.lazy`，供util后续处理使用。
 const DoctorLazy = React.lazy(() => import('../../screens/Doctor.js').then(m => ({
   default: m.Doctor
 })));
+// DoctorWithPlugins 封装CLI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function DoctorWithPlugins(t0) {
+  // $保存`_c`，供util后续处理使用。
   const $ = _c(2);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onDone
   } = t0;
+  // 调用 useManagePlugins，触发util此处需要的副作用。
   useManagePlugins();
+  // t1 暂存 `<React.Suspense fallback={null}><DoctorLazy onDone={onDon...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== onDone) {
+    // t1 暂存 `<React.Suspense fallback={null}><DoctorLazy onDone={onDon...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <React.Suspense fallback={null}><DoctorLazy onDone={onDone} /></React.Suspense>;
+    // $[0] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = onDone;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // 返回 `t1`，作为util这次计算的结果。
   return t1;
 }
+// doctorHandler 封装CLI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function doctorHandler(root: Root): Promise<void> {
+  // 记录util运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_doctor_command', {});
+  // 这个回调绑定到 await new Promise<void>(resolve => {，负责util在该局部场景下的响应。
   await new Promise<void>(resolve => {
+    // 调用 root.render，触发util此处需要的副作用。
     root.render(<AppStateProvider>
         <KeybindingSetup>
           <MCPConnectionManager dynamicMcpConfig={undefined} isStrictMcpConfig={false}>
+            {/* 这个回调绑定到 <DoctorWithPlugins onDone={() => {，负责util在该局部场景下的响应。 */}
             <DoctorWithPlugins onDone={() => {
+            // 显式忽略 `resolve()` 的返回值，只保留它触发的副作用。
             void resolve();
           }} />
           </MCPConnectionManager>
         </KeybindingSetup>
       </AppStateProvider>);
   });
+  // 调用 root.unmount，触发util此处需要的副作用。
   root.unmount();
+  // 调用 process.exit，触发util此处需要的副作用。
   process.exit(0);
 }
 
 // install handler
+// installHandler 封装CLI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function installHandler(target: string | undefined, options: {
   force?: boolean;
 }): Promise<void> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     setup
   } = await import('../../setup.js');
+  // 等待 `setup(cwd(), 'default', false, false, undefined, false)` 完成，再继续util的异步流程。
   await setup(cwd(), 'default', false, false, undefined, false);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     install
   } = await import('../../commands/install.js');
+  // 这个回调绑定到 await new Promise<void>(resolve => {，负责util在该局部场景下的响应。
   await new Promise<void>(resolve => {
+    // 参数列表 从空数组开始收集，后续循环会按处理顺序追加条目。
     const args: string[] = [];
+    // 满足 `target) args.push(target` 时，util执行该分支。
     if (target) args.push(target);
+    // 满足 `options.force) args.push('--force'` 时，util执行该分支。
     if (options.force) args.push('--force');
+    // 这个回调绑定到 void install.call(result => {，负责util在该局部场景下的响应。
     void install.call(result => {
+      // 显式忽略 `resolve()` 的返回值，只保留它触发的副作用。
       void resolve();
+      // 调用 process.exit，触发util此处需要的副作用。
       process.exit(result.includes('failed') ? 1 : 0);
     }, {}, args);
   });

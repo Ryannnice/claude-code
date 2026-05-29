@@ -9,6 +9,7 @@
  * Known code indexing tool identifiers.
  * These are the normalized names used in analytics events.
  */
+// CodeIndexingTool 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CodeIndexingTool =
   // Code search engines
   | 'sourcegraph'
@@ -44,6 +45,7 @@ export type CodeIndexingTool =
  * Mapping of CLI command prefixes to code indexing tools.
  * The key is the command name (first word of the command).
  */
+// CLI_COMMAND_MAPPING 命令数据 集中保存共享工具 code Indexing要一起传递的字段。
 const CLI_COMMAND_MAPPING: Record<string, CodeIndexingTool> = {
   // Sourcegraph ecosystem
   src: 'sourcegraph',
@@ -70,6 +72,7 @@ const CLI_COMMAND_MAPPING: Record<string, CodeIndexingTool> = {
  * Mapping of MCP server name patterns to code indexing tools.
  * Patterns are matched case-insensitively against the server name.
  */
+// MCP_SERVER_PATTERNS 集合 先占位，稍后的条件分支会根据实际输入补齐它。
 const MCP_SERVER_PATTERNS: Array<{
   pattern: RegExp
   tool: CodeIndexingTool
@@ -123,25 +126,35 @@ const MCP_SERVER_PATTERNS: Array<{
  * detectCodeIndexingFromCommand('cody chat --message "help"') // returns 'cody'
  * detectCodeIndexingFromCommand('ls -la') // returns undefined
  */
+// detectCodeIndexingFromCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function detectCodeIndexingFromCommand(
   command: string,
 ): CodeIndexingTool | undefined {
   // Extract the first word (command name)
+  // trimmed格式化`command.trim`，供共享工具后续处理使用。
   const trimmed = command.trim()
+  // firstWord格式化`trimmed.split`，供共享工具后续处理使用。
   const firstWord = trimmed.split(/\s+/)[0]?.toLowerCase()
 
+  // firstWord缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!firstWord) {
+    // 返回 `undefined`，作为共享工具这次计算的结果。
     return undefined
   }
 
   // Check for npx/bunx prefixed commands
+  // 当 `firstWord` 匹配 `'npx' || firstWord === 'bun...` 时，共享工具执行对应分支。
   if (firstWord === 'npx' || firstWord === 'bunx') {
+    // secondWord格式化`trimmed.split`，供共享工具后续处理使用。
     const secondWord = trimmed.split(/\s+/)[1]?.toLowerCase()
+    // 只有 `secondWord && secondWord in CLI_COMMAND_MAPPING` 满足时，共享工具才执行该分支。
     if (secondWord && secondWord in CLI_COMMAND_MAPPING) {
+      // 返回 `CLI_COMMAND_MAPPING[secondWord]`，作为共享工具这次计算的结果。
       return CLI_COMMAND_MAPPING[secondWord]
     }
   }
 
+  // 返回 `CLI_COMMAND_MAPPING[firstWord]`，作为共享工具这次计算的结果。
   return CLI_COMMAND_MAPPING[firstWord]
 }
 
@@ -156,30 +169,43 @@ export function detectCodeIndexingFromCommand(
  * detectCodeIndexingFromMcpTool('mcp__cody__chat') // returns 'cody'
  * detectCodeIndexingFromMcpTool('mcp__filesystem__read') // returns undefined
  */
+// detectCodeIndexingFromMcpTool 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function detectCodeIndexingFromMcpTool(
   toolName: string,
 ): CodeIndexingTool | undefined {
   // MCP tool names follow the format: mcp__serverName__toolName
+  // 满足 `!toolName.startsWith('mcp__')` 时，共享工具执行该分支。
   if (!toolName.startsWith('mcp__')) {
+    // 返回 `undefined`，作为共享工具这次计算的结果。
     return undefined
   }
 
+  // 片段列表格式化`toolName.split`，供共享工具后续处理使用。
   const parts = toolName.split('__')
+  // 满足 `parts.length < 3` 时，共享工具执行该分支。
   if (parts.length < 3) {
+    // 返回 `undefined`，作为共享工具这次计算的结果。
     return undefined
   }
 
+  // serverName读取 `parts[1]` 对应条目，后续围绕该成员继续处理。
   const serverName = parts[1]
+  // serverName缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!serverName) {
+    // 返回 `undefined`，作为共享工具这次计算的结果。
     return undefined
   }
 
+  // 循环处理 `const { pattern, tool } of MCP_SERVER_PATTERNS`，让共享工具逐项把同类条目按顺序走完。
   for (const { pattern, tool } of MCP_SERVER_PATTERNS) {
+    // 满足 `pattern.test(serverName)` 时，共享工具执行该分支。
     if (pattern.test(serverName)) {
+      // 返回 `tool`，作为共享工具这次计算的结果。
       return tool
     }
   }
 
+  // 返回 `undefined`，作为共享工具这次计算的结果。
   return undefined
 }
 
@@ -193,14 +219,19 @@ export function detectCodeIndexingFromMcpTool(
  * detectCodeIndexingFromMcpServerName('sourcegraph') // returns 'sourcegraph'
  * detectCodeIndexingFromMcpServerName('filesystem') // returns undefined
  */
+// detectCodeIndexingFromMcpServerName 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function detectCodeIndexingFromMcpServerName(
   serverName: string,
 ): CodeIndexingTool | undefined {
+  // 循环处理 `const { pattern, tool } of MCP_SERVER_PATTERNS`，让共享工具逐项把同类条目按顺序走完。
   for (const { pattern, tool } of MCP_SERVER_PATTERNS) {
+    // 满足 `pattern.test(serverName)` 时，共享工具执行该分支。
     if (pattern.test(serverName)) {
+      // 返回 `tool`，作为共享工具这次计算的结果。
       return tool
     }
   }
 
+  // 返回 `undefined`，作为共享工具这次计算的结果。
   return undefined
 }

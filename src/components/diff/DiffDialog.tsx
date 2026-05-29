@@ -1,33 +1,54 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { StructuredPatchHunk } 来自 diff，用于校准终端渲染的数据契约。
 import type { StructuredPatchHunk } from 'diff';
+// 引入 React、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+// 类型依赖 { CommandResultDisplay } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../../commands.js';
+// 引入 useRegisterOverlay，将 ../../context/overlayContext.js 中已经封装好的能力接到本文件流程里。
 import { useRegisterOverlay } from '../../context/overlayContext.js';
+// 引入 DiffData、useDiffData，将 ../../hooks/useDiffData.js 中已经封装好的能力接到本文件流程里。
 import { type DiffData, useDiffData } from '../../hooks/useDiffData.js';
+// 引入 TurnDiff、useTurnDiffs，将 ../../hooks/useTurnDiffs.js 中已经封装好的能力接到本文件流程里。
 import { type TurnDiff, useTurnDiffs } from '../../hooks/useTurnDiffs.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 引入 useKeybindings，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
+// 引入 useShortcutDisplay，将 ../../keybindings/useShortcutDisplay.js 中已经封装好的能力接到本文件流程里。
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../../types/message.js';
+// 复用 plural 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { plural } from '../../utils/stringUtils.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 Dialog，将 ../design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from '../design-system/Dialog.js';
+// 引入 DiffDetailView，将 ./DiffDetailView.js 中已经封装好的能力接到本文件流程里。
 import { DiffDetailView } from './DiffDetailView.js';
+// 引入 DiffFileList，将 ./DiffFileList.js 中已经封装好的能力接到本文件流程里。
 import { DiffFileList } from './DiffFileList.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   messages: Message[];
   onDone: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
 };
+// ViewMode 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type ViewMode = 'list' | 'detail';
+// DiffSource 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type DiffSource = {
   type: 'current';
 } | {
   type: 'turn';
   turn: TurnDiff;
 };
+// turnDiffToDiffData 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function turnDiffToDiffData(turn: TurnDiff): DiffData {
+  // files 文件数据保存`Array.from`，供终端渲染后续处理使用。
   const files = Array.from(turn.files.values()).map(f => ({
     path: f.filePath,
     linesAdded: f.linesAdded,
@@ -36,11 +57,16 @@ function turnDiffToDiffData(turn: TurnDiff): DiffData {
     isLargeFile: false,
     isTruncated: false,
     isNewFile: f.isNewFile
+  // 这个回调绑定到 })).sort((a, b) => a.path.localeCompare(b.path));，负责终端渲染在该局部场景下的响应。
   })).sort((a, b) => a.path.localeCompare(b.path));
+  // hunks 集合构建`new Map<string, StructuredPatchHunk[]>()`，供后续判断或组装使用。
   const hunks = new Map<string, StructuredPatchHunk[]>();
+  // 逐项读取 `turn.files.values()` 中的f，按输入顺序推进终端渲染。
   for (const f of turn.files.values()) {
+    // hunks.set 写入新的状态值，使终端渲染后续读取保持一致。
     hunks.set(f.filePath, f.hunks);
   }
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     stats: {
       filesCount: turn.stats.filesChanged,
@@ -52,173 +78,296 @@ function turnDiffToDiffData(turn: TurnDiff): DiffData {
     loading: false
   };
 }
+// DiffDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function DiffDialog(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(73);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     messages,
     onDone
   } = t0;
+  // gitDiffData保存`useDiffData`，供终端渲染后续处理使用。
   const gitDiffData = useDiffData();
+  // turnDiffs 集合保存`useTurnDiffs`，供终端渲染后续处理使用。
   const turnDiffs = useTurnDiffs(messages);
+  // viewMode 由 React state 持有，setViewMode 会在用户操作或异步结果返回时触发刷新。
   const [viewMode, setViewMode] = useState("list");
+  // 选中索引 由 React state 持有，setSelectedIndex 会在用户操作或异步结果返回时触发刷新。
   const [selectedIndex, setSelectedIndex] = useState(0);
+  // sourceIndex 索引 由 React state 持有，setSourceIndex 会在用户操作或异步结果返回时触发刷新。
   const [sourceIndex, setSourceIndex] = useState(0);
+  // t1 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t1 = {
       type: "current"
     };
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // t2 暂存 `[t1, ...turnDiffs.map(_temp)]` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== turnDiffs) {
+    // t2 暂存 `[t1, ...turnDiffs.map(_temp)]` 生成的渲染片段，后续返回路径直接复用。
     t2 = [t1, ...turnDiffs.map(_temp)];
+    // $[1] 缓存 `turnDiffs`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = turnDiffs;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // sources 集合保存`t2`，作为后续临时缓存值处理的输入。
   const sources = t2;
+  // currentSource 命名 `sources[sourceIndex]`，让后续代码直接表达这个值的用途。
   const currentSource = sources[sourceIndex];
+  // currentTurn标记终端 UI Diff Dialog是否启用对应路径。
   const currentTurn = currentSource?.type === "turn" ? currentSource.turn : null;
+  // t3 暂存 `currentTurn ? turnDiffToDiffData(currentTurn) : gitDiffDa...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== currentTurn || $[4] !== gitDiffData) {
+    // t3 暂存 `currentTurn ? turnDiffToDiffData(currentTurn) : gitDiffDa...` 生成的渲染片段，后续返回路径直接复用。
     t3 = currentTurn ? turnDiffToDiffData(currentTurn) : gitDiffData;
+    // $[3] 缓存 `currentTurn`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = currentTurn;
+    // $[4] 缓存 `gitDiffData`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = gitDiffData;
+    // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[5];
   }
+  // diffData 命名 `t3`，让后续代码直接表达这个值的用途。
   const diffData = t3;
+  // selectedFile 文件数据保存`diffData.files[selectedIndex]`，供终端 UI Diff Dialog后续判断或输出使用。
   const selectedFile = diffData.files[selectedIndex];
+  // t4 暂存 `selectedFile ? diffData.hunks.get(selectedFile.path) || [...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[6] !== diffData.hunks || $[7] !== selectedFile) {
+    // t4 暂存 `selectedFile ? diffData.hunks.get(selectedFile.path) || [...` 生成的渲染片段，后续返回路径直接复用。
     t4 = selectedFile ? diffData.hunks.get(selectedFile.path) || [] : [];
+    // $[6] 缓存 `diffData.hunks`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = diffData.hunks;
+    // $[7] 缓存 `selectedFile`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = selectedFile;
+    // $[8] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[8];
   }
+  // selectedHunks 集合 命名 `t4`，让后续代码直接表达这个值的用途。
   const selectedHunks = t4;
+  // t5 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // t6 暂存 `[sources.length, sourceIndex]` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== sourceIndex || $[10] !== sources.length) {
+    // t5 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t5 = () => {
+      // 满足 `sourceIndex >= sources.length` 时，终端渲染执行该分支。
       if (sourceIndex >= sources.length) {
+        // setSourceIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setSourceIndex(Math.max(0, sources.length - 1));
       }
     };
+    // t6 暂存 `[sources.length, sourceIndex]` 生成的渲染片段，后续返回路径直接复用。
     t6 = [sources.length, sourceIndex];
+    // $[9] 缓存 `sourceIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = sourceIndex;
+    // $[10] 缓存 `sources.length`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = sources.length;
+    // $[11] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t5;
+    // $[12] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t6;
   } else {
+    // t5 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[11];
+    // t6 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[12];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t5, t6);
+  // prevSourceIndex 索引保存`useRef`，供终端渲染后续处理使用。
   const prevSourceIndex = useRef(sourceIndex);
+  // t7 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // t8 暂存 `[sourceIndex]` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[13] !== sourceIndex) {
+    // t7 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t7 = () => {
+      // `prevSourceIndex.current` 与 `sourceIndex` 不一致时刷新派生状态，避免使用过期结果。
       if (prevSourceIndex.current !== sourceIndex) {
+        // setSelectedIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setSelectedIndex(0);
+        // current更新为 `sourceIndex`，确保终端 UI后续读取最新状态。
         prevSourceIndex.current = sourceIndex;
       }
     };
+    // t8 暂存 `[sourceIndex]` 生成的渲染片段，后续返回路径直接复用。
     t8 = [sourceIndex];
+    // $[13] 缓存 `sourceIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = sourceIndex;
+    // $[14] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t7;
+    // $[15] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t8;
   } else {
+    // t7 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[14];
+    // t8 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[15];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t7, t8);
+  // 调用 useRegisterOverlay，触发终端渲染此处需要的副作用。
   useRegisterOverlay("diff-dialog");
+  // t10 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t10;
+  // t9 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[16] !== sources.length || $[17] !== viewMode) {
+    // t9 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t9 = () => {
+      // 当 `viewMode` 匹配 `"detail"` 时，终端渲染执行对应分支。
       if (viewMode === "detail") {
+        // setViewMode 写入新的状态值，使终端渲染后续读取保持一致。
         setViewMode("list");
       } else {
+        // 只有 `viewMode === "list" && sources.length > 1` 满足时，终端渲染才执行该分支。
         if (viewMode === "list" && sources.length > 1) {
+          // setSourceIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setSourceIndex(_temp2);
         }
       }
     };
+    // t10 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t10 = () => {
+      // 只有 `viewMode === "list" && sources.length > 1` 满足时，终端渲染才执行该分支。
       if (viewMode === "list" && sources.length > 1) {
+        // setSourceIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setSourceIndex(prev_0 => Math.min(sources.length - 1, prev_0 + 1));
       }
     };
+    // $[16] 缓存 `sources.length`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = sources.length;
+    // $[17] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = viewMode;
+    // $[18] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t10;
+    // $[19] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t9;
   } else {
+    // t10 从 React 编译缓存槽 $[18] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[18];
+    // t9 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[19];
   }
+  // t11 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[20] !== viewMode) {
+    // t11 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t11 = () => {
+      // 当 `viewMode` 匹配 `"detail"` 时，终端渲染执行对应分支。
       if (viewMode === "detail") {
+        // setViewMode 写入新的状态值，使终端渲染后续读取保持一致。
         setViewMode("list");
       }
     };
+    // $[20] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = viewMode;
+    // $[21] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[21];
   }
+  // t12 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[22] !== selectedFile || $[23] !== viewMode) {
+    // t12 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t12 = () => {
+      // 只有 `viewMode === "list" && selectedFile` 满足时，终端渲染才执行该分支。
       if (viewMode === "list" && selectedFile) {
+        // setViewMode 写入新的状态值，使终端渲染后续读取保持一致。
         setViewMode("detail");
       }
     };
+    // $[22] 缓存 `selectedFile`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = selectedFile;
+    // $[23] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = viewMode;
+    // $[24] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = t12;
   } else {
+    // t12 从 React 编译缓存槽 $[24] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[24];
   }
+  // t13 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[25] !== viewMode) {
+    // t13 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t13 = () => {
+      // 当 `viewMode` 匹配 `"list"` 时，终端渲染执行对应分支。
       if (viewMode === "list") {
+        // setSelectedIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setSelectedIndex(_temp3);
       }
     };
+    // $[25] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = viewMode;
+    // $[26] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = t13;
   } else {
+    // t13 从 React 编译缓存槽 $[26] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[26];
   }
+  // t14 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[27] !== diffData.files.length || $[28] !== viewMode) {
+    // t14 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t14 = () => {
+      // 当 `viewMode` 匹配 `"list"` 时，终端渲染执行对应分支。
       if (viewMode === "list") {
+        // setSelectedIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setSelectedIndex(prev_2 => Math.min(diffData.files.length - 1, prev_2 + 1));
       }
     };
+    // $[27] 缓存 `diffData.files.length`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = diffData.files.length;
+    // $[28] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = viewMode;
+    // $[29] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = t14;
   } else {
+    // t14 从 React 编译缓存槽 $[29] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[29];
   }
+  // t15 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t15;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[30] !== t10 || $[31] !== t11 || $[32] !== t12 || $[33] !== t13 || $[34] !== t14 || $[35] !== t9) {
+    // t15 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t15 = {
       "diff:previousSource": t9,
       "diff:nextSource": t10,
@@ -227,154 +376,268 @@ export function DiffDialog(t0) {
       "diff:previousFile": t13,
       "diff:nextFile": t14
     };
+    // $[30] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = t10;
+    // $[31] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = t11;
+    // $[32] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = t12;
+    // $[33] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = t13;
+    // $[34] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = t14;
+    // $[35] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = t9;
+    // $[36] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = t15;
   } else {
+    // t15 从 React 编译缓存槽 $[36] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[36];
   }
+  // t16 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t16;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[37] === Symbol.for("react.memo_cache_sentinel")) {
+    // t16 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t16 = {
       context: "DiffDialog"
     };
+    // $[37] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = t16;
   } else {
+    // t16 从 React 编译缓存槽 $[37] 取回渲染片段，避免依赖未变时重建 JSX。
     t16 = $[37];
   }
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings(t15, t16);
+  // t17 暂存 `diffData.stats ? <Text dimColor={true}>{diffData.stats.fi...` 的派生结果，便于缓存命中时直接复用。
   let t17;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[38] !== diffData.stats) {
+    // t17 暂存 `diffData.stats ? <Text dimColor={true}>{diffData.stats.fi...` 生成的渲染片段，后续返回路径直接复用。
     t17 = diffData.stats ? <Text dimColor={true}>{diffData.stats.filesCount} {plural(diffData.stats.filesCount, "file")}{" "}changed{diffData.stats.linesAdded > 0 && <Text color="diffAddedWord"> +{diffData.stats.linesAdded}</Text>}{diffData.stats.linesRemoved > 0 && <Text color="diffRemovedWord"> -{diffData.stats.linesRemoved}</Text>}</Text> : null;
+    // $[38] 缓存 `diffData.stats`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = diffData.stats;
+    // $[39] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = t17;
   } else {
+    // t17 从 React 编译缓存槽 $[39] 取回渲染片段，避免依赖未变时重建 JSX。
     t17 = $[39];
   }
+  // subtitle 标题 命名 `t17`，让后续代码直接表达这个值的用途。
   const subtitle = t17;
+  // headerTitle 标题保存`currentTurn ? `Turn ${currentTurn.turnIndex}` : "Uncommit...`，供终端 UI Diff Dialog后续判断或输出使用。
   const headerTitle = currentTurn ? `Turn ${currentTurn.turnIndex}` : "Uncommitted changes";
+  // headerSubtitle 标题保存`currentTurn ? currentTurn.userPromptPreview ? `"${current...`，供终端 UI Diff Dialog后续判断或输出使用。
   const headerSubtitle = currentTurn ? currentTurn.userPromptPreview ? `"${currentTurn.userPromptPreview}"` : "" : "(git diff HEAD)";
+  // t18 暂存 `sources.length > 1 ? <Box>{sourceIndex > 0 && <Text dimCo...` 的派生结果，便于缓存命中时直接复用。
   let t18;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[40] !== sourceIndex || $[41] !== sources) {
+    // t18 暂存 `sources.length > 1 ? <Box>{sourceIndex > 0 && <Text dimCo...` 生成的渲染片段，后续返回路径直接复用。
     t18 = sources.length > 1 ? <Box>{sourceIndex > 0 && <Text dimColor={true}>◀ </Text>}{sources.map((source, i) => {
+        // isSelected标记终端 UI Diff Dialog是否启用对应路径。
         const isSelected = i === sourceIndex;
+        // label标记终端 UI Diff Dialog是否启用对应路径。
         const label = source.type === "current" ? "Current" : `T${source.turn.turnIndex}`;
+        // 返回 `<Text key={i} dimColor={!isSelected} bold={isSelected}>{i > 0 ? " \xB7 ...`，作为终端渲染这次计算的结果。
         return <Text key={i} dimColor={!isSelected} bold={isSelected}>{i > 0 ? " \xB7 " : ""}{label}</Text>;
       })}{sourceIndex < sources.length - 1 && <Text dimColor={true}> ▶</Text>}</Box> : null;
+    // $[40] 缓存 `sourceIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = sourceIndex;
+    // $[41] 缓存 `sources`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = sources;
+    // $[42] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[42] = t18;
   } else {
+    // t18 从 React 编译缓存槽 $[42] 取回渲染片段，避免依赖未变时重建 JSX。
     t18 = $[42];
   }
+  // sourceSelector保存`t18`，作为后续临时缓存值处理的输入。
   const sourceSelector = t18;
+  // dismissShortcut保存`useShortcutDisplay`，供终端渲染后续处理使用。
   const dismissShortcut = useShortcutDisplay("diff:dismiss", "DiffDialog", "esc");
+  // t19 暂存 `"Loading diff\u2026"` 的派生结果，便于缓存命中时直接复用。
   let t19;
+  // 终端 UI 组件 Diff Dialog在这里处理 `bb0: {`，完成这一小步状态转换。
   bb0: {
+    // 满足 `diffData.loading` 时，终端渲染执行该分支。
     if (diffData.loading) {
+      // t19 暂存 `"Loading diff\u2026"` 生成的渲染片段，后续返回路径直接复用。
       t19 = "Loading diff\u2026";
+      // 结束这个分支或循环，避免终端渲染继续落入后续路径。
       break bb0;
     }
+    // 满足 `currentTurn` 时，终端渲染执行该分支。
     if (currentTurn) {
+      // t19 暂存 `"No file changes in this turn"` 生成的渲染片段，后续返回路径直接复用。
       t19 = "No file changes in this turn";
+      // 结束这个分支或循环，避免终端渲染继续落入后续路径。
       break bb0;
     }
+    // 只有 `diffData.stats && diffData.stats.filesCount > 0 &` 满足时，终端渲染才执行该分支。
     if (diffData.stats && diffData.stats.filesCount > 0 && diffData.files.length === 0) {
+      // t19 暂存 `"Too many files to display details"` 生成的渲染片段，后续返回路径直接复用。
       t19 = "Too many files to display details";
+      // 结束这个分支或循环，避免终端渲染继续落入后续路径。
       break bb0;
     }
+    // t19 暂存 `"Working tree is clean"` 生成的渲染片段，后续返回路径直接复用。
     t19 = "Working tree is clean";
   }
+  // emptyMessage 消息数据 命名 `t19`，让后续代码直接表达这个值的用途。
   const emptyMessage = t19;
+  // t20 暂存 `headerSubtitle && <Text dimColor={true}> {headerSubtitle}...` 的派生结果，便于缓存命中时直接复用。
   let t20;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[43] !== headerSubtitle) {
+    // t20 暂存 `headerSubtitle && <Text dimColor={true}> {headerSubtitle}...` 生成的渲染片段，后续返回路径直接复用。
     t20 = headerSubtitle && <Text dimColor={true}> {headerSubtitle}</Text>;
+    // $[43] 缓存 `headerSubtitle`，下次依赖未变时 React 编译产物可直接复用。
     $[43] = headerSubtitle;
+    // $[44] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[44] = t20;
   } else {
+    // t20 从 React 编译缓存槽 $[44] 取回渲染片段，避免依赖未变时重建 JSX。
     t20 = $[44];
   }
+  // t21 暂存 `<Text>{headerTitle}{t20}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t21;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[45] !== headerTitle || $[46] !== t20) {
+    // t21 暂存 `<Text>{headerTitle}{t20}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t21 = <Text>{headerTitle}{t20}</Text>;
+    // $[45] 缓存 `headerTitle`，下次依赖未变时 React 编译产物可直接复用。
     $[45] = headerTitle;
+    // $[46] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = t20;
+    // $[47] 缓存 `t21`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = t21;
   } else {
+    // t21 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
     t21 = $[47];
   }
+  // title 标题沿用 `t21` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const title = t21;
+  // t22 暂存 `function handleCancel() {` 的派生结果，便于缓存命中时直接复用。
   let t22;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[48] !== onDone || $[49] !== viewMode) {
+    // t22 暂存 `function handleCancel() {` 生成的渲染片段，后续返回路径直接复用。
     t22 = function handleCancel() {
+      // 当 `viewMode` 匹配 `"detail"` 时，终端渲染执行对应分支。
       if (viewMode === "detail") {
+        // setViewMode 写入新的状态值，使终端渲染后续读取保持一致。
         setViewMode("list");
       } else {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone("Diff dialog dismissed", {
           display: "system"
         });
       }
     };
+    // $[48] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = onDone;
+    // $[49] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = viewMode;
+    // $[50] 缓存 `t22`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = t22;
   } else {
+    // t22 从 React 编译缓存槽 $[50] 取回渲染片段，避免依赖未变时重建 JSX。
     t22 = $[50];
   }
+  // handleCancel保存`t22`，作为后续临时缓存值处理的输入。
   const handleCancel = t22;
+  // t23 暂存 `exitState => exitState.pending ? <Text>Press {exitState.k...` 的派生结果，便于缓存命中时直接复用。
   let t23;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[51] !== dismissShortcut || $[52] !== sources.length || $[53] !== viewMode) {
+    // t23 暂存 `exitState => exitState.pending ? <Text>Press {exitState.k...` 生成的渲染片段，后续返回路径直接复用。
     t23 = exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : viewMode === "list" ? <Byline>{sources.length > 1 && <Text>←/→ source</Text>}<Text>↑/↓ select</Text><Text>Enter view</Text><Text>{dismissShortcut} close</Text></Byline> : <Byline><Text>← back</Text><Text>{dismissShortcut} close</Text></Byline>;
+    // $[51] 缓存 `dismissShortcut`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = dismissShortcut;
+    // $[52] 缓存 `sources.length`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = sources.length;
+    // $[53] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = viewMode;
+    // $[54] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
     $[54] = t23;
   } else {
+    // t23 从 React 编译缓存槽 $[54] 取回渲染片段，避免依赖未变时重建 JSX。
     t23 = $[54];
   }
+  // t24 暂存 `diffData.files.length === 0 ? <Box marginTop={1}><Text di...` 的派生结果，便于缓存命中时直接复用。
   let t24;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[55] !== diffData.files || $[56] !== emptyMessage || $[57] !== selectedFile?.isBinary || $[58] !== selectedFile?.isLargeFile || $[59] !== selectedFile?.isTruncated || $[60] !== selectedFile?.isUntracked || $[61] !== selectedFile?.path || $[62] !== selectedHunks || $[63] !== selectedIndex || $[64] !== viewMode) {
+    // t24 暂存 `diffData.files.length === 0 ? <Box marginTop={1}><Text di...` 生成的渲染片段，后续返回路径直接复用。
     t24 = diffData.files.length === 0 ? <Box marginTop={1}><Text dimColor={true}>{emptyMessage}</Text></Box> : viewMode === "list" ? <Box flexDirection="column" marginTop={1}><DiffFileList files={diffData.files} selectedIndex={selectedIndex} /></Box> : <Box flexDirection="column" marginTop={1}><DiffDetailView filePath={selectedFile?.path || ""} hunks={selectedHunks} isLargeFile={selectedFile?.isLargeFile} isBinary={selectedFile?.isBinary} isTruncated={selectedFile?.isTruncated} isUntracked={selectedFile?.isUntracked} /></Box>;
+    // $[55] 缓存 `diffData.files`，下次依赖未变时 React 编译产物可直接复用。
     $[55] = diffData.files;
+    // $[56] 缓存 `emptyMessage`，下次依赖未变时 React 编译产物可直接复用。
     $[56] = emptyMessage;
+    // $[57] 缓存 `selectedFile?.isBinary`，下次依赖未变时 React 编译产物可直接复用。
     $[57] = selectedFile?.isBinary;
+    // $[58] 缓存 `selectedFile?.isLargeFile`，下次依赖未变时 React 编译产物可直接复用。
     $[58] = selectedFile?.isLargeFile;
+    // $[59] 缓存 `selectedFile?.isTruncated`，下次依赖未变时 React 编译产物可直接复用。
     $[59] = selectedFile?.isTruncated;
+    // $[60] 缓存 `selectedFile?.isUntracked`，下次依赖未变时 React 编译产物可直接复用。
     $[60] = selectedFile?.isUntracked;
+    // $[61] 缓存 `selectedFile?.path`，下次依赖未变时 React 编译产物可直接复用。
     $[61] = selectedFile?.path;
+    // $[62] 缓存 `selectedHunks`，下次依赖未变时 React 编译产物可直接复用。
     $[62] = selectedHunks;
+    // $[63] 缓存 `selectedIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[63] = selectedIndex;
+    // $[64] 缓存 `viewMode`，下次依赖未变时 React 编译产物可直接复用。
     $[64] = viewMode;
+    // $[65] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
     $[65] = t24;
   } else {
+    // t24 从 React 编译缓存槽 $[65] 取回渲染片段，避免依赖未变时重建 JSX。
     t24 = $[65];
   }
+  // t25 暂存 `<Dialog title={title} onCancel={handleCancel} color="back...` 的派生结果，便于缓存命中时直接复用。
   let t25;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[66] !== handleCancel || $[67] !== sourceSelector || $[68] !== subtitle || $[69] !== t23 || $[70] !== t24 || $[71] !== title) {
+    // t25 暂存 `<Dialog title={title} onCancel={handleCancel} color="back...` 生成的渲染片段，后续返回路径直接复用。
     t25 = <Dialog title={title} onCancel={handleCancel} color="background" inputGuide={t23}>{sourceSelector}{subtitle}{t24}</Dialog>;
+    // $[66] 缓存 `handleCancel`，下次依赖未变时 React 编译产物可直接复用。
     $[66] = handleCancel;
+    // $[67] 缓存 `sourceSelector`，下次依赖未变时 React 编译产物可直接复用。
     $[67] = sourceSelector;
+    // $[68] 缓存 `subtitle`，下次依赖未变时 React 编译产物可直接复用。
     $[68] = subtitle;
+    // $[69] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
     $[69] = t23;
+    // $[70] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
     $[70] = t24;
+    // $[71] 缓存 `title`，下次依赖未变时 React 编译产物可直接复用。
     $[71] = title;
+    // $[72] 缓存 `t25`，下次依赖未变时 React 编译产物可直接复用。
     $[72] = t25;
   } else {
+    // t25 从 React 编译缓存槽 $[72] 取回渲染片段，避免依赖未变时重建 JSX。
     t25 = $[72];
   }
+  // 返回 `t25`，作为终端渲染这次计算的结果。
   return t25;
 }
+// _temp3 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp3(prev_1) {
+  // 返回 `Math.max(0, prev_1 - 1)`，作为终端渲染这次计算的结果。
   return Math.max(0, prev_1 - 1);
 }
+// _temp2 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(prev) {
+  // 返回 `Math.max(0, prev - 1)`，作为终端渲染这次计算的结果。
   return Math.max(0, prev - 1);
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(turn) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     type: "turn",
     turn

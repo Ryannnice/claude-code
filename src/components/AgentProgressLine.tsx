@@ -1,8 +1,14 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 复用 formatNumber 工具函数，把通用处理留在 ../utils/format.js 中维护。
 import { formatNumber } from '../utils/format.js';
+// 类型依赖 { Theme } 来自 ../utils/theme.js，用于校准终端渲染的数据契约。
 import type { Theme } from '../utils/theme.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   agentType: string;
   description?: string;
@@ -20,8 +26,11 @@ type Props = {
   lastToolInfo?: string | null;
   hideType?: boolean;
 };
+// AgentProgressLine 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AgentProgressLine(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(32);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     agentType,
     description,
@@ -37,100 +46,176 @@ export function AgentProgressLine(t0) {
     lastToolInfo,
     hideType: t2
   } = t0;
+  // isAsync标记终端 UI Agent Progress Line是否启用对应路径。
   const isAsync = t1 === undefined ? false : t1;
+  // hideType标记终端 UI Agent Progress Line是否启用对应路径。
   const hideType = t2 === undefined ? false : t2;
+  // treeChar保存`isLast ? "\u2514\u2500" : "\u251C\u2500"`，供后续判断或组装使用。
   const treeChar = isLast ? "\u2514\u2500" : "\u251C\u2500";
+  // isBackgrounded标记终端 UI Agent Progress Line是否启用对应路径。
   const isBackgrounded = isAsync && isResolved;
+  // t3 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== isBackgrounded || $[1] !== isResolved || $[2] !== lastToolInfo || $[3] !== taskDescription) {
+    // t3 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t3 = () => {
+      // isResolved缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!isResolved) {
+        // 返回 `lastToolInfo || "Initializing\u2026"`，作为终端渲染这次计算的结果。
         return lastToolInfo || "Initializing\u2026";
       }
+      // 满足 `isBackgrounded` 时，终端渲染执行该分支。
       if (isBackgrounded) {
+        // 返回 `taskDescription ?? "Running in the background"`，作为终端渲染这次计算的结果。
         return taskDescription ?? "Running in the background";
       }
+      // 返回 `"Done"`，作为终端渲染这次计算的结果。
       return "Done";
     };
+    // $[0] 缓存 `isBackgrounded`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = isBackgrounded;
+    // $[1] 缓存 `isResolved`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = isResolved;
+    // $[2] 缓存 `lastToolInfo`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = lastToolInfo;
+    // $[3] 缓存 `taskDescription`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = taskDescription;
+    // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[4];
   }
+  // getStatusText 命名 `t3`，让后续代码直接表达这个值的用途。
   const getStatusText = t3;
+  // t4 暂存 `<Text dimColor={true}>{treeChar} </Text>` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== treeChar) {
+    // t4 暂存 `<Text dimColor={true}>{treeChar} </Text>` 生成的渲染片段，后续返回路径直接复用。
     t4 = <Text dimColor={true}>{treeChar} </Text>;
+    // $[5] 缓存 `treeChar`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = treeChar;
+    // $[6] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[6];
   }
+  // t5标记终端 UI Agent Progress Line是否启用对应路径。
   const t5 = !isResolved;
+  // t6 暂存 `hideType ? <><Text bold={true}>{name ?? description ?? ag...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== agentType || $[8] !== color || $[9] !== description || $[10] !== descriptionColor || $[11] !== hideType || $[12] !== name) {
+    // t6 暂存 `hideType ? <><Text bold={true}>{name ?? description ?? ag...` 生成的渲染片段，后续返回路径直接复用。
     t6 = hideType ? <><Text bold={true}>{name ?? description ?? agentType}</Text>{name && description && <Text dimColor={true}>: {description}</Text>}</> : <><Text bold={true} backgroundColor={color} color={color ? "inverseText" : undefined}>{agentType}</Text>{description && <>{" ("}<Text backgroundColor={descriptionColor} color={descriptionColor ? "inverseText" : undefined}>{description}</Text>{")"}</>}</>;
+    // $[7] 缓存 `agentType`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = agentType;
+    // $[8] 缓存 `color`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = color;
+    // $[9] 缓存 `description`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = description;
+    // $[10] 缓存 `descriptionColor`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = descriptionColor;
+    // $[11] 缓存 `hideType`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = hideType;
+    // $[12] 缓存 `name`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = name;
+    // $[13] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[13];
   }
+  // t7 暂存 `!isBackgrounded && <>{" \xB7 "}{toolUseCount} tool {toolU...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[14] !== isBackgrounded || $[15] !== tokens || $[16] !== toolUseCount) {
+    // t7 暂存 `!isBackgrounded && <>{" \xB7 "}{toolUseCount} tool {toolU...` 生成的渲染片段，后续返回路径直接复用。
     t7 = !isBackgrounded && <>{" \xB7 "}{toolUseCount} tool {toolUseCount === 1 ? "use" : "uses"}{tokens !== null && <> · {formatNumber(tokens)} tokens</>}</>;
+    // $[14] 缓存 `isBackgrounded`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = isBackgrounded;
+    // $[15] 缓存 `tokens`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = tokens;
+    // $[16] 缓存 `toolUseCount`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = toolUseCount;
+    // $[17] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[17];
   }
+  // t8 暂存 `<Text dimColor={t5}>{t6}{t7}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[18] !== t5 || $[19] !== t6 || $[20] !== t7) {
+    // t8 暂存 `<Text dimColor={t5}>{t6}{t7}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Text dimColor={t5}>{t6}{t7}</Text>;
+    // $[18] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t5;
+    // $[19] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t6;
+    // $[20] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t7;
+    // $[21] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[21];
   }
+  // t9 暂存 `<Box paddingLeft={3}>{t4}{t8}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[22] !== t4 || $[23] !== t8) {
+    // t9 暂存 `<Box paddingLeft={3}>{t4}{t8}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t9 = <Box paddingLeft={3}>{t4}{t8}</Box>;
+    // $[22] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t4;
+    // $[23] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = t8;
+    // $[24] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[24] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[24];
   }
+  // t10 暂存 `!isBackgrounded && <Box paddingLeft={3} flexDirection="ro...` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[25] !== getStatusText || $[26] !== isBackgrounded || $[27] !== isLast) {
+    // t10 暂存 `!isBackgrounded && <Box paddingLeft={3} flexDirection="ro...` 生成的渲染片段，后续返回路径直接复用。
     t10 = !isBackgrounded && <Box paddingLeft={3} flexDirection="row"><Text dimColor={true}>{isLast ? "   \u23BF  " : "\u2502  \u23BF  "}</Text><Text dimColor={true}>{getStatusText()}</Text></Box>;
+    // $[25] 缓存 `getStatusText`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = getStatusText;
+    // $[26] 缓存 `isBackgrounded`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = isBackgrounded;
+    // $[27] 缓存 `isLast`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = isLast;
+    // $[28] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[28] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[28];
   }
+  // t11 暂存 `<Box flexDirection="column">{t9}{t10}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[29] !== t10 || $[30] !== t9) {
+    // t11 暂存 `<Box flexDirection="column">{t9}{t10}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t11 = <Box flexDirection="column">{t9}{t10}</Box>;
+    // $[29] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = t10;
+    // $[30] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = t9;
+    // $[31] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[31] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[31];
   }
+  // 返回 `t11`，作为终端渲染这次计算的结果。
   return t11;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIkJveCIsIlRleHQiLCJmb3JtYXROdW1iZXIiLCJUaGVtZSIsIlByb3BzIiwiYWdlbnRUeXBlIiwiZGVzY3JpcHRpb24iLCJuYW1lIiwiZGVzY3JpcHRpb25Db2xvciIsInRhc2tEZXNjcmlwdGlvbiIsInRvb2xVc2VDb3VudCIsInRva2VucyIsImNvbG9yIiwiaXNMYXN0IiwiaXNSZXNvbHZlZCIsImlzRXJyb3IiLCJpc0FzeW5jIiwic2hvdWxkQW5pbWF0ZSIsImxhc3RUb29sSW5mbyIsImhpZGVUeXBlIiwiQWdlbnRQcm9ncmVzc0xpbmUiLCJ0MCIsIiQiLCJfYyIsInQxIiwidDIiLCJ1bmRlZmluZWQiLCJ0cmVlQ2hhciIsImlzQmFja2dyb3VuZGVkIiwidDMiLCJnZXRTdGF0dXNUZXh0IiwidDQiLCJ0NSIsInQ2IiwidDciLCJ0OCIsInQ5IiwidDEwIiwidDExIl0sInNvdXJjZXMiOlsiQWdlbnRQcm9ncmVzc0xpbmUudHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCAqIGFzIFJlYWN0IGZyb20gJ3JlYWN0J1xuaW1wb3J0IHsgQm94LCBUZXh0IH0gZnJvbSAnLi4vaW5rLmpzJ1xuaW1wb3J0IHsgZm9ybWF0TnVtYmVyIH0gZnJvbSAnLi4vdXRpbHMvZm9ybWF0LmpzJ1xuaW1wb3J0IHR5cGUgeyBUaGVtZSB9IGZyb20gJy4uL3V0aWxzL3RoZW1lLmpzJ1xuXG50eXBlIFByb3BzID0ge1xuICBhZ2VudFR5cGU6IHN0cmluZ1xuICBkZXNjcmlwdGlvbj86IHN0cmluZ1xuICBuYW1lPzogc3RyaW5nXG4gIGRlc2NyaXB0aW9uQ29sb3I/OiBrZXlvZiBUaGVtZVxuICB0YXNrRGVzY3JpcHRpb24/OiBzdHJpbmdcbiAgdG9vbFVzZUNvdW50OiBudW1iZXJcbiAgdG9rZW5zOiBudW1iZXIgfCBudWxsXG4gIGNvbG9yPzoga2V5b2YgVGhlbWVcbiAgaXNMYXN0OiBib29sZWFuXG4gIGlzUmVzb2x2ZWQ6IGJvb2xlYW5cbiAgaXNFcnJvcjogYm9vbGVhblxuICBpc0FzeW5jPzogYm9vbGVhblxuICBzaG91bGRBbmltYXRlOiBib29sZWFuXG4gIGxhc3RUb29sSW5mbz86IHN0cmluZyB8IG51bGxcbiAgaGlkZVR5cGU/OiBib29sZWFuXG59XG5cbmV4cG9ydCBmdW5jdGlvbiBBZ2VudFByb2dyZXNzTGluZSh7XG4gIGFnZW50VHlwZSxcbiAgZGVzY3JpcHRpb24sXG4gIG5hbWUsXG4gIGRlc2NyaXB0aW9uQ29sb3IsXG4gIHRhc2tEZXNjcmlwdGlvbixcbiAgdG9vbFVzZUNvdW50LFxuICB0b2tlbnMsXG4gIGNvbG9yLFxuICBpc0xhc3QsXG4gIGlzUmVzb2x2ZWQsXG4gIGlzRXJyb3I6IF9pc0Vycm9yLFxuICBpc0FzeW5jID0gZmFsc2UsXG4gIHNob3VsZEFuaW1hdGU6IF9zaG91bGRBbmltYXRlLFxuICBsYXN0VG9vbEluZm8sXG4gIGhpZGVUeXBlID0gZmFsc2UsXG59OiBQcm9wcyk6IFJlYWN0LlJlYWN0Tm9kZSB7XG4gIGNvbnN0IHRyZWVDaGFyID0gaXNMYXN0ID8gJ+KUlOKUgCcgOiAn4pSc4pSAJ1xuICBjb25zdCBpc0JhY2tncm91bmRlZCA9IGlzQXN5bmMgJiYgaXNSZXNvbHZlZFxuXG4gIC8vIERldGVybWluZSB0aGUgc3RhdHVzIHRleHRcbiAgY29uc3QgZ2V0U3RhdHVzVGV4dCA9ICgpOiBzdHJpbmcgPT4ge1xuICAgIGlmICghaXNSZXNvbHZlZCkge1xuICAgICAgcmV0dXJuIGxhc3RUb29sSW5mbyB8fCAnSW5pdGlhbGl6aW5n4oCmJ1xuICAgIH1cbiAgICBpZiAoaXNCYWNrZ3JvdW5kZWQpIHtcbiAgICAgIHJldHVybiB0YXNrRGVzY3JpcHRpb24gPz8gJ1J1bm5pbmcgaW4gdGhlIGJhY2tncm91bmQnXG4gICAgfVxuICAgIHJldHVybiAnRG9uZSdcbiAgfVxuXG4gIHJldHVybiAoXG4gICAgPEJveCBmbGV4RGlyZWN0aW9uPVwiY29sdW1uXCI+XG4gICAgICA8Qm94IHBhZGRpbmdMZWZ0PXszfT5cbiAgICAgICAgPFRleHQgZGltQ29sb3I+e3RyZWVDaGFyfSA8L1RleHQ+XG4gICAgICAgIDxUZXh0IGRpbUNvbG9yPXshaXNSZXNvbHZlZH0+XG4gICAgICAgICAge2hpZGVUeXBlID8gKFxuICAgICAgICAgICAgPD5cbiAgICAgICAgICAgICAgPFRleHQgYm9sZD57bmFtZSA/PyBkZXNjcmlwdGlvbiA/PyBhZ2VudFR5cGV9PC9UZXh0PlxuICAgICAgICAgICAgICB7bmFtZSAmJiBkZXNjcmlwdGlvbiAmJiA8VGV4dCBkaW1Db2xvcj46IHtkZXNjcmlwdGlvbn08L1RleHQ+fVxuICAgICAgICAgICAgPC8+XG4gICAgICAgICAgKSA6IChcbiAgICAgICAgICAgIDw+XG4gICAgICAgICAgICAgIDxUZXh0XG4gICAgICAgICAgICAgICAgYm9sZFxuICAgICAgICAgICAgICAgIGJhY2tncm91bmRDb2xvcj17Y29sb3J9XG4gICAgICAgICAgICAgICAgY29sb3I9e2NvbG9yID8gJ2ludmVyc2VUZXh0JyA6IHVuZGVmaW5lZH1cbiAgICAgICAgICAgICAgPlxuICAgICAgICAgICAgICAgIHthZ2VudFR5cGV9XG4gICAgICAgICAgICAgIDwvVGV4dD5cbiAgICAgICAgICAgICAge2Rlc2NyaXB0aW9uICYmIChcbiAgICAgICAgICAgICAgICA8PlxuICAgICAgICAgICAgICAgICAgeycgKCd9XG4gICAgICAgICAgICAgICAgICA8VGV4dFxuICAgICAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kQ29sb3I9e2Rlc2NyaXB0aW9uQ29sb3J9XG4gICAgICAgICAgICAgICAgICAgIGNvbG9yPXtkZXNjcmlwdGlvbkNvbG9yID8gJ2ludmVyc2VUZXh0JyA6IHVuZGVmaW5lZH1cbiAgICAgICAgICAgICAgICAgID5cbiAgICAgICAgICAgICAgICAgICAge2Rlc2NyaXB0aW9ufVxuICAgICAgICAgICAgICAgICAgPC9UZXh0PlxuICAgICAgICAgICAgICAgICAgeycpJ31cbiAgICAgICAgICAgICAgICA8Lz5cbiAgICAgICAgICAgICAgKX1cbiAgICAgICAgICAgIDwvPlxuICAgICAgICAgICl9XG4gICAgICAgICAgeyFpc0JhY2tncm91bmRlZCAmJiAoXG4gICAgICAgICAgICA8PlxuICAgICAgICAgICAgICB7JyDCtyAnfVxuICAgICAgICAgICAgICB7dG9vbFVzZUNvdW50fSB0b29sIHt0b29sVXNlQ291bnQgPT09IDEgPyAndXNlJyA6ICd1c2VzJ31cbiAgICAgICAgICAgICAge3Rva2VucyAhPT0gbnVsbCAmJiA8PiDCtyB7Zm9ybWF0TnVtYmVyKHRva2Vucyl9IHRva2VuczwvPn1cbiAgICAgICAgICAgIDwvPlxuICAgICAgICAgICl9XG4gICAgICAgIDwvVGV4dD5cbiAgICAgIDwvQm94PlxuICAgICAgeyFpc0JhY2tncm91bmRlZCAmJiAoXG4gICAgICAgIDxCb3ggcGFkZGluZ0xlZnQ9ezN9IGZsZXhEaXJlY3Rpb249XCJyb3dcIj5cbiAgICAgICAgICA8VGV4dCBkaW1Db2xvcj57aXNMYXN0ID8gJyAgIOKOvyAgJyA6ICfilIIgIOKOvyAgJ308L1RleHQ+XG4gICAgICAgICAgPFRleHQgZGltQ29sb3I+e2dldFN0YXR1c1RleHQoKX08L1RleHQ+XG4gICAgICAgIDwvQm94PlxuICAgICAgKX1cbiAgICA8L0JveD5cbiAgKVxufVxuIl0sIm1hcHBpbmdzIjoiO0FBQUEsT0FBTyxLQUFLQSxLQUFLLE1BQU0sT0FBTztBQUM5QixTQUFTQyxHQUFHLEVBQUVDLElBQUksUUFBUSxXQUFXO0FBQ3JDLFNBQVNDLFlBQVksUUFBUSxvQkFBb0I7QUFDakQsY0FBY0MsS0FBSyxRQUFRLG1CQUFtQjtBQUU5QyxLQUFLQyxLQUFLLEdBQUc7RUFDWEMsU0FBUyxFQUFFLE1BQU07RUFDakJDLFdBQVcsQ0FBQyxFQUFFLE1BQU07RUFDcEJDLElBQUksQ0FBQyxFQUFFLE1BQU07RUFDYkMsZ0JBQWdCLENBQUMsRUFBRSxNQUFNTCxLQUFLO0VBQzlCTSxlQUFlLENBQUMsRUFBRSxNQUFNO0VBQ3hCQyxZQUFZLEVBQUUsTUFBTTtFQUNwQkMsTUFBTSxF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

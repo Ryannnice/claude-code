@@ -1,33 +1,49 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useMemoryUsage，将 ../hooks/useMemoryUsage.js 中已经封装好的能力接到本文件流程里。
 import { useMemoryUsage } from '../hooks/useMemoryUsage.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 复用 formatFileSize 工具函数，把通用处理留在 ../utils/format.js 中维护。
 import { formatFileSize } from '../utils/format.js';
+// MemoryUsageIndicator 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function MemoryUsageIndicator(): React.ReactNode {
   // Ant-only: the /heapdump link is an internal debugging aid. Gating before
   // the hook means the 10s polling interval is never set up in external builds.
   // USER_TYPE is a build-time constant, so the hook call below is either always
   // reached or dead-code-eliminated — never conditional at runtime.
+  // `"external"` 与 `'ant'` 不一致时刷新派生状态，避免使用过期结果。
   if ("external" !== 'ant') {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   // biome-ignore lint/correctness/useHookAtTopLevel: USER_TYPE is a build-time constant
+  // memoryUsage保存`useMemoryUsage`，供终端渲染后续处理使用。
   const memoryUsage = useMemoryUsage();
+  // memoryUsage缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!memoryUsage) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     heapUsed,
     status
   } = memoryUsage;
 
   // Only show indicator when memory usage is high or critical
+  // 当 `status` 匹配 `'normal'` 时，终端渲染执行对应分支。
   if (status === 'normal') {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // formattedSize格式化`formatFileSize`，供终端渲染后续处理使用。
   const formattedSize = formatFileSize(heapUsed);
+  // color标记终端 UI Memory Usage Indicat...是否启用对应路径。
   const color = status === 'critical' ? 'error' : 'warning';
+  // 返回 `<Box>`，作为终端渲染这次计算的结果。
   return <Box>
       <Text color={color} wrap="truncate">
         High memory usage ({formattedSize}) · /heapdump

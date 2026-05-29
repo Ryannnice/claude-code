@@ -1,5 +1,8 @@
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone): Promise<undefined> {
+  // 调用 onDone，触发命令处理此处需要的副作用。
   onDone('/output-style has been deprecated. Use /config to change your output style, or set it in your settings file. Changes take effect on the next session.', {
     display: 'system'
   });

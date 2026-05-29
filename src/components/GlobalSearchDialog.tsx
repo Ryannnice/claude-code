@@ -1,323 +1,555 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { resolve as resolvePath } from 'path';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useRef, useState } from 'react';
+// 引入 useRegisterOverlay，将 ../context/overlayContext.js 中已经封装好的能力接到本文件流程里。
 import { useRegisterOverlay } from '../context/overlayContext.js';
+// 引入 useTerminalSize，将 ../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 ../services/analytics/index.js 处理。
 import { logEvent } from '../services/analytics/index.js';
+// 复用 getCwd 工具函数，把通用处理留在 ../utils/cwd.js 中维护。
 import { getCwd } from '../utils/cwd.js';
+// 复用 openFileInExternalEditor 工具函数，把通用处理留在 ../utils/editor.js 中维护。
 import { openFileInExternalEditor } from '../utils/editor.js';
+// 复用 truncatePathMiddle、truncateToWidth 工具函数，把通用处理留在 ../utils/format.js 中维护。
 import { truncatePathMiddle, truncateToWidth } from '../utils/format.js';
+// 复用 highlightMatch 工具函数，把通用处理留在 ../utils/highlightMatch.js 中维护。
 import { highlightMatch } from '../utils/highlightMatch.js';
+// 复用 relativePath 工具函数，把通用处理留在 ../utils/permissions/filesystem.js 中维护。
 import { relativePath } from '../utils/permissions/filesystem.js';
+// 复用 readFileInRange 工具函数，把通用处理留在 ../utils/readFileInRange.js 中维护。
 import { readFileInRange } from '../utils/readFileInRange.js';
+// 复用 ripGrepStream 工具函数，把通用处理留在 ../utils/ripgrep.js 中维护。
 import { ripGrepStream } from '../utils/ripgrep.js';
+// 引入 FuzzyPicker，将 ./design-system/FuzzyPicker.js 中已经封装好的能力接到本文件流程里。
 import { FuzzyPicker } from './design-system/FuzzyPicker.js';
+// 引入 LoadingState，将 ./design-system/LoadingState.js 中已经封装好的能力接到本文件流程里。
 import { LoadingState } from './design-system/LoadingState.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
+  // 这个回调绑定到 onDone: () => void;，负责终端渲染在该局部场景下的响应。
   onDone: () => void;
+  // 这个回调绑定到 onInsert: (text: string) => void;，负责终端渲染在该局部场景下的响应。
   onInsert: (text: string) => void;
 };
+// Match 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Match = {
   file: string;
   line: number;
   text: string;
 };
+// VISIBLE_RESULTS 集合 命名 `12`，让后续代码直接表达这个值的用途。
 const VISIBLE_RESULTS = 12;
+// DEBOUNCE_MS 集合保存`100`，供后续判断或组装使用。
 const DEBOUNCE_MS = 100;
+// PREVIEW_CONTEXT_LINES 集合 命名 `4`，让后续代码直接表达这个值的用途。
 const PREVIEW_CONTEXT_LINES = 4;
 // rg -m is per-file; we also cap the parsed array to keep memory bounded.
+// MAX_MATCHES_PER_FILE 文件数据 命名 `10`，让后续代码直接表达这个值的用途。
 const MAX_MATCHES_PER_FILE = 10;
+// MAX_TOTAL_MATCHES 集合 命名 `500`，让后续代码直接表达这个值的用途。
 const MAX_TOTAL_MATCHES = 500;
 
 /**
  * Global Search dialog (ctrl+shift+f / cmd+shift+f).
  * Debounced ripgrep search across the workspace.
  */
+// GlobalSearchDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function GlobalSearchDialog(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(40);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onDone,
     onInsert
   } = t0;
+  // 调用 useRegisterOverlay，触发终端渲染此处需要的副作用。
   useRegisterOverlay("global-search");
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns,
     rows
   } = useTerminalSize();
+  // previewOnRight保存`columns >= 140`，供终端 UI Global Search Dialog后续判断或输出使用。
   const previewOnRight = columns >= 140;
+  // visibleResults 集合保存`Math.min`，供终端渲染后续处理使用。
   const visibleResults = Math.min(VISIBLE_RESULTS, Math.max(4, rows - 14));
+  // t1 暂存 `[]` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `[]` 生成的渲染片段，后续返回路径直接复用。
     t1 = [];
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // matches 集合 由 React state 持有，setMatches 会在用户操作或异步结果返回时触发刷新。
   const [matches, setMatches] = useState(t1);
+  // truncated 由 React state 持有，setTruncated 会在用户操作或异步结果返回时触发刷新。
   const [truncated, setTruncated] = useState(false);
+  // isSearching 由 React state 持有，setIsSearching 会在用户操作或异步结果返回时触发刷新。
   const [isSearching, setIsSearching] = useState(false);
+  // query 由 React state 持有，setQuery 会在用户操作或异步结果返回时触发刷新。
   const [query, setQuery] = useState("");
+  // focused 由 React state 持有，setFocused 会在用户操作或异步结果返回时触发刷新。
   const [focused, setFocused] = useState(undefined);
+  // preview 由 React state 持有，setPreview 会在用户操作或异步结果返回时触发刷新。
   const [preview, setPreview] = useState(null);
+  // abortRef 引用保存`useRef`，供终端渲染后续处理使用。
   const abortRef = useRef(null);
+  // timeoutRef 引用保存`useRef`，供终端渲染后续处理使用。
   const timeoutRef = useRef(null);
+  // t2 暂存 `() => () => {` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // t3 暂存 `[]` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+    // t2 暂存 `() => () => {` 生成的渲染片段，后续返回路径直接复用。
     t2 = () => () => {
+      // 满足 `timeoutRef.current` 时，终端渲染执行该分支。
       if (timeoutRef.current) {
+        // 调用 clearTimeout，触发终端渲染此处需要的副作用。
         clearTimeout(timeoutRef.current);
       }
+      // 调用 abortRef.current?.abort();，完成这一处局部操作。
       abortRef.current?.abort();
     };
+    // t3 暂存 `[]` 生成的渲染片段，后续返回路径直接复用。
     t3 = [];
+    // $[1] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t2;
+    // $[2] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t3;
   } else {
+    // t2 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[1];
+    // t3 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[2];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t2, t3);
+  // t4 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // t5 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== focused) {
+    // t4 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t4 = () => {
+      // focused缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!focused) {
+        // setPreview 写入新的状态值，使终端渲染后续读取保持一致。
         setPreview(null);
+        // 终端 UI 组件 Global Search Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // controller保存`AbortController`，供终端渲染后续处理使用。
       const controller = new AbortController();
+      // absolute读取`resolvePath`，供终端渲染后续处理使用。
       const absolute = resolvePath(getCwd(), focused.file);
+      // start保存`Math.max`，供终端渲染后续处理使用。
       const start = Math.max(0, focused.line - PREVIEW_CONTEXT_LINES - 1);
+      // 调用 readFileInRange，触发终端渲染此处需要的副作用。
       readFileInRange(absolute, start, PREVIEW_CONTEXT_LINES * 2 + 1, undefined, controller.signal).then(r => {
+        // 满足 `controller.signal.aborted` 时，终端渲染执行该分支。
         if (controller.signal.aborted) {
+          // 终端 UI 组件 Global Search Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // setPreview 写入新的状态值，使终端渲染后续读取保持一致。
         setPreview({
           file: focused.file,
           line: focused.line,
           content: r.content
         });
+      // 这个回调绑定到 }).catch(() => {，负责终端渲染在该局部场景下的响应。
       }).catch(() => {
+        // 满足 `controller.signal.aborted` 时，终端渲染执行该分支。
         if (controller.signal.aborted) {
+          // 终端 UI 组件 Global Search Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // setPreview 写入新的状态值，使终端渲染后续读取保持一致。
         setPreview({
           file: focused.file,
           line: focused.line,
           content: "(preview unavailable)"
         });
       });
+      // 返回 `() => controller.abort()`，作为终端渲染这次计算的结果。
       return () => controller.abort();
     };
+    // t5 暂存 `[focused]` 生成的渲染片段，后续返回路径直接复用。
     t5 = [focused];
+    // $[3] 缓存 `focused`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = focused;
+    // $[4] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t4;
+    // $[5] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t5;
   } else {
+    // t4 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[4];
+    // t5 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[5];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t4, t5);
+  // t6 暂存 `q => {` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+    // t6 暂存 `q => {` 生成的渲染片段，后续返回路径直接复用。
     t6 = q => {
+      // setQuery 写入新的状态值，使终端渲染后续读取保持一致。
       setQuery(q);
+      // 满足 `timeoutRef.current` 时，终端渲染执行该分支。
       if (timeoutRef.current) {
+        // 调用 clearTimeout，触发终端渲染此处需要的副作用。
         clearTimeout(timeoutRef.current);
       }
+      // 调用 abortRef.current?.abort();，完成这一处局部操作。
       abortRef.current?.abort();
+      // 满足 `!q.trim()` 时，终端渲染执行该分支。
       if (!q.trim()) {
+        // setMatches 写入新的状态值，使终端渲染后续读取保持一致。
         setMatches(_temp);
+        // setIsSearching 写入新的状态值，使终端渲染后续读取保持一致。
         setIsSearching(false);
+        // setTruncated 写入新的状态值，使终端渲染后续读取保持一致。
         setTruncated(false);
+        // 终端 UI 组件 Global Search Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // controller_0保存`AbortController`，供终端渲染后续处理使用。
       const controller_0 = new AbortController();
+      // current更新为 `controller_0`，确保终端 UI后续读取最新状态。
       abortRef.current = controller_0;
+      // setIsSearching 写入新的状态值，使终端渲染后续读取保持一致。
       setIsSearching(true);
+      // setTruncated 写入新的状态值，使终端渲染后续读取保持一致。
       setTruncated(false);
+      // queryLower保存`q.toLowerCase`，供终端渲染后续处理使用。
       const queryLower = q.toLowerCase();
+      // setMatches 写入新的状态值，使终端渲染后续读取保持一致。
       setMatches(m_0 => {
+        // filtered筛选`m_0.filter`，供终端渲染后续处理使用。
         const filtered = m_0.filter(match => match.text.toLowerCase().includes(queryLower));
+        // 返回 `filtered.length === m_0.length ? m_0 : filtered`，作为终端渲染这次计算的结果。
         return filtered.length === m_0.length ? m_0 : filtered;
       });
+      // current更新为 `setTimeout(_temp4, DEBOUNCE_MS, q, controller_0, setMatch...`，确保终端 UI后续读取最新状态。
       timeoutRef.current = setTimeout(_temp4, DEBOUNCE_MS, q, controller_0, setMatches, setTruncated, setIsSearching);
     };
+    // $[6] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[6];
   }
+  // handleQueryChange沿用 `t6` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const handleQueryChange = t6;
+  // listWidth 集合保存`Math.floor`，供终端渲染后续处理使用。
   const listWidth = previewOnRight ? Math.floor((columns - 10) * 0.5) : columns - 8;
+  // maxPathWidth 路径数据保存`Math.max`，供终端渲染后续处理使用。
   const maxPathWidth = Math.max(20, Math.floor(listWidth * 0.4));
+  // maxTextWidth保存`Math.max`，供终端渲染后续处理使用。
   const maxTextWidth = Math.max(20, listWidth - maxPathWidth - 4);
+  // previewWidth保存`Math.max`，供终端渲染后续处理使用。
   const previewWidth = previewOnRight ? Math.max(40, columns - listWidth - 14) : columns - 6;
+  // t7 暂存 `m_3 => {` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== matches.length || $[8] !== onDone) {
+    // t7 暂存 `m_3 => {` 生成的渲染片段，后续返回路径直接复用。
     t7 = m_3 => {
+      // opened保存`openFileInExternalEditor`，供终端渲染后续处理使用。
       const opened = openFileInExternalEditor(resolvePath(getCwd(), m_3.file), m_3.line);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent("tengu_global_search_select", {
         result_count: matches.length,
         opened_editor: opened
       });
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
     };
+    // $[7] 缓存 `matches.length`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = matches.length;
+    // $[8] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = onDone;
+    // $[9] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[9];
   }
+  // handleOpen 命名 `t7`，让后续代码直接表达这个值的用途。
   const handleOpen = t7;
+  // t8 暂存 `(m_4, mention) => {` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[10] !== matches.length || $[11] !== onDone || $[12] !== onInsert) {
+    // t8 暂存 `(m_4, mention) => {` 生成的渲染片段，后续返回路径直接复用。
     t8 = (m_4, mention) => {
+      // 调用 onInsert，触发终端渲染此处需要的副作用。
       onInsert(mention ? `@${m_4.file}#L${m_4.line} ` : `${m_4.file}:${m_4.line} `);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent("tengu_global_search_insert", {
         result_count: matches.length,
         mention
       });
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
     };
+    // $[10] 缓存 `matches.length`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = matches.length;
+    // $[11] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = onDone;
+    // $[12] 缓存 `onInsert`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = onInsert;
+    // $[13] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[13];
   }
+  // handleInsert 命名 `t8`，让后续代码直接表达这个值的用途。
   const handleInsert = t8;
+  // matchLabel 命名 `matches.length > 0 ? `${matches.length}${truncated ? "+" ...`，让后续代码直接表达这个值的用途。
   const matchLabel = matches.length > 0 ? `${matches.length}${truncated ? "+" : ""} matches${isSearching ? "\u2026" : ""}` : " ";
+  // 临时值 t9 命名 `previewOnRight ? "right" : "bottom"`，让后续代码直接表达这个值的用途。
   const t9 = previewOnRight ? "right" : "bottom";
+  // t10 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[14] !== handleInsert) {
+    // t10 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t10 = {
       action: "mention",
+      // 这个回调绑定到 handler: m_5 => handleInsert(m_5, true)，负责终端渲染在该局部场景下的响应。
       handler: m_5 => handleInsert(m_5, true)
     };
+    // $[14] 缓存 `handleInsert`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = handleInsert;
+    // $[15] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[15];
   }
+  // t11 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[16] !== handleInsert) {
+    // t11 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t11 = {
       action: "insert path",
+      // 这个回调绑定到 handler: m_6 => handleInsert(m_6, false)，负责终端渲染在该局部场景下的响应。
       handler: m_6 => handleInsert(m_6, false)
     };
+    // $[16] 缓存 `handleInsert`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = handleInsert;
+    // $[17] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[17];
   }
+  // t12 暂存 `q_0 => isSearching ? "Searching\u2026" : q_0 ? "No matche...` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[18] !== isSearching) {
+    // t12 暂存 `q_0 => isSearching ? "Searching\u2026" : q_0 ? "No matche...` 生成的渲染片段，后续返回路径直接复用。
     t12 = q_0 => isSearching ? "Searching\u2026" : q_0 ? "No matches" : "Type to search\u2026";
+    // $[18] 缓存 `isSearching`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = isSearching;
+    // $[19] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t12;
   } else {
+    // t12 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[19];
   }
+  // t13 暂存 `(m_7, isFocused) => <Text color={isFocused ? "suggestion"...` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[20] !== maxPathWidth || $[21] !== maxTextWidth || $[22] !== query) {
+    // t13 暂存 `(m_7, isFocused) => <Text color={isFocused ? "suggestion"...` 生成的渲染片段，后续返回路径直接复用。
     t13 = (m_7, isFocused) => <Text color={isFocused ? "suggestion" : undefined}><Text dimColor={true}>{truncatePathMiddle(m_7.file, maxPathWidth)}:{m_7.line}</Text>{" "}{highlightMatch(truncateToWidth(m_7.text.trimStart(), maxTextWidth), query)}</Text>;
+    // $[20] 缓存 `maxPathWidth`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = maxPathWidth;
+    // $[21] 缓存 `maxTextWidth`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = maxTextWidth;
+    // $[22] 缓存 `query`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = query;
+    // $[23] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = t13;
   } else {
+    // t13 从 React 编译缓存槽 $[23] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[23];
   }
+  // t14 暂存 `m_8 => preview?.file === m_8.file && preview.line === m_8...` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[24] !== preview || $[25] !== previewWidth || $[26] !== query) {
+    // t14 暂存 `m_8 => preview?.file === m_8.file && preview.line === m_8...` 生成的渲染片段，后续返回路径直接复用。
     t14 = m_8 => preview?.file === m_8.file && preview.line === m_8.line ? <><Text dimColor={true}>{truncatePathMiddle(m_8.file, previewWidth)}:{m_8.line}</Text>{preview.content.split("\n").map((line_0, i) => <Text key={i}>{highlightMatch(truncateToWidth(line_0, previewWidth), query)}</Text>)}</> : <LoadingState message={"Loading\u2026"} dimColor={true} />;
+    // $[24] 缓存 `preview`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = preview;
+    // $[25] 缓存 `previewWidth`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = previewWidth;
+    // $[26] 缓存 `query`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = query;
+    // $[27] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = t14;
   } else {
+    // t14 从 React 编译缓存槽 $[27] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[27];
   }
+  // t15 暂存 `<FuzzyPicker title="Global Search" placeholder={"Type to ...` 的派生结果，便于缓存命中时直接复用。
   let t15;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[28] !== handleOpen || $[29] !== matchLabel || $[30] !== matches || $[31] !== onDone || $[32] !== t10 || $[33] !== t11 || $[34] !== t12 || $[35] !== t13 || $[36] !== t14 || $[37] !== t9 || $[38] !== visibleResults) {
+    // t15 暂存 `<FuzzyPicker title="Global Search" placeholder={"Type to ...` 生成的渲染片段，后续返回路径直接复用。
     t15 = <FuzzyPicker title="Global Search" placeholder={"Type to search\u2026"} items={matches} getKey={matchKey} visibleCount={visibleResults} direction="up" previewPosition={t9} onQueryChange={handleQueryChange} onFocus={setFocused} onSelect={handleOpen} onTab={t10} onShiftTab={t11} onCancel={onDone} emptyMessage={t12} matchLabel={matchLabel} selectAction="open in editor" renderItem={t13} renderPreview={t14} />;
+    // $[28] 缓存 `handleOpen`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = handleOpen;
+    // $[29] 缓存 `matchLabel`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = matchLabel;
+    // $[30] 缓存 `matches`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = matches;
+    // $[31] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = onDone;
+    // $[32] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = t10;
+    // $[33] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = t11;
+    // $[34] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = t12;
+    // $[35] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = t13;
+    // $[36] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = t14;
+    // $[37] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = t9;
+    // $[38] 缓存 `visibleResults`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = visibleResults;
+    // $[39] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = t15;
   } else {
+    // t15 从 React 编译缓存槽 $[39] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[39];
   }
+  // 返回 `t15`，作为终端渲染这次计算的结果。
   return t15;
 }
+// _temp4 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp4(query_0, controller_1, setMatches_0, setTruncated_0, setIsSearching_0) {
+  // cwd读取`getCwd`，供终端渲染后续处理使用。
   const cwd = getCwd();
+  // collected 命名 `0`，让后续代码直接表达这个值的用途。
   let collected = 0;
+  // 调用 ripGrepStream，触发终端渲染此处需要的副作用。
   ripGrepStream(["-n", "--no-heading", "-i", "-m", String(MAX_MATCHES_PER_FILE), "-F", "-e", query_0], cwd, controller_1.signal, lines => {
+    // 满足 `controller_1.signal.aborted` 时，终端渲染执行该分支。
     if (controller_1.signal.aborted) {
+      // 终端 UI 组件 Global Search Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 解析结果 从空数组开始收集，后续循环会按处理顺序追加条目。
     const parsed = [];
+    // 按顺序遍历 `lines` 中的line，逐个交给终端渲染处理。
     for (const line of lines) {
+      // m_1解析`parseRipgrepLine`，供终端渲染后续处理使用。
       const m_1 = parseRipgrepLine(line);
+      // m_1缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!m_1) {
+        // 跳过当前项，继续处理终端渲染中的下一轮循环。
         continue;
       }
+      // rel保存`relativePath`，供终端渲染后续处理使用。
       const rel = relativePath(cwd, m_1.file);
+      // 解析结果追加新条目，保持收集顺序与输入顺序一致。
       parsed.push({
         ...m_1,
         file: rel.startsWith("..") ? m_1.file : rel
       });
     }
+    // parsed.length 数量缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!parsed.length) {
+      // 终端 UI 组件 Global Search Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // collected更新为 `collected + parsed.length`，确保终端 UI后续读取最新状态。
     collected = collected + parsed.length;
+    // 终端 UI 组件 Global Search Dialog在这里处理 `collected`，完成这一小步状态转换。
     collected;
+    // setMatches_0 写入新的状态值，使终端渲染后续读取保持一致。
     setMatches_0(prev => {
+      // seen保存`Set`，供终端渲染后续处理使用。
       const seen = new Set(prev.map(matchKey));
+      // fresh解析`parsed.filter`，供终端渲染后续处理使用。
       const fresh = parsed.filter(p => !seen.has(matchKey(p)));
+      // fresh.length 数量缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!fresh.length) {
+        // 返回 `prev`，作为终端渲染这次计算的结果。
         return prev;
       }
+      // next保存`prev.concat`，供终端渲染后续处理使用。
       const next = prev.concat(fresh);
+      // 返回 `next.length > MAX_TOTAL_MATCHES ? next.slice(0, MAX_TOTAL_MATCHES) : ne...`，作为终端渲染这次计算的结果。
       return next.length > MAX_TOTAL_MATCHES ? next.slice(0, MAX_TOTAL_MATCHES) : next;
     });
+    // 满足 `collected >= MAX_TOTAL_MATCHES` 时，终端渲染执行该分支。
     if (collected >= MAX_TOTAL_MATCHES) {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       controller_1.abort();
+      // setTruncated_0 写入新的状态值，使终端渲染后续读取保持一致。
       setTruncated_0(true);
+      // setIsSearching_0 写入新的状态值，使终端渲染后续读取保持一致。
       setIsSearching_0(false);
     }
+  // 这个回调绑定到 }).catch(_temp2).finally(() => {，负责终端渲染在该局部场景下的响应。
   }).catch(_temp2).finally(() => {
+    // 满足 `controller_1.signal.aborted` 时，终端渲染执行该分支。
     if (controller_1.signal.aborted) {
+      // 终端 UI 组件 Global Search Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `collected === 0` 时，终端渲染执行该分支。
     if (collected === 0) {
+      // setMatches_0 写入新的状态值，使终端渲染后续读取保持一致。
       setMatches_0(_temp3);
     }
+    // setIsSearching_0 写入新的状态值，使终端渲染后续读取保持一致。
     setIsSearching_0(false);
   });
 }
+// _temp3 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp3(m_2) {
+  // 返回 `m_2.length ? [] : m_2`，作为终端渲染这次计算的结果。
   return m_2.length ? [] : m_2;
 }
+// _temp2 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2() {}
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(m) {
+  // 返回 `m.length ? [] : m`，作为终端渲染这次计算的结果。
   return m.length ? [] : m;
 }
+// matchKey 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function matchKey(m: Match): string {
+  // 返回 ``${m.file}:${m.line}``，作为终端渲染这次计算的结果。
   return `${m.file}:${m.line}`;
 }
 
@@ -328,12 +560,19 @@ function matchKey(m: Match): string {
  * the first :<digits>: instead.
  * @internal exported for testing
  */
+// parseRipgrepLine 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function parseRipgrepLine(line: string): Match | null {
+  // m保存`exec`，供终端渲染后续处理使用。
   const m = /^(.*?):(\d+):(.*)$/.exec(line);
+  // m缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!m) return null;
+  // 从 `m` 按位置拆出 file、lineStr、text，让终端 UI 组件 Global Search Dialog分别处理这些返回值。
   const [, file, lineStr, text] = m;
+  // lineNum保存`Number`，供终端渲染后续处理使用。
   const lineNum = Number(lineStr);
+  // 只有 `!file || !Number.isFinite(lineNum)` 满足时，终端渲染才执行该分支。
   if (!file || !Number.isFinite(lineNum)) return null;
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     file,
     line: lineNum,

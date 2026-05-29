@@ -97,6 +97,7 @@
  * http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
  * ) to obtain a formatter capable of generating timestamps in this format.
  */
+// Timestamp 描述timestamp需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface Timestamp {
   /**
    * Represents seconds of UTC time since Unix epoch
@@ -113,42 +114,62 @@ export interface Timestamp {
   nanos?: number | undefined
 }
 
+// createBaseTimestamp 封装timestamp的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createBaseTimestamp(): Timestamp {
+  // 返回结构化结果，集中表达timestamp已经整理出的状态。
   return { seconds: 0, nanos: 0 }
 }
 
+// Timestamp 集中保存timestamp要一起传递的字段。
 export const Timestamp: MessageFns<Timestamp> = {
+  // fromJSON 使用 object: any 完成timestamp里的对应操作。
   fromJSON(object: any): Timestamp {
+    // 返回结构化结果，集中表达timestamp已经整理出的状态。
     return {
       seconds: isSet(object.seconds) ? globalThis.Number(object.seconds) : 0,
       nanos: isSet(object.nanos) ? globalThis.Number(object.nanos) : 0,
     }
   },
 
+  // toJSON 使用 message: Timestamp 完成timestamp里的对应操作。
   toJSON(message: Timestamp): unknown {
+    // obj 从空对象开始收集键值，后续按名称补齐内容。
     const obj: any = {}
+    // `message.seconds` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.seconds !== undefined) {
+      // seconds 集合更新为 `Math.round(message.seconds)`，确保timestamp后续读取最新状态。
       obj.seconds = Math.round(message.seconds)
     }
+    // `message.nanos` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.nanos !== undefined) {
+      // nanos 集合更新为 `Math.round(message.nanos)`，确保timestamp后续读取最新状态。
       obj.nanos = Math.round(message.nanos)
     }
+    // 返回 `obj`，作为timestamp这次计算的结果。
     return obj
   },
 
+  // timestamp在这里处理 `create<I extends Exact<DeepPartial<Timestamp>, I>>(base?: I): Timestamp...`，完成这一小步状态转换。
   create<I extends Exact<DeepPartial<Timestamp>, I>>(base?: I): Timestamp {
+    // 返回 `Timestamp.fromPartial(base ?? ({} as any))`，作为timestamp这次计算的结果。
     return Timestamp.fromPartial(base ?? ({} as any))
   },
+  // timestamp在这里处理 `fromPartial<I extends Exact<DeepPartial<Timestamp>, I>>(`，完成这一小步状态转换。
   fromPartial<I extends Exact<DeepPartial<Timestamp>, I>>(
     object: I,
   ): Timestamp {
+    // 消息构建`createBaseTimestamp`，供timestamp后续处理使用。
     const message = createBaseTimestamp()
+    // seconds 集合更新为 `object.seconds ?? 0`，确保timestamp后续读取最新状态。
     message.seconds = object.seconds ?? 0
+    // nanos 集合更新为 `object.nanos ?? 0`，确保timestamp后续读取最新状态。
     message.nanos = object.nanos ?? 0
+    // 返回 `message`，作为timestamp这次计算的结果。
     return message
   },
 }
 
+// Builtin 固化timestamp里传递的数据形状，帮助调用方按同一结构读写字段。
 type Builtin =
   | Date
   | Function
@@ -158,6 +179,7 @@ type Builtin =
   | boolean
   | undefined
 
+// DeepPartial 固化timestamp里传递的数据形状，帮助调用方按同一结构读写字段。
 type DeepPartial<T> = T extends Builtin
   ? T
   : T extends globalThis.Array<infer U>
@@ -168,17 +190,22 @@ type DeepPartial<T> = T extends Builtin
         ? { [K in keyof T]?: DeepPartial<T[K]> }
         : Partial<T>
 
+// KeysOfUnion 固化timestamp里传递的数据形状，帮助调用方按同一结构读写字段。
 type KeysOfUnion<T> = T extends T ? keyof T : never
+// Exact 固化timestamp里传递的数据形状，帮助调用方按同一结构读写字段。
 type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
+// isSet 封装timestamp的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isSet(value: any): boolean {
+  // 返回 `value !== null && value !== undefined`，作为timestamp这次计算的结果。
   return value !== null && value !== undefined
 }
 
+// MessageFns 描述timestamp需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface MessageFns<T> {
   fromJSON(object: any): T
   toJSON(message: T): unknown

@@ -1,11 +1,16 @@
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { join } from 'path'
+// 复用 getClaudeConfigHomeDir 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+// 复用 getFsImplementation 工具函数，把通用处理留在 ../../utils/fsOperations.js 中维护。
 import { getFsImplementation } from '../../utils/fsOperations.js'
 
 /**
  * Get the Magic Docs update prompt template
  */
+// getUpdatePromptTemplate 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getUpdatePromptTemplate(): string {
+  // 返回 ``IMPORTANT: This message and these instructions are NOT part of the act...`，作为服务层 prompts这次计算的结果。
   return `IMPORTANT: This message and these instructions are NOT part of the actual user conversation. Do NOT include any references to "documentation updates", "magic docs", or these update instructions in the document content.
 
 Based on the user conversation above (EXCLUDING this documentation update instruction message), update the Magic Doc file to incorporate any NEW learnings, insights, or information that would be valuable to preserve.
@@ -63,14 +68,20 @@ REMEMBER: Only update if there is substantial new information. The Magic Doc hea
  * Custom prompts can be placed at ~/.claude/magic-docs/prompt.md
  * Use {{variableName}} syntax for variable substitution (e.g., {{docContents}}, {{docPath}}, {{docTitle}})
  */
+// loadMagicDocsPrompt 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function loadMagicDocsPrompt(): Promise<string> {
+  // fs 集合读取`getFsImplementation`，供服务层 prompts后续处理使用。
   const fs = getFsImplementation()
+  // promptPath 路径数据格式化`join`，供服务层 prompts后续处理使用。
   const promptPath = join(getClaudeConfigHomeDir(), 'magic-docs', 'prompt.md')
 
+  // 保护这一段可能失败的服务层 prompts操作，确保异常能进入相邻错误处理。
   try {
+    // 等待并返回 `fs.readFile(promptPath, { encoding: 'utf-8' })`，调用方直接接收异步结果。
     return await fs.readFile(promptPath, { encoding: 'utf-8' })
   } catch {
     // Silently fall back to default if custom prompt doesn't exist or fails to load
+    // 返回 `getUpdatePromptTemplate()`，作为服务层 prompts这次计算的结果。
     return getUpdatePromptTemplate()
   }
 }
@@ -78,6 +89,7 @@ async function loadMagicDocsPrompt(): Promise<string> {
 /**
  * Substitute variables in the prompt template using {{variable}} syntax
  */
+// substituteVariables 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function substituteVariables(
   template: string,
   variables: Record<string, string>,
@@ -85,6 +97,7 @@ function substituteVariables(
   // Single-pass replacement avoids two bugs: (1) $ backreference corruption
   // (replacer fn treats $ literally), and (2) double-substitution when user
   // content happens to contain {{varName}} matching a later variable.
+  // 返回 `template.replace(/\{\{(\w+)\}\}/g, (match, key: string) =>`，作为服务层 prompts这次计算的结果。
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) =>
     Object.prototype.hasOwnProperty.call(variables, key)
       ? variables[key]!
@@ -95,15 +108,18 @@ function substituteVariables(
 /**
  * Build the Magic Docs update prompt with variable substitution
  */
+// buildMagicDocsUpdatePrompt 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function buildMagicDocsUpdatePrompt(
   docContents: string,
   docPath: string,
   docTitle: string,
   instructions?: string,
 ): Promise<string> {
+  // promptTemplate读取`loadMagicDocsPrompt`，供服务层 prompts后续处理使用。
   const promptTemplate = await loadMagicDocsPrompt()
 
   // Build custom instructions section if provided
+  // customInstructions 集合保存`instructions`，供服务层 prompts后续判断或输出使用。
   const customInstructions = instructions
     ? `
 
@@ -116,6 +132,7 @@ These instructions take priority over the general rules below. Make sure your up
     : ''
 
   // Substitute variables in the prompt
+  // variables 集合 集中保存服务层 prompts要一起传递的字段。
   const variables = {
     docContents,
     docPath,
@@ -123,5 +140,6 @@ These instructions take priority over the general rules below. Make sure your up
     customInstructions,
   }
 
+  // 返回 `substituteVariables(promptTemplate, variables)`，作为服务层 prompts这次计算的结果。
   return substituteVariables(promptTemplate, variables)
 }

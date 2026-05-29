@@ -2,68 +2,108 @@
  * This testing-only tool will always pop up a permission dialog when called by
  * the model.
  */
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4';
+// 类型依赖 { Tool } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { Tool } from '../../Tool.js';
+// 引入 buildTool、ToolDef，将 ../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { buildTool, type ToolDef } from '../../Tool.js';
+// 复用 lazySchema 工具函数，把通用处理留在 ../../utils/lazySchema.js 中维护。
 import { lazySchema } from '../../utils/lazySchema.js';
+// NAME保存`'TestingPermission'`，作为后续固定文本处理的输入。
 const NAME = 'TestingPermission';
+// inputSchema保存`lazySchema`，供工具调用后续处理使用。
 const inputSchema = lazySchema(() => z.strictObject({}));
+// InputSchema 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type InputSchema = ReturnType<typeof inputSchema>;
+// TestingPermissionTool 权限数据构建`buildTool({`，供后续判断或组装使用。
 export const TestingPermissionTool: Tool<InputSchema, string> = buildTool({
   name: NAME,
   maxResultSizeChars: 100_000,
+  // description 使用 无 完成工具调用里的对应操作。
   async description() {
+    // 返回 `'Test tool that always asks for permission'`，作为工具调用这次计算的结果。
     return 'Test tool that always asks for permission';
   },
+  // prompt 使用 无 完成工具调用里的对应操作。
   async prompt() {
+    // 返回 `'Test tool that always asks for permission before executing. Used for e...`，作为工具调用这次计算的结果。
     return 'Test tool that always asks for permission before executing. Used for end-to-end testing.';
   },
+  // 工具实现 Testing Permission Tool在这里处理 `get inputSchema(): InputSchema {`，完成这一小步状态转换。
   get inputSchema(): InputSchema {
+    // 返回 `inputSchema()`，作为工具调用这次计算的结果。
     return inputSchema();
   },
+  // userFacingName 使用 无 完成工具调用里的对应操作。
   userFacingName() {
+    // 返回 `'TestingPermission'`，作为工具调用这次计算的结果。
     return 'TestingPermission';
   },
+  // isEnabled 用 无 判断工具调用是否满足条件。
   isEnabled() {
+    // 返回 `"production" === 'test'`，作为工具调用这次计算的结果。
     return "production" === 'test';
   },
+  // isConcurrencySafe 用 无 判断工具调用是否满足条件。
   isConcurrencySafe() {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   },
+  // isReadOnly 用 无 判断工具调用是否满足条件。
   isReadOnly() {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   },
+  // checkPermissions 使用 无 完成工具调用里的对应操作。
   async checkPermissions() {
     // This tool always requires permission
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'ask' as const,
       message: `Run test?`
     };
   },
+  // renderToolUseMessage 使用 无 完成工具调用里的对应操作。
   renderToolUseMessage() {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   },
+  // renderToolUseProgressMessage 使用 无 完成工具调用里的对应操作。
   renderToolUseProgressMessage() {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   },
+  // renderToolUseQueuedMessage 使用 无 完成工具调用里的对应操作。
   renderToolUseQueuedMessage() {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   },
+  // renderToolUseRejectedMessage 使用 无 完成工具调用里的对应操作。
   renderToolUseRejectedMessage() {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   },
+  // renderToolResultMessage 使用 无 完成工具调用里的对应操作。
   renderToolResultMessage() {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   },
+  // renderToolUseErrorMessage 使用 无 完成工具调用里的对应操作。
   renderToolUseErrorMessage() {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   },
+  // call 使用 无 完成工具调用里的对应操作。
   async call() {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       data: `${NAME} executed successfully`
     };
   },
+  // mapToolResultToToolResultBlockParam 使用 result, toolUseID 完成工具调用里的对应操作。
   mapToolResultToToolResultBlockParam(result, toolUseID) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       type: 'tool_result',
       content: String(result),

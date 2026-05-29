@@ -1,60 +1,95 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 引入 React、useMemo、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useMemo, useRef } from 'react';
+// 引入 useVoiceState，将 ../context/voice.js 中已经封装好的能力接到本文件流程里。
 import { useVoiceState } from '../context/voice.js';
+// 引入 useClipboardImageHint，将 ../hooks/useClipboardImageHint.js 中已经封装好的能力接到本文件流程里。
 import { useClipboardImageHint } from '../hooks/useClipboardImageHint.js';
+// 引入 useSettings，将 ../hooks/useSettings.js 中已经封装好的能力接到本文件流程里。
 import { useSettings } from '../hooks/useSettings.js';
+// 引入 useTextInput，将 ../hooks/useTextInput.js 中已经封装好的能力接到本文件流程里。
 import { useTextInput } from '../hooks/useTextInput.js';
+// 引入 Box、color、useAnimationFrame、useTerminalFocus、useTheme，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, color, useAnimationFrame, useTerminalFocus, useTheme } from '../ink.js';
+// 类型依赖 { BaseTextInputProps } 来自 ../types/textInputTypes.js，用于校准终端渲染的数据契约。
 import type { BaseTextInputProps } from '../types/textInputTypes.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../utils/envUtils.js';
+// 类型依赖 { TextHighlight } 来自 ../utils/textHighlighting.js，用于校准终端渲染的数据契约。
 import type { TextHighlight } from '../utils/textHighlighting.js';
+// 引入 BaseTextInput，将 ./BaseTextInput.js 中已经封装好的能力接到本文件流程里。
 import { BaseTextInput } from './BaseTextInput.js';
+// 引入 hueToRgb，将 ./Spinner/utils.js 中已经封装好的能力接到本文件流程里。
 import { hueToRgb } from './Spinner/utils.js';
 
 // Block characters for waveform bars: space (silent) + 8 rising block elements.
+// BARS 集合保存`' \u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588'`，作为后续固定文本处理的输入。
 const BARS = ' \u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588';
 
 // Mini waveform cursor width
+// CURSOR_WAVEFORM_WIDTH保存`1`，供终端 UI Text Input后续判断或输出使用。
 const CURSOR_WAVEFORM_WIDTH = 1;
 
 // Smoothing factor (0 = instant, 1 = frozen). Applied as EMA to
 // smooth both rises and falls for a steady, non-jittery bar.
+// SMOOTH保存`0.7`，供后续判断或组装使用。
 const SMOOTH = 0.7;
 
 // Boost factor for audio levels — computeLevel normalizes with a
 // conservative divisor (rms/2000), so normal speech sits around
 // 0.3-0.5. This multiplier lets the bar use the full range.
+// LEVEL_BOOST保存`1.8`，供终端 UI Text Input后续判断或输出使用。
 const LEVEL_BOOST = 1.8;
 
 // Raw audio level threshold (pre-boost) below which the cursor is
 // grey. computeLevel returns sqrt(rms/2000), so ambient mic noise
 // typically sits at 0.05-0.15. Speech starts around 0.2+.
+// SILENCE_THRESHOLD 命名 `0.15`，让后续代码直接表达这个值的用途。
 const SILENCE_THRESHOLD = 0.15;
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Props = BaseTextInputProps & {
   highlights?: TextHighlight[];
 };
+// 终端 UI 组件 Text Input在这里处理 `export default function TextInput(props: Props): React.ReactNode {`，完成这一小步状态转换。
 export default function TextInput(props: Props): React.ReactNode {
+  // 从 `useTheme()` 按位置拆出 theme，让终端 UI 组件 Text Input分别处理这些返回值。
   const [theme] = useTheme();
+  // isTerminalFocused记录 `useTerminalFocus` 是否成立，终端渲染随后按该结果分支。
   const isTerminalFocused = useTerminalFocus();
   // Hoisted to mount-time — this component re-renders on every keystroke.
+  // accessibilityEnabled保存`useMemo`，供终端渲染后续处理使用。
   const accessibilityEnabled = useMemo(() => isEnvTruthy(process.env.CLAUDE_CODE_ACCESSIBILITY), []);
+  // settings 集合保存`useSettings`，供终端渲染后续处理使用。
   const settings = useSettings();
+  // reducedMotion保存`settings.prefersReducedMotion ?? false`，供终端 UI Text Input后续判断或输出使用。
   const reducedMotion = settings.prefersReducedMotion ?? false;
+  // voiceState 状态保存`feature`，供终端渲染后续处理使用。
   const voiceState = feature('VOICE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useVoiceState 使用 s => s.voiceState 完成终端渲染里的对应操作。
   useVoiceState(s => s.voiceState) : 'idle' as const;
+  // isVoiceRecording标记终端 UI Text Input是否启用对应路径。
   const isVoiceRecording = voiceState === 'recording';
+  // audioLevels 集合保存`feature`，供终端渲染后续处理使用。
   const audioLevels = feature('VOICE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useVoiceState 使用 s_0 => s_0.voiceAudioLevels 完成终端渲染里的对应操作。
   useVoiceState(s_0 => s_0.voiceAudioLevels) : [];
+  // smoothedRef 引用保存`Array`，供终端渲染后续处理使用。
   const smoothedRef = useRef<number[]>(new Array(CURSOR_WAVEFORM_WIDTH).fill(0));
+  // needsAnimation标记终端 UI Text Input是否启用对应路径。
   const needsAnimation = isVoiceRecording && !reducedMotion;
+  // 从 `feature('VOICE_MODE') ?` 按位置拆出 animRef、animTime，让终端 UI 组件 Text Input分别处理这些返回值。
   const [animRef, animTime] = feature('VOICE_MODE') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAnimationFrame 使用 needsAnimation ? 50 : null 完成终端渲染里的对应操作。
   useAnimationFrame(needsAnimation ? 50 : null) : [() => {}, 0];
 
   // Show hint when terminal regains focus and clipboard has an image
+  // 调用 useClipboardImageHint，触发终端渲染此处需要的副作用。
   useClipboardImageHint(isTerminalFocused, !!props.onImagePaste);
 
   // Cursor invert function: mini waveform during voice recording,
@@ -62,20 +97,34 @@ export default function TextInput(props: Props): React.ReactNode {
   // warmup window is too short for a 1s-period pulse to register, and
   // driving TextInput re-renders at 50ms during warmup (while spaces
   // are simultaneously arriving every 30-80ms) causes visible stutter.
+  // canShowCursor标记终端 UI Text Input是否启用对应路径。
   const canShowCursor = isTerminalFocused && !accessibilityEnabled;
+  // 这个回调绑定到 let invert: (text: string) => string;，负责终端渲染在该局部场景下的响应。
   let invert: (text: string) => string;
+  // canShowCursor缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!canShowCursor) {
+    // invert更新为 `(text: string) => text`，确保终端 UI后续读取最新状态。
     invert = (text: string) => text;
+  // 终端 UI 组件 Text Input在这里处理 `} else if (isVoiceRecording && !reducedMotion) {`，完成这一小步状态转换。
   } else if (isVoiceRecording && !reducedMotion) {
     // Single-bar waveform from the latest audio level
+    // smoothed保存`smoothedRef.current`，供终端 UI Text Input后续判断或输出使用。
     const smoothed = smoothedRef.current;
+    // 原始文本记录 `audioLevels.length > 0 ? audioLevels[audioLevels.length -...` 是否成立，下一步按该结果分支。
     const raw = audioLevels.length > 0 ? audioLevels[audioLevels.length - 1] ?? 0 : 0;
+    // target保存`Math.min`，供终端渲染后续处理使用。
     const target = Math.min(raw * LEVEL_BOOST, 1);
+    // smoothed[0更新为 `(smoothed[0] ?? 0) * SMOOTH + target * (1 - SMOOTH)`，确保终端 UI 组件 Text Input后续读取最新状态。
     smoothed[0] = (smoothed[0] ?? 0) * SMOOTH + target * (1 - SMOOTH);
+    // displayLevel读取 `smoothed[0] ?? 0` 对应条目，后续围绕该成员继续处理。
     const displayLevel = smoothed[0] ?? 0;
+    // barIndex 索引保存`Math.max`，供终端渲染后续处理使用。
     const barIndex = Math.max(1, Math.min(Math.round(displayLevel * (BARS.length - 1)), BARS.length - 1));
+    // isSilent标记终端 UI Text Input是否启用对应路径。
     const isSilent = raw < SILENCE_THRESHOLD;
+    // hue保存`animTime / 1000 * 90 % 360`，供后续判断或组装使用。
     const hue = animTime / 1000 * 90 % 360;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       r,
       g,
@@ -85,10 +134,13 @@ export default function TextInput(props: Props): React.ReactNode {
       g: 128,
       b: 128
     } : hueToRgb(hue);
+    // invert更新为 `() => chalk.rgb(r, g, b)(BARS[barIndex]!)`，确保终端 UI后续读取最新状态。
     invert = () => chalk.rgb(r, g, b)(BARS[barIndex]!);
   } else {
+    // invert更新为 `chalk.inverse`，确保终端 UI后续读取最新状态。
     invert = chalk.inverse;
   }
+  // textInputState 状态保存`useTextInput`，供终端渲染后续处理使用。
   const textInputState = useTextInput({
     value: props.value,
     onChange: props.onChange,
@@ -117,6 +169,7 @@ export default function TextInput(props: Props): React.ReactNode {
     inlineGhostText: props.inlineGhostText,
     dim: chalk.dim
   });
+  // 返回 `<Box ref={animRef}>`，作为终端渲染这次计算的结果。
   return <Box ref={animRef}>
       <BaseTextInput inputState={textInputState} terminalFocus={isTerminalFocused} highlights={props.highlights} invert={invert} hidePlaceholderText={isVoiceRecording} {...props} />
     </Box>;

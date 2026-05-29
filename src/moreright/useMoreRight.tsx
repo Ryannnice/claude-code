@@ -5,21 +5,33 @@
 // would resolve to scripts/external-stubs/src/types/ (doesn't exist).
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// M 固化use More Right里传递的数据形状，帮助调用方按同一结构读写字段。
 type M = any;
+// useMoreRight 封装useMoreRight的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useMoreRight(_args: {
   enabled: boolean;
+  // 这个回调绑定到 setMessages: (action: M[] | ((prev: M[]) => M[])) => void;，负责use More Right在该局部场景下的响应。
   setMessages: (action: M[] | ((prev: M[]) => M[])) => void;
   inputValue: string;
+  // 这个回调绑定到 setInputValue: (s: string) => void;，负责use More Right在该局部场景下的响应。
   setInputValue: (s: string) => void;
+  // 这个回调绑定到 setToolJSX: (args: M) => void;，负责use More Right在该局部场景下的响应。
   setToolJSX: (args: M) => void;
 }): {
+  // 这个回调绑定到 onBeforeQuery: (input: string, all: M[], n: number) => Promise<boolean>;，负责use More Right在该局部场景下的响应。
   onBeforeQuery: (input: string, all: M[], n: number) => Promise<boolean>;
+  // 这个回调绑定到 onTurnComplete: (all: M[], aborted: boolean) => Promise<void>;，负责use More Right在该局部场景下的响应。
   onTurnComplete: (all: M[], aborted: boolean) => Promise<void>;
+  // 这个回调绑定到 render: () => null;，负责use More Right在该局部场景下的响应。
   render: () => null;
 } {
+  // 返回结构化结果，集中表达use More Right已经整理出的状态。
   return {
+    // 这个回调绑定到 onBeforeQuery: async () => true,，负责use More Right在该局部场景下的响应。
     onBeforeQuery: async () => true,
+    // 这个回调绑定到 onTurnComplete: async () => {},，负责use More Right在该局部场景下的响应。
     onTurnComplete: async () => {},
+    // 这个回调绑定到 render: () => null，负责use More Right在该局部场景下的响应。
     render: () => null
   };
 }

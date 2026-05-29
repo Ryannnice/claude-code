@@ -1,3 +1,4 @@
+// 引入 createMovedToPluginCommand，将 ../createMovedToPluginCommand.js 中已经封装好的能力接到本文件流程里。
 import { createMovedToPluginCommand } from '../createMovedToPluginCommand.js'
 
 export default createMovedToPluginCommand({
@@ -6,7 +7,9 @@ export default createMovedToPluginCommand({
   progressMessage: 'fetching PR comments',
   pluginName: 'pr-comments',
   pluginCommand: 'pr-comments',
+  // getPromptWhileMarketplaceIsPrivate 根据 args 读取或计算命令处理需要的结果。
   async getPromptWhileMarketplaceIsPrivate(args) {
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [
       {
         type: 'text',

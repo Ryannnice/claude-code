@@ -1,4 +1,6 @@
+// getExitWorktreeToolPrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getExitWorktreeToolPrompt(): string {
+  // 返回 ``Exit a worktree session created by EnterWorktree and return the sessio...`，作为工具调用这次计算的结果。
   return `Exit a worktree session created by EnterWorktree and return the session to the original working directory.
 
 ## Scope

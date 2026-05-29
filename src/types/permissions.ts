@@ -6,13 +6,16 @@
  * to avoid circular dependencies.
  */
 
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 类型依赖 { ContentBlockParam } 来自 @anthropic-ai/sdk/resources/messages.mjs，用于校准permissions的数据契约。
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs'
 
 // ============================================================================
 // Permission Modes
 // ============================================================================
 
+// EXTERNAL_PERMISSION_MODES 权限数据 聚合成有序列表，保持后续遍历顺序稳定。
 export const EXTERNAL_PERMISSION_MODES = [
   'acceptEdits',
   'bypassPermissions',
@@ -21,26 +24,32 @@ export const EXTERNAL_PERMISSION_MODES = [
   'plan',
 ] as const
 
+// ExternalPermissionMode 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ExternalPermissionMode = (typeof EXTERNAL_PERMISSION_MODES)[number]
 
 // Exhaustive mode union for typechecking. The user-addressable runtime set
 // is INTERNAL_PERMISSION_MODES below.
+// InternalPermissionMode 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InternalPermissionMode = ExternalPermissionMode | 'auto' | 'bubble'
+// PermissionMode 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionMode = InternalPermissionMode
 
 // Runtime validation set: modes that are user-addressable (settings.json
 // defaultMode, --permission-mode CLI flag, conversation recovery).
+// INTERNAL_PERMISSION_MODES 权限数据 聚合成有序列表，保持后续遍历顺序稳定。
 export const INTERNAL_PERMISSION_MODES = [
   ...EXTERNAL_PERMISSION_MODES,
   ...(feature('TRANSCRIPT_CLASSIFIER') ? (['auto'] as const) : ([] as const)),
 ] as const satisfies readonly PermissionMode[]
 
+// PERMISSION_MODES 权限数据 命名 `INTERNAL_PERMISSION_MODES`，让后续代码直接表达这个值的用途。
 export const PERMISSION_MODES = INTERNAL_PERMISSION_MODES
 
 // ============================================================================
 // Permission Behaviors
 // ============================================================================
 
+// PermissionBehavior 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionBehavior = 'allow' | 'deny' | 'ask'
 
 // ============================================================================
@@ -51,6 +60,7 @@ export type PermissionBehavior = 'allow' | 'deny' | 'ask'
  * Where a permission rule originated from.
  * Includes all SettingSource values plus additional rule-specific sources.
  */
+// PermissionRuleSource 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionRuleSource =
   | 'userSettings'
   | 'projectSettings'
@@ -64,6 +74,7 @@ export type PermissionRuleSource =
 /**
  * The value of a permission rule - specifies which tool and optional content
  */
+// PermissionRuleValue 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionRuleValue = {
   toolName: string
   ruleContent?: string
@@ -72,6 +83,7 @@ export type PermissionRuleValue = {
 /**
  * A permission rule with its source and behavior
  */
+// PermissionRule 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionRule = {
   source: PermissionRuleSource
   ruleBehavior: PermissionBehavior
@@ -85,6 +97,7 @@ export type PermissionRule = {
 /**
  * Where a permission update should be persisted
  */
+// PermissionUpdateDestination 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionUpdateDestination =
   | 'userSettings'
   | 'projectSettings'
@@ -95,6 +108,7 @@ export type PermissionUpdateDestination =
 /**
  * Update operations for permission configuration
  */
+// PermissionUpdate 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionUpdate =
   | {
       type: 'addRules'
@@ -135,11 +149,13 @@ export type PermissionUpdate =
  * Note: This is currently the same as PermissionRuleSource but kept as a
  * separate type for semantic clarity and potential future divergence.
  */
+// WorkingDirectorySource 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type WorkingDirectorySource = PermissionRuleSource
 
 /**
  * An additional directory included in permission scope
  */
+// AdditionalWorkingDirectory 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AdditionalWorkingDirectory = {
   path: string
   source: WorkingDirectorySource
@@ -154,6 +170,7 @@ export type AdditionalWorkingDirectory = {
  * This is intentionally a subset of the full Command type to avoid import cycles.
  * Only includes properties needed by permission-related components.
  */
+// PermissionCommandMetadata 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionCommandMetadata = {
   name: string
   description?: string
@@ -164,6 +181,7 @@ export type PermissionCommandMetadata = {
 /**
  * Metadata attached to permission decisions
  */
+// PermissionMetadata 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionMetadata =
   | { command: PermissionCommandMetadata }
   | undefined
@@ -171,6 +189,7 @@ export type PermissionMetadata =
 /**
  * Result when permission is granted
  */
+// PermissionAllowDecision 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionAllowDecision<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
 > = {
@@ -187,6 +206,7 @@ export type PermissionAllowDecision<
  * Metadata for a pending classifier check that will run asynchronously.
  * Used to enable non-blocking allow classifier evaluation.
  */
+// PendingClassifierCheck 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PendingClassifierCheck = {
   command: string
   cwd: string
@@ -196,6 +216,7 @@ export type PendingClassifierCheck = {
 /**
  * Result when user should be prompted
  */
+// PermissionAskDecision 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionAskDecision<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
 > = {
@@ -228,6 +249,7 @@ export type PermissionAskDecision<
 /**
  * Result when permission is denied
  */
+// PermissionDenyDecision 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionDenyDecision = {
   behavior: 'deny'
   message: string
@@ -238,6 +260,7 @@ export type PermissionDenyDecision = {
 /**
  * A permission decision - allow, ask, or deny
  */
+// PermissionDecision 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionDecision<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
 > =
@@ -248,6 +271,7 @@ export type PermissionDecision<
 /**
  * Permission result with additional passthrough option
  */
+// PermissionResult 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionResult<
   Input extends { [key: string]: unknown } = { [key: string]: unknown },
 > =
@@ -268,6 +292,7 @@ export type PermissionResult<
 /**
  * Explanation of why a permission decision was made
  */
+// PermissionDecisionReason 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionDecisionReason =
   | {
       type: 'rule'
@@ -327,6 +352,7 @@ export type PermissionDecisionReason =
 // Bash Classifier Types
 // ============================================================================
 
+// ClassifierResult 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ClassifierResult = {
   matches: boolean
   matchedDescription?: string
@@ -334,8 +360,10 @@ export type ClassifierResult = {
   reason: string
 }
 
+// ClassifierBehavior 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ClassifierBehavior = 'deny' | 'ask' | 'allow'
 
+// ClassifierUsage 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ClassifierUsage = {
   inputTokens: number
   outputTokens: number
@@ -343,6 +371,7 @@ export type ClassifierUsage = {
   cacheCreationInputTokens: number
 }
 
+// YoloClassifierResult 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type YoloClassifierResult = {
   thinking?: string
   shouldBlock: boolean
@@ -400,8 +429,10 @@ export type YoloClassifierResult = {
 // Permission Explainer Types
 // ============================================================================
 
+// RiskLevel 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'
 
+// PermissionExplanation 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PermissionExplanation = {
   riskLevel: RiskLevel
   explanation: string
@@ -416,6 +447,7 @@ export type PermissionExplanation = {
 /**
  * Mapping of permission rules by their source
  */
+// ToolPermissionRulesBySource 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ToolPermissionRulesBySource = {
   [T in PermissionRuleSource]?: string[]
 }
@@ -424,6 +456,7 @@ export type ToolPermissionRulesBySource = {
  * Context needed for permission checking in tools
  * Note: Uses a simplified DeepImmutable approximation for this types-only file
  */
+// ToolPermissionContext 固化permissions里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ToolPermissionContext = {
   readonly mode: PermissionMode
   readonly additionalWorkingDirectories: ReadonlyMap<

@@ -1,36 +1,70 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 引入 Box、Text、useTheme，将 ../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useTheme } from '../../../ink.js';
+// 引入 useKeybinding，将 ../../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../../keybindings/useKeybinding.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../../../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 ../../../services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../../services/analytics/index.js';
+// 接入 sanitizeToolNameForAnalytics 服务层能力，把外部通信或共享状态交给 ../../../services/analytics/metadata.js 处理。
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js';
+// 引入 useAppState，将 ../../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../../state/AppState.js';
+// 接入 BashTool 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { BashTool } from '../../../tools/BashTool/BashTool.js';
+// 接入 getFirstWordPrefix、getSimpleCommandPrefix 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { getFirstWordPrefix, getSimpleCommandPrefix } from '../../../tools/BashTool/bashPermissions.js';
+// 接入 getDestructiveCommandWarning 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { getDestructiveCommandWarning } from '../../../tools/BashTool/destructiveCommandWarning.js';
+// 接入 parseSedEditCommand 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { parseSedEditCommand } from '../../../tools/BashTool/sedEditParser.js';
+// 接入 shouldUseSandbox 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { shouldUseSandbox } from '../../../tools/BashTool/shouldUseSandbox.js';
+// 复用 getCompoundCommandPrefixesStatic 工具函数，把通用处理留在 ../../../utils/bash/prefix.js 中维护。
 import { getCompoundCommandPrefixesStatic } from '../../../utils/bash/prefix.js';
+// 复用 createPromptRuleContent、generateGenericDescription、getBashPromptAllowDescriptions、isClassifierPermissionsEnabled 工具函数，把通用处理留在 ../../../utils/permissions/bashClassifier.js 中维护。
 import { createPromptRuleContent, generateGenericDescription, getBashPromptAllowDescriptions, isClassifierPermissionsEnabled } from '../../../utils/permissions/bashClassifier.js';
+// 复用 extractRules 工具函数，把通用处理留在 ../../../utils/permissions/PermissionUpdate.js 中维护。
 import { extractRules } from '../../../utils/permissions/PermissionUpdate.js';
+// 类型依赖 { PermissionUpdate } 来自 ../../../utils/permissions/PermissionUpdateSchema.js，用于校准终端渲染的数据契约。
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js';
+// 复用 SandboxManager 工具函数，把通用处理留在 ../../../utils/sandbox/sandbox-adapter.js 中维护。
 import { SandboxManager } from '../../../utils/sandbox/sandbox-adapter.js';
+// 引入 Select，将 ../../CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../../CustomSelect/select.js';
+// 引入 ShimmerChar，将 ../../Spinner/ShimmerChar.js 中已经封装好的能力接到本文件流程里。
 import { ShimmerChar } from '../../Spinner/ShimmerChar.js';
+// 引入 useShimmerAnimation，将 ../../Spinner/useShimmerAnimation.js 中已经封装好的能力接到本文件流程里。
 import { useShimmerAnimation } from '../../Spinner/useShimmerAnimation.js';
+// 引入 UnaryEvent、usePermissionRequestLogging，将 ../hooks.js 中已经封装好的能力接到本文件流程里。
 import { type UnaryEvent, usePermissionRequestLogging } from '../hooks.js';
+// 引入 PermissionDecisionDebugInfo，将 ../PermissionDecisionDebugInfo.js 中已经封装好的能力接到本文件流程里。
 import { PermissionDecisionDebugInfo } from '../PermissionDecisionDebugInfo.js';
+// 引入 PermissionDialog，将 ../PermissionDialog.js 中已经封装好的能力接到本文件流程里。
 import { PermissionDialog } from '../PermissionDialog.js';
+// 引入 PermissionExplainerContent、usePermissionExplainerUI，将 ../PermissionExplanation.js 中已经封装好的能力接到本文件流程里。
 import { PermissionExplainerContent, usePermissionExplainerUI } from '../PermissionExplanation.js';
+// 类型依赖 { PermissionRequestProps } 来自 ../PermissionRequest.js，用于校准终端渲染的数据契约。
 import type { PermissionRequestProps } from '../PermissionRequest.js';
+// 引入 PermissionRuleExplanation，将 ../PermissionRuleExplanation.js 中已经封装好的能力接到本文件流程里。
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js';
+// 引入 SedEditPermissionRequest，将 ../SedEditPermissionRequest/SedEditPermissionRequest.js 中已经封装好的能力接到本文件流程里。
 import { SedEditPermissionRequest } from '../SedEditPermissionRequest/SedEditPermissionRequest.js';
+// 引入 useShellPermissionFeedback，将 ../useShellPermissionFeedback.js 中已经封装好的能力接到本文件流程里。
 import { useShellPermissionFeedback } from '../useShellPermissionFeedback.js';
+// 引入 logUnaryPermissionEvent，将 ../utils.js 中已经封装好的能力接到本文件流程里。
 import { logUnaryPermissionEvent } from '../utils.js';
+// 引入 bashToolUseOptions，将 ./bashToolUseOptions.js 中已经封装好的能力接到本文件流程里。
 import { bashToolUseOptions } from './bashToolUseOptions.js';
+// CHECKING_TEXT 命名 `'Attempting to auto-approve\u2026'`，让后续代码直接表达这个值的用途。
 const CHECKING_TEXT = 'Attempting to auto-approve\u2026';
 
 // Isolates the 20fps shimmer clock from BashPermissionRequestInner. Before this
@@ -39,37 +73,62 @@ const CHECKING_TEXT = 'Attempting to auto-approve\u2026';
 // all children) for the ~1-3 seconds the classifier typically takes. Inner also
 // has a Compiler bailout (see below), so nothing was auto-memoized — the full
 // JSX tree was reconstructed 20-60 times per classifier check.
+// ClassifierCheckingSubtitle 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ClassifierCheckingSubtitle() {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(6);
+  // 从 `useShimmerAnimation("requesting", CHECKING_TEXT, false)` 按位置拆出 ref、glimmerIndex，让权限确认界面 Bash Permission Request分别处理这些返回值。
   const [ref, glimmerIndex] = useShimmerAnimation("requesting", CHECKING_TEXT, false);
+  // t0 暂存 `[...CHECKING_TEXT]` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t0 暂存 `[...CHECKING_TEXT]` 生成的渲染片段，后续返回路径直接复用。
     t0 = [...CHECKING_TEXT];
+    // $[0] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[0];
   }
+  // t1 暂存 `<Text>{t0.map((char, i) => <ShimmerChar key={i} char={cha...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== glimmerIndex) {
+    // t1 暂存 `<Text>{t0.map((char, i) => <ShimmerChar key={i} char={cha...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <Text>{t0.map((char, i) => <ShimmerChar key={i} char={char} index={i} glimmerIndex={glimmerIndex} messageColor="inactive" shimmerColor="subtle" />)}</Text>;
+    // $[1] 缓存 `glimmerIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = glimmerIndex;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // t2 暂存 `<Box ref={ref}>{t1}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== ref || $[4] !== t1) {
+    // t2 暂存 `<Box ref={ref}>{t1}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Box ref={ref}>{t1}</Box>;
+    // $[3] 缓存 `ref`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = ref;
+    // $[4] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t1;
+    // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[5];
   }
+  // 返回 `t2`，作为终端渲染这次计算的结果。
   return t2;
 }
+// BashPermissionRequest 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function BashPermissionRequest(props) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(21);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     toolUseConfirm,
     toolUseContext,
@@ -78,61 +137,104 @@ export function BashPermissionRequest(props) {
     verbose,
     workerBadge
   } = props;
+  // 命令 先占位，稍后的条件分支会根据实际输入补齐它。
   let command;
+  // description 先占位，稍后的条件分支会根据实际输入补齐它。
   let description;
+  // t0 暂存 `parseSedEditCommand(command)` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== toolUseConfirm.input) {
+    // 重新解构输入对象，把权限确认界面 Bash Permission Request需要的字段同步到本地变量。
     ({
       command,
       description
     } = BashTool.inputSchema.parse(toolUseConfirm.input));
+    // t0 暂存 `parseSedEditCommand(command)` 生成的渲染片段，后续返回路径直接复用。
     t0 = parseSedEditCommand(command);
+    // $[0] 缓存 `toolUseConfirm.input`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = toolUseConfirm.input;
+    // $[1] 缓存 `command`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = command;
+    // $[2] 缓存 `description`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = description;
+    // $[3] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t0;
   } else {
+    // 命令更新为 `$[1]`，确保权限确认界面后续读取最新状态。
     command = $[1];
+    // description更新为 `$[2]`，确保权限确认界面后续读取最新状态。
     description = $[2];
+    // t0 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[3];
   }
+  // sed 替换信息沿用 `t0` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const sedInfo = t0;
+  // 满足 `sedInfo` 时，终端渲染执行该分支。
   if (sedInfo) {
+    // t1 暂存 `<SedEditPermissionRequest toolUseConfirm={toolUseConfirm}...` 的派生结果，便于缓存命中时直接复用。
     let t1;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[4] !== onDone || $[5] !== onReject || $[6] !== sedInfo || $[7] !== toolUseConfirm || $[8] !== toolUseContext || $[9] !== verbose || $[10] !== workerBadge) {
+      // t1 暂存 `<SedEditPermissionRequest toolUseConfirm={toolUseConfirm}...` 生成的渲染片段，后续返回路径直接复用。
       t1 = <SedEditPermissionRequest toolUseConfirm={toolUseConfirm} toolUseContext={toolUseContext} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} sedInfo={sedInfo} />;
+      // $[4] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
       $[4] = onDone;
+      // $[5] 缓存 `onReject`，下次依赖未变时 React 编译产物可直接复用。
       $[5] = onReject;
+      // $[6] 缓存 `sedInfo`，下次依赖未变时 React 编译产物可直接复用。
       $[6] = sedInfo;
+      // $[7] 缓存 `toolUseConfirm`，下次依赖未变时 React 编译产物可直接复用。
       $[7] = toolUseConfirm;
+      // $[8] 缓存 `toolUseContext`，下次依赖未变时 React 编译产物可直接复用。
       $[8] = toolUseContext;
+      // $[9] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
       $[9] = verbose;
+      // $[10] 缓存 `workerBadge`，下次依赖未变时 React 编译产物可直接复用。
       $[10] = workerBadge;
+      // $[11] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[11] = t1;
     } else {
+      // t1 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
       t1 = $[11];
     }
+    // 返回 `t1`，作为终端渲染这次计算的结果。
     return t1;
   }
+  // t1 暂存 `<BashPermissionRequestInner toolUseConfirm={toolUseConfir...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[12] !== command || $[13] !== description || $[14] !== onDone || $[15] !== onReject || $[16] !== toolUseConfirm || $[17] !== toolUseContext || $[18] !== verbose || $[19] !== workerBadge) {
+    // t1 暂存 `<BashPermissionRequestInner toolUseConfirm={toolUseConfir...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <BashPermissionRequestInner toolUseConfirm={toolUseConfirm} toolUseContext={toolUseContext} onDone={onDone} onReject={onReject} verbose={verbose} workerBadge={workerBadge} command={command} description={description} />;
+    // $[12] 缓存 `command`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = command;
+    // $[13] 缓存 `description`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = description;
+    // $[14] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = onDone;
+    // $[15] 缓存 `onReject`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = onReject;
+    // $[16] 缓存 `toolUseConfirm`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = toolUseConfirm;
+    // $[17] 缓存 `toolUseContext`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = toolUseContext;
+    // $[18] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = verbose;
+    // $[19] 缓存 `workerBadge`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = workerBadge;
+    // $[20] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[20] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[20];
   }
+  // 返回 `t1`，作为终端渲染这次计算的结果。
   return t1;
 }
 
 // Inner component that uses hooks - only called for non-MCP CLI commands
+// BashPermissionRequestInner 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function BashPermissionRequestInner({
   toolUseConfirm,
   toolUseContext,
@@ -146,14 +248,18 @@ function BashPermissionRequestInner({
   command: string;
   description?: string;
 }): React.ReactNode {
+  // 从 `useTheme()` 按位置拆出 theme，让权限确认界面 Bash Permission Request分别处理这些返回值。
   const [theme] = useTheme();
+  // toolPermissionContext 权限数据保存`useAppState`，供终端渲染后续处理使用。
   const toolPermissionContext = useAppState(s => s.toolPermissionContext);
+  // explainerState 状态保存`usePermissionExplainerUI`，供终端渲染后续处理使用。
   const explainerState = usePermissionExplainerUI({
     toolName: toolUseConfirm.tool.name,
     toolInput: toolUseConfirm.input,
     toolDescription: toolUseConfirm.description,
     messages: toolUseContext.messages
   });
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     yesInputMode,
     noInputMode,
@@ -173,22 +279,34 @@ function BashPermissionRequestInner({
     onReject,
     explainerVisible: explainerState.visible
   });
+  // showPermissionDebug 权限数据 由 React state 持有，setShowPermissionDebug 会在用户操作或异步结果返回时触发刷新。
   const [showPermissionDebug, setShowPermissionDebug] = useState(false);
+  // classifierDescription 由 React state 持有，setClassifierDescription 会在用户操作或异步结果返回时触发刷新。
   const [classifierDescription, setClassifierDescription] = useState(description || '');
   // Track whether the initial description (from prop or async generation) was empty.
   // Once we receive a non-empty description, this stays false.
+  // initialClassifierDescriptionEmpty 由 React state 持有，setInitialClassifierDescriptionEmpty 会在用户操作或异步结果返回时触发刷新。
   const [initialClassifierDescriptionEmpty, setInitialClassifierDescriptionEmpty] = useState(!description?.trim());
 
   // Asynchronously generate a generic description for the classifier
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 满足 `!isClassifierPermissionsEnabled()` 时，终端渲染执行该分支。
     if (!isClassifierPermissionsEnabled()) return;
+    // abortController保存`AbortController`，供终端渲染后续处理使用。
     const abortController = new AbortController();
+    // 调用 generateGenericDescription，触发终端渲染此处需要的副作用。
     generateGenericDescription(command, description, abortController.signal).then(generic => {
+      // 只有 `generic && !abortController.signal.aborted` 满足时，终端渲染才执行该分支。
       if (generic && !abortController.signal.aborted) {
+        // setClassifierDescription 写入新的状态值，使终端渲染后续读取保持一致。
         setClassifierDescription(generic);
+        // setInitialClassifierDescriptionEmpty 写入新的状态值，使终端渲染后续读取保持一致。
         setInitialClassifierDescriptionEmpty(false);
       }
+    // 这个回调绑定到 }).catch(() => {}); // Keep original on error，负责终端渲染在该局部场景下的响应。
     }).catch(() => {}); // Keep original on error
+    // 返回 `() => abortController.abort()`，作为终端渲染这次计算的结果。
     return () => abortController.abort();
   }, [command, description]);
 
@@ -206,6 +324,7 @@ function BashPermissionRequestInner({
   // from the backend rule. When compound with 2+ rules, editablePrefix stays
   // undefined so bashToolUseOptions falls through to yes-apply-suggestions,
   // which saves all per-subcommand rules atomically.
+  // isCompound标记终端渲染权限确认界面 Bash Permission Request是否启用对应路径。
   const isCompound = toolUseConfirm.permissionResult.decisionReason?.type === 'subcommandResults';
 
   // Editable prefix — initialize synchronously with the best prefix we can
@@ -216,39 +335,63 @@ function BashPermissionRequestInner({
   //
   // Lazy initializer: this runs regex + split on every render if left in
   // the render body; it's only needed for initial state.
+  // 这个回调绑定到 const [editablePrefix, setEditablePrefix] = useState<string | undefined>(() => {，负责终端渲染在该局部场景下的响应。
   const [editablePrefix, setEditablePrefix] = useState<string | undefined>(() => {
+    // 满足 `isCompound` 时，终端渲染执行该分支。
     if (isCompound) {
       // Backend suggestion is the source of truth for compound commands.
       // Single rule → seed the editable input so the user can refine it.
       // Multiple/zero rules → undefined → yes-apply-suggestions handles it.
+      // backendBashRules 集合保存`extractRules`，供终端渲染后续处理使用。
       const backendBashRules = extractRules('suggestions' in toolUseConfirm.permissionResult ? toolUseConfirm.permissionResult.suggestions : undefined).filter(r => r.toolName === BashTool.name && r.ruleContent);
+      // 返回 `backendBashRules.length === 1 ? backendBashRules[0]!.ruleContent : unde...`，作为终端渲染这次计算的结果。
       return backendBashRules.length === 1 ? backendBashRules[0]!.ruleContent : undefined;
     }
+    // two读取`getSimpleCommandPrefix`，供终端渲染后续处理使用。
     const two = getSimpleCommandPrefix(command);
+    // 满足 `two` 时，终端渲染执行该分支。
     if (two) return `${two}:*`;
+    // one读取`getFirstWordPrefix`，供终端渲染后续处理使用。
     const one = getFirstWordPrefix(command);
+    // 满足 `one` 时，终端渲染执行该分支。
     if (one) return `${one}:*`;
+    // 返回 `command`，作为终端渲染这次计算的结果。
     return command;
   });
+  // hasUserEditedPrefix记录 `useRef` 是否成立，终端渲染随后按该结果分支。
   const hasUserEditedPrefix = useRef(false);
+  // onEditablePrefixChange保存`useCallback`，供终端渲染后续处理使用。
   const onEditablePrefixChange = useCallback((value: string) => {
+    // current更新为 `true`，确保权限确认界面后续读取最新状态。
     hasUserEditedPrefix.current = true;
+    // setEditablePrefix 写入新的状态值，使终端渲染后续读取保持一致。
     setEditablePrefix(value);
   }, []);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
     // Skip async refinement for compound commands — the backend already ran
     // the full per-subcommand analysis and its suggestion is correct.
+    // 满足 `isCompound` 时，终端渲染执行该分支。
     if (isCompound) return;
+    // cancelled标记终端渲染权限确认界面 Bash Permission Request是否启用对应路径。
     let cancelled = false;
+    // 调用 getCompoundCommandPrefixesStatic，触发终端渲染此处需要的副作用。
     getCompoundCommandPrefixesStatic(command, subcmd => BashTool.isReadOnly({
       command: subcmd
+    // 这个回调绑定到 })).then(prefixes => {，负责终端渲染在该局部场景下的响应。
     })).then(prefixes => {
+      // 只有 `cancelled || hasUserEditedPrefix.current` 满足时，终端渲染才执行该分支。
       if (cancelled || hasUserEditedPrefix.current) return;
+      // 满足 `prefixes.length > 0` 时，终端渲染执行该分支。
       if (prefixes.length > 0) {
+        // setEditablePrefix 写入新的状态值，使终端渲染后续读取保持一致。
         setEditablePrefix(`${prefixes[0]}:*`);
       }
+    // 这个回调绑定到 }).catch(() => {}); // Keep sync prefix on tree-sitter failure，负责终端渲染在该局部场景下的响应。
     }).catch(() => {}); // Keep sync prefix on tree-sitter failure
+    // 返回 `() => {`，作为终端渲染这次计算的结果。
     return () => {
+      // cancelled更新为 `true`，确保权限确认界面后续读取最新状态。
       cancelled = true;
     };
   }, [command, isCompound]);
@@ -258,6 +401,7 @@ function BashPermissionRequestInner({
   // and only ever transitions true→false, so capturing the mount-time value is
   // sufficient — no latch/ref needed. The feature() ternary keeps the property
   // read out of external builds (forbidden-string check).
+  // classifierWasChecking 由 React state 持有，setter 会在用户操作或异步结果返回时触发刷新。
   const [classifierWasChecking] = useState(feature('BASH_CLASSIFIER') ? !!toolUseConfirm.classifierCheckInProgress : false);
 
   // These derive solely from the tool input (fixed for the dialog lifetime).
@@ -266,26 +410,36 @@ function BashPermissionRequestInner({
   // extraction). React Compiler can't auto-memoize imported functions (can't
   // prove side-effect freedom), so this useMemo still guards against any
   // re-render source (e.g. Inner state updates). Same pattern as PR#20730.
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     destructiveWarning: destructiveWarning_0,
     sandboxingEnabled: sandboxingEnabled_0,
     isSandboxed: isSandboxed_0
+  // 这个回调绑定到 } = useMemo(() => {，负责终端渲染在该局部场景下的响应。
   } = useMemo(() => {
+    // destructiveWarning 警告信息读取`getFeatureValue_CACHED_MAY_BE_STALE`，供终端渲染后续处理使用。
     const destructiveWarning = getFeatureValue_CACHED_MAY_BE_STALE('tengu_destructive_command_warning', false) ? getDestructiveCommandWarning(command) : null;
+    // sandboxingEnabled保存`SandboxManager.isSandboxingEnabled`，供终端渲染后续处理使用。
     const sandboxingEnabled = SandboxManager.isSandboxingEnabled();
+    // isSandboxed记录 `shouldUseSandbox` 是否成立，终端渲染随后按该结果分支。
     const isSandboxed = sandboxingEnabled && shouldUseSandbox(toolUseConfirm.input);
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       destructiveWarning,
       sandboxingEnabled,
       isSandboxed
     };
   }, [command, toolUseConfirm.input]);
+  // unaryEvent读取 hook 状态，供终端渲染权限确认界面 Bash Permission Request本轮渲染使用。
   const unaryEvent = useMemo<UnaryEvent>(() => ({
     completion_type: 'tool_use_single',
     language_name: 'none'
   }), []);
+  // 调用 usePermissionRequestLogging，触发终端渲染此处需要的副作用。
   usePermissionRequestLogging(toolUseConfirm, unaryEvent);
+  // existingAllowDescriptions 集合保存`useMemo`，供终端渲染后续处理使用。
   const existingAllowDescriptions = useMemo(() => getBashPromptAllowDescriptions(toolPermissionContext), [toolPermissionContext]);
+  // 选项保存`useMemo`，供终端渲染后续处理使用。
   const options = useMemo(() => bashToolUseOptions({
     suggestions: toolUseConfirm.permissionResult.behavior === 'ask' ? toolUseConfirm.permissionResult.suggestions : undefined,
     decisionReason: toolUseConfirm.permissionResult.decisionReason,
@@ -302,30 +456,40 @@ function BashPermissionRequestInner({
   }), [toolUseConfirm, classifierDescription, initialClassifierDescriptionEmpty, existingAllowDescriptions, yesInputMode, noInputMode, editablePrefix, onEditablePrefixChange]);
 
   // Toggle permission debug info with keybinding
+  // handleToggleDebug保存`useCallback`，供终端渲染后续处理使用。
   const handleToggleDebug = useCallback(() => {
+    // setShowPermissionDebug 写入新的状态值，使终端渲染后续读取保持一致。
     setShowPermissionDebug(prev => !prev);
   }, []);
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('permission:toggleDebug', handleToggleDebug, {
     context: 'Confirmation'
   });
 
   // Allow Esc to dismiss the checkmark after auto-approval
+  // handleDismissCheckmark保存`useCallback`，供终端渲染后续处理使用。
   const handleDismissCheckmark = useCallback(() => {
+    // 调用 toolUseConfirm.onDismissCheckmark?.();，完成这一处局部操作。
     toolUseConfirm.onDismissCheckmark?.();
   }, [toolUseConfirm]);
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleDismissCheckmark, {
     context: 'Confirmation',
     isActive: feature('BASH_CLASSIFIER') ? !!toolUseConfirm.classifierAutoApproved : false
   });
+  // onSelect 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function onSelect(value_0: string) {
     // Map options to numeric values for analytics (strings not allowed in logEvent)
+    // optionIndex 索引 集中保存权限确认界面 Bash Permission Request要一起传递的字段。
     let optionIndex: Record<string, number> = {
       yes: 1,
       'yes-apply-suggestions': 2,
       'yes-prefix-edited': 2,
       no: 3
     };
+    // 满足 `feature('BASH_CLASSIFIER')` 时，终端渲染执行该分支。
     if (feature('BASH_CLASSIFIER')) {
+      // optionIndex 索引更新为 `{`，确保权限确认界面后续读取最新状态。
       optionIndex = {
         yes: 1,
         'yes-apply-suggestions': 2,
@@ -334,17 +498,25 @@ function BashPermissionRequestInner({
         no: 4
       };
     }
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_permission_request_option_selected', {
       option_index: optionIndex[value_0],
       explainer_visible: explainerState.visible
     });
+    // toolNameForAnalytics 集合保存`sanitizeToolNameForAnalytics`，供终端渲染后续处理使用。
     const toolNameForAnalytics = sanitizeToolNameForAnalytics(toolUseConfirm.tool.name) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
+    // 当 `value_0` 匹配 `'yes-prefix-edited'` 时，终端渲染执行对应分支。
     if (value_0 === 'yes-prefix-edited') {
+      // trimmedPrefix格式化`trim`，供终端渲染后续处理使用。
       const trimmedPrefix = (editablePrefix ?? '').trim();
+      // 调用 logUnaryPermissionEvent，触发终端渲染此处需要的副作用。
       logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
+      // trimmedPrefix缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!trimmedPrefix) {
+        // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
         toolUseConfirm.onAllow(toolUseConfirm.input, []);
       } else {
+        // prefixUpdates 集合 聚合成有序列表，保持后续遍历顺序稳定。
         const prefixUpdates: PermissionUpdate[] = [{
           type: 'addRules',
           rules: [{
@@ -354,17 +526,26 @@ function BashPermissionRequestInner({
           behavior: 'allow',
           destination: 'localSettings'
         }];
+        // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
         toolUseConfirm.onAllow(toolUseConfirm.input, prefixUpdates);
       }
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
+      // 权限确认界面 Bash Permission Request在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 当 `feature('BASH_CLASSIFIER') && value_0` 匹配 `'yes-classifier-reviewed'` 时，终端渲染执行对应分支。
     if (feature('BASH_CLASSIFIER') && value_0 === 'yes-classifier-reviewed') {
+      // trimmedDescription格式化`classifierDescription.trim`，供终端渲染后续处理使用。
       const trimmedDescription = classifierDescription.trim();
+      // 调用 logUnaryPermissionEvent，触发终端渲染此处需要的副作用。
       logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
+      // trimmedDescription缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!trimmedDescription) {
+        // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
         toolUseConfirm.onAllow(toolUseConfirm.input, []);
       } else {
+        // permissionUpdates 权限数据 聚合成有序列表，保持后续遍历顺序稳定。
         const permissionUpdates: PermissionUpdate[] = [{
           type: 'addRules',
           rules: [{
@@ -374,17 +555,24 @@ function BashPermissionRequestInner({
           behavior: 'allow',
           destination: 'session'
         }];
+        // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
         toolUseConfirm.onAllow(toolUseConfirm.input, permissionUpdates);
       }
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
+      // 权限确认界面 Bash Permission Request在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 按照 value_0 的取值选择终端渲染的具体处理分支。
     switch (value_0) {
       case 'yes':
         {
+          // trimmedFeedback_0格式化`acceptFeedback.trim`，供终端渲染后续处理使用。
           const trimmedFeedback_0 = acceptFeedback.trim();
+          // 调用 logUnaryPermissionEvent，触发终端渲染此处需要的副作用。
           logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
           // Log accept submission with feedback context
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_accept_submitted', {
             toolName: toolNameForAnalytics,
             isMcp: toolUseConfirm.tool.isMcp ?? false,
@@ -392,24 +580,34 @@ function BashPermissionRequestInner({
             instructions_length: trimmedFeedback_0.length,
             entered_feedback_mode: yesFeedbackModeEntered
           });
+          // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
           toolUseConfirm.onAllow(toolUseConfirm.input, [], trimmedFeedback_0 || undefined);
+          // 调用 onDone，触发终端渲染此处需要的副作用。
           onDone();
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         }
       case 'yes-apply-suggestions':
         {
+          // 调用 logUnaryPermissionEvent，触发终端渲染此处需要的副作用。
           logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
           // Extract suggestions if present (works for both 'ask' and 'passthrough' behaviors)
+          // permissionUpdates_0 权限数据 命名 `'suggestions' in toolUseConfirm.permissionResult ? toolUs...`，让后续代码直接表达这个值的用途。
           const permissionUpdates_0 = 'suggestions' in toolUseConfirm.permissionResult ? toolUseConfirm.permissionResult.suggestions || [] : [];
+          // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
           toolUseConfirm.onAllow(toolUseConfirm.input, permissionUpdates_0);
+          // 调用 onDone，触发终端渲染此处需要的副作用。
           onDone();
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         }
       case 'no':
         {
+          // trimmedFeedback格式化`rejectFeedback.trim`，供终端渲染后续处理使用。
           const trimmedFeedback = rejectFeedback.trim();
 
           // Log reject submission with feedback context
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_reject_submitted', {
             toolName: toolNameForAnalytics,
             isMcp: toolUseConfirm.tool.isMcp ?? false,
@@ -419,11 +617,14 @@ function BashPermissionRequestInner({
           });
 
           // Process rejection (with or without feedback)
+          // 调用 handleReject，触发终端渲染此处需要的副作用。
           handleReject(trimmedFeedback || undefined);
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         }
     }
   }
+  // classifierSubtitle 标题保存`feature`，供终端渲染后续处理使用。
   const classifierSubtitle = feature('BASH_CLASSIFIER') ? toolUseConfirm.classifierAutoApproved ? <Text>
         <Text color="success">{figures.tick} Auto-approved</Text>
         {toolUseConfirm.classifierMatchedRule && <Text dimColor>
@@ -432,6 +633,7 @@ function BashPermissionRequestInner({
             {'"'}
           </Text>}
       </Text> : toolUseConfirm.classifierCheckInProgress ? <ClassifierCheckingSubtitle /> : classifierWasChecking ? <Text dimColor>Requires manual approval</Text> : undefined : undefined;
+  // 返回 `<PermissionDialog workerBadge={workerBadge} title={sandboxingEnabled_0 ...`，作为终端渲染这次计算的结果。
   return <PermissionDialog workerBadge={workerBadge} title={sandboxingEnabled_0 && !isSandboxed_0 ? 'Bash command (unsandboxed)' : 'Bash command'} subtitle={classifierSubtitle}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Text dimColor={explainerState.visible}>
@@ -447,6 +649,7 @@ function BashPermissionRequestInner({
         {!explainerState.visible && <Text dimColor>{toolUseConfirm.description}</Text>}
         <PermissionExplainerContent visible={explainerState.visible} promise={explainerState.promise} />
       </Box>
+      {/* 权限确认界面 Bash Permission Request处理 `{showPermissionDebug ? <>`，完成这一小步状态转换。 */}
       {showPermissionDebug ? <>
           <PermissionDecisionDebugInfo permissionResult={toolUseConfirm.permissionResult} toolName="Bash" />
           {toolUseContext.options.debug && <Box justifyContent="flex-end" marginTop={1}>
@@ -463,9 +666,11 @@ function BashPermissionRequestInner({
             <Text dimColor={feature('BASH_CLASSIFIER') ? toolUseConfirm.classifierAutoApproved : false}>
               Do you want to proceed?
             </Text>
+            {/* 这个回调绑定到 <Select options={feature('BASH_CLASSIFIER') ? toolUseConfirm.classifierAutoApproved …，负责终端渲染在该局部场景下的响应。 */}
             <Select options={feature('BASH_CLASSIFIER') ? toolUseConfirm.classifierAutoApproved ? options.map(o => ({
           ...o,
           disabled: true
+        // 这个回调绑定到 })) : options : options} isDisabled={feature('BASH_CLASSIFIER') ? toolUseConfirm.cla…，负责终端渲染在该局部场景下的响应。
         })) : options : options} isDisabled={feature('BASH_CLASSIFIER') ? toolUseConfirm.classifierAutoApproved : false} inlineDescriptions onChange={onSelect} onCancel={() => handleReject()} onFocus={handleFocus} onInputModeToggle={handleInputModeToggle} />
           </Box>
           <Box justifyContent="space-between" marginTop={1}>

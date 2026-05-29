@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
+# 启用严格 Bash 模式，确保脚本在错误、未定义变量或管道失败时立即退出。
 set -euo pipefail
 
+# 计算仓库根目录，保证无论从哪里调用都在项目根目录执行。
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# 切换到仓库根目录，以便后续 Bun 命令可以稳定找到源码和 .env。
 cd "$ROOT_DIR"
 
 # Force recovery CLI (simple readline REPL, no Ink TUI)
+# 当显式开启恢复模式时，启动简化 readline CLI，跳过完整 Ink TUI。
 if [[ "${CLAUDE_CODE_FORCE_RECOVERY_CLI:-0}" == "1" ]]; then
   exec bun --env-file=.env ./src/localRecoveryCli.ts "$@"
 fi
 
 # Default: full CLI with Ink TUI
+# 默认启动完整 CLI 入口，让主程序负责参数解析、初始化和 TUI 渲染。
 exec bun --env-file=.env ./src/entrypoints/cli.tsx "$@"

@@ -1,8 +1,14 @@
+// 类型依赖 { StructuredPatchHunk } 来自 diff，用于校准终端渲染的数据契约。
 import type { StructuredPatchHunk } from 'diff';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Box、NoSelect、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, NoSelect, Text } from '../ink.js';
+// 复用 intersperse 工具函数，把通用处理留在 ../utils/array.js 中维护。
 import { intersperse } from '../utils/array.js';
+// 引入 StructuredDiff，将 ./StructuredDiff.js 中已经封装好的能力接到本文件流程里。
 import { StructuredDiff } from './StructuredDiff.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   hunks: StructuredPatchHunk[];
   dim: boolean;
@@ -13,6 +19,7 @@ type Props = {
 };
 
 /** Renders a list of diff hunks with ellipsis separators between them. */
+// StructuredDiffList 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function StructuredDiffList({
   hunks,
   dim,
@@ -21,8 +28,10 @@ export function StructuredDiffList({
   firstLine,
   fileContent
 }: Props): React.ReactNode {
+  // 返回 `intersperse(hunks.map(hunk => <Box flexDirection="column" key={hunk.new...`，作为终端渲染这次计算的结果。
   return intersperse(hunks.map(hunk => <Box flexDirection="column" key={hunk.newStart}>
         <StructuredDiff patch={hunk} dim={dim} width={width} filePath={filePath} firstLine={firstLine} fileContent={fileContent} />
+      {/* 这个回调绑定到 </Box>), i => <NoSelect fromLeftEdge key={`ellipsis-${i}`}>，负责终端渲染在该局部场景下的响应。 */}
       </Box>), i => <NoSelect fromLeftEdge key={`ellipsis-${i}`}>
         <Text dimColor>...</Text>
       </NoSelect>);

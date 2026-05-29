@@ -1,43 +1,73 @@
+// 类型依赖 { Notification } 来自 src/context/notifications.js，用于校准应用状态管理的数据契约。
 import type { Notification } from 'src/context/notifications.js'
+// 类型依赖 { TodoList } 来自 src/utils/todo/types.js，用于校准应用状态管理的数据契约。
 import type { TodoList } from 'src/utils/todo/types.js'
+// 类型依赖 { BridgePermissionCallbacks } 来自 ../bridge/bridgePermissionCallbacks.js，用于校准应用状态管理的数据契约。
 import type { BridgePermissionCallbacks } from '../bridge/bridgePermissionCallbacks.js'
+// 类型依赖 { Command } 来自 ../commands.js，用于校准应用状态管理的数据契约。
 import type { Command } from '../commands.js'
+// 类型依赖 { ChannelPermissionCallbacks } 来自 ../services/mcp/channelPermissions.js，用于校准应用状态管理的数据契约。
 import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissions.js'
+// 类型依赖 { ElicitationRequestEvent } 来自 ../services/mcp/elicitationHandler.js，用于校准应用状态管理的数据契约。
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
+// 整理这一组导入，让应用状态管理后续逻辑可以直接复用这些外部能力。
 import type {
   MCPServerConnection,
   ServerResource,
 } from '../services/mcp/types.js'
+// 接入 shouldEnablePromptSuggestion 服务层能力，把外部通信或共享状态交给 ../services/PromptSuggestion/promptSuggestion.js 处理。
 import { shouldEnablePromptSuggestion } from '../services/PromptSuggestion/promptSuggestion.js'
+// 整理这一组导入，让应用状态管理后续逻辑可以直接复用这些外部能力。
 import {
   getEmptyToolPermissionContext,
   type Tool,
   type ToolPermissionContext,
 } from '../Tool.js'
+// 类型依赖 { TaskState } 来自 ../tasks/types.js，用于校准应用状态管理的数据契约。
 import type { TaskState } from '../tasks/types.js'
+// 类型依赖 { AgentColorName } 来自 ../tools/AgentTool/agentColorManager.js，用于校准应用状态管理的数据契约。
 import type { AgentColorName } from '../tools/AgentTool/agentColorManager.js'
+// 类型依赖 { AgentDefinitionsResult } 来自 ../tools/AgentTool/loadAgentsDir.js，用于校准应用状态管理的数据契约。
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
+// 类型依赖 { AllowedPrompt } 来自 ../tools/ExitPlanModeTool/ExitPlanModeV2Tool.js，用于校准应用状态管理的数据契约。
 import type { AllowedPrompt } from '../tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
+// 类型依赖 { AgentId } 来自 ../types/ids.js，用于校准应用状态管理的数据契约。
 import type { AgentId } from '../types/ids.js'
+// 类型依赖 { Message, UserMessage } 来自 ../types/message.js，用于校准应用状态管理的数据契约。
 import type { Message, UserMessage } from '../types/message.js'
+// 类型依赖 { LoadedPlugin, PluginError } 来自 ../types/plugin.js，用于校准应用状态管理的数据契约。
 import type { LoadedPlugin, PluginError } from '../types/plugin.js'
+// 类型依赖 { DeepImmutable } 来自 ../types/utils.js，用于校准应用状态管理的数据契约。
 import type { DeepImmutable } from '../types/utils.js'
+// 整理这一组导入，让应用状态管理后续逻辑可以直接复用这些外部能力。
 import {
   type AttributionState,
   createEmptyAttributionState,
 } from '../utils/commitAttribution.js'
+// 类型依赖 { EffortValue } 来自 ../utils/effort.js，用于校准应用状态管理的数据契约。
 import type { EffortValue } from '../utils/effort.js'
+// 类型依赖 { FileHistoryState } 来自 ../utils/fileHistory.js，用于校准应用状态管理的数据契约。
 import type { FileHistoryState } from '../utils/fileHistory.js'
+// 类型依赖 { REPLHookContext } 来自 ../utils/hooks/postSamplingHooks.js，用于校准应用状态管理的数据契约。
 import type { REPLHookContext } from '../utils/hooks/postSamplingHooks.js'
+// 类型依赖 { SessionHooksState } 来自 ../utils/hooks/sessionHooks.js，用于校准应用状态管理的数据契约。
 import type { SessionHooksState } from '../utils/hooks/sessionHooks.js'
+// 类型依赖 { ModelSetting } 来自 ../utils/model/model.js，用于校准应用状态管理的数据契约。
 import type { ModelSetting } from '../utils/model/model.js'
+// 类型依赖 { DenialTrackingState } 来自 ../utils/permissions/denialTracking.js，用于校准应用状态管理的数据契约。
 import type { DenialTrackingState } from '../utils/permissions/denialTracking.js'
+// 类型依赖 { PermissionMode } 来自 ../utils/permissions/PermissionMode.js，用于校准应用状态管理的数据契约。
 import type { PermissionMode } from '../utils/permissions/PermissionMode.js'
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../utils/settings/settings.js'
+// 类型依赖 { SettingsJson } 来自 ../utils/settings/types.js，用于校准应用状态管理的数据契约。
 import type { SettingsJson } from '../utils/settings/types.js'
+// 复用 shouldEnableThinkingByDefault 工具函数，把通用处理留在 ../utils/thinking.js 中维护。
 import { shouldEnableThinkingByDefault } from '../utils/thinking.js'
+// 类型依赖 { Store } 来自 ./store.js，用于校准应用状态管理的数据契约。
 import type { Store } from './store.js'
 
+// CompletionBoundary 固化应用状态管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CompletionBoundary =
   | { type: 'complete'; completedAt: number; outputTokens: number }
   | { type: 'bash'; command: string; completedAt: number }
@@ -49,17 +79,20 @@ export type CompletionBoundary =
       completedAt: number
     }
 
+// SpeculationResult 固化应用状态管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SpeculationResult = {
   messages: Message[]
   boundary: CompletionBoundary | null
   timeSavedMs: number
 }
 
+// SpeculationState 固化应用状态管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SpeculationState =
   | { status: 'idle' }
   | {
       status: 'active'
       id: string
+      // 这个回调绑定到 abort: () => void，负责应用状态管理在该局部场景下的响应。
       abort: () => void
       startTime: number
       messagesRef: { current: Message[] } // Mutable ref - avoids array spreading per message
@@ -76,8 +109,10 @@ export type SpeculationState =
       } | null
     }
 
+// IDLE_SPECULATION_STATE 状态 集中保存状态管理 App State Store要一起传递的字段。
 export const IDLE_SPECULATION_STATE: SpeculationState = { status: 'idle' }
 
+// FooterItem 固化应用状态管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type FooterItem =
   | 'tasks'
   | 'tmux'
@@ -86,6 +121,7 @@ export type FooterItem =
   | 'bridge'
   | 'companion'
 
+// AppState 固化应用状态管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AppState = DeepImmutable<{
   settings: SettingsJson
   verbose: boolean
@@ -306,17 +342,26 @@ export type AppState = DeepImmutable<{
         name: string
         description: string
         schema: Record<string, unknown>
+        // 这个回调绑定到 handler: (args: Record<string, unknown>) => Promise<unknown>，负责应用状态管理在该局部场景下的响应。
         handler: (args: Record<string, unknown>) => Promise<unknown>
       }
     >
     console: {
+      // 这个回调绑定到 log: (...args: unknown[]) => void，负责应用状态管理在该局部场景下的响应。
       log: (...args: unknown[]) => void
+      // 这个回调绑定到 error: (...args: unknown[]) => void，负责应用状态管理在该局部场景下的响应。
       error: (...args: unknown[]) => void
+      // 这个回调绑定到 warn: (...args: unknown[]) => void，负责应用状态管理在该局部场景下的响应。
       warn: (...args: unknown[]) => void
+      // 这个回调绑定到 info: (...args: unknown[]) => void，负责应用状态管理在该局部场景下的响应。
       info: (...args: unknown[]) => void
+      // 这个回调绑定到 debug: (...args: unknown[]) => void，负责应用状态管理在该局部场景下的响应。
       debug: (...args: unknown[]) => void
+      // 这个回调绑定到 getStdout: () => string，负责应用状态管理在该局部场景下的响应。
       getStdout: () => string
+      // 这个回调绑定到 getStderr: () => string，负责应用状态管理在该局部场景下的响应。
       getStderr: () => string
+      // 这个回调绑定到 clear: () => void，负责应用状态管理在该局部场景下的响应。
       clear: () => void
     }
   }
@@ -451,20 +496,25 @@ export type AppState = DeepImmutable<{
   channelPermissionCallbacks?: ChannelPermissionCallbacks
 }
 
+// AppStateStore 固化应用状态管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AppStateStore = Store<AppState>
 
+// getDefaultAppState 封装AppStateStore的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getDefaultAppState(): AppState {
   // Determine initial permission mode for teammates spawned with plan_mode_required
   // Use lazy require to avoid circular dependency with teammate.ts
   /* eslint-disable @typescript-eslint/no-require-imports */
+  // teammateUtils 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const teammateUtils =
     require('../utils/teammate.js') as typeof import('../utils/teammate.js')
   /* eslint-enable @typescript-eslint/no-require-imports */
+  // initialMode 先占位，稍后的条件分支会根据实际输入补齐它。
   const initialMode: PermissionMode =
     teammateUtils.isTeammate() && teammateUtils.isPlanModeRequired()
       ? 'plan'
       : 'default'
 
+  // 返回结构化结果，集中表达应用状态管理已经整理出的状态。
   return {
     settings: getInitialSettings(),
     tasks: {},

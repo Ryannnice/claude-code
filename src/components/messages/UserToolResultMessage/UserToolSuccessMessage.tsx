@@ -1,15 +1,28 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 SentryErrorBoundary 终端界面组件，避免在这里重复拼装显示逻辑。
 import { SentryErrorBoundary } from 'src/components/SentryErrorBoundary.js';
+// 引入 Box、Text、useTheme，将 ../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useTheme } from '../../../ink.js';
+// 引入 useAppState，将 ../../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../../state/AppState.js';
+// 引入 filterToolProgressMessages、Tool、Tools，将 ../../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { filterToolProgressMessages, type Tool, type Tools } from '../../../Tool.js';
+// 类型依赖 { NormalizedUserMessage, ProgressMessage } 来自 ../../../types/message.js，用于校准终端渲染的数据契约。
 import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js';
+// 复用 deleteClassifierApproval、getClassifierApproval、getYoloClassifierApproval 工具函数，把通用处理留在 ../../../utils/classifierApprovals.js 中维护。
 import { deleteClassifierApproval, getClassifierApproval, getYoloClassifierApproval } from '../../../utils/classifierApprovals.js';
+// 类型依赖 { buildMessageLookups } 来自 ../../../utils/messages.js，用于校准终端渲染的数据契约。
 import type { buildMessageLookups } from '../../../utils/messages.js';
+// 引入 MessageResponse，将 ../../MessageResponse.js 中已经封装好的能力接到本文件流程里。
 import { MessageResponse } from '../../MessageResponse.js';
+// 引入 HookProgressMessage，将 ../HookProgressMessage.js 中已经封装好的能力接到本文件流程里。
 import { HookProgressMessage } from '../HookProgressMessage.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   message: NormalizedUserMessage;
   lookups: ReturnType<typeof buildMessageLookups>;
@@ -22,6 +35,7 @@ type Props = {
   width: number | string;
   isTranscriptMode?: boolean;
 };
+// UserToolSuccessMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function UserToolSuccessMessage({
   message,
   lookups,
@@ -34,22 +48,31 @@ export function UserToolSuccessMessage({
   width,
   isTranscriptMode
 }: Props): React.ReactNode {
+  // 从 `useTheme()` 按位置拆出 theme，让终端 UI 组件 User Tool Success Message分别处理这些返回值。
   const [theme] = useTheme();
   // Hook stays inside feature() ternary so external builds don't pay a
   // per-scrollback-message store subscription — same pattern as
   // UserPromptMessage.tsx.
+  // isBriefOnly记录 `feature` 是否成立，终端渲染随后按该结果分支。
   const isBriefOnly = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // useAppState 使用 s => s.isBriefOnly 完成终端渲染里的对应操作。
   useAppState(s => s.isBriefOnly) : false;
 
   // Capture classifier approval once on mount, then delete from Map to prevent linear growth.
   // useState lazy initializer ensures the value persists across re-renders.
+  // 这个回调绑定到 const [classifierRule] = React.useState(() => getClassifierApproval(toolUseID));，负责终端渲染在该局部场景下的响应。
   const [classifierRule] = React.useState(() => getClassifierApproval(toolUseID));
+  // 这个回调绑定到 const [yoloReason] = React.useState(() => getYoloClassifierApproval(toolUseID));，负责终端渲染在该局部场景下的响应。
   const [yoloReason] = React.useState(() => getYoloClassifierApproval(toolUseID));
+  // 调用 React.useEffect，触发终端渲染此处需要的副作用。
   React.useEffect(() => {
+    // 调用 deleteClassifierApproval，触发终端渲染此处需要的副作用。
     deleteClassifierApproval(toolUseID);
   }, [toolUseID]);
+  // 只有 `!message.toolUseResult || !tool` 满足时，终端渲染才执行该分支。
   if (!message.toolUseResult || !tool) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 
@@ -57,11 +80,16 @@ export function UserToolSuccessMessage({
   // validation (parseJSONL). A partial/corrupt/old-format result crashes
   // renderToolResultMessage on first field access (anthropics/claude-code#39817).
   // Validate against outputSchema before rendering — mirrors CollapsedReadSearchContent.
+  // parsedOutput保存`safeParse`，供终端渲染后续处理使用。
   const parsedOutput = tool.outputSchema?.safeParse(message.toolUseResult);
+  // 只有 `parsedOutput && !parsedOutput.success` 满足时，终端渲染才执行该分支。
   if (parsedOutput && !parsedOutput.success) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // toolResult解析`parsedOutput?.data ?? message.toolUseResult` 整理出中间结果，供终端 UI User Tool Success Me...后续步骤使用。
   const toolResult = parsedOutput?.data ?? message.toolUseResult;
+  // renderedMessage 消息数据筛选`filterToolProgressMessages`，供终端渲染后续处理使用。
   const renderedMessage = tool.renderToolResultMessage?.(toolResult as never, filterToolProgressMessages(progressMessagesForMessage), {
     style,
     theme,
@@ -73,7 +101,9 @@ export function UserToolSuccessMessage({
   }) ?? null;
 
   // Don't render anything if the tool result message is null
+  // 满足 `renderedMessage === null` 时，终端渲染执行该分支。
   if (renderedMessage === null) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 
@@ -81,7 +111,9 @@ export function UserToolSuccessMessage({
   // render like plain assistant text. Skip the tool-result width constraint
   // so MarkdownTable's SAFETY_MARGIN=4 (tuned for the assistant-text 2-col
   // dot gutter) holds — otherwise tables wrap their box-drawing chars.
+  // rendersAsAssistantText保存`tool.userFacingName`，供终端渲染后续处理使用。
   const rendersAsAssistantText = tool.userFacingName(undefined) === '';
+  // 返回 `<Box flexDirection="column">`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column">
       <Box flexDirection="column" width={rendersAsAssistantText ? undefined : width}>
         {renderedMessage}

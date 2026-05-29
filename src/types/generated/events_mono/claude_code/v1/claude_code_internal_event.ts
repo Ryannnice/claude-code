@@ -5,10 +5,13 @@
 // source: events_mono/claude_code/v1/claude_code_internal_event.proto
 
 /* eslint-disable */
+// 引入 Timestamp，将 ../../../google/protobuf/timestamp.js 中已经封装好的能力接到本文件流程里。
 import { Timestamp } from '../../../google/protobuf/timestamp.js'
+// 引入 PublicApiAuth，将 ../../common/v1/auth.js 中已经封装好的能力接到本文件流程里。
 import { PublicApiAuth } from '../../common/v1/auth.js'
 
 /** GitHubActionsMetadata contains GitHub Actions-specific environment information */
+// GitHubActionsMetadata 描述claude code internal event需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface GitHubActionsMetadata {
   actor_id?: string | undefined
   repository_id?: string | undefined
@@ -19,6 +22,7 @@ export interface GitHubActionsMetadata {
  * EnvironmentMetadata contains environment and runtime information
  * See claude-cli-internal/src/services/statsig.ts for the source of these fields
  */
+// EnvironmentMetadata 描述claude code internal event需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface EnvironmentMetadata {
   platform?: string | undefined
   node_version?: string | undefined
@@ -65,6 +69,7 @@ export interface EnvironmentMetadata {
  * Event-specific fields (errorType, durationMs, httpStatus, etc.) go in
  * ClaudeCodeInternalEvent.additional_metadata as JSON.
  */
+// SlackContext 描述claude code internal event需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface SlackContext {
   slack_team_id?: string | undefined
   is_enterprise_install?: boolean | undefined
@@ -77,6 +82,7 @@ export interface SlackContext {
  * This schema matches the structure in claude-cli-internal/src/services/statsig.ts
  * Source table: proj-product-data-nhme.raw_statsig_internal_tools.events
  */
+// ClaudeCodeInternalEvent 描述claude code internal event需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface ClaudeCodeInternalEvent {
   /** Event name (e.g., "tengu_binary_feedback", "tengu_api_success") */
   event_name?: string | undefined
@@ -129,12 +135,17 @@ export interface ClaudeCodeInternalEvent {
   marketplace_name?: string | undefined
 }
 
+// createBaseGitHubActionsMetadata 封装claude_code_internal_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createBaseGitHubActionsMetadata(): GitHubActionsMetadata {
+  // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
   return { actor_id: '', repository_id: '', repository_owner_id: '' }
 }
 
+// GitHubActionsMetadata 集中保存claude code internal event要一起传递的字段。
 export const GitHubActionsMetadata: MessageFns<GitHubActionsMetadata> = {
+  // fromJSON 使用 object: any 完成claude code internal event里的对应操作。
   fromJSON(object: any): GitHubActionsMetadata {
+    // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
     return {
       actor_id: isSet(object.actor_id)
         ? globalThis.String(object.actor_id)
@@ -148,37 +159,56 @@ export const GitHubActionsMetadata: MessageFns<GitHubActionsMetadata> = {
     }
   },
 
+  // toJSON 使用 message: GitHubActionsMetadata 完成claude code internal event里的对应操作。
   toJSON(message: GitHubActionsMetadata): unknown {
+    // obj 从空对象开始收集键值，后续按名称补齐内容。
     const obj: any = {}
+    // `message.actor_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.actor_id !== undefined) {
+      // actor_id更新为 `message.actor_id`，确保claude_code_internal_event后续读取最新状态。
       obj.actor_id = message.actor_id
     }
+    // `message.repository_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.repository_id !== undefined) {
+      // repository_id更新为 `message.repository_id`，确保claude_code_internal_event后续读取最新状态。
       obj.repository_id = message.repository_id
     }
+    // `message.repository_owner_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.repository_owner_id !== undefined) {
+      // repository_owner_id更新为 `message.repository_owner_id`，确保claude_code_internal_event后续读取最新状态。
       obj.repository_owner_id = message.repository_owner_id
     }
+    // 返回 `obj`，作为claude code internal event这次计算的结果。
     return obj
   },
 
+  // claude code internal event在这里处理 `create<I extends Exact<DeepPartial<GitHubActionsMetadata>, I>>(`，完成这一小步状态转换。
   create<I extends Exact<DeepPartial<GitHubActionsMetadata>, I>>(
     base?: I,
   ): GitHubActionsMetadata {
+    // 返回 `GitHubActionsMetadata.fromPartial(base ?? ({} as any))`，作为claude code internal event这次计算的结果。
     return GitHubActionsMetadata.fromPartial(base ?? ({} as any))
   },
+  // claude code internal event在这里处理 `fromPartial<I extends Exact<DeepPartial<GitHubActionsMetadata>, I>>(`，完成这一小步状态转换。
   fromPartial<I extends Exact<DeepPartial<GitHubActionsMetadata>, I>>(
     object: I,
   ): GitHubActionsMetadata {
+    // 消息构建`createBaseGitHubActionsMetadata`，供claude code internal event后续处理使用。
     const message = createBaseGitHubActionsMetadata()
+    // actor_id更新为 `object.actor_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.actor_id = object.actor_id ?? ''
+    // repository_id更新为 `object.repository_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.repository_id = object.repository_id ?? ''
+    // repository_owner_id更新为 `object.repository_owner_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.repository_owner_id = object.repository_owner_id ?? ''
+    // 返回 `message`，作为claude code internal event这次计算的结果。
     return message
   },
 }
 
+// createBaseEnvironmentMetadata 封装claude_code_internal_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createBaseEnvironmentMetadata(): EnvironmentMetadata {
+  // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
   return {
     platform: '',
     node_version: '',
@@ -218,8 +248,11 @@ function createBaseEnvironmentMetadata(): EnvironmentMetadata {
   }
 }
 
+// EnvironmentMetadata 集中保存claude code internal event要一起传递的字段。
 export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
+  // fromJSON 使用 object: any 完成claude code internal event里的对应操作。
   fromJSON(object: any): EnvironmentMetadata {
+    // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
     return {
       platform: isSet(object.platform)
         ? globalThis.String(object.platform)
@@ -287,6 +320,7 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
         ? globalThis.String(object.claude_code_remote_session_id)
         : '',
       tags: globalThis.Array.isArray(object?.tags)
+        // 这个回调绑定到 ? object.tags.map((e: any) => globalThis.String(e))，负责claude code internal event在该局部场景下的响应。
         ? object.tags.map((e: any) => globalThis.String(e))
         : [],
       deployment_environment: isSet(object.deployment_environment)
@@ -323,174 +357,289 @@ export const EnvironmentMetadata: MessageFns<EnvironmentMetadata> = {
     }
   },
 
+  // toJSON 使用 message: EnvironmentMetadata 完成claude code internal event里的对应操作。
   toJSON(message: EnvironmentMetadata): unknown {
+    // obj 从空对象开始收集键值，后续按名称补齐内容。
     const obj: any = {}
+    // `message.platform` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.platform !== undefined) {
+      // platform更新为 `message.platform`，确保claude_code_internal_event后续读取最新状态。
       obj.platform = message.platform
     }
+    // `message.node_version` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.node_version !== undefined) {
+      // node_version更新为 `message.node_version`，确保claude_code_internal_event后续读取最新状态。
       obj.node_version = message.node_version
     }
+    // `message.terminal` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.terminal !== undefined) {
+      // terminal更新为 `message.terminal`，确保claude_code_internal_event后续读取最新状态。
       obj.terminal = message.terminal
     }
+    // `message.package_managers` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.package_managers !== undefined) {
+      // package_managers 集合更新为 `message.package_managers`，确保claude_code_internal_event后续读取最新状态。
       obj.package_managers = message.package_managers
     }
+    // `message.runtimes` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.runtimes !== undefined) {
+      // runtimes 集合更新为 `message.runtimes`，确保claude_code_internal_event后续读取最新状态。
       obj.runtimes = message.runtimes
     }
+    // `message.is_running_with_bun` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_running_with_bun !== undefined) {
+      // is_running_with_bun更新为 `message.is_running_with_bun`，确保claude_code_internal_event后续读取最新状态。
       obj.is_running_with_bun = message.is_running_with_bun
     }
+    // `message.is_ci` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_ci !== undefined) {
+      // is_ci更新为 `message.is_ci`，确保claude_code_internal_event后续读取最新状态。
       obj.is_ci = message.is_ci
     }
+    // `message.is_claubbit` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_claubbit !== undefined) {
+      // is_claubbit更新为 `message.is_claubbit`，确保claude_code_internal_event后续读取最新状态。
       obj.is_claubbit = message.is_claubbit
     }
+    // `message.is_github_action` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_github_action !== undefined) {
+      // is_github_action更新为 `message.is_github_action`，确保claude_code_internal_event后续读取最新状态。
       obj.is_github_action = message.is_github_action
     }
+    // `message.is_claude_code_action` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_claude_code_action !== undefined) {
+      // is_claude_code_action更新为 `message.is_claude_code_action`，确保claude_code_internal_event后续读取最新状态。
       obj.is_claude_code_action = message.is_claude_code_action
     }
+    // `message.is_claude_ai_auth` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_claude_ai_auth !== undefined) {
+      // is_claude_ai_auth更新为 `message.is_claude_ai_auth`，确保claude_code_internal_event后续读取最新状态。
       obj.is_claude_ai_auth = message.is_claude_ai_auth
     }
+    // `message.version` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.version !== undefined) {
+      // version更新为 `message.version`，确保claude_code_internal_event后续读取最新状态。
       obj.version = message.version
     }
+    // `message.github_event_name` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.github_event_name !== undefined) {
+      // github_event_name更新为 `message.github_event_name`，确保claude_code_internal_event后续读取最新状态。
       obj.github_event_name = message.github_event_name
     }
+    // `message.github_actions_runner_environment` 与 `und` 不一致时刷新派生状态，避免使用过期结果。
     if (message.github_actions_runner_environment !== undefined) {
+      // claude code internal event在这里处理 `obj.github_actions_runner_environment =`，完成这一小步状态转换。
       obj.github_actions_runner_environment =
         message.github_actions_runner_environment
     }
+    // `message.github_actions_runner_os` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.github_actions_runner_os !== undefined) {
+      // github_actions_runner_os 集合更新为 `message.github_actions_runner_os`，确保claude_code_internal_event后续读取最新状态。
       obj.github_actions_runner_os = message.github_actions_runner_os
     }
+    // `message.github_action_ref` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.github_action_ref !== undefined) {
+      // github_action_ref 引用更新为 `message.github_action_ref`，确保claude_code_internal_event后续读取最新状态。
       obj.github_action_ref = message.github_action_ref
     }
+    // `message.wsl_version` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.wsl_version !== undefined) {
+      // wsl_version更新为 `message.wsl_version`，确保claude_code_internal_event后续读取最新状态。
       obj.wsl_version = message.wsl_version
     }
+    // `message.github_actions_metadata` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.github_actions_metadata !== undefined) {
+      // github_actions_metadata更新为 `GitHubActionsMetadata.toJSON(`，确保claude_code_internal_event后续读取最新状态。
       obj.github_actions_metadata = GitHubActionsMetadata.toJSON(
         message.github_actions_metadata,
       )
     }
+    // `message.arch` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.arch !== undefined) {
+      // arch更新为 `message.arch`，确保claude_code_internal_event后续读取最新状态。
       obj.arch = message.arch
     }
+    // `message.is_claude_code_remote` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_claude_code_remote !== undefined) {
+      // is_claude_code_remote更新为 `message.is_claude_code_remote`，确保claude_code_internal_event后续读取最新状态。
       obj.is_claude_code_remote = message.is_claude_code_remote
     }
+    // `message.remote_environment_type` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.remote_environment_type !== undefined) {
+      // remote_environment_type更新为 `message.remote_environment_type`，确保claude_code_internal_event后续读取最新状态。
       obj.remote_environment_type = message.remote_environment_type
     }
+    // `message.claude_code_container_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.claude_code_container_id !== undefined) {
+      // claude_code_container_id更新为 `message.claude_code_container_id`，确保claude_code_internal_event后续读取最新状态。
       obj.claude_code_container_id = message.claude_code_container_id
     }
+    // `message.claude_code_remote_session_id` 与 `undefin` 不一致时刷新派生状态，避免使用过期结果。
     if (message.claude_code_remote_session_id !== undefined) {
+      // claude_code_remote_session_id 会话数据更新为 `message.claude_code_remote_session_id`，确保claude_code_internal_event后续读取最新状态。
       obj.claude_code_remote_session_id = message.claude_code_remote_session_id
     }
+    // 满足 `message.tags?.length` 时，claude code internal event执行该分支。
     if (message.tags?.length) {
+      // tags 集合更新为 `message.tags`，确保claude_code_internal_event后续读取最新状态。
       obj.tags = message.tags
     }
+    // `message.deployment_environment` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.deployment_environment !== undefined) {
+      // deployment_environment更新为 `message.deployment_environment`，确保claude_code_internal_event后续读取最新状态。
       obj.deployment_environment = message.deployment_environment
     }
+    // `message.is_conductor` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_conductor !== undefined) {
+      // is_conductor更新为 `message.is_conductor`，确保claude_code_internal_event后续读取最新状态。
       obj.is_conductor = message.is_conductor
     }
+    // `message.version_base` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.version_base !== undefined) {
+      // version_base更新为 `message.version_base`，确保claude_code_internal_event后续读取最新状态。
       obj.version_base = message.version_base
     }
+    // `message.coworker_type` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.coworker_type !== undefined) {
+      // coworker_type更新为 `message.coworker_type`，确保claude_code_internal_event后续读取最新状态。
       obj.coworker_type = message.coworker_type
     }
+    // `message.build_time` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.build_time !== undefined) {
+      // build_time更新为 `message.build_time`，确保claude_code_internal_event后续读取最新状态。
       obj.build_time = message.build_time
     }
+    // `message.is_local_agent_mode` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_local_agent_mode !== undefined) {
+      // is_local_agent_mode更新为 `message.is_local_agent_mode`，确保claude_code_internal_event后续读取最新状态。
       obj.is_local_agent_mode = message.is_local_agent_mode
     }
+    // `message.linux_distro_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.linux_distro_id !== undefined) {
+      // linux_distro_id更新为 `message.linux_distro_id`，确保claude_code_internal_event后续读取最新状态。
       obj.linux_distro_id = message.linux_distro_id
     }
+    // `message.linux_distro_version` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.linux_distro_version !== undefined) {
+      // linux_distro_version更新为 `message.linux_distro_version`，确保claude_code_internal_event后续读取最新状态。
       obj.linux_distro_version = message.linux_distro_version
     }
+    // `message.linux_kernel` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.linux_kernel !== undefined) {
+      // linux_kernel更新为 `message.linux_kernel`，确保claude_code_internal_event后续读取最新状态。
       obj.linux_kernel = message.linux_kernel
     }
+    // `message.vcs` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.vcs !== undefined) {
+      // vcs 集合更新为 `message.vcs`，确保claude_code_internal_event后续读取最新状态。
       obj.vcs = message.vcs
     }
+    // `message.platform_raw` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.platform_raw !== undefined) {
+      // platform_raw更新为 `message.platform_raw`，确保claude_code_internal_event后续读取最新状态。
       obj.platform_raw = message.platform_raw
     }
+    // 返回 `obj`，作为claude code internal event这次计算的结果。
     return obj
   },
 
+  // claude code internal event在这里处理 `create<I extends Exact<DeepPartial<EnvironmentMetadata>, I>>(`，完成这一小步状态转换。
   create<I extends Exact<DeepPartial<EnvironmentMetadata>, I>>(
     base?: I,
   ): EnvironmentMetadata {
+    // 返回 `EnvironmentMetadata.fromPartial(base ?? ({} as any))`，作为claude code internal event这次计算的结果。
     return EnvironmentMetadata.fromPartial(base ?? ({} as any))
   },
+  // claude code internal event在这里处理 `fromPartial<I extends Exact<DeepPartial<EnvironmentMetadata>, I>>(`，完成这一小步状态转换。
   fromPartial<I extends Exact<DeepPartial<EnvironmentMetadata>, I>>(
     object: I,
   ): EnvironmentMetadata {
+    // 消息构建`createBaseEnvironmentMetadata`，供claude code internal event后续处理使用。
     const message = createBaseEnvironmentMetadata()
+    // platform更新为 `object.platform ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.platform = object.platform ?? ''
+    // node_version更新为 `object.node_version ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.node_version = object.node_version ?? ''
+    // terminal更新为 `object.terminal ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.terminal = object.terminal ?? ''
+    // package_managers 集合更新为 `object.package_managers ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.package_managers = object.package_managers ?? ''
+    // runtimes 集合更新为 `object.runtimes ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.runtimes = object.runtimes ?? ''
+    // is_running_with_bun更新为 `object.is_running_with_bun ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_running_with_bun = object.is_running_with_bun ?? false
+    // is_ci更新为 `object.is_ci ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_ci = object.is_ci ?? false
+    // is_claubbit更新为 `object.is_claubbit ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_claubbit = object.is_claubbit ?? false
+    // is_github_action更新为 `object.is_github_action ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_github_action = object.is_github_action ?? false
+    // is_claude_code_action更新为 `object.is_claude_code_action ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_claude_code_action = object.is_claude_code_action ?? false
+    // is_claude_ai_auth更新为 `object.is_claude_ai_auth ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_claude_ai_auth = object.is_claude_ai_auth ?? false
+    // version更新为 `object.version ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.version = object.version ?? ''
+    // github_event_name更新为 `object.github_event_name ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.github_event_name = object.github_event_name ?? ''
+    // claude code internal event在这里处理 `message.github_actions_runner_environment =`，完成这一小步状态转换。
     message.github_actions_runner_environment =
       object.github_actions_runner_environment ?? ''
+    // github_actions_runner_os 集合更新为 `object.github_actions_runner_os ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.github_actions_runner_os = object.github_actions_runner_os ?? ''
+    // github_action_ref 引用更新为 `object.github_action_ref ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.github_action_ref = object.github_action_ref ?? ''
+    // wsl_version更新为 `object.wsl_version ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.wsl_version = object.wsl_version ?? ''
+    // claude code internal event在这里处理 `message.github_actions_metadata =`，完成这一小步状态转换。
     message.github_actions_metadata =
       object.github_actions_metadata !== undefined &&
       object.github_actions_metadata !== null
         ? GitHubActionsMetadata.fromPartial(object.github_actions_metadata)
         : undefined
+    // arch更新为 `object.arch ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.arch = object.arch ?? ''
+    // is_claude_code_remote更新为 `object.is_claude_code_remote ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_claude_code_remote = object.is_claude_code_remote ?? false
+    // remote_environment_type更新为 `object.remote_environment_type ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.remote_environment_type = object.remote_environment_type ?? ''
+    // claude_code_container_id更新为 `object.claude_code_container_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.claude_code_container_id = object.claude_code_container_id ?? ''
+    // claude code internal event在这里处理 `message.claude_code_remote_session_id =`，完成这一小步状态转换。
     message.claude_code_remote_session_id =
       object.claude_code_remote_session_id ?? ''
+    // tags 集合更新为 `object.tags?.map(e => e) || []`，确保claude_code_internal_event后续读取最新状态。
     message.tags = object.tags?.map(e => e) || []
+    // deployment_environment更新为 `object.deployment_environment ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.deployment_environment = object.deployment_environment ?? ''
+    // is_conductor更新为 `object.is_conductor ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_conductor = object.is_conductor ?? false
+    // version_base更新为 `object.version_base ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.version_base = object.version_base ?? ''
+    // coworker_type更新为 `object.coworker_type ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.coworker_type = object.coworker_type ?? ''
+    // build_time更新为 `object.build_time ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.build_time = object.build_time ?? ''
+    // is_local_agent_mode更新为 `object.is_local_agent_mode ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_local_agent_mode = object.is_local_agent_mode ?? false
+    // linux_distro_id更新为 `object.linux_distro_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.linux_distro_id = object.linux_distro_id ?? ''
+    // linux_distro_version更新为 `object.linux_distro_version ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.linux_distro_version = object.linux_distro_version ?? ''
+    // linux_kernel更新为 `object.linux_kernel ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.linux_kernel = object.linux_kernel ?? ''
+    // vcs 集合更新为 `object.vcs ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.vcs = object.vcs ?? ''
+    // platform_raw更新为 `object.platform_raw ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.platform_raw = object.platform_raw ?? ''
+    // 返回 `message`，作为claude code internal event这次计算的结果。
     return message
   },
 }
 
+// createBaseSlackContext 封装claude_code_internal_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createBaseSlackContext(): SlackContext {
+  // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
   return {
     slack_team_id: '',
     is_enterprise_install: false,
@@ -499,8 +648,11 @@ function createBaseSlackContext(): SlackContext {
   }
 }
 
+// SlackContext 集中保存claude code internal event要一起传递的字段。
 export const SlackContext: MessageFns<SlackContext> = {
+  // fromJSON 使用 object: any 完成claude code internal event里的对应操作。
   fromJSON(object: any): SlackContext {
+    // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
     return {
       slack_team_id: isSet(object.slack_team_id)
         ? globalThis.String(object.slack_team_id)
@@ -515,41 +667,63 @@ export const SlackContext: MessageFns<SlackContext> = {
     }
   },
 
+  // toJSON 使用 message: SlackContext 完成claude code internal event里的对应操作。
   toJSON(message: SlackContext): unknown {
+    // obj 从空对象开始收集键值，后续按名称补齐内容。
     const obj: any = {}
+    // `message.slack_team_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.slack_team_id !== undefined) {
+      // slack_team_id更新为 `message.slack_team_id`，确保claude_code_internal_event后续读取最新状态。
       obj.slack_team_id = message.slack_team_id
     }
+    // `message.is_enterprise_install` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_enterprise_install !== undefined) {
+      // is_enterprise_install更新为 `message.is_enterprise_install`，确保claude_code_internal_event后续读取最新状态。
       obj.is_enterprise_install = message.is_enterprise_install
     }
+    // `message.trigger` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.trigger !== undefined) {
+      // trigger更新为 `message.trigger`，确保claude_code_internal_event后续读取最新状态。
       obj.trigger = message.trigger
     }
+    // `message.creation_method` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.creation_method !== undefined) {
+      // creation_method更新为 `message.creation_method`，确保claude_code_internal_event后续读取最新状态。
       obj.creation_method = message.creation_method
     }
+    // 返回 `obj`，作为claude code internal event这次计算的结果。
     return obj
   },
 
+  // claude code internal event在这里处理 `create<I extends Exact<DeepPartial<SlackContext>, I>>(`，完成这一小步状态转换。
   create<I extends Exact<DeepPartial<SlackContext>, I>>(
     base?: I,
   ): SlackContext {
+    // 返回 `SlackContext.fromPartial(base ?? ({} as any))`，作为claude code internal event这次计算的结果。
     return SlackContext.fromPartial(base ?? ({} as any))
   },
+  // claude code internal event在这里处理 `fromPartial<I extends Exact<DeepPartial<SlackContext>, I>>(`，完成这一小步状态转换。
   fromPartial<I extends Exact<DeepPartial<SlackContext>, I>>(
     object: I,
   ): SlackContext {
+    // 消息构建`createBaseSlackContext`，供claude code internal event后续处理使用。
     const message = createBaseSlackContext()
+    // slack_team_id更新为 `object.slack_team_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.slack_team_id = object.slack_team_id ?? ''
+    // is_enterprise_install更新为 `object.is_enterprise_install ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_enterprise_install = object.is_enterprise_install ?? false
+    // trigger更新为 `object.trigger ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.trigger = object.trigger ?? ''
+    // creation_method更新为 `object.creation_method ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.creation_method = object.creation_method ?? ''
+    // 返回 `message`，作为claude code internal event这次计算的结果。
     return message
   },
 }
 
+// createBaseClaudeCodeInternalEvent 封装claude_code_internal_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createBaseClaudeCodeInternalEvent(): ClaudeCodeInternalEvent {
+  // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
   return {
     event_name: '',
     client_timestamp: undefined,
@@ -583,8 +757,11 @@ function createBaseClaudeCodeInternalEvent(): ClaudeCodeInternalEvent {
   }
 }
 
+// ClaudeCodeInternalEvent 集中保存claude code internal event要一起传递的字段。
 export const ClaudeCodeInternalEvent: MessageFns<ClaudeCodeInternalEvent> = {
+  // fromJSON 使用 object: any 完成claude code internal event里的对应操作。
   fromJSON(object: any): ClaudeCodeInternalEvent {
+    // 返回结构化结果，集中表达claude code internal event已经整理出的状态。
     return {
       event_name: isSet(object.event_name)
         ? globalThis.String(object.event_name)
@@ -668,149 +845,245 @@ export const ClaudeCodeInternalEvent: MessageFns<ClaudeCodeInternalEvent> = {
     }
   },
 
+  // toJSON 使用 message: ClaudeCodeInternalEvent 完成claude code internal event里的对应操作。
   toJSON(message: ClaudeCodeInternalEvent): unknown {
+    // obj 从空对象开始收集键值，后续按名称补齐内容。
     const obj: any = {}
+    // `message.event_name` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.event_name !== undefined) {
+      // event_name更新为 `message.event_name`，确保claude_code_internal_event后续读取最新状态。
       obj.event_name = message.event_name
     }
+    // `message.client_timestamp` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.client_timestamp !== undefined) {
+      // client_timestamp更新为 `message.client_timestamp.toISOString()`，确保claude_code_internal_event后续读取最新状态。
       obj.client_timestamp = message.client_timestamp.toISOString()
     }
+    // `message.model` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.model !== undefined) {
+      // 模型名称更新为 `message.model`，确保claude_code_internal_event后续读取最新状态。
       obj.model = message.model
     }
+    // `message.session_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.session_id !== undefined) {
+      // session_id 会话数据更新为 `message.session_id`，确保claude_code_internal_event后续读取最新状态。
       obj.session_id = message.session_id
     }
+    // `message.user_type` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.user_type !== undefined) {
+      // user_type更新为 `message.user_type`，确保claude_code_internal_event后续读取最新状态。
       obj.user_type = message.user_type
     }
+    // `message.betas` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.betas !== undefined) {
+      // betas 集合更新为 `message.betas`，确保claude_code_internal_event后续读取最新状态。
       obj.betas = message.betas
     }
+    // `message.env` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.env !== undefined) {
+      // env更新为 `EnvironmentMetadata.toJSON(message.env)`，确保claude_code_internal_event后续读取最新状态。
       obj.env = EnvironmentMetadata.toJSON(message.env)
     }
+    // `message.entrypoint` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.entrypoint !== undefined) {
+      // entrypoint更新为 `message.entrypoint`，确保claude_code_internal_event后续读取最新状态。
       obj.entrypoint = message.entrypoint
     }
+    // `message.agent_sdk_version` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.agent_sdk_version !== undefined) {
+      // agent_sdk_version更新为 `message.agent_sdk_version`，确保claude_code_internal_event后续读取最新状态。
       obj.agent_sdk_version = message.agent_sdk_version
     }
+    // `message.is_interactive` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.is_interactive !== undefined) {
+      // is_interactive更新为 `message.is_interactive`，确保claude_code_internal_event后续读取最新状态。
       obj.is_interactive = message.is_interactive
     }
+    // `message.client_type` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.client_type !== undefined) {
+      // client_type更新为 `message.client_type`，确保claude_code_internal_event后续读取最新状态。
       obj.client_type = message.client_type
     }
+    // `message.process` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.process !== undefined) {
+      // process 集合更新为 `message.process`，确保claude_code_internal_event后续读取最新状态。
       obj.process = message.process
     }
+    // `message.additional_metadata` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.additional_metadata !== undefined) {
+      // additional_metadata更新为 `message.additional_metadata`，确保claude_code_internal_event后续读取最新状态。
       obj.additional_metadata = message.additional_metadata
     }
+    // `message.auth` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.auth !== undefined) {
+      // auth更新为 `PublicApiAuth.toJSON(message.auth)`，确保claude_code_internal_event后续读取最新状态。
       obj.auth = PublicApiAuth.toJSON(message.auth)
     }
+    // `message.server_timestamp` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.server_timestamp !== undefined) {
+      // server_timestamp更新为 `message.server_timestamp.toISOString()`，确保claude_code_internal_event后续读取最新状态。
       obj.server_timestamp = message.server_timestamp.toISOString()
     }
+    // `message.event_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.event_id !== undefined) {
+      // event_id更新为 `message.event_id`，确保claude_code_internal_event后续读取最新状态。
       obj.event_id = message.event_id
     }
+    // `message.device_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.device_id !== undefined) {
+      // device_id更新为 `message.device_id`，确保claude_code_internal_event后续读取最新状态。
       obj.device_id = message.device_id
     }
+    // `message.swe_bench_run_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.swe_bench_run_id !== undefined) {
+      // swe_bench_run_id更新为 `message.swe_bench_run_id`，确保claude_code_internal_event后续读取最新状态。
       obj.swe_bench_run_id = message.swe_bench_run_id
     }
+    // `message.swe_bench_instance_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.swe_bench_instance_id !== undefined) {
+      // swe_bench_instance_id更新为 `message.swe_bench_instance_id`，确保claude_code_internal_event后续读取最新状态。
       obj.swe_bench_instance_id = message.swe_bench_instance_id
     }
+    // `message.swe_bench_task_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.swe_bench_task_id !== undefined) {
+      // swe_bench_task_id更新为 `message.swe_bench_task_id`，确保claude_code_internal_event后续读取最新状态。
       obj.swe_bench_task_id = message.swe_bench_task_id
     }
+    // `message.email` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.email !== undefined) {
+      // email更新为 `message.email`，确保claude_code_internal_event后续读取最新状态。
       obj.email = message.email
     }
+    // `message.agent_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.agent_id !== undefined) {
+      // agent_id更新为 `message.agent_id`，确保claude_code_internal_event后续读取最新状态。
       obj.agent_id = message.agent_id
     }
+    // `message.parent_session_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.parent_session_id !== undefined) {
+      // parent_session_id 会话数据更新为 `message.parent_session_id`，确保claude_code_internal_event后续读取最新状态。
       obj.parent_session_id = message.parent_session_id
     }
+    // `message.agent_type` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.agent_type !== undefined) {
+      // agent_type更新为 `message.agent_type`，确保claude_code_internal_event后续读取最新状态。
       obj.agent_type = message.agent_type
     }
+    // `message.slack` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.slack !== undefined) {
+      // slack更新为 `SlackContext.toJSON(message.slack)`，确保claude_code_internal_event后续读取最新状态。
       obj.slack = SlackContext.toJSON(message.slack)
     }
+    // `message.team_name` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.team_name !== undefined) {
+      // team_name更新为 `message.team_name`，确保claude_code_internal_event后续读取最新状态。
       obj.team_name = message.team_name
     }
+    // `message.skill_name` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.skill_name !== undefined) {
+      // skill_name更新为 `message.skill_name`，确保claude_code_internal_event后续读取最新状态。
       obj.skill_name = message.skill_name
     }
+    // `message.plugin_name` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.plugin_name !== undefined) {
+      // plugin_name 插件数据更新为 `message.plugin_name`，确保claude_code_internal_event后续读取最新状态。
       obj.plugin_name = message.plugin_name
     }
+    // `message.marketplace_name` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.marketplace_name !== undefined) {
+      // marketplace_name 市场数据更新为 `message.marketplace_name`，确保claude_code_internal_event后续读取最新状态。
       obj.marketplace_name = message.marketplace_name
     }
+    // 返回 `obj`，作为claude code internal event这次计算的结果。
     return obj
   },
 
+  // claude code internal event在这里处理 `create<I extends Exact<DeepPartial<ClaudeCodeInternalEvent>, I>>(`，完成这一小步状态转换。
   create<I extends Exact<DeepPartial<ClaudeCodeInternalEvent>, I>>(
     base?: I,
   ): ClaudeCodeInternalEvent {
+    // 返回 `ClaudeCodeInternalEvent.fromPartial(base ?? ({} as any))`，作为claude code internal event这次计算的结果。
     return ClaudeCodeInternalEvent.fromPartial(base ?? ({} as any))
   },
+  // claude code internal event在这里处理 `fromPartial<I extends Exact<DeepPartial<ClaudeCodeInternalEvent>, I>>(`，完成这一小步状态转换。
   fromPartial<I extends Exact<DeepPartial<ClaudeCodeInternalEvent>, I>>(
     object: I,
   ): ClaudeCodeInternalEvent {
+    // 消息构建`createBaseClaudeCodeInternalEvent`，供claude code internal event后续处理使用。
     const message = createBaseClaudeCodeInternalEvent()
+    // event_name更新为 `object.event_name ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.event_name = object.event_name ?? ''
+    // client_timestamp更新为 `object.client_timestamp ?? undefined`，确保claude_code_internal_event后续读取最新状态。
     message.client_timestamp = object.client_timestamp ?? undefined
+    // 模型名称更新为 `object.model ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.model = object.model ?? ''
+    // session_id 会话数据更新为 `object.session_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.session_id = object.session_id ?? ''
+    // user_type更新为 `object.user_type ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.user_type = object.user_type ?? ''
+    // betas 集合更新为 `object.betas ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.betas = object.betas ?? ''
+    // claude code internal event在这里处理 `message.env =`，完成这一小步状态转换。
     message.env =
       object.env !== undefined && object.env !== null
         ? EnvironmentMetadata.fromPartial(object.env)
         : undefined
+    // entrypoint更新为 `object.entrypoint ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.entrypoint = object.entrypoint ?? ''
+    // agent_sdk_version更新为 `object.agent_sdk_version ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.agent_sdk_version = object.agent_sdk_version ?? ''
+    // is_interactive更新为 `object.is_interactive ?? false`，确保claude_code_internal_event后续读取最新状态。
     message.is_interactive = object.is_interactive ?? false
+    // client_type更新为 `object.client_type ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.client_type = object.client_type ?? ''
+    // process 集合更新为 `object.process ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.process = object.process ?? ''
+    // additional_metadata更新为 `object.additional_metadata ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.additional_metadata = object.additional_metadata ?? ''
+    // claude code internal event在这里处理 `message.auth =`，完成这一小步状态转换。
     message.auth =
       object.auth !== undefined && object.auth !== null
         ? PublicApiAuth.fromPartial(object.auth)
         : undefined
+    // server_timestamp更新为 `object.server_timestamp ?? undefined`，确保claude_code_internal_event后续读取最新状态。
     message.server_timestamp = object.server_timestamp ?? undefined
+    // event_id更新为 `object.event_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.event_id = object.event_id ?? ''
+    // device_id更新为 `object.device_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.device_id = object.device_id ?? ''
+    // swe_bench_run_id更新为 `object.swe_bench_run_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.swe_bench_run_id = object.swe_bench_run_id ?? ''
+    // swe_bench_instance_id更新为 `object.swe_bench_instance_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.swe_bench_instance_id = object.swe_bench_instance_id ?? ''
+    // swe_bench_task_id更新为 `object.swe_bench_task_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.swe_bench_task_id = object.swe_bench_task_id ?? ''
+    // email更新为 `object.email ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.email = object.email ?? ''
+    // agent_id更新为 `object.agent_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.agent_id = object.agent_id ?? ''
+    // parent_session_id 会话数据更新为 `object.parent_session_id ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.parent_session_id = object.parent_session_id ?? ''
+    // agent_type更新为 `object.agent_type ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.agent_type = object.agent_type ?? ''
+    // claude code internal event在这里处理 `message.slack =`，完成这一小步状态转换。
     message.slack =
       object.slack !== undefined && object.slack !== null
         ? SlackContext.fromPartial(object.slack)
         : undefined
+    // team_name更新为 `object.team_name ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.team_name = object.team_name ?? ''
+    // skill_name更新为 `object.skill_name ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.skill_name = object.skill_name ?? ''
+    // plugin_name 插件数据更新为 `object.plugin_name ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.plugin_name = object.plugin_name ?? ''
+    // marketplace_name 市场数据更新为 `object.marketplace_name ?? ''`，确保claude_code_internal_event后续读取最新状态。
     message.marketplace_name = object.marketplace_name ?? ''
+    // 返回 `message`，作为claude code internal event这次计算的结果。
     return message
   },
 }
 
+// Builtin 固化claude code internal event里传递的数据形状，帮助调用方按同一结构读写字段。
 type Builtin =
   | Date
   | Function
@@ -820,6 +1093,7 @@ type Builtin =
   | boolean
   | undefined
 
+// DeepPartial 固化claude code internal event里传递的数据形状，帮助调用方按同一结构读写字段。
 type DeepPartial<T> = T extends Builtin
   ? T
   : T extends globalThis.Array<infer U>
@@ -830,33 +1104,48 @@ type DeepPartial<T> = T extends Builtin
         ? { [K in keyof T]?: DeepPartial<T[K]> }
         : Partial<T>
 
+// KeysOfUnion 固化claude code internal event里传递的数据形状，帮助调用方按同一结构读写字段。
 type KeysOfUnion<T> = T extends T ? keyof T : never
+// Exact 固化claude code internal event里传递的数据形状，帮助调用方按同一结构读写字段。
 type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
+// fromTimestamp 封装claude_code_internal_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function fromTimestamp(t: Timestamp): Date {
+  // millis 集合标记claude code internal event是否启用对应路径。
   let millis = (t.seconds || 0) * 1_000
+  // claude code internal event在这里处理 `millis += (t.nanos || 0) / 1_000_000`，完成这一小步状态转换。
   millis += (t.nanos || 0) / 1_000_000
+  // 返回 `new globalThis.Date(millis)`，作为claude code internal event这次计算的结果。
   return new globalThis.Date(millis)
 }
 
+// fromJsonTimestamp 封装claude_code_internal_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function fromJsonTimestamp(o: any): Date {
+  // 满足 `o instanceof globalThis.Date` 时，claude code internal event执行该分支。
   if (o instanceof globalThis.Date) {
+    // 返回 `o`，作为claude code internal event这次计算的结果。
     return o
+  // claude code internal event在这里处理 `} else if (typeof o === 'string') {`，完成这一小步状态转换。
   } else if (typeof o === 'string') {
+    // 返回 `new globalThis.Date(o)`，作为claude code internal event这次计算的结果。
     return new globalThis.Date(o)
   } else {
+    // 返回 `fromTimestamp(Timestamp.fromJSON(o))`，作为claude code internal event这次计算的结果。
     return fromTimestamp(Timestamp.fromJSON(o))
   }
 }
 
+// isSet 封装claude_code_internal_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isSet(value: any): boolean {
+  // 返回 `value !== null && value !== undefined`，作为claude code internal event这次计算的结果。
   return value !== null && value !== undefined
 }
 
+// MessageFns 描述claude code internal event需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface MessageFns<T> {
   fromJSON(object: any): T
   toJSON(message: T): unknown

@@ -9,12 +9,14 @@
  * - outputLimits are in outputLimits.ts
  */
 
+// 引入 getPlatform，将 ../platform.js 中已经封装好的能力接到本文件流程里。
 import { getPlatform } from '../platform.js'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
+// FlagArgType 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type FlagArgType =
   | 'none' // No argument (--color, -n)
   | 'number' // Integer argument (--context=3)
@@ -23,6 +25,7 @@ export type FlagArgType =
   | '{}' // Literal "{}" only
   | 'EOF' // Literal "EOF" only
 
+// ExternalCommandConfig 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ExternalCommandConfig = {
   safeFlags: Record<string, FlagArgType>
   // Returns true if the command is dangerous, false if safe.
@@ -41,6 +44,7 @@ export type ExternalCommandConfig = {
 // Shared git flag groups
 // ---------------------------------------------------------------------------
 
+// GIT_REF_SELECTION_FLAGS 集合 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_REF_SELECTION_FLAGS: Record<string, FlagArgType> = {
   '--all': 'none',
   '--branches': 'none',
@@ -48,6 +52,7 @@ const GIT_REF_SELECTION_FLAGS: Record<string, FlagArgType> = {
   '--remotes': 'none',
 }
 
+// GIT_DATE_FILTER_FLAGS 集合 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_DATE_FILTER_FLAGS: Record<string, FlagArgType> = {
   '--since': 'string',
   '--after': 'string',
@@ -55,6 +60,7 @@ const GIT_DATE_FILTER_FLAGS: Record<string, FlagArgType> = {
   '--before': 'string',
 }
 
+// GIT_LOG_DISPLAY_FLAGS 集合 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_LOG_DISPLAY_FLAGS: Record<string, FlagArgType> = {
   '--oneline': 'none',
   '--graph': 'none',
@@ -64,12 +70,14 @@ const GIT_LOG_DISPLAY_FLAGS: Record<string, FlagArgType> = {
   '--relative-date': 'none',
 }
 
+// GIT_COUNT_FLAGS 数量 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_COUNT_FLAGS: Record<string, FlagArgType> = {
   '--max-count': 'number',
   '-n': 'number',
 }
 
 // Stat output flags - used in git log, show, diff
+// GIT_STAT_FLAGS 集合 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_STAT_FLAGS: Record<string, FlagArgType> = {
   '--stat': 'none',
   '--numstat': 'none',
@@ -79,12 +87,14 @@ const GIT_STAT_FLAGS: Record<string, FlagArgType> = {
 }
 
 // Color output flags - used in git log, show, diff
+// GIT_COLOR_FLAGS 集合 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_COLOR_FLAGS: Record<string, FlagArgType> = {
   '--color': 'none',
   '--no-color': 'none',
 }
 
 // Patch display flags - used in git log, show
+// GIT_PATCH_FLAGS 集合 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_PATCH_FLAGS: Record<string, FlagArgType> = {
   '--patch': 'none',
   '-p': 'none',
@@ -94,6 +104,7 @@ const GIT_PATCH_FLAGS: Record<string, FlagArgType> = {
 }
 
 // Author/committer filter flags - used in git log, reflog
+// GIT_AUTHOR_FILTER_FLAGS 集合 集中保存共享工具 read Only Command Validation要一起传递的字段。
 const GIT_AUTHOR_FILTER_FLAGS: Record<string, FlagArgType> = {
   '--author': 'string',
   '--committer': 'string',
@@ -104,6 +115,7 @@ const GIT_AUTHOR_FILTER_FLAGS: Record<string, FlagArgType> = {
 // GIT_READ_ONLY_COMMANDS — complete map of all git subcommands
 // ---------------------------------------------------------------------------
 
+// GIT_READ_ONLY_COMMANDS 命令数据 集中保存共享工具 read Only Command Validation要一起传递的字段。
 export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
   'git diff': {
     safeFlags: {
@@ -280,6 +292,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     // writes. Only `git reflog` (bare = show) and `git reflog show` are safe.
     // The positional-arg fallthrough at ~:1730 would otherwise accept `expire`
     // as a non-flag arg, and `--all` is in GIT_REF_SELECTION_FLAGS → passes.
+    // 共享工具 read Only Command Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
@@ -288,17 +301,24 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       // Allow: `show`, ref names (HEAD, refs/*, branch names).
       // The subcommand (if any) is the first positional arg. Subsequent
       // positionals after `show` or after flags are ref names (safe).
+      // DANGEROUS_SUBCOMMANDS 命令数据保存`Set`，供共享工具后续处理使用。
       const DANGEROUS_SUBCOMMANDS = new Set(['expire', 'delete', 'exists'])
+      // 按顺序遍历 `args` 中的token，逐个交给共享工具处理。
       for (const token of args) {
+        // 只有 `!token || token.startsWith('-')` 满足时，共享工具才执行该分支。
         if (!token || token.startsWith('-')) continue
         // First non-flag positional: check if it's a dangerous subcommand.
         // If it's `show` or a ref name like `HEAD`/`refs/...`, safe.
+        // 满足 `DANGEROUS_SUBCOMMANDS.has(token)` 时，共享工具执行该分支。
         if (DANGEROUS_SUBCOMMANDS.has(token)) {
+          // 返回 `true // Dangerous subcommand — writes to .git/logs/**`，作为共享工具这次计算的结果。
           return true // Dangerous subcommand — writes to .git/logs/**
         }
         // First positional is safe (show/HEAD/ref) — subsequent are ref args
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
+      // 返回 `false // No positional = bare `git reflog` = safe (shows reflog)`，作为共享工具这次计算的结果。
       return false // No positional = bare `git reflog` = safe (shows reflog)
     },
   },
@@ -475,14 +495,18 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '-n': 'none',
     },
     // Only allow optional -n, then one alphanumeric remote name
+    // 共享工具 read Only Command Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
     ) => {
       // Filter out the known safe flag
+      // 位置参数筛选`args.filter`，供共享工具后续处理使用。
       const positional = args.filter(a => a !== '-n')
       // Must have exactly one positional arg that looks like a remote name
+      // `positional.length` 与 `1` 不一致时刷新派生状态，避免使用过期结果。
       if (positional.length !== 1) return true
+      // 返回 `!/^[a-zA-Z0-9_-]+$/.test(positional[0]!)`，作为共享工具这次计算的结果。
       return !/^[a-zA-Z0-9_-]+$/.test(positional[0]!)
     },
   },
@@ -492,11 +516,13 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--verbose': 'none',
     },
     // Only allow bare 'git remote' or 'git remote -v/--verbose'
+    // 共享工具 read Only Command Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
     ) => {
       // All args must be known safe flags; no positional args allowed
+      // 返回 `args.some(a => a !== '-v' && a !== '--verbose')`，作为共享工具这次计算的结果。
       return args.some(a => a !== '-v' && a !== '--verbose')
     },
   },
@@ -736,6 +762,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     // to .git/refs/tags/, content is fixed HEAD SHA), it violates the
     // read-only invariant and can pollute CI/CD tag-pattern matching or make
     // abandoned commits reachable via `git tag foo <commit>`.
+    // 共享工具 read Only Command Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
@@ -743,6 +770,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       // Safe uses: `git tag` (list), `git tag -l pattern` (list filtered),
       // `git tag --contains <ref>` (list containing). A bare positional arg
       // without -l/--list is a tag name to CREATE — dangerous.
+      // flagsWithArgs 集合保存`Set`，供共享工具后续处理使用。
       const flagsWithArgs = new Set([
         '--contains',
         '--no-contains',
@@ -753,28 +781,44 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
         '--format',
         '-n',
       ])
+      // i保存`0`，供后续判断或组装使用。
       let i = 0
+      // seenListFlag 集合标记共享工具 read Only Command Valida...是否启用对应路径。
       let seenListFlag = false
+      // seenDashDash标记共享工具 read Only Command Valida...是否启用对应路径。
       let seenDashDash = false
+      // while 使用 i < args.length 完成共享工具里的对应操作。
       while (i < args.length) {
+        // token读取 `args[i]` 对应条目，后续围绕该成员继续处理。
         const token = args[i]
+        // token缺失时直接走兜底路径，避免共享工具使用无效输入。
         if (!token) {
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+          // 跳过当前项，继续处理共享工具中的下一轮循环。
           continue
         }
         // `--` ends flag parsing. All subsequent tokens are positional args,
         // even if they start with `-`. `git tag -- -l` CREATES a tag named `-l`.
+        // 只有 `token === '--' && !seenDashDash` 满足时，共享工具才执行该分支。
         if (token === '--' && !seenDashDash) {
+          // seenDashDash更新为 `true`，确保共享工具后续读取最新状态。
           seenDashDash = true
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+          // 跳过当前项，继续处理共享工具中的下一轮循环。
           continue
         }
+        // 只有 `!seenDashDash && token.startsWith('-')` 满足时，共享工具才执行该分支。
         if (!seenDashDash && token.startsWith('-')) {
           // Check for -l/--list (exact or in a bundle). `-li` bundles -l and
           // -i — both 'none' type. Array.includes('-l') exact-matches, missing
           // bundles like `-li`, `-il`. Check individual chars for short bundles.
+          // 当 `token` 匹配 `'--list' || token === '-l'` 时，共享工具执行对应分支。
           if (token === '--list' || token === '-l') {
+            // seenListFlag 集合更新为 `true`，确保共享工具后续读取最新状态。
             seenListFlag = true
+          // 共享工具 read Only Command Validation在这里处理 `} else if (`，完成这一小步状态转换。
           } else if (
             token[0] === '-' &&
             token[1] !== '-' &&
@@ -783,24 +827,34 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
             token.slice(1).includes('l')
           ) {
             // Short-flag bundle like -li, -il containing 'l'
+            // seenListFlag 集合更新为 `true`，确保共享工具后续读取最新状态。
             seenListFlag = true
           }
+          // 满足 `token.includes('=')` 时，共享工具执行该分支。
           if (token.includes('=')) {
+            // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
             i++
+          // 共享工具 read Only Command Validation在这里处理 `} else if (flagsWithArgs.has(token)) {`，完成这一小步状态转换。
           } else if (flagsWithArgs.has(token)) {
+            // 共享工具 read Only Command Validation在这里处理 `i += 2`，完成这一小步状态转换。
             i += 2
           } else {
+            // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
             i++
           }
         } else {
           // Non-flag positional arg (or post-`--` positional). Safe only if
           // preceded by -l/--list (then it's a pattern, not a tag name).
+          // seenListFlag 集合缺失时直接走兜底路径，避免共享工具使用无效输入。
           if (!seenListFlag) {
+            // 返回 `true // Positional arg without --list = tag creation`，作为共享工具这次计算的结果。
             return true // Positional arg without --list = tag creation
           }
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
         }
       }
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     },
   },
@@ -848,6 +902,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     // Block branch creation via positional arguments (e.g., "git branch newbranch")
     // Flag validation is handled by safeFlags above
     // args is tokens after "git branch"
+    // 共享工具 read Only Command Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
@@ -856,6 +911,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       // Only safe uses are: "git branch" (list), "git branch -flags" (list with options),
       // or "git branch --contains/--merged/etc <ref>" (filtering)
       // Flags that require an argument
+      // flagsWithArgs 集合保存`Set`，供共享工具后续处理使用。
       const flagsWithArgs = new Set([
         '--contains',
         '--no-contains',
@@ -864,28 +920,47 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
         // --abbrev REMOVED: git does NOT consume detached arg (PARSE_OPT_OPTARG)
       ])
       // Flags with optional arguments (don't require, but can take one)
+      // flagsWithOptionalArgs 集合保存`Set`，供共享工具后续处理使用。
       const flagsWithOptionalArgs = new Set(['--merged', '--no-merged'])
+      // i保存`0`，供后续判断或组装使用。
       let i = 0
+      // lastFlag保存`''`，作为后续固定文本处理的输入。
       let lastFlag = ''
+      // seenListFlag 集合标记共享工具 read Only Command Valida...是否启用对应路径。
       let seenListFlag = false
+      // seenDashDash标记共享工具 read Only Command Valida...是否启用对应路径。
       let seenDashDash = false
+      // while 使用 i < args.length 完成共享工具里的对应操作。
       while (i < args.length) {
+        // token读取 `args[i]` 对应条目，后续围绕该成员继续处理。
         const token = args[i]
+        // token缺失时直接走兜底路径，避免共享工具使用无效输入。
         if (!token) {
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+          // 跳过当前项，继续处理共享工具中的下一轮循环。
           continue
         }
         // `--` ends flag parsing. `git branch -- -l` CREATES a branch named `-l`.
+        // 只有 `token === '--' && !seenDashDash` 满足时，共享工具才执行该分支。
         if (token === '--' && !seenDashDash) {
+          // seenDashDash更新为 `true`，确保共享工具后续读取最新状态。
           seenDashDash = true
+          // lastFlag更新为 `''`，确保共享工具后续读取最新状态。
           lastFlag = ''
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+          // 跳过当前项，继续处理共享工具中的下一轮循环。
           continue
         }
+        // 只有 `!seenDashDash && token.startsWith('-')` 满足时，共享工具才执行该分支。
         if (!seenDashDash && token.startsWith('-')) {
           // Check for -l/--list including short-flag bundles (-li, -la, etc.)
+          // 当 `token` 匹配 `'--list' || token === '-l'` 时，共享工具执行对应分支。
           if (token === '--list' || token === '-l') {
+            // seenListFlag 集合更新为 `true`，确保共享工具后续读取最新状态。
             seenListFlag = true
+          // 共享工具 read Only Command Validation在这里处理 `} else if (`，完成这一小步状态转换。
           } else if (
             token[0] === '-' &&
             token[1] !== '-' &&
@@ -893,16 +968,25 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
             !token.includes('=') &&
             token.slice(1).includes('l')
           ) {
+            // seenListFlag 集合更新为 `true`，确保共享工具后续读取最新状态。
             seenListFlag = true
           }
+          // 满足 `token.includes('=')` 时，共享工具执行该分支。
           if (token.includes('=')) {
+            // lastFlag更新为 `token.split('=')[0] || ''`，确保共享工具后续读取最新状态。
             lastFlag = token.split('=')[0] || ''
+            // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
             i++
+          // 共享工具 read Only Command Validation在这里处理 `} else if (flagsWithArgs.has(token)) {`，完成这一小步状态转换。
           } else if (flagsWithArgs.has(token)) {
+            // lastFlag更新为 `token`，确保共享工具后续读取最新状态。
             lastFlag = token
+            // 共享工具 read Only Command Validation在这里处理 `i += 2`，完成这一小步状态转换。
             i += 2
           } else {
+            // lastFlag更新为 `token`，确保共享工具后续读取最新状态。
             lastFlag = token
+            // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
             i++
           }
         } else {
@@ -910,13 +994,18 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
           // 1. A branch name (dangerous - creates a branch)
           // 2. A pattern after --list/-l (safe)
           // 3. An optional argument after --merged/--no-merged (safe)
+          // lastFlagHasOptionalArg保存`flagsWithOptionalArgs.has`，供共享工具后续处理使用。
           const lastFlagHasOptionalArg = flagsWithOptionalArgs.has(lastFlag)
+          // 只有 `!seenListFlag && !lastFlagHasOptionalArg` 满足时，共享工具才执行该分支。
           if (!seenListFlag && !lastFlagHasOptionalArg) {
+            // 返回 `true // Positional arg without --list or filtering flag = branch creati...`，作为共享工具这次计算的结果。
             return true // Positional arg without --list or filtering flag = branch creation
           }
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
         }
       }
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     },
   },
@@ -941,46 +1030,66 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
 //   - Any token with `@` (SSH-style)
 // This covers BOTH --repo values AND positional URL/repo arguments, INCLUDING
 // the equals-attached form `--repo=HOST/OWNER/REPO` (cobra accepts both forms).
+// ghIsDangerousCallback 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ghIsDangerousCallback(_rawCommand: string, args: string[]): boolean {
+  // 按顺序遍历 `args` 中的token，逐个交给共享工具处理。
   for (const token of args) {
+    // token缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!token) continue
     // For flag tokens, extract the VALUE after `=` for inspection. Without this,
     // `--repo=evil.com/SECRET/x` (single token starting with `-`) gets skipped
     // entirely, bypassing the HOST check. Cobra treats `--flag=val` identically
     // to `--flag val`; we must inspect both forms.
+    // 取值保存`token`，供共享工具 read Only Command Valida...后续判断或输出使用。
     let value = token
+    // 满足 `token.startsWith('-')` 时，共享工具执行该分支。
     if (token.startsWith('-')) {
+      // eqIdx保存`token.indexOf`，供共享工具后续处理使用。
       const eqIdx = token.indexOf('=')
+      // 满足 `eqIdx === -1` 时，共享工具执行该分支。
       if (eqIdx === -1) continue // flag without inline value, nothing to inspect
+      // 取值更新为 `token.slice(eqIdx + 1)`，确保共享工具后续读取最新状态。
       value = token.slice(eqIdx + 1)
+      // 取值缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!value) continue
     }
     // Skip values that are clearly not repo specs (no `/` at all, or pure numbers)
+    // 共享工具在这里按实际状态进入对应分支。
     if (
       !value.includes('/') &&
       !value.includes('://') &&
       !value.includes('@')
     ) {
+      // 跳过当前项，继续处理共享工具中的下一轮循环。
       continue
     }
     // URL schemes: https://, http://, git://, ssh://
+    // 满足 `value.includes('://')` 时，共享工具执行该分支。
     if (value.includes('://')) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
     }
     // SSH-style: git@host:owner/repo
+    // 满足 `value.includes('@')` 时，共享工具执行该分支。
     if (value.includes('@')) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
     }
     // 3+ segments = HOST/OWNER/REPO (normal gh format is OWNER/REPO, 1 slash)
     // Count slashes: 2+ slashes means 3+ segments
+    // slashCount 数量匹配`value.match`，供共享工具后续处理使用。
     const slashCount = (value.match(/\//g) || []).length
+    // 满足 `slashCount >= 2` 时，共享工具执行该分支。
     if (slashCount >= 2) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
     }
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
+// GH_READ_ONLY_COMMANDS 命令数据 集中保存共享工具 read Only Command Validation要一起传递的字段。
 export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
   // gh pr view is read-only — displays pull request details
   'gh pr view': {
@@ -1383,6 +1492,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
 // DOCKER_READ_ONLY_COMMANDS — docker inspect/logs read-only commands
 // ---------------------------------------------------------------------------
 
+// DOCKER_READ_ONLY_COMMANDS 命令数据 先占位，稍后的条件分支会根据实际输入补齐它。
 export const DOCKER_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
   {
     'docker logs': {
@@ -1413,6 +1523,7 @@ export const DOCKER_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
 // RIPGREP_READ_ONLY_COMMANDS — rg (ripgrep) read-only search
 // ---------------------------------------------------------------------------
 
+// RIPGREP_READ_ONLY_COMMANDS 命令数据 先占位，稍后的条件分支会根据实际输入补齐它。
 export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
   {
     rg: {
@@ -1501,6 +1612,7 @@ export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
 // PYRIGHT_READ_ONLY_COMMANDS — pyright static type checker
 // ---------------------------------------------------------------------------
 
+// PYRIGHT_READ_ONLY_COMMANDS 命令数据 先占位，稍后的条件分支会根据实际输入补齐它。
 export const PYRIGHT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
   {
     pyright: {
@@ -1520,11 +1632,13 @@ export const PYRIGHT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
         '--dependencies': 'none',
         '--warnings': 'none',
       },
+      // 共享工具 read Only Command Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
       additionalCommandIsDangerousCallback: (
         _rawCommand: string,
         args: string[],
       ) => {
         // Check if --watch or -w appears as a standalone token (flag)
+        // 返回 `args.some(t => t === '--watch' || t === '-w')`，作为共享工具这次计算的结果。
         return args.some(t => t === '--watch' || t === '-w')
       },
     },
@@ -1536,6 +1650,7 @@ export const PYRIGHT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
 // Unix-specific commands (cat, head, wc, etc.) belong in BashTool's READONLY_COMMANDS.
 // ---------------------------------------------------------------------------
 
+// EXTERNAL_READONLY_COMMANDS 命令数据 聚合成有序列表，保持后续遍历顺序稳定。
 export const EXTERNAL_READONLY_COMMANDS: readonly string[] = [
   // Cross-platform external tools that work the same in bash and PowerShell on Windows
   'docker ps',
@@ -1559,9 +1674,12 @@ export const EXTERNAL_READONLY_COMMANDS: readonly string[] = [
  * @param pathOrCommand The path or command string to check
  * @returns true if the path/command contains potentially vulnerable UNC paths
  */
+// containsVulnerableUncPath 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   // Only check on Windows platform
+  // `getPlatform()` 与 `'windows'` 不一致时刷新派生状态，避免使用过期结果。
   if (getPlatform() !== 'windows') {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
@@ -1569,8 +1687,11 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   // Pattern matches: \\server, \\server\share, \\server/share, \\server@port\share
   // Uses [^\s\\/]+ for hostname to catch Unicode homoglyphs and other non-ASCII chars
   // Trailing accepts both \ and / since Windows treats both as path separators
+  // backslashUncPattern读取 `/\\\\[^\s\\/]+(?:@(?:\d+|ssl))?(?:[\\/]|$|\s)/i` 对应条目，后续围绕该成员继续处理。
   const backslashUncPattern = /\\\\[^\s\\/]+(?:@(?:\d+|ssl))?(?:[\\/]|$|\s)/i
+  // 满足 `backslashUncPattern.test(pathOrCommand)` 时，共享工具执行该分支。
   if (backslashUncPattern.test(pathOrCommand)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
@@ -1579,10 +1700,13 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   // Uses negative lookbehind (?<!:) to exclude URLs (https://, http://, ftp://)
   // while catching // preceded by quotes, =, or any other non-colon character.
   // Trailing accepts both / and \ since Windows treats both as path separators
+  // forwardSlashUncPattern 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const forwardSlashUncPattern =
     // eslint-disable-next-line custom-rules/no-lookbehind-regex -- .test() on short command strings
     /(?<!:)\/\/[^\s\\/]+(?:@(?:\d+|ssl))?(?:[\\/]|$|\s)/i
+  // 满足 `forwardSlashUncPattern.test(pathOrCommand)` 时，共享工具执行该分支。
   if (forwardSlashUncPattern.test(pathOrCommand)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
@@ -1591,49 +1715,64 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   // In bash, /\\server becomes /\server after escape processing, which is a UNC path.
   // Requires 2+ backslashes after / because a single backslash just escapes the next char
   // (e.g., /\a → /a after bash processing, which is NOT a UNC path).
+  // mixedSlashUncPattern 命名 `/\/\\{2,}[^\s\\/]/`，让后续代码直接表达这个值的用途。
   const mixedSlashUncPattern = /\/\\{2,}[^\s\\/]/
+  // 满足 `mixedSlashUncPattern.test(pathOrCommand)` 时，共享工具执行该分支。
   if (mixedSlashUncPattern.test(pathOrCommand)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // 4. Check for mixed-separator UNC paths (backslashes + forward slash)
   // \\/server in bash becomes \/server after escape processing, which is a UNC path
   // on Windows since both \ and / are path separators.
+  // reverseMixedSlashUncPattern读取 `/\\{2,}\/[^\s\\/]/` 对应条目，后续围绕该成员继续处理。
   const reverseMixedSlashUncPattern = /\\{2,}\/[^\s\\/]/
+  // 满足 `reverseMixedSlashUncPattern.test(pathOrCommand)` 时，共享工具执行该分支。
   if (reverseMixedSlashUncPattern.test(pathOrCommand)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // 5. Check for WebDAV SSL/port patterns
   // Examples: \\server@SSL@8443\path, \\server@8443@SSL\path
+  // 只有 `/@SSL@\d+/i.test(pathOrCommand) || /@\d+@SSL/i.test(pathOrCommand)` 满足时，共享工具才执行该分支。
   if (/@SSL@\d+/i.test(pathOrCommand) || /@\d+@SSL/i.test(pathOrCommand)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // 6. Check for DavWWWRoot marker (Windows WebDAV redirector)
   // Example: \\server\DavWWWRoot\path
+  // 满足 `/DavWWWRoot/i.test(pathOrCommand)` 时，共享工具执行该分支。
   if (/DavWWWRoot/i.test(pathOrCommand)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // 7. Check for UNC paths with IPv4 addresses (explicit check for defense-in-depth)
   // Examples: \\192.168.1.1\share, \\10.0.0.1\path
+  // 共享工具在这里按实际状态进入对应分支。
   if (
     /^\\\\(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})[\\/]/.test(pathOrCommand) ||
     /^\/\/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})[\\/]/.test(pathOrCommand)
   ) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // 8. Check for UNC paths with bracketed IPv6 addresses (explicit check for defense-in-depth)
   // Examples: \\[2001:db8::1]\share, \\[::1]\path
+  // 共享工具在这里按实际状态进入对应分支。
   if (
     /^\\\\(\[[\da-fA-F:]+\])[\\/]/.test(pathOrCommand) ||
     /^\/\/(\[[\da-fA-F:]+\])[\\/]/.test(pathOrCommand)
   ) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -1642,29 +1781,39 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
 // ---------------------------------------------------------------------------
 
 // Regex pattern to match valid flag names (letters, digits, underscores, hyphens)
+// FLAG_PATTERN 命名 `/^-[a-zA-Z0-9_-]/`，让后续代码直接表达这个值的用途。
 export const FLAG_PATTERN = /^-[a-zA-Z0-9_-]/
 
 /**
  * Validates flag arguments based on their expected type
  */
+// validateFlagArgument 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function validateFlagArgument(
   value: string,
   argType: FlagArgType,
 ): boolean {
+  // 按照 argType 的取值选择共享工具的具体处理分支。
   switch (argType) {
     case 'none':
+      // 返回 `false // Should not have been called for 'none' type`，作为共享工具这次计算的结果。
       return false // Should not have been called for 'none' type
     case 'number':
+      // 返回 `/^\d+$/.test(value)`，作为共享工具这次计算的结果。
       return /^\d+$/.test(value)
     case 'string':
+      // 返回 `true // Any string including empty is valid`，作为共享工具这次计算的结果。
       return true // Any string including empty is valid
     case 'char':
+      // 返回 `value.length === 1`，作为共享工具这次计算的结果。
       return value.length === 1
     case '{}':
+      // 返回 `value === '{}'`，作为共享工具这次计算的结果。
       return value === '{}'
     case 'EOF':
+      // 返回 `value === 'EOF'`，作为共享工具这次计算的结果。
       return value === 'EOF'
     default:
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
   }
 }
@@ -1681,6 +1830,7 @@ export function validateFlagArgument(
  * @param options.xargsTargetCommands - If provided, enables xargs-style target command detection
  * @returns true if all flags are valid, false otherwise
  */
+// validateFlags 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function validateFlags(
   tokens: string[],
   startIndex: number,
@@ -1691,45 +1841,65 @@ export function validateFlags(
     xargsTargetCommands?: string[]
   },
 ): boolean {
+  // i保存`startIndex`，供后续判断或组装使用。
   let i = startIndex
 
+  // while 使用 i < tokens.length 完成共享工具里的对应操作。
   while (i < tokens.length) {
+    // token 命名 `tokens[i]`，让后续代码直接表达这个值的用途。
     let token = tokens[i]
+    // token缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!token) {
+      // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
       i++
+      // 跳过当前项，继续处理共享工具中的下一轮循环。
       continue
     }
 
     // Special handling for xargs: once we find the target command, stop validating flags
+    // 共享工具在这里按实际状态进入对应分支。
     if (
       options?.xargsTargetCommands &&
       options.commandName === 'xargs' &&
       (!token.startsWith('-') || token === '--')
     ) {
+      // 只有 `token === '--' && i + 1 < tokens.length` 满足时，共享工具才执行该分支。
       if (token === '--' && i + 1 < tokens.length) {
+        // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
         i++
+        // token更新为 `tokens[i]`，确保共享工具后续读取最新状态。
         token = tokens[i]
       }
+      // 只有 `token && options.xargsTargetCommands.includes(token)` 满足时，共享工具才执行该分支。
       if (token && options.xargsTargetCommands.includes(token)) {
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       }
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
 
+    // 当 `token` 匹配 `'--'` 时，共享工具执行对应分支。
     if (token === '--') {
       // SECURITY: Only break if the tool respects POSIX `--` (default: true).
       // Tools like pyright don't respect `--` — they treat it as a file path
       // and continue processing subsequent tokens as flags. Breaking here
       // would let `pyright -- --createstub os` auto-approve a file-write flag.
+      // `config.respectsDoubleDash` 与 `false` 不一致时刷新派生状态，避免使用过期结果。
       if (config.respectsDoubleDash !== false) {
+        // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
         i++
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break // Everything after -- is arguments
       }
       // Tool doesn't respect --: treat as positional arg, keep validating
+      // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
       i++
+      // 跳过当前项，继续处理共享工具中的下一轮循环。
       continue
     }
 
+    // 只有 `token.startsWith('-') && token.length > 1 && FLAG_PATTERN.test(token)` 满足时，共享工具才执行该分支。
     if (token.startsWith('-') && token.length > 1 && FLAG_PATTERN.test(token)) {
       // Handle --flag=value format
       // SECURITY: Track whether the token CONTAINS `=` separately from
@@ -1749,44 +1919,64 @@ export function validateFlags(
       // provided arg. validateFlagArgument('', 'EOF') → false → rejected.
       // This is correct for all arg types: the user explicitly typed `=`,
       // indicating they provided a value (empty). Don't consume next token.
+      // hasEquals 集合记录 `token.includes` 是否成立，共享工具随后按该结果分支。
       const hasEquals = token.includes('=')
+      // 从 `token.split('=')` 按位置拆出 flag、其余 valueParts，让共享工具 read Only Command Validation分别处理这些返回值。
       const [flag, ...valueParts] = token.split('=')
+      // inlineValue格式化`valueParts.join`，供共享工具后续处理使用。
       const inlineValue = valueParts.join('=')
 
+      // flag缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!flag) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
 
+      // flagArgType保存`config.safeFlags[flag]`，供共享工具 read Only Command Valida...后续判断或输出使用。
       const flagArgType = config.safeFlags[flag]
 
+      // flagArgType缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!flagArgType) {
         // Special case: git commands support -<number> as shorthand for -n <number>
+        // 只有 `options?.commandName === 'git' && flag.match(/^-\d+$/)` 满足时，共享工具才执行该分支。
         if (options?.commandName === 'git' && flag.match(/^-\d+$/)) {
           // This is equivalent to -n flag which is safe for git log/diff/show
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+          // 跳过当前项，继续处理共享工具中的下一轮循环。
           continue
         }
 
         // Handle flags with directly attached numeric arguments (e.g., -A20, -B10)
         // Only apply this special handling to grep and rg commands
+        // 共享工具在这里按实际状态进入对应分支。
         if (
           (options?.commandName === 'grep' || options?.commandName === 'rg') &&
           flag.startsWith('-') &&
           !flag.startsWith('--') &&
           flag.length > 2
         ) {
+          // potentialFlag格式化`flag.substring`，供共享工具后续处理使用。
           const potentialFlag = flag.substring(0, 2) // e.g., '-A' from '-A20'
+          // potentialValue格式化`flag.substring`，供共享工具后续处理使用。
           const potentialValue = flag.substring(2) // e.g., '20' from '-A20'
 
+          // 只有 `config.safeFlags[potentialFlag] && /^\d+$/.test(potentialValue)` 满足时，共享工具才执行该分支。
           if (config.safeFlags[potentialFlag] && /^\d+$/.test(potentialValue)) {
             // This is a flag with attached numeric argument
+            // flagArgType 命名 `config.safeFlags[potentialFlag]`，让后续代码直接表达这个值的用途。
             const flagArgType = config.safeFlags[potentialFlag]
+            // 只有 `flagArgType === 'number' || flagArgType === 'stri` 满足时，共享工具才执行该分支。
             if (flagArgType === 'number' || flagArgType === 'string') {
               // Validate the numeric value
+              // 满足 `validateFlagArgument(potentialValue, flagArgType)` 时，共享工具执行该分支。
               if (validateFlagArgument(potentialValue, flagArgType)) {
+                // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
                 i++
+                // 跳过当前项，继续处理共享工具中的下一轮循环。
                 continue
               } else {
+                // 返回 `false // Invalid attached value`，作为共享工具这次计算的结果。
                 return false // Invalid attached value
               }
             }
@@ -1809,44 +1999,64 @@ export function validateFlags(
         // flag requires an argument (non-'none' type), reject the whole bundle.
         // This is conservative — it blocks `-rI` (xargs) entirely, but that's
         // the safe direction. Users who need `-I` can use it unbundled: `-r -I {}`.
+        // 只有 `flag.startsWith('-') && !flag.startsWith('--') && flag.length > 2` 满足时，共享工具才执行该分支。
         if (flag.startsWith('-') && !flag.startsWith('--') && flag.length > 2) {
+          // 循环处理 `let j = 1; j < flag.length; j++`，让共享工具逐项把同类条目按顺序走完。
           for (let j = 1; j < flag.length; j++) {
+            // singleFlag固定为 `'-' + flag[j]`，作为共享工具 read Only Command Valida...后续展示或比较的基准。
             const singleFlag = '-' + flag[j]
+            // flagType 命名 `config.safeFlags[singleFlag]`，让后续代码直接表达这个值的用途。
             const flagType = config.safeFlags[singleFlag]
+            // flagType缺失时直接走兜底路径，避免共享工具使用无效输入。
             if (!flagType) {
+              // 返回 `false // One of the combined flags is not safe`，作为共享工具这次计算的结果。
               return false // One of the combined flags is not safe
             }
             // SECURITY: Bundled flags must be no-arg type. An arg-taking flag
             // in a bundle consumes the NEXT token in GNU getopt, which our
             // handler doesn't model. Reject to avoid parser differential.
+            // `flagType` 与 `'none'` 不一致时刷新派生状态，避免使用过期结果。
             if (flagType !== 'none') {
+              // 返回 `false // Arg-taking flag in a bundle — cannot safely validate`，作为共享工具这次计算的结果。
               return false // Arg-taking flag in a bundle — cannot safely validate
             }
           }
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+          // 跳过当前项，继续处理共享工具中的下一轮循环。
           continue
         } else {
+          // 返回 `false // Unknown flag`，作为共享工具这次计算的结果。
           return false // Unknown flag
         }
       }
 
       // Validate flag arguments
+      // 当 `flagArgType` 匹配 `'none'` 时，共享工具执行对应分支。
       if (flagArgType === 'none') {
         // SECURITY: hasEquals covers `-FLAG=` (empty inline). Without it,
         // `-FLAG=` with 'none' type would pass (inlineValue='' is falsy).
+        // 满足 `hasEquals` 时，共享工具执行该分支。
         if (hasEquals) {
+          // 返回 `false // Flag should not have a value`，作为共享工具这次计算的结果。
           return false // Flag should not have a value
         }
+        // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
         i++
       } else {
+        // argValue 先占位，稍后的条件分支会根据实际输入补齐它。
         let argValue: string
         // SECURITY: Use hasEquals (not inlineValue truthiness). `-E=` must
         // NOT consume next token — the user explicitly provided empty value.
+        // 满足 `hasEquals` 时，共享工具执行该分支。
         if (hasEquals) {
+          // argValue更新为 `inlineValue`，确保共享工具后续读取最新状态。
           argValue = inlineValue
+          // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
         } else {
           // Check if next token is the argument
+          // 共享工具在这里按实际状态进入对应分支。
           if (
             i + 1 >= tokens.length ||
             (tokens[i + 1] &&
@@ -1854,9 +2064,12 @@ export function validateFlags(
               tokens[i + 1]!.length > 1 &&
               FLAG_PATTERN.test(tokens[i + 1]!))
           ) {
+            // 返回 `false // Missing required argument`，作为共享工具这次计算的结果。
             return false // Missing required argument
           }
+          // argValue更新为 `tokens[i + 1] || ''`，确保共享工具后续读取最新状态。
           argValue = tokens[i + 1] || ''
+          // 共享工具 read Only Command Validation在这里处理 `i += 2`，完成这一小步状态转换。
           i += 2
         }
 
@@ -1864,8 +2077,10 @@ export function validateFlags(
         // This prevents type confusion attacks where a flag marked as 'string'
         // but actually takes no arguments could be used to inject dangerous flags
         // Exception: git's --sort flag can have values starting with '-' for reverse sorting
+        // 只有 `flagArgType === 'string' && argValue.startsWith('-')` 满足时，共享工具才执行该分支。
         if (flagArgType === 'string' && argValue.startsWith('-')) {
           // Special case: git's --sort flag allows - prefix for reverse sorting
+          // 共享工具在这里按实际状态进入对应分支。
           if (
             flag === '--sort' &&
             options?.commandName === 'git' &&
@@ -1874,20 +2089,25 @@ export function validateFlags(
             // This looks like a reverse sort (e.g., -refname, -version:refname)
             // Allow it if the rest looks like a valid sort key
           } else {
+            // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
             return false
           }
         }
 
         // Validate argument based on type
+        // 满足 `!validateFlagArgument(argValue, flagArgType)` 时，共享工具执行该分支。
         if (!validateFlagArgument(argValue, flagArgType)) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false
         }
       }
     } else {
       // Non-flag argument (like revision specs, file paths, etc.) - this is allowed
+      // 共享工具 read Only Command Validation在这里处理 `i++`，完成这一小步状态转换。
       i++
     }
   }
 
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true
 }

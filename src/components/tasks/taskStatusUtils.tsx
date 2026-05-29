@@ -2,70 +2,100 @@
  * Shared utilities for displaying task status across different task types.
  */
 
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 类型依赖 { TaskStatus } 来自 src/Task.js，用于校准终端渲染的数据契约。
 import type { TaskStatus } from 'src/Task.js';
+// 类型依赖 { InProcessTeammateTaskState } 来自 src/tasks/InProcessTeammateTask/types.js，用于校准终端渲染的数据契约。
 import type { InProcessTeammateTaskState } from 'src/tasks/InProcessTeammateTask/types.js';
+// 引入 isPanelAgentTask，将 src/tasks/LocalAgentTask/LocalAgentTask.js 中已经封装好的能力接到本文件流程里。
 import { isPanelAgentTask } from 'src/tasks/LocalAgentTask/LocalAgentTask.js';
+// 引入 isBackgroundTask、TaskState，将 src/tasks/types.js 中已经封装好的能力接到本文件流程里。
 import { isBackgroundTask, type TaskState } from 'src/tasks/types.js';
+// 类型依赖 { DeepImmutable } 来自 src/types/utils.js，用于校准终端渲染的数据契约。
 import type { DeepImmutable } from 'src/types/utils.js';
+// 复用 summarizeRecentActivities 工具函数，把通用处理留在 src/utils/collapseReadSearch.js 中维护。
 import { summarizeRecentActivities } from 'src/utils/collapseReadSearch.js';
 
 /**
  * Returns true if the given task status represents a terminal (finished) state.
  */
+// isTerminalStatus 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isTerminalStatus(status: TaskStatus): boolean {
+  // 返回 `status === 'completed' || status === 'failed' || status === 'killed'`，作为终端渲染这次计算的结果。
   return status === 'completed' || status === 'failed' || status === 'killed';
 }
 
 /**
  * Returns the appropriate icon for a task based on status and state flags.
  */
+// getTaskStatusIcon 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getTaskStatusIcon(status: TaskStatus, options?: {
   isIdle?: boolean;
   awaitingApproval?: boolean;
   hasError?: boolean;
   shutdownRequested?: boolean;
 }): string {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     isIdle,
     awaitingApproval,
     hasError,
     shutdownRequested
   } = options ?? {};
+  // 满足 `hasError` 时，终端渲染执行该分支。
   if (hasError) return figures.cross;
+  // 满足 `awaitingApproval` 时，终端渲染执行该分支。
   if (awaitingApproval) return figures.questionMarkPrefix;
+  // 满足 `shutdownRequested` 时，终端渲染执行该分支。
   if (shutdownRequested) return figures.warning;
+  // 当 `status` 匹配 `'running'` 时，终端渲染执行对应分支。
   if (status === 'running') {
+    // 满足 `isIdle` 时，终端渲染执行该分支。
     if (isIdle) return figures.ellipsis;
+    // 返回 `figures.play`，作为终端渲染这次计算的结果。
     return figures.play;
   }
+  // 当 `status` 匹配 `'completed'` 时，终端渲染执行对应分支。
   if (status === 'completed') return figures.tick;
+  // 当 `status` 匹配 `'failed' || status === 'kil...` 时，终端渲染执行对应分支。
   if (status === 'failed' || status === 'killed') return figures.cross;
+  // 返回 `figures.bullet`，作为终端渲染这次计算的结果。
   return figures.bullet;
 }
 
 /**
  * Returns the appropriate semantic color for a task based on status and state flags.
  */
+// getTaskStatusColor 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getTaskStatusColor(status: TaskStatus, options?: {
   isIdle?: boolean;
   awaitingApproval?: boolean;
   hasError?: boolean;
   shutdownRequested?: boolean;
 }): 'success' | 'error' | 'warning' | 'background' {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     isIdle,
     awaitingApproval,
     hasError,
     shutdownRequested
   } = options ?? {};
+  // 满足 `hasError` 时，终端渲染执行该分支。
   if (hasError) return 'error';
+  // 满足 `awaitingApproval` 时，终端渲染执行该分支。
   if (awaitingApproval) return 'warning';
+  // 满足 `shutdownRequested` 时，终端渲染执行该分支。
   if (shutdownRequested) return 'warning';
+  // 满足 `isIdle` 时，终端渲染执行该分支。
   if (isIdle) return 'background';
+  // 当 `status` 匹配 `'completed'` 时，终端渲染执行对应分支。
   if (status === 'completed') return 'success';
+  // 当 `status` 匹配 `'failed'` 时，终端渲染执行对应分支。
   if (status === 'failed') return 'error';
+  // 当 `status` 匹配 `'killed'` 时，终端渲染执行对应分支。
   if (status === 'killed') return 'warning';
+  // 返回 `'background'`，作为终端渲染这次计算的结果。
   return 'background';
 }
 
@@ -74,10 +104,15 @@ export function getTaskStatusColor(status: TaskStatus, options?: {
  * accounting for shutdown/approval/idle states and falling back through
  * recent-activity summary → last activity description → 'working'.
  */
+// describeTeammateActivity 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function describeTeammateActivity(t: DeepImmutable<InProcessTeammateTaskState>): string {
+  // 满足 `t.shutdownRequested` 时，终端渲染执行该分支。
   if (t.shutdownRequested) return 'stopping';
+  // 满足 `t.awaitingPlanApproval` 时，终端渲染执行该分支。
   if (t.awaitingPlanApproval) return 'awaiting approval';
+  // 满足 `t.isIdle` 时，终端渲染执行该分支。
   if (t.isIdle) return 'idle';
+  // 返回 `(t.progress?.recentActivities && summarizeRecentActivities(t.progress.r...`，作为终端渲染这次计算的结果。
   return (t.progress?.recentActivities && summarizeRecentActivities(t.progress.recentActivities)) ?? t.progress?.lastActivity?.activityDescription ?? 'working';
 }
 
@@ -90,18 +125,27 @@ export function describeTeammateActivity(t: DeepImmutable<InProcessTeammateTaskS
  * plus exclusion of panel-managed agent tasks for ants (those are shown
  * by CoordinatorTaskPanel).
  */
+// shouldHideTasksFooter 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldHideTasksFooter(tasks: {
   [taskId: string]: TaskState;
 }, showSpinnerTree: boolean): boolean {
+  // showSpinnerTree缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!showSpinnerTree) return false;
+  // hasVisibleTask标记终端 UI task Status Utils是否启用对应路径。
   let hasVisibleTask = false;
+  // 逐项读取 `Object.values(tasks) as TaskState[]` 中的t，按输入顺序推进终端渲染。
   for (const t of Object.values(tasks) as TaskState[]) {
+    // 只有 `!isBackgroundTask(t) || "external" === 'ant' && isPanelAgentTask(t)` 满足时，终端渲染才执行该分支。
     if (!isBackgroundTask(t) || "external" === 'ant' && isPanelAgentTask(t)) {
+      // 跳过当前项，继续处理终端渲染中的下一轮循环。
       continue;
     }
+    // hasVisibleTask更新为 `true`，确保任务详情界面后续读取最新状态。
     hasVisibleTask = true;
+    // `t.type` 与 `'in_process_teammate'` 不一致时刷新派生状态，避免使用过期结果。
     if (t.type !== 'in_process_teammate') return false;
   }
+  // 返回 `hasVisibleTask`，作为终端渲染这次计算的结果。
   return hasVisibleTask;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJmaWd1cmVzIiwiVGFza1N0YXR1cyIsIkluUHJvY2Vzc1RlYW1tYXRlVGFza1N0YXRlIiwiaXNQYW5lbEFnZW50VGFzayIsImlzQmFja2dyb3VuZFRhc2siLCJUYXNrU3RhdGUiLCJEZWVwSW1tdXRhYmxlIiwic3VtbWFyaXplUmVjZW50QWN0aXZpdGllcyIsImlzVGVybWluYWxTdGF0dXMiLCJzdGF0dXMiLCJnZXRUYXNrU3RhdHVzSWNvbiIsIm9wdGlvbnMiLCJpc0lkbGUiLCJhd2FpdGluZ0FwcHJvdmFsIiwiaGFzRXJyb3IiLCJzaHV0ZG93blJlcXVlc3RlZCIsImNyb3NzIiwicXVlc3Rpb25NYXJrUHJlZml4Iiwid2FybmluZyIsImVsbGlwc2lzIiwicGxheSIsInRpY2siLCJidWxsZXQiLCJnZXRUYXNrU3RhdHVzQ29sb3IiLCJkZXNjcmliZVRlYW1tYXRlQWN0aXZpdHkiLCJ0IiwiYXdhaXRpbmdQbGFuQXBwcm92YWwiLCJwcm9ncmVzcyIsInJlY2VudEFjdGl2aXRpZXMiLCJsYXN0QWN0aXZpdHkiLCJhY3Rpdml0eURlc2NyaXB0aW9uIiwic2hvdWxkSGlkZVRhc2tzRm9vdGVyIiwidGFza3MiLCJ0YXNrSWQiLCJzaG93U3Bpbm5lclRyZWUiLCJoYXNWaXNpYmxlVGFzayIsIk9iamVjdCIsInZhbHVlcyIsInR5cGUiXSwic291cmNlcyI6WyJ0YXNrU3RhdHVzVXRpbHMudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIi8qKlxuICogU2hhcmVkIHV0aWxpdGllcyBmb3IgZGlzcGxheWluZyB0YXNrIHN0YXR1cyBhY3Jvc3MgZGlmZmVyZW50IHRhc2sgdHlwZXMuXG4gKi9cblxuaW1wb3J0IGZpZ3VyZXMgZnJvbSAnZmlndXJlcydcbmltcG9ydCB0eXBlIHsgVGFza1N0YXR1cyB9IGZyb20gJ3NyYy9UYXNrLmpzJ1xuaW1wb3J0IHR5cGUgeyBJblByb2Nlc3NUZWFtbWF0ZVRhc2tTdGF0ZSB9IGZyb20gJ3NyYy90YXNrcy9JblByb2Nlc3NUZWFtbWF0ZVRhc2svdHlwZXMuanMnXG5pbXBvcnQgeyBpc1BhbmVsQWdlbnRUYXNrIH0gZnJvbSAnc3JjL3Rhc2tzL0xvY2FsQWdlbnRUYXNrL0xvY2FsQWdlbnRUYXNrLmpzJ1xuaW1wb3J0IHsgaXNCYWNrZ3JvdW5kVGFzaywgdHlwZSBUYXNrU3RhdGUgfSBmcm9tICdzcmMvdGFza3MvdHlwZXMuanMnXG5pbXBvcnQgdHlwZSB7IERlZXBJbW11dGFibGUgfSBmcm9tICdzcmMvdHlwZXMvdXRpbHMuanMnXG5pbXBvcnQgeyBzdW1tYXJpemVSZWNlbnRBY3Rpdml0aWVzIH0gZnJvbSAnc3JjL3V0aWxzL2NvbGxhcHNlUmVhZFNlYXJjaC5qcydcblxuLyoqXG4gKiBSZXR1cm5zIHRydWUgaWYgdGhlIGdpdmVuIHRhc2sgc3RhdHVzIHJlcHJlc2VudHMgYSB0ZXJtaW5hbCAoZmluaXNoZWQpIHN0YXRlLlxuICovXG5leHBvcnQgZnVuY3Rpb24gaXNUZXJtaW5hbFN0YXR1cyhzdGF0dXM6IFRhc2tTdGF0dXMpOiBib29sZWFuIHtcbiAgcmV0dXJuIHN0YXR1cyA9PT0gJ2NvbXBsZXRlZCcgfHwgc3RhdHVzID09PSAnZmFpbGVkJyB8fCBzdGF0dXMgPT09ICdraWxsZWQnXG59XG5cbi8qKlxuICogUmV0dXJucyB0aGUgYXBwcm9wcmlhdGUgaWNvbiBmb3IgYSB0YXNrIGJhc2VkIG9uIHN0YXR1cyBhbmQgc3RhdGUgZmxhZ3MuXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBnZXRUYXNrU3RhdHVzSWNvbihcbiAgc3RhdHVzOiBUYXNrU3RhdHVzLFxuICBvcHRpb25zPzoge1xuICAgIGlzSWRsZT86IGJvb2xlYW5cbiAgICBhd2FpdGluZ0FwcHJvdmFsPzogYm9vbGVhblxuICAgIGhhc0Vycm9yPzogYm9vbGVhblxuICAgIHNodXRkb3duUmVxdWVzdGVkPzogYm9vbGVhblxuICB9LFxuKTogc3RyaW5nIHtcbiAgY29uc3QgeyBpc0lkbGUsIGF3YWl0aW5nQXBwcm92YWwsIGhhc0Vycm9yLCBzaHV0ZG93blJlcXVlc3RlZCB9ID1cbiAgICBvcHRpb25zID8/IHt9XG5cbiAgaWYgKGhhc0Vycm9yKSByZXR1cm4gZmlndXJlcy5jcm9zc1xuICBpZiAoYXdhaXRpbmdBcHByb3ZhbCkgcmV0dXJuIGZpZ3VyZXMucXVlc3Rpb25NYXJrUHJlZml4XG4gIGlmIChzaHV0ZG93blJlcXVlc3RlZCkgcmV0dXJuIGZpZ3VyZXMud2FybmluZ1xuXG4gIGlmIChzdGF0dXMgPT09ICdydW5uaW5nJykge1xuICAgIGlmIChpc0lkbGUpIHJldHVybiBmaWd1cmVzLmVsbGlwc2lzXG4gICAgcmV0dXJuIGZpZ3VyZXMucGxheVxuICB9XG4gIGlmIChzdGF0dXMgPT09ICdjb21wbGV0ZWQnKSByZXR1cm4gZmlndXJlcy50aWNrXG4gIGlmIChzdGF0dXMgPT09ICdmYWlsZWQnIHx8IHN0YXR1cyA9PT0gJ2tpbGxlZCcpIHJldHVybiBmaWd1cmVzLmNyb3NzXG4gIHJldHVybiBmaWd1cmVzLmJ1bGxldFxufVxuXG4vKipcbiAqIFJldHVybnMgdGhlIGFwcHJvcHJpYXRlIHNlbWFudGljIGNvbG9yIGZvciBhIHRhc2sgYmFzZWQgb24gc3RhdHVzIGFuZCBzdGF0ZSBmbGFncy5cbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIGdldFRhc2tTdGF0dXNDb2xvcihcbiAgc3RhdHVzOiBUYXNrU3RhdHVzLFxuICBvcHRpb25zPzoge1xuICAgIGlzSWRsZT86IGJvb2xlYW5cbiAgICBhd2FpdGluZ0FwcHJvdmFsPzogYm9vbGVhblxuICAgIGhhc0Vycm9yPzogYm9vbGVhblxuICAgIHNodXRkb3duUmVxdWVzdGVkPzogYm9vbGVhblxuICB9LFxuKTogJ3N1Y2Nlc3MnIHwgJ2Vycm9yJyB8ICd3YXJuaW5nJyB8ICdiYWNrZ3JvdW5kJyB7XG4gIGNvbnN0IHsgaXNJZGxlLCBhd2FpdGluZ0FwcHJvdmFsLCBoYXNFcnJvciwgc2h1dGRvd25SZXF1ZXN0ZWQgfSA9XG4gICAgb3B0aW9ucyA/PyB7fVxuXG4gIGlmIChoYXNFcnJvcikgcmV0dXJuICdlcnJvcidcbiAgaWYgKGF3YWl0aW5nQXBwcm92YWwpIHJldHVybiAnd2FybmluZydcbiAgaWYgKHNodXRkb3duUmVxdWVzdGVkKSByZXR1cm4gJ3dhcm5pbmcnXG4gIGlmIChpc0lkbGUpIHJldHVybiAnYmFja2dyb3VuZCdcblxuICBpZiAoc3RhdHVzID09PSAnY29tcGxldGVkJykgcmV0dXJuICdzdWNjZXNzJ1xuICBpZiAoc3RhdHVzID09PSAnZmFpbGVkJykgcmV0dXJuICdlcnJvcidcbiAgaWYgKHN0YXR1cyA9PT0gJ2tpbGxlZCcpIHJldHVybiAnd2FybmluZydcbiAgcmV0dXJuICdiYWNrZ3JvdW5kJ1xufVxuXG4vKipcbiAqIERlcml2ZXMgYSBodW1hbi1yZWFkYWJsZSBhY3Rpdml0eSBzdHJpbmcgZm9yIGFuIGluLXByb2Nlc3MgdGVhbW1hdGUsXG4gKiBhY2NvdW50aW5nIGZvciBzaHV0ZG93bi9hcHByb3ZhbC9pZGxlIHN0YXRlcyBhbmQgZmFsbGluZyBiYWNrIHRocm91Z2hcbiAqIHJlY2VudC1hY3Rpdml0eSBzdW1tYXJ5IOKGkiBsYXN0IGFjdGl2aXR5IGRlc2NyaXB0aW9uIOKGkiAnd29ya2luZycuXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBkZXNjcmliZVRlYW1tYXRlQWN0aXZpdHkoXG4gIHQ6IERlZXBJbW11dGFibGU8SW5Qcm9jZXNzVGVhbW1hdGVUYXNrU3RhdGU+LFxuKTogc3RyaW5nIHtcbiAgaWYgKHQuc2h1dGRvd25SZXF1ZXN0ZWQpIHJldHVybiAnc3RvcHBpbmcnXG4gIGlmICh0LmF3YWl0aW5nUGxhbkFwcHJvdmFsKSByZXR1cm4gJ2F3YWl0aW5nIGFwcHJvdmFsJ1xuICBpZiAodC5pc0lkbGUpIHJldHVybiAnaWRsZSdcbiAgcmV0dXJuIChcbiAgICAodC5wcm9ncmVzcz8ucmVjZW50QWN0aXZpdGllcyAmJlxuICAgICAgc3VtbWFyaXplUmVjZW50QWN0aXZpdGllcyh0LnByb2dyZXNzLnJlY2VudEFjdGl2aXRpZXMpKSA/P1xuICAgIHQucHJvZ3Jlc3M/Lmxhc3RBY3Rpdml0eT8uYWN0aXZpdHlEZXNjcmlwdGlvbiA/P1xuICAgICd3b3JraW5nJ1xuICApXG59XG5cbi8qKlxuICogUmV0dXJucyB0cnVlIHdoZW4gQmFja2dyb3VuZFRhc2tTdGF0dXMgd291bGQgcmVuZGVyIG5vdGhpbmcgYmVjYXVzZSB0aGVcbiAqIHNwaW5uZXIgdHJlZSBpcyBhY3RpdmUgYW5kIGV2ZXJ5IHZpc2libGUgYmFja2dyb3VuZCB0YXNrIGlzIGFuIGluLXByb2Nlc3NcbiAqIHRlYW1tYXRlICh0ZWFtbWF0ZXMgYXJlIHNob3duIGluIHRoZSBzcGlubmVyIHRyZWUgaW5zdGVhZCkuXG4gKlxuICogVXNlcyB0aGUgc2FtZSB0YXNrIGZpbHRlcmluZyBhcyBCYWNrZ3JvdW5kVGFza1N0YXR1czogYGlzQmFja2dyb3VuZFRhc2soKWBcbiAqIHBsdXMgZXhjbHVzaW9uIG9mIHBhbmVsLW1hbmFnZWQgYWdlbnQgdGFza3MgZm9yIGFudHMgKHRob3NlIGFyZSBzaG93blxuICogYnkgQ29vcmRpbmF0b3JUYXNrUGFuZWwpLlxuICovXG5leHBvcnQgZnVuY3Rpb24gc2hvdWxkSGlkZVRhc2tzRm9vdGVyKFxuICB0YXNrczogeyBbdGFza0lkOiBzdHJpbmddOiBUYXNrU3RhdGUgfSxcbiAgc2hvd1NwaW5uZXJUcmVlOiBib29sZWFuLFxuKTogYm9vbGVhbiB7XG4gIGlmICghc2hvd1NwaW5uZXJUcmVlKSByZXR1cm4gZmFsc2VcbiAgbGV0IGhhc1Zpc2libGVUYXNrID0gZmFsc2VcbiAgZm9yIChjb25zdCB0IG9mIE9iamVjdC52YWx1ZXModGFza3MpIGFzIFRhc2tTdGF0ZVtdKSB7XG4gICAgaWYgKFxuICAgICAgIWlzQmFja2dyb3VuZFRhc2sodCkgfHxcbiAgICAgIChcImV4dGVybmFsXCIgPT09ICdhbnQnICYmIGlzUGFuZWxBZ2VudFRhc2sodCkpXG4gICAgKSB7XG4gICAgICBjb250aW51ZVxuICAgIH1cbiAgICBoYXNWaXNpYmxlVGFzayA9IHRydWVcbiAgICBpZiAodC50eXBlICE9PSAnaW5fcHJvY2Vzc190ZWFtbWF0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

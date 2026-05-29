@@ -1,8 +1,14 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { LocalJSXCommandContext } 来自 ../../commands.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandContext } from '../../commands.js';
+// 复用 BackgroundTasksDialog 终端界面组件，避免在这里重复拼装显示逻辑。
 import { BackgroundTasksDialog } from '../../components/tasks/BackgroundTasksDialog.js';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode> {
+  // 返回 `<BackgroundTasksDialog toolUseContext={context} onDone={onDone} />`，作为命令处理这次计算的结果。
   return <BackgroundTasksDialog toolUseContext={context} onDone={onDone} />;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIkxvY2FsSlNYQ29tbWFuZENvbnRleHQiLCJCYWNrZ3JvdW5kVGFza3NEaWFsb2ciLCJMb2NhbEpTWENvbW1hbmRPbkRvbmUiLCJjYWxsIiwib25Eb25lIiwiY29udGV4dCIsIlByb21pc2UiLCJSZWFjdE5vZGUiXSwic291cmNlcyI6WyJ0YXNrcy50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICogYXMgUmVhY3QgZnJvbSAncmVhY3QnXG5pbXBvcnQgdHlwZSB7IExvY2FsSlNYQ29tbWFuZENvbnRleHQgfSBmcm9tICcuLi8uLi9jb21tYW5kcy5qcydcbmltcG9ydCB7IEJhY2tncm91bmRUYXNrc0RpYWxvZyB9IGZyb20gJy4uLy4uL2NvbXBvbmVudHMvdGFza3MvQmFja2dyb3VuZFRhc2tzRGlhbG9nLmpzJ1xuaW1wb3J0IHR5cGUgeyBMb2NhbEpTWENvbW1hbmRPbkRvbmUgfSBmcm9tICcuLi8uLi90eXBlcy9jb21tYW5kLmpzJ1xuXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gY2FsbChcbiAgb25Eb25lOiBMb2NhbEpTWENvbW1hbmRPbkRvbmUsXG4gIGNvbnRleHQ6IExvY2FsSlNYQ29tbWFuZENvbnRleHQsXG4pOiBQcm9taXNlPFJlYWN0LlJlYWN0Tm9kZT4ge1xuICByZXR1cm4gPEJhY2tncm91bmRUYXNrc0RpYWxvZyB0b29sVXNlQ29udGV4dD17Y29udGV4dH0gb25Eb25lPXtvbkRvbmV9IC8+XG59XG4iXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sS0FBS0EsS0FBSyxNQUFNLE9BQU87QUFDOUIsY0FBY0Msc0JBQXNCLFFBQVEsbUJBQW1CO0FBQy9ELFNBQVNDLHFCQUFxQixRQUFRLGlEQUFpRDtBQUN2RixjQUFjQyxxQkFBcUIsUUFBUSx3QkFBd0I7QUFFbkUsT0FBTyxlQUFlQyxJQUFJQSxDQUN4QkMsTUFBTSxFQUFFRixxQkFBcUIsRUFDN0JHLE9BQU8sRUFBRUwsc0JBQXNCLENBQ2hDLEVBQUVNLE9BQU8sQ0FBQ1AsS0FBSyxDQUFDUSxTQUFTLENBQUMsQ0FBQztFQUMxQixPQUFPLENBQUMscUJBQXFCLENBQUMsY0FBYyxDQUFDLENBQUNGLE9BQU8sQ0FBQyxDQUFDLE1BQU0sQ0FBQyxDQUFDRCxNQUFNLENBQUMsR0FBRztBQUMzRSIsImlnbm9yZUxpc3QiOltdfQ==

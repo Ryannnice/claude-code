@@ -1,188 +1,317 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 接入 isFeedbackSurveyDisabled 服务层能力，把外部通信或共享状态交给 src/services/analytics/config.js 处理。
 import { isFeedbackSurveyDisabled } from 'src/services/analytics/config.js';
+// 接入 checkStatsigFeatureGate_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 src/services/analytics/growthbook.js 处理。
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 接入 shouldUseSessionMemoryCompaction 服务层能力，把外部通信或共享状态交给 ../../services/compact/sessionMemoryCompact.js 处理。
 import { shouldUseSessionMemoryCompaction } from '../../services/compact/sessionMemoryCompact.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../../types/message.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js';
+// 复用 isCompactBoundaryMessage 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { isCompactBoundaryMessage } from '../../utils/messages.js';
+// 复用 logOTelEvent 工具函数，把通用处理留在 ../../utils/telemetry/events.js 中维护。
 import { logOTelEvent } from '../../utils/telemetry/events.js';
+// 引入 useSurveyState，将 ./useSurveyState.js 中已经封装好的能力接到本文件流程里。
 import { useSurveyState } from './useSurveyState.js';
+// 类型依赖 { FeedbackSurveyResponse } 来自 ./utils.js，用于校准终端渲染的数据契约。
 import type { FeedbackSurveyResponse } from './utils.js';
+// HIDE_THANKS_AFTER_MS 集合 命名 `3000`，让后续代码直接表达这个值的用途。
 const HIDE_THANKS_AFTER_MS = 3000;
+// POST_COMPACT_SURVEY_GATE保存`'tengu_post_compact_survey'`，作为后续固定文本处理的输入。
 const POST_COMPACT_SURVEY_GATE = 'tengu_post_compact_survey';
+// SURVEY_PROBABILITY保存`0.2; // Show survey 20% of the time after compaction`，供后续判断或组装使用。
 const SURVEY_PROBABILITY = 0.2; // Show survey 20% of the time after compaction
 
+// hasMessageAfterBoundary 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function hasMessageAfterBoundary(messages: Message[], boundaryUuid: string): boolean {
+  // boundaryIndex 索引筛选`messages.findIndex`，供终端渲染后续处理使用。
   const boundaryIndex = messages.findIndex(msg => msg.uuid === boundaryUuid);
+  // 满足 `boundaryIndex === -1` 时，终端渲染执行该分支。
   if (boundaryIndex === -1) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
 
   // Check if there's a user or assistant message after the boundary
+  // 循环处理 `let i = boundaryIndex + 1; i < messages.length; i`，让终端渲染逐项把同类条目按顺序走完。
   for (let i = boundaryIndex + 1; i < messages.length; i++) {
+    // 消息读取 `messages[i]` 对应条目，后续围绕该成员继续处理。
     const msg = messages[i];
+    // 只有 `msg && (msg.type === 'user' || msg.type === 'assistant')` 满足时，终端渲染才执行该分支。
     if (msg && (msg.type === 'user' || msg.type === 'assistant')) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     }
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false;
 }
+// usePostCompactSurvey 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function usePostCompactSurvey(messages, isLoading, t0, t1) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(23);
+  // hasActivePrompt标记终端 UI use Post Compact Sur...是否启用对应路径。
   const hasActivePrompt = t0 === undefined ? false : t0;
+  // t2 暂存 `t1 === undefined ? {} : t1` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== t1) {
+    // t2 暂存 `t1 === undefined ? {} : t1` 生成的渲染片段，后续返回路径直接复用。
     t2 = t1 === undefined ? {} : t1;
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
+    // $[1] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[1];
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     enabled: t3
   } = t2;
+  // enabled标记终端 UI use Post Compact Sur...是否启用对应路径。
   const enabled = t3 === undefined ? true : t3;
+  // gateEnabled 由 React state 持有，setGateEnabled 会在用户操作或异步结果返回时触发刷新。
   const [gateEnabled, setGateEnabled] = useState(null);
+  // t4 暂存 `new Set()` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    // t4 暂存 `new Set()` 生成的渲染片段，后续返回路径直接复用。
     t4 = new Set();
+    // $[2] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[2];
   }
+  // seenCompactBoundaries 集合保存`useRef`，供终端渲染后续处理使用。
   const seenCompactBoundaries = useRef(t4);
+  // pendingCompactBoundaryUuid保存`useRef`，供终端渲染后续处理使用。
   const pendingCompactBoundaryUuid = useRef(null);
+  // onOpen保存`_temp`，供后续判断或组装使用。
   const onOpen = _temp;
+  // onSelect 命名 `_temp2`，让后续代码直接表达这个值的用途。
   const onSelect = _temp2;
+  // t5 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+    // t5 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t5 = {
       hideThanksAfterMs: HIDE_THANKS_AFTER_MS,
       onOpen,
       onSelect
     };
+    // $[3] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[3];
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     state,
     lastResponse,
     open,
     handleSelect
   } = useSurveyState(t5);
+  // t6 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // t7 暂存 `[enabled]` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== enabled) {
+    // t6 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t6 = () => {
+      // enabled缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!enabled) {
+        // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // setGateEnabled 写入新的状态值，使终端渲染后续读取保持一致。
       setGateEnabled(checkStatsigFeatureGate_CACHED_MAY_BE_STALE(POST_COMPACT_SURVEY_GATE));
     };
+    // t7 暂存 `[enabled]` 生成的渲染片段，后续返回路径直接复用。
     t7 = [enabled];
+    // $[4] 缓存 `enabled`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = enabled;
+    // $[5] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t6;
+    // $[6] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t7;
   } else {
+    // t6 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[5];
+    // t7 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[6];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t6, t7);
+  // t8 暂存 `new Set(messages.filter(_temp3).map(_temp4))` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== messages) {
+    // t8 暂存 `new Set(messages.filter(_temp3).map(_temp4))` 生成的渲染片段，后续返回路径直接复用。
     t8 = new Set(messages.filter(_temp3).map(_temp4));
+    // $[7] 缓存 `messages`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = messages;
+    // $[8] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[8];
   }
+  // currentCompactBoundaries 集合 命名 `t8`，让后续代码直接表达这个值的用途。
   const currentCompactBoundaries = t8;
+  // t10 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t10;
+  // t9 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== currentCompactBoundaries || $[10] !== enabled || $[11] !== gateEnabled || $[12] !== hasActivePrompt || $[13] !== isLoading || $[14] !== messages || $[15] !== open || $[16] !== state) {
+    // t9 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t9 = () => {
+      // enabled缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!enabled) {
+        // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // `state` 与 `"closed" || isLoading` 不一致时刷新派生状态，避免使用过期结果。
       if (state !== "closed" || isLoading) {
+        // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `hasActivePrompt` 时，终端渲染执行该分支。
       if (hasActivePrompt) {
+        // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // `gateEnabled` 与 `true` 不一致时刷新派生状态，避免使用过期结果。
       if (gateEnabled !== true) {
+        // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `isFeedbackSurveyDisabled()` 时，终端渲染执行该分支。
       if (isFeedbackSurveyDisabled()) {
+        // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY)` 时，终端渲染执行该分支。
       if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY)) {
+        // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // `pendingCompactBoundaryUuid.current` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (pendingCompactBoundaryUuid.current !== null) {
+        // 满足 `hasMessageAfterBoundary(messages, pendingCompactBoundaryUuid.current)` 时，终端渲染执行该分支。
         if (hasMessageAfterBoundary(messages, pendingCompactBoundaryUuid.current)) {
+          // current更新为 `null`，确保终端 UI后续读取最新状态。
           pendingCompactBoundaryUuid.current = null;
+          // 满足 `Math.random() < SURVEY_PROBABILITY` 时，终端渲染执行该分支。
           if (Math.random() < SURVEY_PROBABILITY) {
+            // 调用 open，触发终端渲染此处需要的副作用。
             open();
           }
+          // 终端 UI 组件 use Post Compact Survey在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
       }
+      // newBoundaries 集合保存`Array.from`，供终端渲染后续处理使用。
       const newBoundaries = Array.from(currentCompactBoundaries).filter(uuid => !seenCompactBoundaries.current.has(uuid));
+      // 满足 `newBoundaries.length > 0` 时，终端渲染执行该分支。
       if (newBoundaries.length > 0) {
+        // current更新为 `new Set(currentCompactBoundaries)`，确保终端 UI后续读取最新状态。
         seenCompactBoundaries.current = new Set(currentCompactBoundaries);
+        // current更新为 `newBoundaries[newBoundaries.length - 1]`，确保终端 UI后续读取最新状态。
         pendingCompactBoundaryUuid.current = newBoundaries[newBoundaries.length - 1];
       }
     };
+    // t10 暂存 `[enabled, currentCompactBoundaries, state, isLoading, has...` 生成的渲染片段，后续返回路径直接复用。
     t10 = [enabled, currentCompactBoundaries, state, isLoading, hasActivePrompt, gateEnabled, messages, open];
+    // $[9] 缓存 `currentCompactBoundaries`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = currentCompactBoundaries;
+    // $[10] 缓存 `enabled`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = enabled;
+    // $[11] 缓存 `gateEnabled`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = gateEnabled;
+    // $[12] 缓存 `hasActivePrompt`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = hasActivePrompt;
+    // $[13] 缓存 `isLoading`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = isLoading;
+    // $[14] 缓存 `messages`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = messages;
+    // $[15] 缓存 `open`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = open;
+    // $[16] 缓存 `state`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = state;
+    // $[17] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t10;
+    // $[18] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t9;
   } else {
+    // t10 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[17];
+    // t9 从 React 编译缓存槽 $[18] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[18];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t9, t10);
+  // t11 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[19] !== handleSelect || $[20] !== lastResponse || $[21] !== state) {
+    // t11 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t11 = {
       state,
       lastResponse,
       handleSelect
     };
+    // $[19] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = handleSelect;
+    // $[20] 缓存 `lastResponse`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = lastResponse;
+    // $[21] 缓存 `state`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = state;
+    // $[22] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[22] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[22];
   }
+  // 返回 `t11`，作为终端渲染这次计算的结果。
   return t11;
 }
+// _temp4 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp4(msg_0) {
+  // 返回 `msg_0.uuid`，作为终端渲染这次计算的结果。
   return msg_0.uuid;
 }
+// _temp3 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp3(msg) {
+  // 返回 `isCompactBoundaryMessage(msg)`，作为终端渲染这次计算的结果。
   return isCompactBoundaryMessage(msg);
 }
+// _temp2 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(appearanceId_0, selected) {
+  // smCompactionEnabled_0保存`shouldUseSessionMemoryCompaction`，供终端渲染后续处理使用。
   const smCompactionEnabled_0 = shouldUseSessionMemoryCompaction();
+  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
   logEvent("tengu_post_compact_survey_event", {
     event_type: "responded" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     appearance_id: appearanceId_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     response: selected as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     session_memory_compaction_enabled: smCompactionEnabled_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
   });
+  // 调用 logOTelEvent，触发终端渲染此处需要的副作用。
   logOTelEvent("feedback_survey", {
     event_type: "responded",
     appearance_id: appearanceId_0,
@@ -190,13 +319,17 @@ function _temp2(appearanceId_0, selected) {
     survey_type: "post_compact"
   });
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(appearanceId) {
+  // smCompactionEnabled保存`shouldUseSessionMemoryCompaction`，供终端渲染后续处理使用。
   const smCompactionEnabled = shouldUseSessionMemoryCompaction();
+  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
   logEvent("tengu_post_compact_survey_event", {
     event_type: "appeared" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     appearance_id: appearanceId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     session_memory_compaction_enabled: smCompactionEnabled as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
   });
+  // 调用 logOTelEvent，触发终端渲染此处需要的副作用。
   logOTelEvent("feedback_survey", {
     event_type: "appeared",
     appearance_id: appearanceId,

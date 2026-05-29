@@ -9,6 +9,7 @@
  * sdk/controlTypes.ts directly.
  */
 
+// 整理这一组导入，让agent Sdk Types后续逻辑可以直接复用这些外部能力。
 import type {
   CallToolResult,
   ToolAnnotations,
@@ -16,24 +17,30 @@ import type {
 
 // Control protocol types for SDK builders (bridge subpath consumers)
 /** @alpha */
+// 导出类型定义，让其他模块沿用agent Sdk Types的数据契约。
 export type {
   SDKControlRequest,
   SDKControlResponse,
 } from './sdk/controlTypes.js'
 // Re-export core types (common serializable types)
+// agent Sdk Types在这里处理 `export * from './sdk/coreTypes.js'`，完成这一小步状态转换。
 export * from './sdk/coreTypes.js'
 // Re-export runtime types (callbacks, interfaces with methods)
+// agent Sdk Types在这里处理 `export * from './sdk/runtimeTypes.js'`，完成这一小步状态转换。
 export * from './sdk/runtimeTypes.js'
 
 // Re-export settings types (generated from settings JSON schema)
+// 导出类型定义，让其他模块沿用agent Sdk Types的数据契约。
 export type { Settings } from './sdk/settingsTypes.generated.js'
 // Re-export tool types (all marked @internal until SDK API stabilizes)
+// agent Sdk Types在这里处理 `export * from './sdk/toolTypes.js'`，完成这一小步状态转换。
 export * from './sdk/toolTypes.js'
 
 // ============================================================================
 // Functions
 // ============================================================================
 
+// 整理这一组导入，让agent Sdk Types后续逻辑可以直接复用这些外部能力。
 import type {
   SDKMessage,
   SDKResultMessage,
@@ -41,6 +48,7 @@ import type {
   SDKUserMessage,
 } from './sdk/coreTypes.js'
 // Import types needed for function signatures
+// 整理这一组导入，让agent Sdk Types后续逻辑可以直接复用这些外部能力。
 import type {
   AnyZodRawShape,
   ForkSessionOptions,
@@ -61,6 +69,7 @@ import type {
   SessionMutationOptions,
 } from './sdk/runtimeTypes.js'
 
+// 导出类型定义，让其他模块沿用agent Sdk Types的数据契约。
 export type {
   ListSessionsOptions,
   GetSessionInfoOptions,
@@ -70,10 +79,12 @@ export type {
   SDKSessionInfo,
 }
 
+// tool 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function tool<Schema extends AnyZodRawShape>(
   _name: string,
   _description: string,
   _inputSchema: Schema,
+  // agent Sdk Types在这里处理 `_handler: (`，完成这一小步状态转换。
   _handler: (
     args: InferShape<Schema>,
     extra: unknown,
@@ -84,9 +95,11 @@ export function tool<Schema extends AnyZodRawShape>(
     alwaysLoad?: boolean
   },
 ): SdkMcpToolDefinition<Schema> {
+  // 抛出 new Error('not implemented')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('not implemented')
 }
 
+// CreateSdkMcpServerOptions 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 type CreateSdkMcpServerOptions = {
   name: string
   version?: string
@@ -100,24 +113,31 @@ type CreateSdkMcpServerOptions = {
  *
  * If your SDK MCP calls will run longer than 60s, override CLAUDE_CODE_STREAM_CLOSE_TIMEOUT
  */
+// createSdkMcpServer 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createSdkMcpServer(
   _options: CreateSdkMcpServerOptions,
 ): McpSdkServerConfigWithInstance {
+  // 抛出 new Error('not implemented')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('not implemented')
 }
 
+// AbortError 聚合agent Sdk Types相关状态与操作，把同一职责的行为收束到类实例中。
 export class AbortError extends Error {}
 
 /** @internal */
+// query 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function query(_params: {
   prompt: string | AsyncIterable<SDKUserMessage>
   options?: InternalOptions
 }): InternalQuery
+// query 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function query(_params: {
   prompt: string | AsyncIterable<SDKUserMessage>
   options?: Options
 }): Query
+// query 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function query(): Query {
+  // 抛出 new Error('query is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('query is not implemented in the SDK')
 }
 
@@ -126,9 +146,11 @@ export function query(): Query {
  * Create a persistent session for multi-turn conversations.
  * @alpha
  */
+// unstable_v2_createSession 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function unstable_v2_createSession(
   _options: SDKSessionOptions,
 ): SDKSession {
+  // 抛出 new Error('unstable_v2_createSession is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('unstable_v2_createSession is not implemented in the SDK')
 }
 
@@ -137,10 +159,12 @@ export function unstable_v2_createSession(
  * Resume an existing session by ID.
  * @alpha
  */
+// unstable_v2_resumeSession 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function unstable_v2_resumeSession(
   _sessionId: string,
   _options: SDKSessionOptions,
 ): SDKSession {
+  // 抛出 new Error('unstable_v2_resumeSession is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('unstable_v2_resumeSession is not implemented in the SDK')
 }
 
@@ -157,10 +181,12 @@ export function unstable_v2_resumeSession(
  * })
  * ```
  */
+// unstable_v2_prompt 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function unstable_v2_prompt(
   _message: string,
   _options: SDKSessionOptions,
 ): Promise<SDKResultMessage> {
+  // 抛出 new Error('unstable_v2_prompt is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('unstable_v2_prompt is not implemented in the SDK')
 }
 
@@ -175,10 +201,12 @@ export async function unstable_v2_prompt(
  * @param options - Optional dir, limit, offset, and includeSystemMessages
  * @returns Array of messages, or empty array if session not found
  */
+// getSessionMessages 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function getSessionMessages(
   _sessionId: string,
   _options?: GetSessionMessagesOptions,
 ): Promise<SessionMessage[]> {
+  // 抛出 new Error('getSessionMessages is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('getSessionMessages is not implemented in the SDK')
 }
 
@@ -201,9 +229,11 @@ export async function getSessionMessages(
  * const page2 = await listSessions({ limit: 50, offset: 50 })
  * ```
  */
+// listSessions 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function listSessions(
   _options?: ListSessionsOptions,
 ): Promise<SDKSessionInfo[]> {
+  // 抛出 new Error('listSessions is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('listSessions is not implemented in the SDK')
 }
 
@@ -216,10 +246,12 @@ export async function listSessions(
  * @param sessionId - UUID of the session
  * @param options - `{ dir?: string }` project path; omit to search all project directories
  */
+// getSessionInfo 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function getSessionInfo(
   _sessionId: string,
   _options?: GetSessionInfoOptions,
 ): Promise<SDKSessionInfo | undefined> {
+  // 抛出 new Error('getSessionInfo is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('getSessionInfo is not implemented in the SDK')
 }
 
@@ -229,11 +261,13 @@ export async function getSessionInfo(
  * @param title - New title
  * @param options - `{ dir?: string }` project path; omit to search all projects
  */
+// renameSession 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function renameSession(
   _sessionId: string,
   _title: string,
   _options?: SessionMutationOptions,
 ): Promise<void> {
+  // 抛出 new Error('renameSession is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('renameSession is not implemented in the SDK')
 }
 
@@ -243,11 +277,13 @@ export async function renameSession(
  * @param tag - Tag string, or null to clear
  * @param options - `{ dir?: string }` project path; omit to search all projects
  */
+// tagSession 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function tagSession(
   _sessionId: string,
   _tag: string | null,
   _options?: SessionMutationOptions,
 ): Promise<void> {
+  // 抛出 new Error('tagSession is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('tagSession is not implemented in the SDK')
 }
 
@@ -265,10 +301,12 @@ export async function tagSession(
  * @param options - `{ dir?, upToMessageId?, title? }`
  * @returns `{ sessionId }` — UUID of the new forked session
  */
+// forkSession 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function forkSession(
   _sessionId: string,
   _options?: ForkSessionOptions,
 ): Promise<ForkSessionResult> {
+  // 抛出 new Error('forkSession is not implemented in the SDK')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('forkSession is not implemented in the SDK')
 }
 
@@ -280,6 +318,7 @@ export async function forkSession(
  * A scheduled task from `<dir>/.claude/scheduled_tasks.json`.
  * @internal
  */
+// CronTask 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CronTask = {
   id: string
   cron: string
@@ -295,6 +334,7 @@ export type CronTask = {
  * same tuning.
  * @internal
  */
+// CronJitterConfig 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CronJitterConfig = {
   recurringFrac: number
   recurringCapMs: number
@@ -308,6 +348,7 @@ export type CronJitterConfig = {
  * Event yielded by `watchScheduledTasks()`.
  * @internal
  */
+// ScheduledTaskEvent 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ScheduledTaskEvent =
   | { type: 'fire'; task: CronTask }
   | { type: 'missed'; tasks: CronTask[] }
@@ -316,6 +357,7 @@ export type ScheduledTaskEvent =
  * Handle returned by `watchScheduledTasks()`.
  * @internal
  */
+// ScheduledTasksHandle 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ScheduledTasksHandle = {
   /** Async stream of fire/missed events. Drain with `for await`. */
   events(): AsyncGenerator<ScheduledTaskEvent>
@@ -324,6 +366,7 @@ export type ScheduledTasksHandle = {
    * if nothing is scheduled. Useful for deciding whether to tear down an
    * idle agent subprocess or keep it warm for an imminent fire.
    */
+  // getNextFireTime不依赖额外参数，直接计算agent Sdk Types需要的结果。
   getNextFireTime(): number | null
 }
 
@@ -347,11 +390,13 @@ export type ScheduledTasksHandle = {
  *
  * @internal
  */
+// watchScheduledTasks 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function watchScheduledTasks(_opts: {
   dir: string
   signal: AbortSignal
   getJitterConfig?: () => CronJitterConfig
 }): ScheduledTasksHandle {
+  // 抛出 new Error('not implemented')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('not implemented')
 }
 
@@ -360,7 +405,9 @@ export function watchScheduledTasks(_opts: {
  * with the user (via AskUserQuestion) before executing.
  * @internal
  */
+// buildMissedTaskNotification 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildMissedTaskNotification(_missed: CronTask[]): string {
+  // 抛出 new Error('not implemented')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('not implemented')
 }
 
@@ -368,6 +415,7 @@ export function buildMissedTaskNotification(_missed: CronTask[]): string {
  * A user message typed on claude.ai, extracted from the bridge WS.
  * @internal
  */
+// InboundPrompt 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InboundPrompt = {
   content: string | unknown[]
   uuid?: string
@@ -377,12 +425,14 @@ export type InboundPrompt = {
  * Options for connectRemoteControl.
  * @internal
  */
+// ConnectRemoteControlOptions 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ConnectRemoteControlOptions = {
   dir: string
   name?: string
   workerType?: string
   branch?: string
   gitRepoUrl?: string | null
+  // 这个回调绑定到 getAccessToken: () => string | undefined，负责agent Sdk Types在该局部场景下的响应。
   getAccessToken: () => string | undefined
   baseUrl: string
   orgUUID: string
@@ -395,24 +445,35 @@ export type ConnectRemoteControlOptions = {
  * field documentation.
  * @internal
  */
+// RemoteControlHandle 固化agent Sdk Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type RemoteControlHandle = {
   sessionUrl: string
   environmentId: string
   bridgeSessionId: string
   write(msg: SDKMessage): void
+  // sendResult 使用 无 完成agent Sdk Types里的对应操作。
   sendResult(): void
+  // sendControlRequest 使用 req: unknown 完成agent Sdk Types里的对应操作。
   sendControlRequest(req: unknown): void
+  // sendControlResponse 使用 res: unknown 完成agent Sdk Types里的对应操作。
   sendControlResponse(res: unknown): void
+  // sendControlCancelRequest 使用 requestId: string 完成agent Sdk Types里的对应操作。
   sendControlCancelRequest(requestId: string): void
+  // inboundPrompts 使用 无 完成agent Sdk Types里的对应操作。
   inboundPrompts(): AsyncGenerator<InboundPrompt>
+  // controlRequests 使用 无 完成agent Sdk Types里的对应操作。
   controlRequests(): AsyncGenerator<unknown>
+  // permissionResponses 使用 无 完成agent Sdk Types里的对应操作。
   permissionResponses(): AsyncGenerator<unknown>
+  // 调用 onStateChange，触发agent Sdk Types此处需要的副作用。
   onStateChange(
+    // agent Sdk Types在这里处理 `cb: (`，完成这一小步状态转换。
     cb: (
       state: 'ready' | 'connected' | 'reconnecting' | 'failed',
       detail?: string,
     ) => void,
   ): void
+  // teardown 使用 无 完成agent Sdk Types里的对应操作。
   teardown(): Promise<void>
 }
 
@@ -436,8 +497,10 @@ export type RemoteControlHandle = {
  *
  * @internal
  */
+// connectRemoteControl 封装agentSdkTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function connectRemoteControl(
   _opts: ConnectRemoteControlOptions,
 ): Promise<RemoteControlHandle | null> {
+  // 抛出 new Error('not implemented')，阻止agent Sdk Types在无效状态下继续运行。
   throw new Error('not implemented')
 }

@@ -1,12 +1,21 @@
+// 接入 BASH_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
+// 接入 EXIT_PLAN_MODE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { EXIT_PLAN_MODE_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
+// 接入 FILE_EDIT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
+// 接入 FILE_WRITE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_WRITE_TOOL_NAME } from 'src/tools/FileWriteTool/prompt.js'
+// 接入 NOTEBOOK_EDIT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { NOTEBOOK_EDIT_TOOL_NAME } from 'src/tools/NotebookEditTool/constants.js'
+// 接入 WEB_FETCH_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
+// 引入 AGENT_TOOL_NAME，将 ../constants.js 中已经封装好的能力接到本文件流程里。
 import { AGENT_TOOL_NAME } from '../constants.js'
+// 类型依赖 { BuiltInAgentDefinition } 来自 ../loadAgentsDir.js，用于校准工具调用的数据契约。
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
+// VERIFICATION_SYSTEM_PROMPT保存``You are a verification specialist. Your job is not to co...`，作为后续固定文本处理的输入。
 const VERIFICATION_SYSTEM_PROMPT = `You are a verification specialist. Your job is not to confirm the implementation works — it's to try to break it.
 
 You have two documented failure patterns. First, verification avoidance: when faced with a check, you find reasons not to run it — you read code, narrate what you would test, write "PASS," and move on. Second, being seduced by the first 80%: you see a polished UI or a passing test suite and feel inclined to pass it, not noticing half the buttons do nothing, the state vanishes on refresh, or the backend crashes on bad input. The first 80% is the easy part. Your entire value is in finding the last 20%. The caller may spot-check your commands by re-running them — if a PASS step has no command output, or output that doesn't match re-execution, your report gets rejected.
@@ -128,9 +137,11 @@ Use the literal string \`VERDICT: \` followed by exactly one of \`PASS\`, \`FAIL
 - **FAIL**: include what failed, exact error output, reproduction steps.
 - **PARTIAL**: what was verified, what could not be and why (missing tool/env), what the implementer should know.`
 
+// VERIFICATION_WHEN_TO_USE 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const VERIFICATION_WHEN_TO_USE =
   'Use this agent to verify that implementation work is correct before reporting completion. Invoke after non-trivial tasks (3+ file edits, backend/API changes, infrastructure changes). Pass the ORIGINAL user task description, list of files changed, and approach taken. The agent runs builds, tests, linters, and checks to produce a PASS/FAIL/PARTIAL verdict with evidence.'
 
+// VERIFICATION_AGENT 集中保存Agent 工具 verification Agent要一起传递的字段。
 export const VERIFICATION_AGENT: BuiltInAgentDefinition = {
   agentType: 'verification',
   whenToUse: VERIFICATION_WHEN_TO_USE,
@@ -146,6 +157,7 @@ export const VERIFICATION_AGENT: BuiltInAgentDefinition = {
   source: 'built-in',
   baseDir: 'built-in',
   model: 'inherit',
+  // 这个回调绑定到 getSystemPrompt: () => VERIFICATION_SYSTEM_PROMPT,，负责工具调用在该局部场景下的响应。
   getSystemPrompt: () => VERIFICATION_SYSTEM_PROMPT,
   criticalSystemReminder_EXPERIMENTAL:
     'CRITICAL: This is a VERIFICATION-ONLY task. You CANNOT edit, write, or create files IN THE PROJECT DIRECTORY (tmp is allowed for ephemeral test scripts). You MUST end with VERDICT: PASS, VERDICT: FAIL, or VERDICT: PARTIAL.',

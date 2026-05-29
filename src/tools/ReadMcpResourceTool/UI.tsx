@@ -1,27 +1,45 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { z } 来自 zod/v4，用于校准工具调用的数据契约。
 import type { z } from 'zod/v4';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 复用 OutputLine 终端界面组件，避免在这里重复拼装显示逻辑。
 import { OutputLine } from '../../components/shell/OutputLine.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { ToolProgressData } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolProgressData } from '../../Tool.js';
+// 类型依赖 { ProgressMessage } 来自 ../../types/message.js，用于校准工具调用的数据契约。
 import type { ProgressMessage } from '../../types/message.js';
+// 复用 jsonStringify 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonStringify } from '../../utils/slowOperations.js';
+// 类型依赖 { inputSchema, Output } 来自 ./ReadMcpResourceTool.js，用于校准工具调用的数据契约。
 import type { inputSchema, Output } from './ReadMcpResourceTool.js';
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(input: Partial<z.infer<ReturnType<typeof inputSchema>>>): React.ReactNode {
+  // 只有 `!input.uri || !input.server` 满足时，工具调用才执行该分支。
   if (!input.uri || !input.server) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 返回 ``Read resource "${input.uri}" from server "${input.server}"``，作为工具调用这次计算的结果。
   return `Read resource "${input.uri}" from server "${input.server}"`;
 }
+// userFacingName 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function userFacingName(): string {
+  // 返回 `'readMcpResource'`，作为工具调用这次计算的结果。
   return 'readMcpResource';
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: Output, _progressMessagesForMessage: ProgressMessage<ToolProgressData>[], {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // 只有 `!output || !output.contents || output.contents.le` 满足时，工具调用才执行该分支。
   if (!output || !output.contents || output.contents.length === 0) {
+    // 返回 `<Box justifyContent="space-between" overflowX="hidden" width="100%">`，作为工具调用这次计算的结果。
     return <Box justifyContent="space-between" overflowX="hidden" width="100%">
         <MessageResponse height={1}>
           <Text dimColor>(No content)</Text>
@@ -31,7 +49,9 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
 
   // Format as JSON for better readability
   // eslint-disable-next-line no-restricted-syntax -- human-facing UI, not tool_result
+  // formattedOutput保存`jsonStringify`，供工具调用后续处理使用。
   const formattedOutput = jsonStringify(output, null, 2);
+  // 返回 `<OutputLine content={formattedOutput} verbose={verbose} />`，作为工具调用这次计算的结果。
   return <OutputLine content={formattedOutput} verbose={verbose} />;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsInoiLCJNZXNzYWdlUmVzcG9uc2UiLCJPdXRwdXRMaW5lIiwiQm94IiwiVGV4dCIsIlRvb2xQcm9ncmVzc0RhdGEiLCJQcm9ncmVzc01lc3NhZ2UiLCJqc29uU3RyaW5naWZ5IiwiaW5wdXRTY2hlbWEiLCJPdXRwdXQiLCJyZW5kZXJUb29sVXNlTWVzc2FnZSIsImlucHV0IiwiUGFydGlhbCIsImluZmVyIiwiUmV0dXJuVHlwZSIsIlJlYWN0Tm9kZSIsInVyaSIsInNlcnZlciIsInVzZXJGYWNpbmdOYW1lIiwicmVuZGVyVG9vbFJlc3VsdE1lc3NhZ2UiLCJvdXRwdXQiLCJfcHJvZ3Jlc3NNZXNzYWdlc0Zvck1lc3NhZ2UiLCJ2ZXJib3NlIiwiY29udGVudHMiLCJsZW5ndGgiLCJmb3JtYXR0ZWRPdXRwdXQiXSwic291cmNlcyI6WyJVSS50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICogYXMgUmVhY3QgZnJvbSAncmVhY3QnXG5pbXBvcnQgdHlwZSB7IHogfSBmcm9tICd6b2QvdjQnXG5pbXBvcnQgeyBNZXNzYWdlUmVzcG9uc2UgfSBmcm9tICcuLi8uLi9jb21wb25lbnRzL01lc3NhZ2VSZXNwb25zZS5qcydcbmltcG9ydCB7IE91dHB1dExpbmUgfSBmcm9tICcuLi8uLi9jb21wb25lbnRzL3NoZWxsL091dHB1dExpbmUuanMnXG5pbXBvcnQgeyBCb3gsIFRleHQgfSBmcm9tICcuLi8uLi9pbmsuanMnXG5pbXBvcnQgdHlwZSB7IFRvb2xQcm9ncmVzc0RhdGEgfSBmcm9tICcuLi8uLi9Ub29sLmpzJ1xuaW1wb3J0IHR5cGUgeyBQcm9ncmVzc01lc3NhZ2UgfSBmcm9tICcuLi8uLi90eXBlcy9tZXNzYWdlLmpzJ1xuaW1wb3J0IHsganNvblN0cmluZ2lmeSB9IGZyb20gJy4uLy4uL3V0aWxzL3Nsb3dPcGVyYXRpb25zLmpzJ1xuaW1wb3J0IHR5cGUgeyBpbnB1dFNjaGVtYSwgT3V0cHV0IH0gZnJvbSAnLi9SZWFkTWNwUmVzb3VyY2VUb29sLmpzJ1xuXG5leHBvcnQgZnVuY3Rpb24gcmVuZGVyVG9vbFVzZU1lc3NhZ2UoXG4gIGlucHV0OiBQYXJ0aWFsPHouaW5mZXI8UmV0dXJuVHlwZTx0eXBlb2YgaW5wdXRTY2hlbWE+Pj4sXG4pOiBSZWFjdC5SZWFjdE5vZGUge1xuICBpZiAoIWlucHV0LnVyaSB8fCAhaW5wdXQuc2VydmVyKSB7XG4gICAgcmV0dXJuIG51bGxcbiAgfVxuICByZXR1cm4gYFJlYWQgcmVzb3VyY2UgXCIke2lucHV0LnVyaX1cIiBmcm9tIHNlcnZlciBcIiR7aW5wdXQuc2VydmVyfVwiYFxufVxuXG5leHBvcnQgZnVuY3Rpb24gdXNlckZhY2luZ05hbWUoKTogc3RyaW5nIHtcbiAgcmV0dXJuICdyZWFkTWNwUmVzb3VyY2UnXG59XG5cbmV4cG9ydCBmdW5jdGlvbiByZW5kZXJUb29sUmVzdWx0TWVzc2FnZShcbiAgb3V0cHV0OiBPdXRwdXQsXG4gIF9wcm9ncmVzc01lc3NhZ2VzRm9yTWVzc2FnZTogUHJvZ3Jlc3NNZXNzYWdlPFRvb2xQcm9ncmVzc0RhdGE+W10sXG4gIHsgdmVyYm9zZSB9OiB7IHZlcmJvc2U6IGJvb2xlYW4gfSxcbik6IFJlYWN0LlJlYWN0Tm9kZSB7XG4gIGlmICghb3V0cHV0IHx8ICFvdXRwdXQuY29udGVudHMgfHwgb3V0cHV0LmNvbnRlbnRzLmxlbmd0aCA9PT0gMCkge1xuICAgIHJldHVybiAoXG4gICAgICA8Qm94IGp1c3RpZnlDb250ZW50PVwic3BhY2UtYmV0d2VlblwiIG92ZXJmbG93WD1cImhpZGRlblwiIHdpZHRoPVwiMTAwJVwiPlxuICAgICAgICA8TWVzc2FnZVJlc3BvbnNlIGhlaWdodD17MX0+XG4gICAgICAgICAgPFRleHQgZGltQ29sb3I+KE5vIGNvbnRlbnQpPC9UZXh0PlxuICAgICAgICA8L01lc3NhZ2VSZXNwb25zZT5cbiAgICAgIDwvQm94PlxuICAgIClcbiAgfVxuXG4gIC8vIEZvcm1hdCBhcyBKU09OIGZvciBiZXR0ZXIgcmVhZGFiaWxpdHlcbiAgLy8gZXNsaW50LWRpc2FibGUtbmV4dC1saW5lIG5vLXJlc3RyaWN0ZWQtc3ludGF4IC0tIGh1bWFuLWZhY2luZyBVSSwgbm90IHRvb2xfcmVzdWx0XG4gIGNvbnN0IGZvcm1hdHRlZE91dHB1dCA9IGpzb25TdHJpbmdpZnkob3V0cHV0LCBudWxsLCAyKVxuXG4gIHJldHVybiA8T3V0cHV0TGluZSBjb250ZW50PXtmb3JtYXR0ZWRPdXRwdXR9IHZlcmJvc2U9e3ZlcmJvc2V9IC8+XG59XG4iXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sS0FBS0EsS0FBSyxNQUFNLE9BQU87QUFDOUIsY0FBY0MsQ0FBQyxRQUFRLFFBQVE7QUFDL0IsU0FBU0MsZUFBZSxRQUFRLHFDQUFxQztBQUNyRSxTQUFTQyxVQUFVLFFBQVEsc0NBQXNDO0FBQ2pFLFNBQVNDLEdBQUcsRUFBRUMsSUFBSSxRQUFRLGNBQWM7QUFDeEMsY0FBY0MsZ0JBQWdCLFFBQVEsZUFBZTtBQUNyRCxjQUFjQyxlQUFlLFFBQVEsd0JBQXdCO0FBQzdELFNBQVNDLGFBQWEsUUFBUSwrQkFBK0I7QUFDN0QsY0FBY0MsV0FBVyxFQUFFQyxNQUFNLFFBQVEsMEJBQTBCO0FBRW5FLE9BQU8sU0FBU0Msb0JBQW9CQSxDQUNsQ0MsS0FBSyxFQUFFQyxPQUFPLENBQUNaLENBQUMsQ0FBQ2EsS0FBSyxDQUFDQyxVQUFVLENBQUMsT0FBT04sV0FBVyxDQUFDLENBQUMsQ0FBQyxDQUN4RCxFQUFFVCxLQUFLLENBQUNnQixTQUFTLENBQUM7RUFDakIsSUFBSSxDQUFDSixLQUFLLENBQUNLLEdBQUcsSUFBSSxDQUFDTCxLQUFLLENBQUNNLE1BQU0sRUFBRTtJQUMvQixPQUFPLElBQUk7RUFDYjtFQUNBLE9BQU8sa0JBQWtCTixLQUFLLENBQUNLLEdBQUcsa0JBQWtCTCxLQUFLLENBQUNNLE1BQU0sR0FBRztBQUNyRTtBQUVBLE9BQU8sU0FBU0MsY0FBY0EsQ0FBQSxDQUFFLEVBQUUsTUFBTSxDQUFDO0VBQ3ZDLE9BQU8saUJBQWlCO0FBQzFCO0FBRUEsT0FBTyxTQUFTQyx1QkFBdUJBLENBQ3JDQyxNQUFNLEVBQUVYLE1BQU0sRUFDZFksMkJBQTJCLEVBQUVmLGVBQWUsQ0FBQ0QsZ0JBQWdCLENBQUMsRUFBRSxFQUNoRTtFQUFFaUI7QUFBOEIsQ0FBckIsRUFBRTtFQUFFQSxPQUFPLEVBQUUsT0FBTztBQUFDLENBQUMsQ0FDbEMsRUFBRXZCLEtBQUssQ0FBQ2dCLFNBQVMsQ0FBQztFQUNqQixJQUFJLENBQUNLLE1BQU0sSUFBSSxDQUFDQSxNQUFNLENBQUNHLFFBQVEsSUFBSUgsTUFBTSxDQUFDRyxRQUFRLENBQUNDLE1BQU0sS0FBSyxDQUFDLEVBQUU7SUFDL0QsT0FDRSxDQUFDLEdBQUcsQ0FBQyxjQUFjLENBQUMsZUFBZSxDQUFDLFNBQVMsQ0FBQyxRQUFRLENBQUMsS0FBSyxDQUFDLE1BQU07QUFDekUsUUFBUSxDQUFDLGVBQWUsQ0FBQyxNQUFNLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDbkMsVUFBVSxDQUFDLElBQUksQ0FBQyxRQUFRLENBQUMsWUFBWSxFQUFFLElBQUk7QUFDM0MsUUFBUSxFQUFFLGVBQWU7QUFDekIsTUFBTSxFQUFFLEdBQUcsQ0FBQztFQUVWOztFQUVBO0VBQ0E7RUFDQSxNQUFNQyxlQUFlLEdBQUdsQixhQUFhLENBQUNhLE1BQU0sRUFBRSxJQUFJLEVBQUUsQ0FBQyxDQUFDO0VBRXRELE9BQU8sQ0FBQyxVQUFVLENBQUMsT0FBTyxDQUFDLENBQUNLLGVBQWUsQ0FBQyxDQUFDLE9BQU8sQ0FBQyxDQUFDSCxPQUFPLENBQUMsR0FBRztBQUNuRSIsImlnbm9yZUxpc3QiOltdfQ==

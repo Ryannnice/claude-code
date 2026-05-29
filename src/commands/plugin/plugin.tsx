@@ -1,7 +1,12 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// 引入 PluginSettings，将 ./PluginSettings.js 中已经封装好的能力接到本文件流程里。
 import { PluginSettings } from './PluginSettings.js';
+// call 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, _context: unknown, args?: string): Promise<React.ReactNode> {
+  // 返回 `<PluginSettings onComplete={onDone} args={args} />`，作为命令处理这次计算的结果。
   return <PluginSettings onComplete={onDone} args={args} />;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIkxvY2FsSlNYQ29tbWFuZE9uRG9uZSIsIlBsdWdpblNldHRpbmdzIiwiY2FsbCIsIm9uRG9uZSIsIl9jb250ZXh0IiwiYXJncyIsIlByb21pc2UiLCJSZWFjdE5vZGUiXSwic291cmNlcyI6WyJwbHVnaW4udHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCAqIGFzIFJlYWN0IGZyb20gJ3JlYWN0J1xuaW1wb3J0IHR5cGUgeyBMb2NhbEpTWENvbW1hbmRPbkRvbmUgfSBmcm9tICcuLi8uLi90eXBlcy9jb21tYW5kLmpzJ1xuaW1wb3J0IHsgUGx1Z2luU2V0dGluZ3MgfSBmcm9tICcuL1BsdWdpblNldHRpbmdzLmpzJ1xuXG5leHBvcnQgYXN5bmMgZnVuY3Rpb24gY2FsbChcbiAgb25Eb25lOiBMb2NhbEpTWENvbW1hbmRPbkRvbmUsXG4gIF9jb250ZXh0OiB1bmtub3duLFxuICBhcmdzPzogc3RyaW5nLFxuKTogUHJvbWlzZTxSZWFjdC5SZWFjdE5vZGU+IHtcbiAgcmV0dXJuIDxQbHVnaW5TZXR0aW5ncyBvbkNvbXBsZXRlPXtvbkRvbmV9IGFyZ3M9e2FyZ3N9IC8+XG59XG4iXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sS0FBS0EsS0FBSyxNQUFNLE9BQU87QUFDOUIsY0FBY0MscUJBQXFCLFFBQVEsd0JBQXdCO0FBQ25FLFNBQVNDLGNBQWMsUUFBUSxxQkFBcUI7QUFFcEQsT0FBTyxlQUFlQyxJQUFJQSxDQUN4QkMsTUFBTSxFQUFFSCxxQkFBcUIsRUFDN0JJLFFBQVEsRUFBRSxPQUFPLEVBQ2pCQyxJQUFhLENBQVIsRUFBRSxNQUFNLENBQ2QsRUFBRUMsT0FBTyxDQUFDUCxLQUFLLENBQUNRLFNBQVMsQ0FBQyxDQUFDO0VBQzFCLE9BQU8sQ0FBQyxjQUFjLENBQUMsVUFBVSxDQUFDLENBQUNKLE1BQU0sQ0FBQyxDQUFDLElBQUksQ0FBQyxDQUFDRSxJQUFJLENBQUMsR0FBRztBQUMzRCIsImlnbm9yZUxpc3QiOltdfQ==

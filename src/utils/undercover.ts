@@ -21,23 +21,34 @@
  * function in this file reduces to a trivial return.
  */
 
+// 引入 getRepoClassCached，将 ./commitAttribution.js 中已经封装好的能力接到本文件流程里。
 import { getRepoClassCached } from './commitAttribution.js'
+// 引入 getGlobalConfig，将 ./config.js 中已经封装好的能力接到本文件流程里。
 import { getGlobalConfig } from './config.js'
+// 引入 isEnvTruthy，将 ./envUtils.js 中已经封装好的能力接到本文件流程里。
 import { isEnvTruthy } from './envUtils.js'
 
+// isUndercover 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isUndercover(): boolean {
+  // 当 `process.env.USER_TYPE` 匹配 `'ant'` 时，共享工具执行对应分支。
   if (process.env.USER_TYPE === 'ant') {
+    // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_UNDERCOVER)` 时，共享工具执行该分支。
     if (isEnvTruthy(process.env.CLAUDE_CODE_UNDERCOVER)) return true
     // Auto: active unless we've positively confirmed we're in an allowlisted
     // internal repo. 'external', 'none', and null (check not yet run) all
     // resolve to ON. The check is primed in setup.ts; only 'internal' → OFF.
+    // 返回 `getRepoClassCached() !== 'internal'`，作为共享工具这次计算的结果。
     return getRepoClassCached() !== 'internal'
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
+// getUndercoverInstructions 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getUndercoverInstructions(): string {
+  // 当 `process.env.USER_TYPE` 匹配 `'ant'` 时，共享工具执行对应分支。
   if (process.env.USER_TYPE === 'ant') {
+    // 返回 ``## UNDERCOVER MODE — CRITICAL`，作为共享工具这次计算的结果。
     return `## UNDERCOVER MODE — CRITICAL
 
 You are operating UNDERCOVER in a PUBLIC/OPEN-SOURCE repository. Your commit
@@ -68,6 +79,7 @@ BAD (never write these):
 - "Co-Authored-By: Claude Opus 4.6 <…>"
 `
   }
+  // 返回空字符串表示没有可用文本，调用方会按空输入处理。
   return ''
 }
 
@@ -77,13 +89,20 @@ BAD (never write these):
  * and the user hasn't seen the notice before. Pure — the component marks the
  * flag on mount.
  */
+// shouldShowUndercoverAutoNotice 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldShowUndercoverAutoNotice(): boolean {
+  // 当 `process.env.USER_TYPE` 匹配 `'ant'` 时，共享工具执行对应分支。
   if (process.env.USER_TYPE === 'ant') {
     // If forced via env, user already knows; don't nag.
+    // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_UNDERCOVER)` 时，共享工具执行该分支。
     if (isEnvTruthy(process.env.CLAUDE_CODE_UNDERCOVER)) return false
+    // 满足 `!isUndercover()` 时，共享工具执行该分支。
     if (!isUndercover()) return false
+    // 满足 `getGlobalConfig().hasSeenUndercoverAutoNotice` 时，共享工具执行该分支。
     if (getGlobalConfig().hasSeenUndercoverAutoNotice) return false
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }

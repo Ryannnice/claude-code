@@ -1,17 +1,25 @@
+// 引入 toJSONSchema，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { toJSONSchema } from 'zod/v4'
+// 复用 SettingsSchema 工具函数，把通用处理留在 ../../utils/settings/types.js 中维护。
 import { SettingsSchema } from '../../utils/settings/types.js'
+// 复用 jsonStringify 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonStringify } from '../../utils/slowOperations.js'
+// 引入 registerBundledSkill，将 ../bundledSkills.js 中已经封装好的能力接到本文件流程里。
 import { registerBundledSkill } from '../bundledSkills.js'
 
 /**
  * Generate JSON Schema from the settings Zod schema.
  * This keeps the skill prompt in sync with the actual types.
  */
+// generateSettingsSchema 封装updateConfig的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function generateSettingsSchema(): string {
+  // jsonSchema保存`toJSONSchema`，供update Config后续处理使用。
   const jsonSchema = toJSONSchema(SettingsSchema(), { io: 'input' })
+  // 返回 `jsonStringify(jsonSchema, null, 2)`，作为update Config这次计算的结果。
   return jsonStringify(jsonSchema, null, 2)
 }
 
+// SETTINGS_EXAMPLES_DOCS 集合 命名 ``## Settings File Locations`，让后续代码直接表达这个值的用途。
 const SETTINGS_EXAMPLES_DOCS = `## Settings File Locations
 
 Choose the appropriate file based on scope:
@@ -107,6 +115,7 @@ Plugin syntax: \`plugin-name@source\` where source is \`claude-code-marketplace\
 // actionable than auto-generated schema docs. The generated schema list
 // provides completeness while examples provide clarity.
 
+// HOOKS_DOCS 集合 命名 ``## Hooks Configuration`，让后续代码直接表达这个值的用途。
 const HOOKS_DOCS = `## Hooks Configuration
 
 Hooks run commands at specific points in Claude Code's lifecycle.
@@ -266,6 +275,7 @@ echo '{"systemMessage": "Session complete!"}'
 \`\`\`
 `
 
+// HOOK_VERIFICATION_FLOW保存`Hook`，供update Config后续处理使用。
 const HOOK_VERIFICATION_FLOW = `## Constructing a Hook (with verification)
 
 Given an event, matcher, target file, and desired behavior, follow this flow. Each step catches a different failure class — a hook that silently does nothing is worse than no hook.
@@ -304,6 +314,7 @@ Given an event, matcher, target file, and desired behavior, follow this flow. Ea
 7. **Handoff.** Tell the user the hook is live (or needs \`/hooks\`/restart per the watcher caveat). Point them at \`/hooks\` to review, edit, or disable it later. The UI only shows "Ran N hooks" if a hook errors or is slow — silent success is invisible by design.
 `
 
+// UPDATE_CONFIG_PROMPT 配置 命名 ``# Update Config Skill`，让后续代码直接表达这个值的用途。
 const UPDATE_CONFIG_PROMPT = `# Update Config Skill
 
 Modify Claude Code configuration by updating settings.json files.
@@ -442,33 +453,48 @@ If a hook isn't running:
 6. **Use --debug** - Run \`claude --debug\` to see hook execution logs
 `
 
+// registerUpdateConfigSkill 封装updateConfig的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function registerUpdateConfigSkill(): void {
+  // 调用 registerBundledSkill，触发update Config此处需要的副作用。
   registerBundledSkill({
     name: 'update-config',
     description:
       'Use this skill to configure the Claude Code harness via settings.json. Automated behaviors ("from now on when X", "each time X", "whenever X", "before/after X") require hooks configured in settings.json - the harness executes these, not Claude, so memory/preferences cannot fulfill them. Also use for: permissions ("allow X", "add permission", "move permission to"), env vars ("set X=Y"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: "allow npm commands", "add bq permission to global settings", "move permission to user settings", "set DEBUG=true", "when claude stops show X". For simple settings like theme/model, use Config tool.',
     allowedTools: ['Read'],
     userInvocable: true,
+    // getPromptForCommand 根据 args 读取或计算update Config需要的结果。
     async getPromptForCommand(args) {
+      // 满足 `args.startsWith('[hooks-only]')` 时，update Config执行该分支。
       if (args.startsWith('[hooks-only]')) {
+        // req格式化`args.slice`，供update Config后续处理使用。
         const req = args.slice('[hooks-only]'.length).trim()
+        // 提示词保存`HOOKS_DOCS + '\n\n' + HOOK_VERIFICATION_FLOW`，供后续判断或组装使用。
         let prompt = HOOKS_DOCS + '\n\n' + HOOK_VERIFICATION_FLOW
+        // 满足 `req` 时，update Config执行该分支。
         if (req) {
+          // update Config在这里处理 `prompt += `\n\n## Task\n\n${req}``，完成这一小步状态转换。
           prompt += `\n\n## Task\n\n${req}`
         }
+        // 返回列表结果，保留update Config已经排好的条目顺序。
         return [{ type: 'text', text: prompt }]
       }
 
       // Generate schema dynamically to stay in sync with types
+      // jsonSchema保存`generateSettingsSchema`，供update Config后续处理使用。
       const jsonSchema = generateSettingsSchema()
 
+      // 提示词保存`UPDATE_CONFIG_PROMPT`，供后续判断或组装使用。
       let prompt = UPDATE_CONFIG_PROMPT
+      // update Config在这里处理 `prompt += `\n\n## Full Settings JSON Schema\n\n\`\`\`json\n${jsonSchema...`，完成这一小步状态转换。
       prompt += `\n\n## Full Settings JSON Schema\n\n\`\`\`json\n${jsonSchema}\n\`\`\``
 
+      // 满足 `args` 时，update Config执行该分支。
       if (args) {
+        // update Config在这里处理 `prompt += `\n\n## User Request\n\n${args}``，完成这一小步状态转换。
         prompt += `\n\n## User Request\n\n${args}`
       }
 
+      // 返回列表结果，保留update Config已经排好的条目顺序。
       return [{ type: 'text', text: prompt }]
     },
   })

@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 /**
  * Teammate-specific system prompt addendum.
  *
@@ -5,6 +6,7 @@
  * It explains visibility constraints and communication requirements.
  */
 
+// TEAMMATE_SYSTEM_PROMPT_ADDENDUM保存```，作为后续固定文本处理的输入。
 export const TEAMMATE_SYSTEM_PROMPT_ADDENDUM = `
 # Agent Teammate Communication
 

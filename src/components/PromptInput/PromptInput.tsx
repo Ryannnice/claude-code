@@ -1,131 +1,257 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import * as path from 'path';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect、useMemo、useRef、useState、useSyncExternalStore，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+// 引入 useNotifications，将 src/context/notifications.js 中已经封装好的能力接到本文件流程里。
 import { useNotifications } from 'src/context/notifications.js';
+// 引入 useCommandQueue，将 src/hooks/useCommandQueue.js 中已经封装好的能力接到本文件流程里。
 import { useCommandQueue } from 'src/hooks/useCommandQueue.js';
+// 引入 IDEAtMentioned、useIdeAtMentioned，将 src/hooks/useIdeAtMentioned.js 中已经封装好的能力接到本文件流程里。
 import { type IDEAtMentioned, useIdeAtMentioned } from 'src/hooks/useIdeAtMentioned.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 引入 AppState、useAppState、useAppStateStore、useSetAppState，将 src/state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { type AppState, useAppState, useAppStateStore, useSetAppState } from 'src/state/AppState.js';
+// 类型依赖 { FooterItem } 来自 src/state/AppStateStore.js，用于校准终端渲染的数据契约。
 import type { FooterItem } from 'src/state/AppStateStore.js';
+// 复用 getCwd 工具函数，把通用处理留在 src/utils/cwd.js 中维护。
 import { getCwd } from 'src/utils/cwd.js';
+// 复用 isQueuedCommandEditable、popAllEditable 工具函数，把通用处理留在 src/utils/messageQueueManager.js 中维护。
 import { isQueuedCommandEditable, popAllEditable } from 'src/utils/messageQueueManager.js';
+// 引入 stripAnsi，将 strip-ansi 中已经封装好的能力接到本文件流程里。
 import stripAnsi from 'strip-ansi';
+// 引入 isBuddyEnabled，将 ../../buddy/availability.js 中已经封装好的能力接到本文件流程里。
 import { isBuddyEnabled } from '../../buddy/availability.js';
+// 引入 companionReservedColumns，将 ../../buddy/CompanionSprite.js 中已经封装好的能力接到本文件流程里。
 import { companionReservedColumns } from '../../buddy/CompanionSprite.js';
+// 引入 findBuddyTriggerPositions、useBuddyNotification，将 ../../buddy/useBuddyNotification.js 中已经封装好的能力接到本文件流程里。
 import { findBuddyTriggerPositions, useBuddyNotification } from '../../buddy/useBuddyNotification.js';
+// 注册 FastModePicker 命令实现，后续会把它纳入斜杠命令集合。
 import { FastModePicker } from '../../commands/fast/fast.js';
+// 注册 isUltrareviewEnabled 命令实现，后续会把它纳入斜杠命令集合。
 import { isUltrareviewEnabled } from '../../commands/review/ultrareviewEnabled.js';
+// 注册 getNativeCSIuTerminalDisplayName 命令实现，后续会把它纳入斜杠命令集合。
 import { getNativeCSIuTerminalDisplayName } from '../../commands/terminalSetup/terminalSetup.js';
+// 引入 Command、hasCommand，将 ../../commands.js 中已经封装好的能力接到本文件流程里。
 import { type Command, hasCommand } from '../../commands.js';
+// 引入 useIsModalOverlayActive，将 ../../context/overlayContext.js 中已经封装好的能力接到本文件流程里。
 import { useIsModalOverlayActive } from '../../context/overlayContext.js';
+// 引入 useSetPromptOverlayDialog，将 ../../context/promptOverlayContext.js 中已经封装好的能力接到本文件流程里。
 import { useSetPromptOverlayDialog } from '../../context/promptOverlayContext.js';
+// 引入 formatImageRef、formatPastedTextRef、getPastedTextRefNumLines、parseReferences，将 ../../history.js 中已经封装好的能力接到本文件流程里。
 import { formatImageRef, formatPastedTextRef, getPastedTextRefNumLines, parseReferences } from '../../history.js';
+// 类型依赖 { VerificationStatus } 来自 ../../hooks/useApiKeyVerification.js，用于校准终端渲染的数据契约。
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js';
+// 引入 HistoryMode、useArrowKeyHistory，将 ../../hooks/useArrowKeyHistory.js 中已经封装好的能力接到本文件流程里。
 import { type HistoryMode, useArrowKeyHistory } from '../../hooks/useArrowKeyHistory.js';
+// 引入 useDoublePress，将 ../../hooks/useDoublePress.js 中已经封装好的能力接到本文件流程里。
 import { useDoublePress } from '../../hooks/useDoublePress.js';
+// 引入 useHistorySearch，将 ../../hooks/useHistorySearch.js 中已经封装好的能力接到本文件流程里。
 import { useHistorySearch } from '../../hooks/useHistorySearch.js';
+// 类型依赖 { IDESelection } 来自 ../../hooks/useIdeSelection.js，用于校准终端渲染的数据契约。
 import type { IDESelection } from '../../hooks/useIdeSelection.js';
+// 引入 useInputBuffer，将 ../../hooks/useInputBuffer.js 中已经封装好的能力接到本文件流程里。
 import { useInputBuffer } from '../../hooks/useInputBuffer.js';
+// 引入 useMainLoopModel，将 ../../hooks/useMainLoopModel.js 中已经封装好的能力接到本文件流程里。
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
+// 引入 usePromptSuggestion，将 ../../hooks/usePromptSuggestion.js 中已经封装好的能力接到本文件流程里。
 import { usePromptSuggestion } from '../../hooks/usePromptSuggestion.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 引入 useTypeahead，将 ../../hooks/useTypeahead.js 中已经封装好的能力接到本文件流程里。
 import { useTypeahead } from '../../hooks/useTypeahead.js';
+// 类型依赖 { BorderTextOptions } 来自 ../../ink/render-border.js，用于校准终端渲染的数据契约。
 import type { BorderTextOptions } from '../../ink/render-border.js';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../ink/stringWidth.js';
+// 引入 Box、ClickEvent、Key、Text、useInput，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, type ClickEvent, type Key, Text, useInput } from '../../ink.js';
+// 引入 useOptionalKeybindingContext，将 ../../keybindings/KeybindingContext.js 中已经封装好的能力接到本文件流程里。
 import { useOptionalKeybindingContext } from '../../keybindings/KeybindingContext.js';
+// 引入 getShortcutDisplay，将 ../../keybindings/shortcutFormat.js 中已经封装好的能力接到本文件流程里。
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js';
+// 引入 useKeybinding、useKeybindings，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
+// 类型依赖 { MCPServerConnection } 来自 ../../services/mcp/types.js，用于校准终端渲染的数据契约。
 import type { MCPServerConnection } from '../../services/mcp/types.js';
+// 接入 abortPromptSuggestion、logSuggestionSuppressed 服务层能力，把外部通信或共享状态交给 ../../services/PromptSuggestion/promptSuggestion.js 处理。
 import { abortPromptSuggestion, logSuggestionSuppressed } from '../../services/PromptSuggestion/promptSuggestion.js';
+// 接入 ActiveSpeculationState、abortSpeculation 服务层能力，把外部通信或共享状态交给 ../../services/PromptSuggestion/speculation.js 处理。
 import { type ActiveSpeculationState, abortSpeculation } from '../../services/PromptSuggestion/speculation.js';
+// 引入 getActiveAgentForInput、getViewedTeammateTask，将 ../../state/selectors.js 中已经封装好的能力接到本文件流程里。
 import { getActiveAgentForInput, getViewedTeammateTask } from '../../state/selectors.js';
+// 引入 enterTeammateView、exitTeammateView、stopOrDismissAgent，将 ../../state/teammateViewHelpers.js 中已经封装好的能力接到本文件流程里。
 import { enterTeammateView, exitTeammateView, stopOrDismissAgent } from '../../state/teammateViewHelpers.js';
+// 类型依赖 { ToolPermissionContext } 来自 ../../Tool.js，用于校准终端渲染的数据契约。
 import type { ToolPermissionContext } from '../../Tool.js';
+// 引入 getRunningTeammatesSorted，将 ../../tasks/InProcessTeammateTask/InProcessTeammateTask.js 中已经封装好的能力接到本文件流程里。
 import { getRunningTeammatesSorted } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js';
+// 类型依赖 { InProcessTeammateTaskState } 来自 ../../tasks/InProcessTeammateTask/types.js，用于校准终端渲染的数据契约。
 import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js';
+// 引入 isPanelAgentTask、LocalAgentTaskState，将 ../../tasks/LocalAgentTask/LocalAgentTask.js 中已经封装好的能力接到本文件流程里。
 import { isPanelAgentTask, type LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
+// 引入 isBackgroundTask，将 ../../tasks/types.js 中已经封装好的能力接到本文件流程里。
 import { isBackgroundTask } from '../../tasks/types.js';
+// 接入 AGENT_COLOR_TO_THEME_COLOR、AGENT_COLORS、AgentColorName 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AGENT_COLOR_TO_THEME_COLOR, AGENT_COLORS, type AgentColorName } from '../../tools/AgentTool/agentColorManager.js';
+// 类型依赖 { AgentDefinition } 来自 ../../tools/AgentTool/loadAgentsDir.js，用于校准终端渲染的数据契约。
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../../types/message.js';
+// 类型依赖 { PermissionMode } 来自 ../../types/permissions.js，用于校准终端渲染的数据契约。
 import type { PermissionMode } from '../../types/permissions.js';
+// 类型依赖 { BaseTextInputProps, PromptInputMode, VimMode } 来自 ../../types/textInputTypes.js，用于校准终端渲染的数据契约。
 import type { BaseTextInputProps, PromptInputMode, VimMode } from '../../types/textInputTypes.js';
+// 复用 isAgentSwarmsEnabled 工具函数，把通用处理留在 ../../utils/agentSwarmsEnabled.js 中维护。
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js';
+// 复用 count 工具函数，把通用处理留在 ../../utils/array.js 中维护。
 import { count } from '../../utils/array.js';
+// 类型依赖 { AutoUpdaterResult } 来自 ../../utils/autoUpdater.js，用于校准终端渲染的数据契约。
 import type { AutoUpdaterResult } from '../../utils/autoUpdater.js';
+// 复用 Cursor 工具函数，把通用处理留在 ../../utils/Cursor.js 中维护。
 import { Cursor } from '../../utils/Cursor.js';
+// 复用 getGlobalConfig、PastedContent、saveGlobalConfig 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { getGlobalConfig, type PastedContent, saveGlobalConfig } from '../../utils/config.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../../utils/debug.js 中维护。
 import { logForDebugging } from '../../utils/debug.js';
+// 复用 parseDirectMemberMessage、sendDirectMemberMessage 工具函数，把通用处理留在 ../../utils/directMemberMessage.js 中维护。
 import { parseDirectMemberMessage, sendDirectMemberMessage } from '../../utils/directMemberMessage.js';
+// 类型依赖 { EffortLevel } 来自 ../../utils/effort.js，用于校准终端渲染的数据契约。
 import type { EffortLevel } from '../../utils/effort.js';
+// 复用 env 工具函数，把通用处理留在 ../../utils/env.js 中维护。
 import { env } from '../../utils/env.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { errorMessage } from '../../utils/errors.js';
+// 复用 isBilledAsExtraUsage 工具函数，把通用处理留在 ../../utils/extraUsage.js 中维护。
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
+// 复用 getFastModeUnavailableReason、isFastModeAvailable、isFastModeCooldown、isFastModeEnabled、isFastModeSupportedByModel 工具函数，把通用处理留在 ../../utils/fastMode.js 中维护。
 import { getFastModeUnavailableReason, isFastModeAvailable, isFastModeCooldown, isFastModeEnabled, isFastModeSupportedByModel } from '../../utils/fastMode.js';
+// 复用 isFullscreenEnvEnabled 工具函数，把通用处理留在 ../../utils/fullscreen.js 中维护。
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
+// 类型依赖 { PromptInputHelpers } 来自 ../../utils/handlePromptSubmit.js，用于校准终端渲染的数据契约。
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js';
+// 复用 getImageFromClipboard、PASTE_THRESHOLD 工具函数，把通用处理留在 ../../utils/imagePaste.js 中维护。
 import { getImageFromClipboard, PASTE_THRESHOLD } from '../../utils/imagePaste.js';
+// 类型依赖 { ImageDimensions } 来自 ../../utils/imageResizer.js，用于校准终端渲染的数据契约。
 import type { ImageDimensions } from '../../utils/imageResizer.js';
+// 复用 cacheImagePath、storeImage 工具函数，把通用处理留在 ../../utils/imageStore.js 中维护。
 import { cacheImagePath, storeImage } from '../../utils/imageStore.js';
+// 复用 isMacosOptionChar、MACOS_OPTION_SPECIAL_CHARS 工具函数，把通用处理留在 ../../utils/keyboardShortcuts.js 中维护。
 import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 isOpus1mMergeEnabled、modelDisplayString 工具函数，把通用处理留在 ../../utils/model/model.js 中维护。
 import { isOpus1mMergeEnabled, modelDisplayString } from '../../utils/model/model.js';
+// 复用 setAutoModeActive 工具函数，把通用处理留在 ../../utils/permissions/autoModeState.js 中维护。
 import { setAutoModeActive } from '../../utils/permissions/autoModeState.js';
+// 复用 cyclePermissionMode、getNextPermissionMode 工具函数，把通用处理留在 ../../utils/permissions/getNextPermissionMode.js 中维护。
 import { cyclePermissionMode, getNextPermissionMode } from '../../utils/permissions/getNextPermissionMode.js';
+// 复用 transitionPermissionMode 工具函数，把通用处理留在 ../../utils/permissions/permissionSetup.js 中维护。
 import { transitionPermissionMode } from '../../utils/permissions/permissionSetup.js';
+// 复用 getPlatform 工具函数，把通用处理留在 ../../utils/platform.js 中维护。
 import { getPlatform } from '../../utils/platform.js';
+// 类型依赖 { ProcessUserInputContext } 来自 ../../utils/processUserInput/processUserInput.js，用于校准终端渲染的数据契约。
 import type { ProcessUserInputContext } from '../../utils/processUserInput/processUserInput.js';
+// 复用 editPromptInEditor 工具函数，把通用处理留在 ../../utils/promptEditor.js 中维护。
 import { editPromptInEditor } from '../../utils/promptEditor.js';
+// 复用 hasAutoModeOptIn 工具函数，把通用处理留在 ../../utils/settings/settings.js 中维护。
 import { hasAutoModeOptIn } from '../../utils/settings/settings.js';
+// 复用 findBtwTriggerPositions 工具函数，把通用处理留在 ../../utils/sideQuestion.js 中维护。
 import { findBtwTriggerPositions } from '../../utils/sideQuestion.js';
+// 复用 findSlashCommandPositions 工具函数，把通用处理留在 ../../utils/suggestions/commandSuggestions.js 中维护。
 import { findSlashCommandPositions } from '../../utils/suggestions/commandSuggestions.js';
+// 复用 findSlackChannelPositions、getKnownChannelsVersion、hasSlackMcpServer、subscribeKnownChannels 工具函数，把通用处理留在 ../../utils/suggestions/slackChannelSuggestions.js 中维护。
 import { findSlackChannelPositions, getKnownChannelsVersion, hasSlackMcpServer, subscribeKnownChannels } from '../../utils/suggestions/slackChannelSuggestions.js';
+// 复用 isInProcessEnabled 工具函数，把通用处理留在 ../../utils/swarm/backends/registry.js 中维护。
 import { isInProcessEnabled } from '../../utils/swarm/backends/registry.js';
+// 复用 syncTeammateMode 工具函数，把通用处理留在 ../../utils/swarm/teamHelpers.js 中维护。
 import { syncTeammateMode } from '../../utils/swarm/teamHelpers.js';
+// 类型依赖 { TeamSummary } 来自 ../../utils/teamDiscovery.js，用于校准终端渲染的数据契约。
 import type { TeamSummary } from '../../utils/teamDiscovery.js';
+// 复用 getTeammateColor 工具函数，把通用处理留在 ../../utils/teammate.js 中维护。
 import { getTeammateColor } from '../../utils/teammate.js';
+// 复用 isInProcessTeammate 工具函数，把通用处理留在 ../../utils/teammateContext.js 中维护。
 import { isInProcessTeammate } from '../../utils/teammateContext.js';
+// 复用 writeToMailbox 工具函数，把通用处理留在 ../../utils/teammateMailbox.js 中维护。
 import { writeToMailbox } from '../../utils/teammateMailbox.js';
+// 类型依赖 { TextHighlight } 来自 ../../utils/textHighlighting.js，用于校准终端渲染的数据契约。
 import type { TextHighlight } from '../../utils/textHighlighting.js';
+// 类型依赖 { Theme } 来自 ../../utils/theme.js，用于校准终端渲染的数据契约。
 import type { Theme } from '../../utils/theme.js';
+// 复用 findThinkingTriggerPositions、getRainbowColor、isUltrathinkEnabled 工具函数，把通用处理留在 ../../utils/thinking.js 中维护。
 import { findThinkingTriggerPositions, getRainbowColor, isUltrathinkEnabled } from '../../utils/thinking.js';
+// 复用 findTokenBudgetPositions 工具函数，把通用处理留在 ../../utils/tokenBudget.js 中维护。
 import { findTokenBudgetPositions } from '../../utils/tokenBudget.js';
+// 复用 findUltraplanTriggerPositions、findUltrareviewTriggerPositions 工具函数，把通用处理留在 ../../utils/ultraplan/keyword.js 中维护。
 import { findUltraplanTriggerPositions, findUltrareviewTriggerPositions } from '../../utils/ultraplan/keyword.js';
+// 引入 AutoModeOptInDialog，将 ../AutoModeOptInDialog.js 中已经封装好的能力接到本文件流程里。
 import { AutoModeOptInDialog } from '../AutoModeOptInDialog.js';
+// 引入 BridgeDialog，将 ../BridgeDialog.js 中已经封装好的能力接到本文件流程里。
 import { BridgeDialog } from '../BridgeDialog.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 getVisibleAgentTasks、useCoordinatorTaskCount，将 ../CoordinatorAgentStatus.js 中已经封装好的能力接到本文件流程里。
 import { getVisibleAgentTasks, useCoordinatorTaskCount } from '../CoordinatorAgentStatus.js';
+// 引入 getEffortNotificationText，将 ../EffortIndicator.js 中已经封装好的能力接到本文件流程里。
 import { getEffortNotificationText } from '../EffortIndicator.js';
+// 引入 getFastIconString，将 ../FastIcon.js 中已经封装好的能力接到本文件流程里。
 import { getFastIconString } from '../FastIcon.js';
+// 引入 GlobalSearchDialog，将 ../GlobalSearchDialog.js 中已经封装好的能力接到本文件流程里。
 import { GlobalSearchDialog } from '../GlobalSearchDialog.js';
+// 引入 HistorySearchDialog，将 ../HistorySearchDialog.js 中已经封装好的能力接到本文件流程里。
 import { HistorySearchDialog } from '../HistorySearchDialog.js';
+// 引入 ModelPicker，将 ../ModelPicker.js 中已经封装好的能力接到本文件流程里。
 import { ModelPicker } from '../ModelPicker.js';
+// 引入 QuickOpenDialog，将 ../QuickOpenDialog.js 中已经封装好的能力接到本文件流程里。
 import { QuickOpenDialog } from '../QuickOpenDialog.js';
+// 引入 TextInput，将 ../TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from '../TextInput.js';
+// 引入 ThinkingToggle，将 ../ThinkingToggle.js 中已经封装好的能力接到本文件流程里。
 import { ThinkingToggle } from '../ThinkingToggle.js';
+// 引入 BackgroundTasksDialog，将 ../tasks/BackgroundTasksDialog.js 中已经封装好的能力接到本文件流程里。
 import { BackgroundTasksDialog } from '../tasks/BackgroundTasksDialog.js';
+// 引入 shouldHideTasksFooter，将 ../tasks/taskStatusUtils.js 中已经封装好的能力接到本文件流程里。
 import { shouldHideTasksFooter } from '../tasks/taskStatusUtils.js';
+// 引入 TeamsDialog，将 ../teams/TeamsDialog.js 中已经封装好的能力接到本文件流程里。
 import { TeamsDialog } from '../teams/TeamsDialog.js';
+// 引入 VimTextInput，将 ../VimTextInput.js 中已经封装好的能力接到本文件流程里。
 import VimTextInput from '../VimTextInput.js';
+// 引入 getModeFromInput、getValueFromInput，将 ./inputModes.js 中已经封装好的能力接到本文件流程里。
 import { getModeFromInput, getValueFromInput } from './inputModes.js';
+// 引入 FOOTER_TEMPORARY_STATUS_TIMEOUT、Notifications，将 ./Notifications.js 中已经封装好的能力接到本文件流程里。
 import { FOOTER_TEMPORARY_STATUS_TIMEOUT, Notifications } from './Notifications.js';
+// 引入 PromptInputFooter，将 ./PromptInputFooter.js 中已经封装好的能力接到本文件流程里。
 import PromptInputFooter from './PromptInputFooter.js';
+// 类型依赖 { SuggestionItem } 来自 ./PromptInputFooterSuggestions.js，用于校准终端渲染的数据契约。
 import type { SuggestionItem } from './PromptInputFooterSuggestions.js';
+// 引入 PromptInputModeIndicator，将 ./PromptInputModeIndicator.js 中已经封装好的能力接到本文件流程里。
 import { PromptInputModeIndicator } from './PromptInputModeIndicator.js';
+// 引入 PromptInputQueuedCommands，将 ./PromptInputQueuedCommands.js 中已经封装好的能力接到本文件流程里。
 import { PromptInputQueuedCommands } from './PromptInputQueuedCommands.js';
+// 引入 PromptInputStashNotice，将 ./PromptInputStashNotice.js 中已经封装好的能力接到本文件流程里。
 import { PromptInputStashNotice } from './PromptInputStashNotice.js';
+// 引入 useMaybeTruncateInput，将 ./useMaybeTruncateInput.js 中已经封装好的能力接到本文件流程里。
 import { useMaybeTruncateInput } from './useMaybeTruncateInput.js';
+// 引入 usePromptInputPlaceholder，将 ./usePromptInputPlaceholder.js 中已经封装好的能力接到本文件流程里。
 import { usePromptInputPlaceholder } from './usePromptInputPlaceholder.js';
+// 引入 useShowFastIconHint，将 ./useShowFastIconHint.js 中已经封装好的能力接到本文件流程里。
 import { useShowFastIconHint } from './useShowFastIconHint.js';
+// 引入 useSwarmBanner，将 ./useSwarmBanner.js 中已经封装好的能力接到本文件流程里。
 import { useSwarmBanner } from './useSwarmBanner.js';
+// 引入 isNonSpacePrintable、isVimModeEnabled，将 ./utils.js 中已经封装好的能力接到本文件流程里。
 import { isNonSpacePrintable, isVimModeEnabled } from './utils.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   debug: boolean;
   ideSelection: IDESelection | undefined;
   toolPermissionContext: ToolPermissionContext;
+  // 这个回调绑定到 setToolPermissionContext: (ctx: ToolPermissionContext) => void;，负责终端渲染在该局部场景下的响应。
   setToolPermissionContext: (ctx: ToolPermissionContext) => void;
   apiKeyStatus: VerificationStatus;
   commands: Command[];
@@ -133,23 +259,28 @@ type Props = {
   isLoading: boolean;
   verbose: boolean;
   messages: Message[];
+  // 这个回调绑定到 onAutoUpdaterResult: (result: AutoUpdaterResult) => void;，负责终端渲染在该局部场景下的响应。
   onAutoUpdaterResult: (result: AutoUpdaterResult) => void;
   autoUpdaterResult: AutoUpdaterResult | null;
   input: string;
+  // 这个回调绑定到 onInputChange: (value: string) => void;，负责终端渲染在该局部场景下的响应。
   onInputChange: (value: string) => void;
   mode: PromptInputMode;
+  // 这个回调绑定到 onModeChange: (mode: PromptInputMode) => void;，负责终端渲染在该局部场景下的响应。
   onModeChange: (mode: PromptInputMode) => void;
   stashedPrompt: {
     text: string;
     cursorOffset: number;
     pastedContents: Record<number, PastedContent>;
   } | undefined;
+  // 提示输入组件 Prompt Input在这里处理 `setStashedPrompt: (value: {`，完成这一小步状态转换。
   setStashedPrompt: (value: {
     text: string;
     cursorOffset: number;
     pastedContents: Record<number, PastedContent>;
   } | undefined) => void;
   submitCount: number;
+  // 这个回调绑定到 onShowMessageSelector: () => void;，负责终端渲染在该局部场景下的响应。
   onShowMessageSelector: () => void;
   /** Fullscreen message actions: shift+↑ enters cursor. */
   onMessageActionsEnter?: () => void;
@@ -157,20 +288,27 @@ type Props = {
   pastedContents: Record<number, PastedContent>;
   setPastedContents: React.Dispatch<React.SetStateAction<Record<number, PastedContent>>>;
   vimMode: VimMode;
+  // 这个回调绑定到 setVimMode: (mode: VimMode) => void;，负责终端渲染在该局部场景下的响应。
   setVimMode: (mode: VimMode) => void;
   showBashesDialog: string | boolean;
+  // 这个回调绑定到 setShowBashesDialog: (show: string | boolean) => void;，负责终端渲染在该局部场景下的响应。
   setShowBashesDialog: (show: string | boolean) => void;
+  // 这个回调绑定到 onExit: () => void;，负责终端渲染在该局部场景下的响应。
   onExit: () => void;
+  // 这个回调绑定到 getToolUseContext: (messages: Message[], newMessages: Message[], abortController: Ab…，负责终端渲染在该局部场景下的响应。
   getToolUseContext: (messages: Message[], newMessages: Message[], abortController: AbortController, mainLoopModel: string) => ProcessUserInputContext;
+  // 提示输入组件 Prompt Input在这里处理 `onSubmit: (input: string, helpers: PromptInputHelpers, speculationAccep...`，完成这一小步状态转换。
   onSubmit: (input: string, helpers: PromptInputHelpers, speculationAccept?: {
     state: ActiveSpeculationState;
     speculationSessionTimeSavedMs: number;
+    // 这个回调绑定到 setAppState: (f: (prev: AppState) => AppState) => void;，负责终端渲染在该局部场景下的响应。
     setAppState: (f: (prev: AppState) => AppState) => void;
   }, options?: {
     fromKeybinding?: boolean;
   }) => Promise<void>;
   onAgentSubmit?: (input: string, task: InProcessTeammateTaskState | LocalAgentTaskState, helpers: PromptInputHelpers) => Promise<void>;
   isSearchingHistory: boolean;
+  // 这个回调绑定到 setIsSearchingHistory: (isSearching: boolean) => void;，负责终端渲染在该局部场景下的响应。
   setIsSearchingHistory: (isSearching: boolean) => void;
   onDismissSideQuestion?: () => void;
   isSideQuestionVisible?: boolean;
@@ -179,7 +317,9 @@ type Props = {
   hasSuppressedDialogs?: boolean;
   isLocalJSXCommandActive?: boolean;
   insertTextRef?: React.MutableRefObject<{
+    // 这个回调绑定到 insert: (text: string) => void;，负责终端渲染在该局部场景下的响应。
     insert: (text: string) => void;
+    // 这个回调绑定到 setInputWithCursor: (value: string, cursor: number) => void;，负责终端渲染在该局部场景下的响应。
     setInputWithCursor: (value: string, cursor: number) => void;
     cursorOffset: number;
   } | null>;
@@ -190,8 +330,11 @@ type Props = {
 };
 
 // Bottom slot has maxHeight="50%"; reserve lines for footer, border, status.
+// PROMPT_FOOTER_LINES 集合保存`5`，供终端渲染提示输入组件 Prompt Input后续判断或输出使用。
 const PROMPT_FOOTER_LINES = 5;
+// MIN_INPUT_VIEWPORT_LINES 集合 命名 `3`，让后续代码直接表达这个值的用途。
 const MIN_INPUT_VIEWPORT_LINES = 3;
+// PromptInput 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function PromptInput({
   debug,
   ideSelection,
@@ -236,77 +379,121 @@ function PromptInput({
   insertTextRef,
   voiceInterimRange
 }: Props): React.ReactNode {
+  // mainLoopModel保存`useMainLoopModel`，供终端渲染后续处理使用。
   const mainLoopModel = useMainLoopModel();
   // A local-jsx command (e.g., /mcp while agent is running) renders a full-
   // screen dialog on top of PromptInput via the immediate-command path with
   // shouldHidePromptInput: false. Those dialogs don't register in the overlay
   // system, so treat them as a modal overlay here to stop navigation keys from
   // leaking into TextInput/footer handlers and stacking a second dialog.
+  // isModalOverlayActive记录 `useIsModalOverlayActive` 是否成立，终端渲染随后按该结果分支。
   const isModalOverlayActive = useIsModalOverlayActive() || isLocalJSXCommandActive;
+  // isAutoUpdating 由 React state 持有，setIsAutoUpdating 会在用户操作或异步结果返回时触发刷新。
   const [isAutoUpdating, setIsAutoUpdating] = useState(false);
+  // 从 `useState<{` 按位置拆出 exitMessage、setExitMessage，让提示输入组件 Prompt Input分别处理这些返回值。
   const [exitMessage, setExitMessage] = useState<{
     show: boolean;
     key?: string;
   }>({
     show: false
   });
+  // 光标偏移 由 React state 持有，setCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [cursorOffset, setCursorOffset] = useState<number>(input.length);
   // Track the last input value set via internal handlers so we can detect
   // external input changes (e.g. speech-to-text injection) and move cursor to end.
+  // lastInternalInputRef 引用保存`React.useRef`，供终端渲染后续处理使用。
   const lastInternalInputRef = React.useRef(input);
+  // `input` 与 `lastInternalInputRef.current` 不一致时刷新派生状态，避免使用过期结果。
   if (input !== lastInternalInputRef.current) {
     // Input changed externally (not through any internal handler) — move cursor to end
+    // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setCursorOffset(input.length);
+    // current更新为 `input`，确保提示输入组件后续读取最新状态。
     lastInternalInputRef.current = input;
   }
   // Wrap onInputChange to track internal changes before they trigger re-render
+  // trackAndSetInput保存`React.useCallback`，供终端渲染后续处理使用。
   const trackAndSetInput = React.useCallback((value: string) => {
+    // current更新为 `value`，确保提示输入组件后续读取最新状态。
     lastInternalInputRef.current = value;
+    // 调用 onInputChange，触发终端渲染此处需要的副作用。
     onInputChange(value);
   }, [onInputChange]);
   // Expose an insertText function so callers (e.g. STT) can splice text at the
   // current cursor position instead of replacing the entire input.
+  // 满足 `insertTextRef` 时，终端渲染执行该分支。
   if (insertTextRef) {
+    // current更新为 `{`，确保提示输入组件后续读取最新状态。
     insertTextRef.current = {
       cursorOffset,
+      // 这个回调绑定到 insert: (text: string) => {，负责终端渲染在该局部场景下的响应。
       insert: (text: string) => {
+        // needsSpace记录 `test` 是否成立，终端渲染随后按该结果分支。
         const needsSpace = cursorOffset === input.length && input.length > 0 && !/\s$/.test(input);
+        // insertText 命名 `needsSpace ? ' ' + text : text`，让后续代码直接表达这个值的用途。
         const insertText = needsSpace ? ' ' + text : text;
+        // newValue格式化`input.slice`，供终端渲染后续处理使用。
         const newValue = input.slice(0, cursorOffset) + insertText + input.slice(cursorOffset);
+        // current更新为 `newValue`，确保提示输入组件后续读取最新状态。
         lastInternalInputRef.current = newValue;
+        // 调用 onInputChange，触发终端渲染此处需要的副作用。
         onInputChange(newValue);
+        // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setCursorOffset(cursorOffset + insertText.length);
       },
+      // 这个回调绑定到 setInputWithCursor: (value: string, cursor: number) => {，负责终端渲染在该局部场景下的响应。
       setInputWithCursor: (value: string, cursor: number) => {
+        // current更新为 `value`，确保提示输入组件后续读取最新状态。
         lastInternalInputRef.current = value;
+        // 调用 onInputChange，触发终端渲染此处需要的副作用。
         onInputChange(value);
+        // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setCursorOffset(cursor);
       }
     };
   }
+  // store保存`useAppStateStore`，供终端渲染后续处理使用。
   const store = useAppStateStore();
+  // setAppState 状态保存`useSetAppState`，供终端渲染后续处理使用。
   const setAppState = useSetAppState();
+  // tasks 集合保存`useAppState`，供终端渲染后续处理使用。
   const tasks = useAppState(s => s.tasks);
+  // replBridgeConnected保存`useAppState`，供终端渲染后续处理使用。
   const replBridgeConnected = useAppState(s => s.replBridgeConnected);
+  // replBridgeExplicit保存`useAppState`，供终端渲染后续处理使用。
   const replBridgeExplicit = useAppState(s => s.replBridgeExplicit);
+  // replBridgeReconnecting保存`useAppState`，供终端渲染后续处理使用。
   const replBridgeReconnecting = useAppState(s => s.replBridgeReconnecting);
   // Must match BridgeStatusIndicator's render condition (PromptInputFooter.tsx) —
   // the pill returns null for implicit-and-not-reconnecting, so nav must too,
   // otherwise bridge becomes an invisible selection stop.
+  // bridgeFooterVisible标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const bridgeFooterVisible = replBridgeConnected && (replBridgeExplicit || replBridgeReconnecting);
   // Tmux pill (ant-only) — visible when there's an active tungsten session
+  // hasTungstenSession 会话数据记录 `useAppState` 是否成立，终端渲染随后按该结果分支。
   const hasTungstenSession = useAppState(s => "external" === 'ant' && s.tungstenActiveSession !== undefined);
+  // tmuxFooterVisible标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const tmuxFooterVisible = "external" === 'ant' && hasTungstenSession;
   // WebBrowser pill — visible when a browser is open
+  // bagelFooterVisible保存`useAppState`，供终端渲染后续处理使用。
   const bagelFooterVisible = useAppState(s => false);
+  // teamContext保存`useAppState`，供终端渲染后续处理使用。
   const teamContext = useAppState(s => s.teamContext);
+  // queuedCommands 命令数据保存`useCommandQueue`，供终端渲染后续处理使用。
   const queuedCommands = useCommandQueue();
+  // promptSuggestionState 状态保存`useAppState`，供终端渲染后续处理使用。
   const promptSuggestionState = useAppState(s => s.promptSuggestion);
+  // speculation保存`useAppState`，供终端渲染后续处理使用。
   const speculation = useAppState(s => s.speculation);
+  // speculationSessionTimeSavedMs 会话数据保存`useAppState`，供终端渲染后续处理使用。
   const speculationSessionTimeSavedMs = useAppState(s => s.speculationSessionTimeSavedMs);
+  // viewingAgentTaskId保存`useAppState`，供终端渲染后续处理使用。
   const viewingAgentTaskId = useAppState(s => s.viewingAgentTaskId);
+  // viewSelectionMode保存`useAppState`，供终端渲染后续处理使用。
   const viewSelectionMode = useAppState(s => s.viewSelectionMode);
+  // showSpinnerTree保存`useAppState`，供终端渲染后续处理使用。
   const showSpinnerTree = useAppState(s => s.expandedView) === 'teammates';
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     companion: _companion,
     companionMuted
@@ -314,49 +501,70 @@ function PromptInput({
     companion: undefined,
     companionMuted: undefined
   };
+  // companionFooterVisible标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const companionFooterVisible = !!_companion && !companionMuted;
   // Brief mode: BriefSpinner/BriefIdleStatus own the 2-row footprint above
   // the input. Dropping marginTop here lets the spinner sit flush against
   // the input bar. viewingAgentTaskId mirrors the gate on both (Spinner.tsx,
   // REPL.tsx) — teammate view falls back to SpinnerWithVerbInner which has
   // its own marginTop, so the gap stays even without ours.
+  // briefOwnsGap保存`feature`，供终端渲染后续处理使用。
   const briefOwnsGap = feature('KAIROS') || feature('KAIROS_BRIEF') ?
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // 调用 useAppState，触发终端渲染此处需要的副作用。
   useAppState(s => s.isBriefOnly) && !viewingAgentTaskId : false;
+  // mainLoopModel_保存`useAppState`，供终端渲染后续处理使用。
   const mainLoopModel_ = useAppState(s => s.mainLoopModel);
+  // mainLoopModelForSession 会话数据保存`useAppState`，供终端渲染后续处理使用。
   const mainLoopModelForSession = useAppState(s => s.mainLoopModelForSession);
+  // thinkingEnabled保存`useAppState`，供终端渲染后续处理使用。
   const thinkingEnabled = useAppState(s => s.thinkingEnabled);
+  // isFastMode记录 `useAppState` 是否成立，终端渲染随后按该结果分支。
   const isFastMode = useAppState(s => isFastModeEnabled() ? s.fastMode : false);
+  // effortValue保存`useAppState`，供终端渲染后续处理使用。
   const effortValue = useAppState(s => s.effortValue);
+  // viewedTeammate读取`getViewedTeammateTask`，供终端渲染后续处理使用。
   const viewedTeammate = getViewedTeammateTask(store.getState());
+  // viewingAgentName保存`viewedTeammate?.identity.agentName`，供后续判断或组装使用。
   const viewingAgentName = viewedTeammate?.identity.agentName;
   // identity.color is typed as `string | undefined` (not AgentColorName) because
   // teammate identity comes from file-based config. Validate before casting to
   // ensure we only use valid color names (falls back to cyan if invalid).
+  // viewingAgentColor筛选`AGENT_COLORS.includes`，供终端渲染后续处理使用。
   const viewingAgentColor = viewedTeammate?.identity.color && AGENT_COLORS.includes(viewedTeammate.identity.color as AgentColorName) ? viewedTeammate.identity.color as AgentColorName : undefined;
   // In-process teammates sorted alphabetically for footer team selector
+  // inProcessTeammates 集合保存`useMemo`，供终端渲染后续处理使用。
   const inProcessTeammates = useMemo(() => getRunningTeammatesSorted(tasks), [tasks]);
 
   // Team mode: all background tasks are in-process teammates
+  // isTeammateMode标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const isTeammateMode = inProcessTeammates.length > 0 || viewedTeammate !== undefined;
 
   // When viewing a teammate, show their permission mode in the footer instead of the leader's
+  // effectiveToolPermissionContext 权限数据保存`useMemo`，供终端渲染后续处理使用。
   const effectiveToolPermissionContext = useMemo((): ToolPermissionContext => {
+    // 满足 `viewedTeammate` 时，终端渲染执行该分支。
     if (viewedTeammate) {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         ...toolPermissionContext,
         mode: viewedTeammate.permissionMode
       };
     }
+    // 返回 `toolPermissionContext`，作为终端渲染这次计算的结果。
     return toolPermissionContext;
   }, [viewedTeammate, toolPermissionContext]);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     historyQuery,
     setHistoryQuery,
     historyMatch,
     historyFailedMatch
+  // 这个回调绑定到 } = useHistorySearch(entry => {，负责终端渲染在该局部场景下的响应。
   } = useHistorySearch(entry => {
+    // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
     setPastedContents(entry.pastedContents);
+    // 显式忽略 `onSubmit(entry.display)` 的返回值，只保留它触发的副作用。
     void onSubmit(entry.display);
   }, input, trackAndSetInput, setCursorOffset, cursorOffset, onModeChange, mode, isSearchingHistory, setIsSearchingHistory, setPastedContents, pastedContents);
   // Counter for paste IDs (shared between images and text).
@@ -364,82 +572,130 @@ function PromptInput({
   // useRef(fn()) evaluates fn() on every render and discards the result after
   // mount — getInitialPasteId walks all messages + regex-scans text blocks,
   // so guard with a lazy-init pattern to run it exactly once.
+  // nextPasteIdRef 引用保存`useRef`，供终端渲染后续处理使用。
   const nextPasteIdRef = useRef(-1);
+  // 满足 `nextPasteIdRef.current === -1` 时，终端渲染执行该分支。
   if (nextPasteIdRef.current === -1) {
+    // current更新为 `getInitialPasteId(messages)`，确保提示输入组件后续读取最新状态。
     nextPasteIdRef.current = getInitialPasteId(messages);
   }
   // Armed by onImagePaste; if the very next keystroke is a non-space
   // printable, inputFilter prepends a space before it. Any other input
   // (arrow, escape, backspace, paste, space) disarms without inserting.
+  // pendingSpaceAfterPillRef 引用保存`useRef`，供终端渲染后续处理使用。
   const pendingSpaceAfterPillRef = useRef(false);
+  // showTeamsDialog 由 React state 持有，setShowTeamsDialog 会在用户操作或异步结果返回时触发刷新。
   const [showTeamsDialog, setShowTeamsDialog] = useState(false);
+  // showBridgeDialog 由 React state 持有，setShowBridgeDialog 会在用户操作或异步结果返回时触发刷新。
   const [showBridgeDialog, setShowBridgeDialog] = useState(false);
+  // teammateFooterIndex 索引 由 React state 持有，setTeammateFooterIndex 会在用户操作或异步结果返回时触发刷新。
   const [teammateFooterIndex, setTeammateFooterIndex] = useState(0);
   // -1 sentinel: tasks pill is selected but no specific agent row is selected yet.
   // First ↓ selects the pill, second ↓ moves to row 0. Prevents double-select
   // of pill + row when both bg tasks (pill) and forked agents (rows) are visible.
+  // coordinatorTaskIndex 索引保存`useAppState`，供终端渲染后续处理使用。
   const coordinatorTaskIndex = useAppState(s => s.coordinatorTaskIndex);
+  // setCoordinatorTaskIndex 索引保存`useCallback`，供终端渲染后续处理使用。
   const setCoordinatorTaskIndex = useCallback((v: number | ((prev: number) => number)) => setAppState(prev => {
+    // next保存`v`，供终端渲染后续处理使用。
     const next = typeof v === 'function' ? v(prev.coordinatorTaskIndex) : v;
+    // 满足 `next === prev.coordinatorTaskIndex` 时，终端渲染执行该分支。
     if (next === prev.coordinatorTaskIndex) return prev;
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       ...prev,
       coordinatorTaskIndex: next
     };
   }), [setAppState]);
+  // coordinatorTaskCount 数量保存`useCoordinatorTaskCount`，供终端渲染后续处理使用。
   const coordinatorTaskCount = useCoordinatorTaskCount();
   // The pill (BackgroundTaskStatus) only renders when non-local_agent bg tasks
   // exist. When only local_agent tasks are running (coordinator/fork mode), the
   // pill is absent, so the -1 sentinel would leave nothing visually selected.
   // In that case, skip -1 and treat 0 as the minimum selectable index.
+  // hasBgTaskPill记录 `useMemo` 是否成立，终端渲染随后按该结果分支。
   const hasBgTaskPill = useMemo(() => Object.values(tasks).some(t => isBackgroundTask(t) && !("external" === 'ant' && isPanelAgentTask(t))), [tasks]);
+  // minCoordinatorIndex 索引保存`hasBgTaskPill ? -1 : 0`，供终端渲染提示输入组件 Prompt Input后续判断或输出使用。
   const minCoordinatorIndex = hasBgTaskPill ? -1 : 0;
   // Clamp index when tasks complete and the list shrinks beneath the cursor
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 满足 `coordinatorTaskIndex >= coordinatorTaskCount` 时，终端渲染执行该分支。
     if (coordinatorTaskIndex >= coordinatorTaskCount) {
+      // setCoordinatorTaskIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setCoordinatorTaskIndex(Math.max(minCoordinatorIndex, coordinatorTaskCount - 1));
+    // 提示输入组件 Prompt Input在这里处理 `} else if (coordinatorTaskIndex < minCoordinatorIndex) {`，完成这一小步状态转换。
     } else if (coordinatorTaskIndex < minCoordinatorIndex) {
+      // setCoordinatorTaskIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setCoordinatorTaskIndex(minCoordinatorIndex);
     }
   }, [coordinatorTaskCount, coordinatorTaskIndex, minCoordinatorIndex]);
+  // isPasting 由 React state 持有，setIsPasting 会在用户操作或异步结果返回时触发刷新。
   const [isPasting, setIsPasting] = useState(false);
+  // isExternalEditorActive 由 React state 持有，setIsExternalEditorActive 会在用户操作或异步结果返回时触发刷新。
   const [isExternalEditorActive, setIsExternalEditorActive] = useState(false);
+  // showModelPicker 由 React state 持有，setShowModelPicker 会在用户操作或异步结果返回时触发刷新。
   const [showModelPicker, setShowModelPicker] = useState(false);
+  // showQuickOpen 由 React state 持有，setShowQuickOpen 会在用户操作或异步结果返回时触发刷新。
   const [showQuickOpen, setShowQuickOpen] = useState(false);
+  // showGlobalSearch 由 React state 持有，setShowGlobalSearch 会在用户操作或异步结果返回时触发刷新。
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  // showHistoryPicker 由 React state 持有，setShowHistoryPicker 会在用户操作或异步结果返回时触发刷新。
   const [showHistoryPicker, setShowHistoryPicker] = useState(false);
+  // showFastModePicker 由 React state 持有，setShowFastModePicker 会在用户操作或异步结果返回时触发刷新。
   const [showFastModePicker, setShowFastModePicker] = useState(false);
+  // showThinkingToggle 由 React state 持有，setShowThinkingToggle 会在用户操作或异步结果返回时触发刷新。
   const [showThinkingToggle, setShowThinkingToggle] = useState(false);
+  // showAutoModeOptIn 由 React state 持有，setShowAutoModeOptIn 会在用户操作或异步结果返回时触发刷新。
   const [showAutoModeOptIn, setShowAutoModeOptIn] = useState(false);
+  // previousModeBeforeAuto 由 React state 持有，setPreviousModeBeforeAuto 会在用户操作或异步结果返回时触发刷新。
   const [previousModeBeforeAuto, setPreviousModeBeforeAuto] = useState<PermissionMode | null>(null);
+  // autoModeOptInTimeoutRef 引用保存 hook 状态，让终端渲染提示输入组件 Prompt Input跨渲染复用同一个容器。
   const autoModeOptInTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if cursor is on the first line of input
+  // isCursorOnFirstLine记录 `useMemo` 是否成立，终端渲染随后按该结果分支。
   const isCursorOnFirstLine = useMemo(() => {
+    // firstNewlineIndex 索引保存`input.indexOf`，供终端渲染后续处理使用。
     const firstNewlineIndex = input.indexOf('\n');
+    // 满足 `firstNewlineIndex === -1` 时，终端渲染执行该分支。
     if (firstNewlineIndex === -1) {
+      // 返回 `true; // No newlines, cursor is always on first line`，作为终端渲染这次计算的结果。
       return true; // No newlines, cursor is always on first line
     }
+    // 返回 `cursorOffset <= firstNewlineIndex`，作为终端渲染这次计算的结果。
     return cursorOffset <= firstNewlineIndex;
   }, [input, cursorOffset]);
+  // isCursorOnLastLine记录 `useMemo` 是否成立，终端渲染随后按该结果分支。
   const isCursorOnLastLine = useMemo(() => {
+    // lastNewlineIndex 索引保存`input.lastIndexOf`，供终端渲染后续处理使用。
     const lastNewlineIndex = input.lastIndexOf('\n');
+    // 满足 `lastNewlineIndex === -1` 时，终端渲染执行该分支。
     if (lastNewlineIndex === -1) {
+      // 返回 `true; // No newlines, cursor is always on last line`，作为终端渲染这次计算的结果。
       return true; // No newlines, cursor is always on last line
     }
+    // 返回 `cursorOffset > lastNewlineIndex`，作为终端渲染这次计算的结果。
     return cursorOffset > lastNewlineIndex;
   }, [input, cursorOffset]);
 
   // Derive team info from teamContext (no filesystem I/O needed)
   // A session can only lead one team at a time
+  // 这个回调绑定到 const cachedTeams: TeamSummary[] = useMemo(() => {，负责终端渲染在该局部场景下的响应。
   const cachedTeams: TeamSummary[] = useMemo(() => {
+    // 满足 `!isAgentSwarmsEnabled()` 时，终端渲染执行该分支。
     if (!isAgentSwarmsEnabled()) return [];
     // In-process mode uses Shift+Down/Up navigation instead of footer menu
+    // 满足 `isInProcessEnabled()` 时，终端渲染执行该分支。
     if (isInProcessEnabled()) return [];
+    // teamContext缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!teamContext) {
+      // 返回列表结果，保留终端渲染已经排好的条目顺序。
       return [];
     }
+    // teammateCount 数量统计`count`，供终端渲染后续处理使用。
     const teammateCount = count(Object.values(teamContext.teammates), t => t.name !== 'team-lead');
+    // 返回列表结果，保留终端渲染已经排好的条目顺序。
     return [{
       name: teamContext.teamName,
       memberCount: teammateCount,
@@ -452,61 +708,91 @@ function PromptInput({
   // Which pills render below the input box. Order here IS the nav order
   // (down/right = forward, up/left = back). Selection lives in AppState so
   // pills rendered outside PromptInput (CompanionSprite) can read focus.
+  // runningTaskCount 数量保存`useMemo`，供终端渲染后续处理使用。
   const runningTaskCount = useMemo(() => count(Object.values(tasks), t => t.status === 'running'), [tasks]);
   // Panel shows retained-completed agents too (getVisibleAgentTasks), so the
   // pill must stay navigable whenever the panel has rows — not just when
   // something is running.
+  // tasksFooterVisible保存`shouldHideTasksFooter`，供终端渲染后续处理使用。
   const tasksFooterVisible = (runningTaskCount > 0 || "external" === 'ant' && coordinatorTaskCount > 0) && !shouldHideTasksFooter(tasks, showSpinnerTree);
+  // teamsFooterVisible保存 `cachedTeams.length > 0` 的判断结果，供终端渲染提示输入组件 Prompt Input后续分支直接复用。
   const teamsFooterVisible = cachedTeams.length > 0;
+  // footerItems 集合保存`useMemo`，供终端渲染后续处理使用。
   const footerItems = useMemo(() => [tasksFooterVisible && 'tasks', tmuxFooterVisible && 'tmux', bagelFooterVisible && 'bagel', teamsFooterVisible && 'teams', bridgeFooterVisible && 'bridge', companionFooterVisible && 'companion'].filter(Boolean) as FooterItem[], [tasksFooterVisible, tmuxFooterVisible, bagelFooterVisible, teamsFooterVisible, bridgeFooterVisible, companionFooterVisible]);
 
   // Effective selection: null if the selected pill stopped rendering (bridge
   // disconnected, task finished). The derivation makes the UI correct
   // immediately; the useEffect below clears the raw state so it doesn't
   // resurrect when the same pill reappears (new task starts → focus stolen).
+  // rawFooterSelection保存`useAppState`，供终端渲染后续处理使用。
   const rawFooterSelection = useAppState(s => s.footerSelection);
+  // footerItemSelected筛选`footerItems.includes`，供终端渲染后续处理使用。
   const footerItemSelected = rawFooterSelection && footerItems.includes(rawFooterSelection) ? rawFooterSelection : null;
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `rawFooterSelection && !footerItemSelected` 满足时，终端渲染才执行该分支。
     if (rawFooterSelection && !footerItemSelected) {
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev => prev.footerSelection === null ? prev : {
         ...prev,
         footerSelection: null
       });
     }
   }, [rawFooterSelection, footerItemSelected, setAppState]);
+  // tasksSelected标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const tasksSelected = footerItemSelected === 'tasks';
+  // tmuxSelected标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const tmuxSelected = footerItemSelected === 'tmux';
+  // bagelSelected标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const bagelSelected = footerItemSelected === 'bagel';
+  // teamsSelected标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const teamsSelected = footerItemSelected === 'teams';
+  // bridgeSelected标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const bridgeSelected = footerItemSelected === 'bridge';
+  // selectFooterItem 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function selectFooterItem(item: FooterItem | null): void {
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => prev.footerSelection === item ? prev : {
       ...prev,
       footerSelection: item
     });
+    // 当 `item` 匹配 `'tasks'` 时，终端渲染执行对应分支。
     if (item === 'tasks') {
+      // setTeammateFooterIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setTeammateFooterIndex(0);
+      // setCoordinatorTaskIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setCoordinatorTaskIndex(minCoordinatorIndex);
     }
   }
 
   // delta: +1 = down/right, -1 = up/left. Returns true if nav happened
   // (including deselecting at the start), false if at a boundary.
+  // navigateFooter 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function navigateFooter(delta: 1 | -1, exitAtStart = false): boolean {
+    // idx保存`footerItems.indexOf`，供终端渲染后续处理使用。
     const idx = footerItemSelected ? footerItems.indexOf(footerItemSelected) : -1;
+    // next读取 `footerItems[idx + delta]` 对应条目，后续围绕该成员继续处理。
     const next = footerItems[idx + delta];
+    // 满足 `next` 时，终端渲染执行该分支。
     if (next) {
+      // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
       selectFooterItem(next);
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     }
+    // 只有 `delta < 0 && exitAtStart` 满足时，终端渲染才执行该分支。
     if (delta < 0 && exitAtStart) {
+      // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
       selectFooterItem(null);
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     }
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
 
   // Prompt suggestion hook - reads suggestions generated by forked agent in query loop
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     suggestion: promptSuggestion,
     markAccepted,
@@ -516,59 +802,94 @@ function PromptInput({
     inputValue: input,
     isAssistantResponding: isLoading
   });
+  // displayedValue保存`useMemo`，供终端渲染后续处理使用。
   const displayedValue = useMemo(() => isSearchingHistory && historyMatch ? getValueFromInput(typeof historyMatch === 'string' ? historyMatch : historyMatch.display) : input, [isSearchingHistory, historyMatch, input]);
+  // thinkTriggers 集合保存`useMemo`，供终端渲染后续处理使用。
   const thinkTriggers = useMemo(() => findThinkingTriggerPositions(displayedValue), [displayedValue]);
+  // ultraplanSessionUrl 会话数据保存`useAppState`，供终端渲染后续处理使用。
   const ultraplanSessionUrl = useAppState(s => s.ultraplanSessionUrl);
+  // ultraplanLaunching保存`useAppState`，供终端渲染后续处理使用。
   const ultraplanLaunching = useAppState(s => s.ultraplanLaunching);
+  // ultraplanTriggers 集合保存`useMemo`，供终端渲染后续处理使用。
   const ultraplanTriggers = useMemo(() => feature('ULTRAPLAN') && !ultraplanSessionUrl && !ultraplanLaunching ? findUltraplanTriggerPositions(displayedValue) : [], [displayedValue, ultraplanSessionUrl, ultraplanLaunching]);
+  // ultrareviewTriggers 集合保存`useMemo`，供终端渲染后续处理使用。
   const ultrareviewTriggers = useMemo(() => isUltrareviewEnabled() ? findUltrareviewTriggerPositions(displayedValue) : [], [displayedValue]);
+  // btwTriggers 集合保存`useMemo`，供终端渲染后续处理使用。
   const btwTriggers = useMemo(() => findBtwTriggerPositions(displayedValue), [displayedValue]);
+  // buddyTriggers 集合保存`useMemo`，供终端渲染后续处理使用。
   const buddyTriggers = useMemo(() => findBuddyTriggerPositions(displayedValue), [displayedValue]);
+  // slashCommandTriggers 命令数据保存`useMemo`，供终端渲染后续处理使用。
   const slashCommandTriggers = useMemo(() => {
+    // positions 集合筛选`findSlashCommandPositions`，供终端渲染后续处理使用。
     const positions = findSlashCommandPositions(displayedValue);
     // Only highlight valid commands
+    // 返回 `positions.filter(pos => {`，作为终端渲染这次计算的结果。
     return positions.filter(pos => {
+      // commandName 命令数据格式化`displayedValue.slice`，供终端渲染后续处理使用。
       const commandName = displayedValue.slice(pos.start + 1, pos.end); // +1 to skip "/"
+      // 返回 `hasCommand(commandName, commands)`，作为终端渲染这次计算的结果。
       return hasCommand(commandName, commands);
     });
   }, [displayedValue, commands]);
+  // tokenBudgetTriggers 集合保存`useMemo`，供终端渲染后续处理使用。
   const tokenBudgetTriggers = useMemo(() => feature('TOKEN_BUDGET') ? findTokenBudgetPositions(displayedValue) : [], [displayedValue]);
+  // knownChannelsVersion保存`useSyncExternalStore`，供终端渲染后续处理使用。
   const knownChannelsVersion = useSyncExternalStore(subscribeKnownChannels, getKnownChannelsVersion);
+  // slackChannelTriggers 集合保存`useMemo`，供终端渲染后续处理使用。
   const slackChannelTriggers = useMemo(() => hasSlackMcpServer(store.getState().mcp.clients) ? findSlackChannelPositions(displayedValue) : [],
   // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable ref
   [displayedValue, knownChannelsVersion]);
 
   // Find @name mentions and highlight with team member's color
+  // memberMentionHighlights 集合保存`useMemo`，供终端渲染后续处理使用。
   const memberMentionHighlights = useMemo((): Array<{
     start: number;
     end: number;
     themeColor: keyof Theme;
   }> => {
+    // 满足 `!isAgentSwarmsEnabled()` 时，终端渲染执行该分支。
     if (!isAgentSwarmsEnabled()) return [];
+    // 满足 `!teamContext?.teammates` 时，终端渲染执行该分支。
     if (!teamContext?.teammates) return [];
+    // highlights 集合 先占位，稍后的条件分支会根据实际输入补齐它。
     const highlights: Array<{
       start: number;
       end: number;
       themeColor: keyof Theme;
     }> = [];
+    // members 集合 命名 `teamContext.teammates`，让后续代码直接表达这个值的用途。
     const members = teamContext.teammates;
+    // members 集合缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!members) return highlights;
 
     // Find all @name patterns in the input
+    // regex 命名 `/(^|\s)@([\w-]+)/g`，让后续代码直接表达这个值的用途。
     const regex = /(^|\s)@([\w-]+)/g;
+    // memberValues 集合派生`Object.values`，供终端渲染后续处理使用。
     const memberValues = Object.values(members);
+    // match 先占位，稍后的条件分支会根据实际输入补齐它。
     let match;
+    // 只要 (match = regex.exec(displayedValue)) !== null 成立，就持续推进终端渲染中的循环处理。
     while ((match = regex.exec(displayedValue)) !== null) {
+      // leadingSpace 命名 `match[1] ?? ''`，让后续代码直接表达这个值的用途。
       const leadingSpace = match[1] ?? '';
+      // nameStart记录 `match.index + leadingSpace.length` 是否成立，下一步按该结果分支。
       const nameStart = match.index + leadingSpace.length;
+      // fullMatch格式化`trimStart`，供终端渲染后续处理使用。
       const fullMatch = match[0].trimStart();
+      // 名称保存`match[2]`，供终端渲染提示输入组件 Prompt Input后续判断或输出使用。
       const name = match[2];
 
       // Check if this name matches a team member
+      // member筛选`memberValues.find`，供终端渲染后续处理使用。
       const member = memberValues.find(t => t.name === name);
+      // 满足 `member?.color` 时，终端渲染执行该分支。
       if (member?.color) {
+        // themeColor 命名 `AGENT_COLOR_TO_THEME_COLOR[member.color as AgentColorName]`，让后续代码直接表达这个值的用途。
         const themeColor = AGENT_COLOR_TO_THEME_COLOR[member.color as AgentColorName];
+        // 满足 `themeColor` 时，终端渲染执行该分支。
         if (themeColor) {
+          // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
           highlights.push({
             start: nameStart,
             end: nameStart + fullMatch.length,
@@ -577,8 +898,10 @@ function PromptInput({
         }
       }
     }
+    // 返回 `highlights`，作为终端渲染这次计算的结果。
     return highlights;
   }, [displayedValue, teamContext]);
+  // imageRefPositions 集合保存`useMemo`，供终端渲染后续处理使用。
   const imageRefPositions = useMemo(() => parseReferences(displayedValue).filter(r => r.match.startsWith('[Image')).map(r => ({
     start: r.index,
     end: r.index + r.match.length
@@ -587,25 +910,36 @@ function PromptInput({
   // chip.start is the "selected" state: the inverted chip IS the cursor.
   // chip.end stays a normal position so you can park the cursor right after
   // `]` like any other character.
+  // cursorAtImageChip筛选`imageRefPositions.some`，供终端渲染后续处理使用。
   const cursorAtImageChip = imageRefPositions.some(r => r.start === cursorOffset);
 
   // up/down movement or a fullscreen click can land the cursor strictly
   // inside a chip; snap to the nearer boundary so it's never editable
   // char-by-char.
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // inside筛选`imageRefPositions.find`，供终端渲染后续处理使用。
     const inside = imageRefPositions.find(r => cursorOffset > r.start && cursorOffset < r.end);
+    // 满足 `inside` 时，终端渲染执行该分支。
     if (inside) {
+      // mid保存`(inside.start + inside.end) / 2`，供终端渲染提示输入组件 Prompt Input后续判断或输出使用。
       const mid = (inside.start + inside.end) / 2;
+      // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorOffset(cursorOffset < mid ? inside.start : inside.end);
     }
   }, [cursorOffset, imageRefPositions, setCursorOffset]);
+  // combinedHighlights 集合保存`useMemo`，供终端渲染后续处理使用。
   const combinedHighlights = useMemo((): TextHighlight[] => {
+    // highlights 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     const highlights: TextHighlight[] = [];
 
     // Invert the [Image #N] chip when the cursor is at chip.start (the
     // "selected" state) so backspace-to-delete is visually obvious.
+    // 按顺序遍历 `imageRefPositions` 中的ref 引用，逐个交给终端渲染处理。
     for (const ref of imageRefPositions) {
+      // 满足 `cursorOffset === ref.start` 时，终端渲染执行该分支。
       if (cursorOffset === ref.start) {
+        // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
         highlights.push({
           start: ref.start,
           end: ref.end,
@@ -615,7 +949,9 @@ function PromptInput({
         });
       }
     }
+    // 只有 `isSearchingHistory && historyMatch && !historyFai` 满足时，终端渲染才执行该分支。
     if (isSearchingHistory && historyMatch && !historyFailedMatch) {
+      // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
       highlights.push({
         start: cursorOffset,
         end: cursorOffset + historyQuery.length,
@@ -625,7 +961,9 @@ function PromptInput({
     }
 
     // Add "btw" highlighting (solid yellow)
+    // 按顺序遍历 `btwTriggers` 中的trigger，逐个交给终端渲染处理。
     for (const trigger of btwTriggers) {
+      // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
       highlights.push({
         start: trigger.start,
         end: trigger.end,
@@ -635,7 +973,9 @@ function PromptInput({
     }
 
     // Add /command highlighting (blue)
+    // 按顺序遍历 `slashCommandTriggers` 中的trigger，逐个交给终端渲染处理。
     for (const trigger of slashCommandTriggers) {
+      // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
       highlights.push({
         start: trigger.start,
         end: trigger.end,
@@ -645,7 +985,9 @@ function PromptInput({
     }
 
     // Add token budget highlighting (blue)
+    // 按顺序遍历 `tokenBudgetTriggers` 中的trigger，逐个交给终端渲染处理。
     for (const trigger of tokenBudgetTriggers) {
+      // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
       highlights.push({
         start: trigger.start,
         end: trigger.end,
@@ -653,7 +995,9 @@ function PromptInput({
         priority: 5
       });
     }
+    // 按顺序遍历 `slackChannelTriggers` 中的trigger，逐个交给终端渲染处理。
     for (const trigger of slackChannelTriggers) {
+      // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
       highlights.push({
         start: trigger.start,
         end: trigger.end,
@@ -663,7 +1007,9 @@ function PromptInput({
     }
 
     // Add @name highlighting with team member's color
+    // 按顺序遍历 `memberMentionHighlights` 中的mention，逐个交给终端渲染处理。
     for (const mention of memberMentionHighlights) {
+      // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
       highlights.push({
         start: mention.start,
         end: mention.end,
@@ -673,7 +1019,9 @@ function PromptInput({
     }
 
     // Dim interim voice dictation text
+    // 满足 `voiceInterimRange` 时，终端渲染执行该分支。
     if (voiceInterimRange) {
+      // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
       highlights.push({
         start: voiceInterimRange.start,
         end: voiceInterimRange.end,
@@ -684,9 +1032,13 @@ function PromptInput({
     }
 
     // Rainbow highlighting for ultrathink keyword (per-character cycling colors)
+    // 满足 `isUltrathinkEnabled()` 时，终端渲染执行该分支。
     if (isUltrathinkEnabled()) {
+      // 按顺序遍历 `thinkTriggers` 中的trigger，逐个交给终端渲染处理。
       for (const trigger of thinkTriggers) {
+        // 循环处理 `let i = trigger.start; i < trigger.end; i++`，让终端渲染逐项把同类条目按顺序走完。
         for (let i = trigger.start; i < trigger.end; i++) {
+          // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
           highlights.push({
             start: i,
             end: i + 1,
@@ -699,9 +1051,13 @@ function PromptInput({
     }
 
     // Same rainbow treatment for the ultraplan keyword
+    // 满足 `feature('ULTRAPLAN')` 时，终端渲染执行该分支。
     if (feature('ULTRAPLAN')) {
+      // 按顺序遍历 `ultraplanTriggers` 中的trigger，逐个交给终端渲染处理。
       for (const trigger of ultraplanTriggers) {
+        // 循环处理 `let i = trigger.start; i < trigger.end; i++`，让终端渲染逐项把同类条目按顺序走完。
         for (let i = trigger.start; i < trigger.end; i++) {
+          // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
           highlights.push({
             start: i,
             end: i + 1,
@@ -714,8 +1070,11 @@ function PromptInput({
     }
 
     // Same rainbow treatment for the ultrareview keyword
+    // 按顺序遍历 `ultrareviewTriggers` 中的trigger，逐个交给终端渲染处理。
     for (const trigger of ultrareviewTriggers) {
+      // 循环处理 `let i = trigger.start; i < trigger.end; i++`，让终端渲染逐项把同类条目按顺序走完。
       for (let i = trigger.start; i < trigger.end; i++) {
+        // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
         highlights.push({
           start: i,
           end: i + 1,
@@ -727,8 +1086,11 @@ function PromptInput({
     }
 
     // Rainbow for /buddy
+    // 按顺序遍历 `buddyTriggers` 中的trigger，逐个交给终端渲染处理。
     for (const trigger of buddyTriggers) {
+      // 循环处理 `let i = trigger.start; i < trigger.end; i++`，让终端渲染逐项把同类条目按顺序走完。
       for (let i = trigger.start; i < trigger.end; i++) {
+        // highlights 集合追加新条目，保持收集顺序与输入顺序一致。
         highlights.push({
           start: i,
           end: i + 1,
@@ -738,16 +1100,21 @@ function PromptInput({
         });
       }
     }
+    // 返回 `highlights`，作为终端渲染这次计算的结果。
     return highlights;
   }, [isSearchingHistory, historyQuery, historyMatch, historyFailedMatch, cursorOffset, btwTriggers, imageRefPositions, memberMentionHighlights, slashCommandTriggers, tokenBudgetTriggers, slackChannelTriggers, displayedValue, voiceInterimRange, thinkTriggers, ultraplanTriggers, ultrareviewTriggers, buddyTriggers]);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     addNotification,
     removeNotification
   } = useNotifications();
 
   // Show ultrathink notification
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `thinkTriggers.length && isUltrathinkEnabled()` 满足时，终端渲染才执行该分支。
     if (thinkTriggers.length && isUltrathinkEnabled()) {
+      // 调用 addNotification，触发终端渲染此处需要的副作用。
       addNotification({
         key: 'ultrathink-active',
         text: 'Effort set to high for this turn',
@@ -755,11 +1122,15 @@ function PromptInput({
         timeoutMs: 5000
       });
     } else {
+      // 调用 removeNotification，触发终端渲染此处需要的副作用。
       removeNotification('ultrathink-active');
     }
   }, [addNotification, removeNotification, thinkTriggers.length]);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `feature('ULTRAPLAN') && ultraplanTriggers.length` 满足时，终端渲染才执行该分支。
     if (feature('ULTRAPLAN') && ultraplanTriggers.length) {
+      // 调用 addNotification，触发终端渲染此处需要的副作用。
       addNotification({
         key: 'ultraplan-active',
         text: 'This prompt will launch an ultraplan session in Claude Code on the web',
@@ -767,11 +1138,15 @@ function PromptInput({
         timeoutMs: 5000
       });
     } else {
+      // 调用 removeNotification，触发终端渲染此处需要的副作用。
       removeNotification('ultraplan-active');
     }
   }, [addNotification, removeNotification, ultraplanTriggers.length]);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `isUltrareviewEnabled() && ultrareviewTriggers.length` 满足时，终端渲染才执行该分支。
     if (isUltrareviewEnabled() && ultrareviewTriggers.length) {
+      // 调用 addNotification，触发终端渲染此处需要的副作用。
       addNotification({
         key: 'ultrareview-active',
         text: 'Run /ultrareview after Claude finishes to review these changes in the cloud',
@@ -782,40 +1157,61 @@ function PromptInput({
   }, [addNotification, ultrareviewTriggers.length]);
 
   // Track input length for stash hint
+  // prevInputLengthRef 引用保存`useRef`，供终端渲染后续处理使用。
   const prevInputLengthRef = useRef(input.length);
+  // peakInputLengthRef 引用保存`useRef`，供终端渲染后续处理使用。
   const peakInputLengthRef = useRef(input.length);
 
   // Dismiss stash hint when user makes any input change
+  // dismissStashHint保存`useCallback`，供终端渲染后续处理使用。
   const dismissStashHint = useCallback(() => {
+    // 调用 removeNotification，触发终端渲染此处需要的副作用。
     removeNotification('stash-hint');
   }, [removeNotification]);
 
   // Show stash hint when user gradually clears substantial input
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // prevLength 数量 命名 `prevInputLengthRef.current`，让后续代码直接表达这个值的用途。
     const prevLength = prevInputLengthRef.current;
+    // peakLength 数量 命名 `peakInputLengthRef.current`，让后续代码直接表达这个值的用途。
     const peakLength = peakInputLengthRef.current;
+    // currentLength 数量保存 `input.length` 的判断结果，供终端渲染提示输入组件 Prompt Input后续分支直接复用。
     const currentLength = input.length;
+    // current更新为 `currentLength`，确保提示输入组件后续读取最新状态。
     prevInputLengthRef.current = currentLength;
 
     // Update peak when input grows
+    // 满足 `currentLength > peakLength` 时，终端渲染执行该分支。
     if (currentLength > peakLength) {
+      // current更新为 `currentLength`，确保提示输入组件后续读取最新状态。
       peakInputLengthRef.current = currentLength;
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Reset state when input is empty
+    // 满足 `currentLength === 0` 时，终端渲染执行该分支。
     if (currentLength === 0) {
+      // current更新为 `0`，确保提示输入组件后续读取最新状态。
       peakInputLengthRef.current = 0;
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Detect gradual clear: peak was high, current is low, but this wasn't a single big jump
     // (rapid clears like esc-esc go from 20+ to 0 in one step)
+    // clearedSubstantialInput标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
     const clearedSubstantialInput = peakLength >= 20 && currentLength <= 5;
+    // wasRapidClear标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
     const wasRapidClear = prevLength >= 20 && currentLength <= 5;
+    // 只有 `clearedSubstantialInput && !wasRapidClear` 满足时，终端渲染才执行该分支。
     if (clearedSubstantialInput && !wasRapidClear) {
+      // 配置读取`getGlobalConfig`，供终端渲染后续处理使用。
       const config = getGlobalConfig();
+      // config.hasUsedStash 配置缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!config.hasUsedStash) {
+        // 调用 addNotification，触发终端渲染此处需要的副作用。
         addNotification({
           key: 'stash-hint',
           jsx: <Text dimColor>
@@ -826,11 +1222,13 @@ function PromptInput({
           timeoutMs: FOOTER_TEMPORARY_STATUS_TIMEOUT
         });
       }
+      // current更新为 `currentLength`，确保提示输入组件后续读取最新状态。
       peakInputLengthRef.current = currentLength;
     }
   }, [input.length, addNotification]);
 
   // Initialize input buffer for undo functionality
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     pushToBuffer,
     undo,
@@ -840,6 +1238,7 @@ function PromptInput({
     maxBufferSize: 50,
     debounceMs: 1000
   });
+  // 调用 useMaybeTruncateInput，触发终端渲染此处需要的副作用。
   useMaybeTruncateInput({
     input,
     pastedContents,
@@ -847,74 +1246,111 @@ function PromptInput({
     setCursorOffset,
     setPastedContents
   });
+  // defaultPlaceholder保存`usePromptInputPlaceholder`，供终端渲染后续处理使用。
   const defaultPlaceholder = usePromptInputPlaceholder({
     input,
     submitCount,
     viewingAgentName
   });
+  // onChange保存`useCallback`，供终端渲染后续处理使用。
   const onChange = useCallback((value: string) => {
+    // 当 `value` 匹配 `'?'` 时，终端渲染执行对应分支。
     if (value === '?') {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_help_toggled', {});
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(v => !v);
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
     setHelpOpen(false);
 
     // Dismiss stash hint when user makes any input change
+    // 调用 dismissStashHint，触发终端渲染此处需要的副作用。
     dismissStashHint();
 
     // Cancel any pending prompt suggestion and speculation when user types
+    // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
     abortPromptSuggestion();
+    // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
     abortSpeculation(setAppState);
 
     // Check if this is a single character insertion at the start
+    // isSingleCharInsertion标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
     const isSingleCharInsertion = value.length === input.length + 1;
+    // insertedAtStart标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
     const insertedAtStart = cursorOffset === 0;
+    // mode读取`getModeFromInput`，供终端渲染后续处理使用。
     const mode = getModeFromInput(value);
+    // `insertedAtStart && mode` 与 `'prompt'` 不一致时刷新派生状态，避免使用过期结果。
     if (insertedAtStart && mode !== 'prompt') {
+      // 满足 `isSingleCharInsertion` 时，终端渲染执行该分支。
       if (isSingleCharInsertion) {
+        // 调用 onModeChange，触发终端渲染此处需要的副作用。
         onModeChange(mode);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Multi-char insertion into empty input (e.g. tab-accepting "! gcloud auth login")
+      // 用户输入为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
       if (input.length === 0) {
+        // 调用 onModeChange，触发终端渲染此处需要的副作用。
         onModeChange(mode);
+        // valueWithoutMode读取`getValueFromInput`，供终端渲染后续处理使用。
         const valueWithoutMode = getValueFromInput(value).replaceAll('\t', '    ');
+        // 调用 pushToBuffer，触发终端渲染此处需要的副作用。
         pushToBuffer(input, cursorOffset, pastedContents);
+        // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
         trackAndSetInput(valueWithoutMode);
+        // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setCursorOffset(valueWithoutMode.length);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
+    // processedValue格式化`value.replaceAll`，供终端渲染后续处理使用。
     const processedValue = value.replaceAll('\t', '    ');
 
     // Push current state to buffer before making changes
+    // `input` 与 `processedValue` 不一致时刷新派生状态，避免使用过期结果。
     if (input !== processedValue) {
+      // 调用 pushToBuffer，触发终端渲染此处需要的副作用。
       pushToBuffer(input, cursorOffset, pastedContents);
     }
 
     // Deselect footer items when user types
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => prev.footerSelection === null ? prev : {
       ...prev,
       footerSelection: null
     });
+    // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
     trackAndSetInput(processedValue);
   }, [trackAndSetInput, onModeChange, input, cursorOffset, pushToBuffer, pastedContents, dismissStashHint, setAppState]);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     resetHistory,
     onHistoryUp,
     onHistoryDown,
     dismissSearchHint,
     historyIndex
+  // 这个回调绑定到 } = useArrowKeyHistory((value: string, historyMode: HistoryMode, pastedContents: Rec…，负责终端渲染在该局部场景下的响应。
   } = useArrowKeyHistory((value: string, historyMode: HistoryMode, pastedContents: Record<number, PastedContent>) => {
+    // 调用 onChange，触发终端渲染此处需要的副作用。
     onChange(value);
+    // 调用 onModeChange，触发终端渲染此处需要的副作用。
     onModeChange(historyMode);
+    // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
     setPastedContents(pastedContents);
   }, input, pastedContents, setCursorOffset, mode);
 
   // Dismiss search hint when user starts searching
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 满足 `isSearchingHistory` 时，终端渲染执行该分支。
     if (isSearchingHistory) {
+      // 调用 dismissSearchHint，触发终端渲染此处需要的副作用。
       dismissSearchHint();
     }
   }, [isSearchingHistory, dismissSearchHint]);
@@ -922,43 +1358,63 @@ function PromptInput({
   // Only use history navigation when there are 0 or 1 slash command suggestions.
   // Footer nav is NOT here — when a pill is selected, TextInput focus=false so
   // these never fire. The Footer keybinding context handles ↑/↓ instead.
+  // handleHistoryUp 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleHistoryUp() {
+    // 满足 `suggestions.length > 1` 时，终端渲染执行该分支。
     if (suggestions.length > 1) {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Only navigate history when cursor is on the first line.
     // In multiline inputs, up arrow should move the cursor (handled by TextInput)
     // and only trigger history when at the top of the input.
+    // isCursorOnFirstLine缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isCursorOnFirstLine) {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // If there's an editable queued command, move it to the input for editing when UP is pressed
+    // hasEditableCommand 命令数据记录 `queuedCommands.some` 是否成立，终端渲染随后按该结果分支。
     const hasEditableCommand = queuedCommands.some(isQueuedCommandEditable);
+    // 满足 `hasEditableCommand` 时，终端渲染执行该分支。
     if (hasEditableCommand) {
+      // 显式忽略 `popAllCommandsFromQueue()` 的返回值，只保留它触发的副作用。
       void popAllCommandsFromQueue();
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 调用 onHistoryUp，触发终端渲染此处需要的副作用。
     onHistoryUp();
   }
+  // handleHistoryDown 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleHistoryDown() {
+    // 满足 `suggestions.length > 1` 时，终端渲染执行该分支。
     if (suggestions.length > 1) {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Only navigate history/footer when cursor is on the last line.
     // In multiline inputs, down arrow should move the cursor (handled by TextInput)
     // and only trigger navigation when at the bottom of the input.
+    // isCursorOnLastLine缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isCursorOnLastLine) {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // At bottom of history → enter footer at first visible pill
+    // 只有 `onHistoryDown() && footerItems.length > 0` 满足时，终端渲染才执行该分支。
     if (onHistoryDown() && footerItems.length > 0) {
+      // first 命名 `footerItems[0]!`，让后续代码直接表达这个值的用途。
       const first = footerItems[0]!;
+      // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
       selectFooterItem(first);
+      // 只有 `first === 'tasks' && !getGlobalConfig().hasSeenTasksHint` 满足时，终端渲染才执行该分支。
       if (first === 'tasks' && !getGlobalConfig().hasSeenTasksHint) {
+        // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
         saveGlobalConfig(c => c.hasSeenTasksHint ? c : {
           ...c,
           hasSeenTasksHint: true
@@ -968,6 +1424,7 @@ function PromptInput({
   }
 
   // Create a suggestions state directly - we'll sync it with useTypeahead later
+  // 从 `useState<{` 按位置拆出 suggestionsState、setSuggestionsStateRaw，让提示输入组件 Prompt Input分别处理这些返回值。
   const [suggestionsState, setSuggestionsStateRaw] = useState<{
     suggestions: SuggestionItem[];
     selectedSuggestion: number;
@@ -979,10 +1436,14 @@ function PromptInput({
   });
 
   // Setter for suggestions state
+  // setSuggestionsState 状态保存`useCallback`，供终端渲染后续处理使用。
   const setSuggestionsState = useCallback((updater: typeof suggestionsState | ((prev: typeof suggestionsState) => typeof suggestionsState)) => {
+    // setSuggestionsStateRaw 根据 prev => typeof updater === 'function' ? updater(p… 更新终端渲染的状态。
     setSuggestionsStateRaw(prev => typeof updater === 'function' ? updater(prev) : updater);
   }, []);
+  // onSubmit保存`useCallback`，供终端渲染后续处理使用。
   const onSubmit = useCallback(async (inputParam: string, isSubmittingSlashCommand = false) => {
+    // inputParam更新为 `inputParam.trimEnd()`，确保提示输入组件后续读取最新状态。
     inputParam = inputParam.trimEnd();
 
     // Don't submit if a footer indicator is being opened. Read fresh from
@@ -990,35 +1451,48 @@ function PromptInput({
     // in the same tick, and the closure value hasn't updated yet. Apply the
     // same "still visible?" derivation as footerItemSelected so a stale
     // selection (pill disappeared) doesn't swallow Enter.
+    // 状态读取`store.getState`，供终端渲染后续处理使用。
     const state = store.getState();
+    // 只有 `state.footerSelection && footerItems.includes(state.footerSelection)` 满足时，终端渲染才执行该分支。
     if (state.footerSelection && footerItems.includes(state.footerSelection)) {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Enter in selection modes confirms selection (useBackgroundTaskNavigation).
     // BaseTextInput's useInput registers before that hook (child effects fire first),
     // so without this guard Enter would double-fire and auto-submit the suggestion.
+    // 当 `state.viewSelectionMode` 匹配 `'selecting-agent'` 时，终端渲染执行对应分支。
     if (state.viewSelectionMode === 'selecting-agent') {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Check for images early - we need this for suggestion logic below
+    // hasImages 集合记录 `Object.values` 是否成立，终端渲染随后按该结果分支。
     const hasImages = Object.values(pastedContents).some(c => c.type === 'image');
 
     // If input is empty OR matches the suggestion, submit it
     // But if there are images attached, don't auto-accept the suggestion -
     // the user wants to submit just the image(s).
     // Only in leader view — promptSuggestion is leader-context, not teammate.
+    // suggestionText 命名 `promptSuggestionState.text`，让后续代码直接表达这个值的用途。
     const suggestionText = promptSuggestionState.text;
+    // inputMatchesSuggestion格式化`inputParam.trim`，供终端渲染后续处理使用。
     const inputMatchesSuggestion = inputParam.trim() === '' || inputParam === suggestionText;
+    // 只有 `inputMatchesSuggestion && suggestionText && !hasI` 满足时，终端渲染才执行该分支。
     if (inputMatchesSuggestion && suggestionText && !hasImages && !state.viewingAgentTaskId) {
       // If speculation is active, inject messages immediately as they stream
+      // 当 `speculation.status` 匹配 `'active'` 时，终端渲染执行对应分支。
       if (speculation.status === 'active') {
+        // 调用 markAccepted，触发终端渲染此处需要的副作用。
         markAccepted();
         // skipReset: resetSuggestion would abort the speculation before we accept it
+        // 调用 logOutcomeAtSubmission，触发终端渲染此处需要的副作用。
         logOutcomeAtSubmission(suggestionText, {
           skipReset: true
         });
+        // 显式忽略 `onSubmitProp(suggestionText, {` 的返回值，只保留它触发的副作用。
         void onSubmitProp(suggestionText, {
           setCursorOffset,
           clearBuffer,
@@ -1028,33 +1502,49 @@ function PromptInput({
           speculationSessionTimeSavedMs: speculationSessionTimeSavedMs,
           setAppState
         });
+        // 返回 `; // Skip normal query - speculation handled it`，作为提示输入组件 Prompt Input这次计算的结果。
         return; // Skip normal query - speculation handled it
       }
 
       // Regular suggestion acceptance (requires shownAt > 0)
+      // 满足 `promptSuggestionState.shownAt > 0` 时，终端渲染执行该分支。
       if (promptSuggestionState.shownAt > 0) {
+        // 调用 markAccepted，触发终端渲染此处需要的副作用。
         markAccepted();
+        // inputParam更新为 `suggestionText`，确保提示输入组件后续读取最新状态。
         inputParam = suggestionText;
       }
     }
 
     // Handle @name direct message
+    // 满足 `isAgentSwarmsEnabled()` 时，终端渲染执行该分支。
     if (isAgentSwarmsEnabled()) {
+      // directMessage 消息数据解析`parseDirectMemberMessage`，供终端渲染后续处理使用。
       const directMessage = parseDirectMemberMessage(inputParam);
+      // 满足 `directMessage` 时，终端渲染执行该分支。
       if (directMessage) {
+        // 结果保存`sendDirectMemberMessage`，供终端渲染后续处理使用。
         const result = await sendDirectMemberMessage(directMessage.recipientName, directMessage.message, teamContext, writeToMailbox);
+        // 满足 `result.success` 时，终端渲染执行该分支。
         if (result.success) {
+          // 调用 addNotification，触发终端渲染此处需要的副作用。
           addNotification({
             key: 'direct-message-sent',
             text: `Sent to @${result.recipientName}`,
             priority: 'immediate',
             timeoutMs: 3000
           });
+          // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
           trackAndSetInput('');
+          // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
           setCursorOffset(0);
+          // 调用 clearBuffer，触发终端渲染此处需要的副作用。
           clearBuffer();
+          // 调用 resetHistory，触发终端渲染此处需要的副作用。
           resetHistory();
+          // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
+        // 提示输入组件 Prompt Input在这里处理 `} else if (result.error === 'no_team_context') {`，完成这一小步状态转换。
         } else if (result.error === 'no_team_context') {
           // No team context - fall through to normal prompt submission
         } else {
@@ -1065,45 +1555,61 @@ function PromptInput({
     }
 
     // Allow submission if there are images attached, even without text
+    // 只有 `inputParam.trim() === '' && !hasImages` 满足时，终端渲染才执行该分支。
     if (inputParam.trim() === '' && !hasImages) {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // PromptInput UX: Check if suggestions dropdown is showing
     // For directory suggestions, allow submission (Tab is used for completion)
+    // hasDirectorySuggestions 集合记录 `suggestions.every` 是否成立，终端渲染随后按该结果分支。
     const hasDirectorySuggestions = suggestionsState.suggestions.length > 0 && suggestionsState.suggestions.every(s => s.description === 'directory');
+    // 只有 `suggestionsState.suggestions.length > 0 && !isSub` 满足时，终端渲染才执行该分支。
     if (suggestionsState.suggestions.length > 0 && !isSubmittingSlashCommand && !hasDirectorySuggestions) {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[onSubmit] early return: suggestions showing (count=${suggestionsState.suggestions.length})`);
+      // 返回 `; // Don't submit, user needs to clear suggestions first`，作为提示输入组件 Prompt Input这次计算的结果。
       return; // Don't submit, user needs to clear suggestions first
     }
 
     // Log suggestion outcome if one exists
+    // 只有 `promptSuggestionState.text && promptSuggestionSta` 满足时，终端渲染才执行该分支。
     if (promptSuggestionState.text && promptSuggestionState.shownAt > 0) {
+      // 调用 logOutcomeAtSubmission，触发终端渲染此处需要的副作用。
       logOutcomeAtSubmission(inputParam);
     }
 
     // Clear stash hint notification on submit
+    // 调用 removeNotification，触发终端渲染此处需要的副作用。
     removeNotification('stash-hint');
 
     // Route input to viewed agent (in-process teammate or named local_agent).
+    // activeAgent读取`getActiveAgentForInput`，供终端渲染后续处理使用。
     const activeAgent = getActiveAgentForInput(store.getState());
+    // `activeAgent.type` 与 `'leader' && onAgentSubmit` 不一致时刷新派生状态，避免使用过期结果。
     if (activeAgent.type !== 'leader' && onAgentSubmit) {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_transcript_input_to_teammate', {});
+      // 等待 `onAgentSubmit(inputParam, activeAgent.task, {` 完成，再继续提示输入组件 Prompt Input的异步流程。
       await onAgentSubmit(inputParam, activeAgent.task, {
         setCursorOffset,
         clearBuffer,
         resetHistory
       });
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Normal leader submission
+    // 等待 `onSubmitProp(inputParam, {` 完成，再继续提示输入组件 Prompt Input的异步流程。
     await onSubmitProp(inputParam, {
       setCursorOffset,
       clearBuffer,
       resetHistory
     });
   }, [promptSuggestionState, speculation, speculationSessionTimeSavedMs, teamContext, store, footerItems, suggestionsState.suggestions, onSubmitProp, onAgentSubmit, clearBuffer, resetHistory, logOutcomeAtSubmission, setAppState, markAccepted, pastedContents, removeNotification]);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     suggestions,
     selectedSuggestion,
@@ -1128,16 +1634,22 @@ function PromptInput({
 
   // Track if prompt suggestion should be shown (computed later with terminal width).
   // Hidden in teammate view — suggestion is leader-context only.
+  // showPromptSuggestion标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const showPromptSuggestion = mode === 'prompt' && suggestions.length === 0 && promptSuggestion && !viewingAgentTaskId;
+  // 满足 `showPromptSuggestion` 时，终端渲染执行该分支。
   if (showPromptSuggestion) {
+    // 调用 markShown，触发终端渲染此处需要的副作用。
     markShown();
   }
 
   // If suggestion was generated but can't be shown due to timing, log suppression.
   // Exclude teammate view: markShown() is gated above, so shownAt stays 0 there —
   // but that's not a timing failure, the suggestion is valid when returning to leader.
+  // 只有 `promptSuggestionState.text && !promptSuggestion &` 满足时，终端渲染才执行该分支。
   if (promptSuggestionState.text && !promptSuggestion && promptSuggestionState.shownAt === 0 && !viewingAgentTaskId) {
+    // 调用 logSuggestionSuppressed，触发终端渲染此处需要的副作用。
     logSuggestionSuppressed('timing', promptSuggestionState.text);
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => ({
       ...prev,
       promptSuggestion: {
@@ -1149,10 +1661,15 @@ function PromptInput({
       }
     }));
   }
+  // onImagePaste 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function onImagePaste(image: string, mediaType?: string, filename?: string, dimensions?: ImageDimensions, sourcePath?: string) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_paste_image', {});
+    // 调用 onModeChange，触发终端渲染此处需要的副作用。
     onModeChange('prompt');
+    // pasteId 命名 `nextPasteIdRef.current++`，让后续代码直接表达这个值的用途。
     const pasteId = nextPasteIdRef.current++;
+    // 新内容 集中保存提示输入组件 Prompt Input要一起传递的字段。
     const newContent: PastedContent = {
       id: pasteId,
       type: 'image',
@@ -1165,12 +1682,15 @@ function PromptInput({
     };
 
     // Cache path immediately (fast) so links work on render
+    // 调用 cacheImagePath，触发终端渲染此处需要的副作用。
     cacheImagePath(newContent);
 
     // Store image to disk in background
+    // 显式忽略 `storeImage(newContent)` 的返回值，只保留它触发的副作用。
     void storeImage(newContent);
 
     // Update UI
+    // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
     setPastedContents(prev => ({
       ...prev,
       [pasteId]: newContent
@@ -1178,8 +1698,11 @@ function PromptInput({
     // Multi-image paste calls onImagePaste in a loop. If the ref is already
     // armed, the previous pill's lazy space fires now (before this pill)
     // rather than being lost.
+    // prefix保存`pendingSpaceAfterPillRef.current ? ' ' : ''`，供后续判断或组装使用。
     const prefix = pendingSpaceAfterPillRef.current ? ' ' : '';
+    // 调用 insertTextAtCursor，触发终端渲染此处需要的副作用。
     insertTextAtCursor(prefix + formatImageRef(pasteId));
+    // current更新为 `true`，确保提示输入组件后续读取最新状态。
     pendingSpaceAfterPillRef.current = true;
   }
 
@@ -1187,145 +1710,225 @@ function PromptInput({
   // Covers pill backspace, Ctrl+U, char-by-char deletion — any edit that drops
   // the ref. onImagePaste batches setPastedContents + insertTextAtCursor in the
   // same event, so this effect sees the placeholder already present.
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // referencedIds 集合保存`Set`，供终端渲染后续处理使用。
     const referencedIds = new Set(parseReferences(input).map(r => r.id));
+    // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
     setPastedContents(prev => {
+      // orphaned派生`Object.values`，供终端渲染后续处理使用。
       const orphaned = Object.values(prev).filter(c => c.type === 'image' && !referencedIds.has(c.id));
+      // orphaned为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
       if (orphaned.length === 0) return prev;
+      // next 集中保存终端渲染提示输入组件 Prompt Input要一起传递的字段。
       const next = {
         ...prev
       };
+      // 逐项读取 `orphaned` 中的img，按输入顺序推进终端渲染。
       for (const img of orphaned) delete next[img.id];
+      // 返回 `next`，作为终端渲染这次计算的结果。
       return next;
     });
   }, [input, setPastedContents]);
+  // onTextPaste 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function onTextPaste(rawText: string) {
+    // current更新为 `false`，确保提示输入组件后续读取最新状态。
     pendingSpaceAfterPillRef.current = false;
     // Clean up pasted text - strip ANSI escape codes and normalize line endings and tabs
+    // 文本保存`stripAnsi`，供终端渲染后续处理使用。
     let text = stripAnsi(rawText).replace(/\r/g, '\n').replaceAll('\t', '    ');
 
     // Match typed/auto-suggest: `!cmd` pasted into empty input enters bash mode.
+    // 用户输入为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
     if (input.length === 0) {
+      // pastedMode读取`getModeFromInput`，供终端渲染后续处理使用。
       const pastedMode = getModeFromInput(text);
+      // `pastedMode` 与 `'prompt'` 不一致时刷新派生状态，避免使用过期结果。
       if (pastedMode !== 'prompt') {
+        // 调用 onModeChange，触发终端渲染此处需要的副作用。
         onModeChange(pastedMode);
+        // 文本更新为 `getValueFromInput(text)`，确保提示输入组件后续读取最新状态。
         text = getValueFromInput(text);
       }
     }
+    // numLines 集合读取`getPastedTextRefNumLines`，供终端渲染后续处理使用。
     const numLines = getPastedTextRefNumLines(text);
     // Limit the number of lines to show in the input
     // If the overall layout is too high then Ink will repaint
     // the entire terminal.
     // The actual required height is dependent on the content, this
     // is just an estimate.
+    // maxLines 集合保存`Math.min`，供终端渲染后续处理使用。
     const maxLines = Math.min(rows - 10, 2);
 
     // Use special handling for long pasted text (>PASTE_THRESHOLD chars)
     // or if it exceeds the number of lines we want to show
+    // 只有 `text.length > PASTE_THRESHOLD || numLines > maxLi` 满足时，终端渲染才执行该分支。
     if (text.length > PASTE_THRESHOLD || numLines > maxLines) {
+      // pasteId 命名 `nextPasteIdRef.current++`，让后续代码直接表达这个值的用途。
       const pasteId = nextPasteIdRef.current++;
+      // 新内容 集中保存提示输入组件 Prompt Input要一起传递的字段。
       const newContent: PastedContent = {
         id: pasteId,
         type: 'text',
         content: text
       };
+      // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedContents(prev => ({
         ...prev,
         [pasteId]: newContent
       }));
+      // 调用 insertTextAtCursor，触发终端渲染此处需要的副作用。
       insertTextAtCursor(formatPastedTextRef(pasteId, numLines));
     } else {
       // For shorter pastes, just insert the text normally
+      // 调用 insertTextAtCursor，触发终端渲染此处需要的副作用。
       insertTextAtCursor(text);
     }
   }
+  // lazySpaceInputFilter保存`useCallback`，供终端渲染后续处理使用。
   const lazySpaceInputFilter = useCallback((input: string, key: Key): string => {
+    // pendingSpaceAfterPillRef.current缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!pendingSpaceAfterPillRef.current) return input;
+    // current更新为 `false`，确保提示输入组件后续读取最新状态。
     pendingSpaceAfterPillRef.current = false;
+    // 满足 `isNonSpacePrintable(input, key)` 时，终端渲染执行该分支。
     if (isNonSpacePrintable(input, key)) return ' ' + input;
+    // 返回 `input`，作为终端渲染这次计算的结果。
     return input;
   }, []);
+  // insertTextAtCursor 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function insertTextAtCursor(text: string) {
     // Push current state to buffer before inserting
+    // 调用 pushToBuffer，触发终端渲染此处需要的副作用。
     pushToBuffer(input, cursorOffset, pastedContents);
+    // newInput格式化`input.slice`，供终端渲染后续处理使用。
     const newInput = input.slice(0, cursorOffset) + text + input.slice(cursorOffset);
+    // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
     trackAndSetInput(newInput);
+    // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setCursorOffset(cursorOffset + text.length);
   }
+  // doublePressEscFromEmpty保存`useDoublePress`，供终端渲染后续处理使用。
   const doublePressEscFromEmpty = useDoublePress(() => {}, () => onShowMessageSelector());
 
   // Function to get the queued command for editing. Returns true if commands were popped.
+  // popAllCommandsFromQueue 命令数据保存`useCallback`，供终端渲染后续处理使用。
   const popAllCommandsFromQueue = useCallback((): boolean => {
+    // 结果保存`popAllEditable`，供终端渲染后续处理使用。
     const result = popAllEditable(input, cursorOffset);
+    // 结果缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!result) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
     trackAndSetInput(result.text);
+    // 调用 onModeChange，触发终端渲染此处需要的副作用。
     onModeChange('prompt'); // Always prompt mode for queued commands
+    // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setCursorOffset(result.cursorOffset);
 
     // Restore images from queued commands to pastedContents
+    // 满足 `result.images.length > 0` 时，终端渲染执行该分支。
     if (result.images.length > 0) {
+      // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedContents(prev => {
+        // newContents 集合 集中保存终端渲染提示输入组件 Prompt Input要一起传递的字段。
         const newContents = {
           ...prev
         };
+        // 按顺序遍历 `result.images` 中的image，逐个交给终端渲染处理。
         for (const image of result.images) {
+          // 标识符更新为 `image`，确保提示输入组件 Prompt Input后续读取最新状态。
           newContents[image.id] = image;
         }
+        // 返回 `newContents`，作为终端渲染这次计算的结果。
         return newContents;
       });
     }
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   }, [trackAndSetInput, onModeChange, input, cursorOffset, setPastedContents]);
 
   // Insert the at-mentioned reference (the file and, optionally, a line range) when
   // we receive an at-mentioned notification the IDE.
+  // onIdeAtMentioned保存`function`，供终端渲染后续处理使用。
   const onIdeAtMentioned = function (atMentioned: IDEAtMentioned) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_ext_at_mentioned', {});
+    // atMentionedText 先占位，稍后的条件分支会根据实际输入补齐它。
     let atMentionedText: string;
+    // relativePath 路径数据保存`path.relative`，供终端渲染后续处理使用。
     const relativePath = path.relative(getCwd(), atMentioned.filePath);
+    // 只有 `atMentioned.lineStart && atMentioned.lineEnd` 满足时，终端渲染才执行该分支。
     if (atMentioned.lineStart && atMentioned.lineEnd) {
+      // atMentionedText更新为 `atMentioned.lineStart === atMentioned.lineEnd ? `@${relat...`，确保提示输入组件后续读取最新状态。
       atMentionedText = atMentioned.lineStart === atMentioned.lineEnd ? `@${relativePath}#L${atMentioned.lineStart} ` : `@${relativePath}#L${atMentioned.lineStart}-${atMentioned.lineEnd} `;
     } else {
+      // atMentionedText更新为 ``@${relativePath} ``，确保提示输入组件后续读取最新状态。
       atMentionedText = `@${relativePath} `;
     }
+    // cursorChar读取 `input[cursorOffset - 1] ?? ' '` 对应条目，后续围绕该成员继续处理。
     const cursorChar = input[cursorOffset - 1] ?? ' ';
+    // 满足 `!/\s/.test(cursorChar)` 时，终端渲染执行该分支。
     if (!/\s/.test(cursorChar)) {
+      // atMentionedText更新为 `` ${atMentionedText}``，确保提示输入组件后续读取最新状态。
       atMentionedText = ` ${atMentionedText}`;
     }
+    // 调用 insertTextAtCursor，触发终端渲染此处需要的副作用。
     insertTextAtCursor(atMentionedText);
   };
+  // 调用 useIdeAtMentioned，触发终端渲染此处需要的副作用。
   useIdeAtMentioned(mcpClients, onIdeAtMentioned);
 
   // Handler for chat:undo - undo last edit
+  // handleUndo保存`useCallback`，供终端渲染后续处理使用。
   const handleUndo = useCallback(() => {
+    // 满足 `canUndo` 时，终端渲染执行该分支。
     if (canUndo) {
+      // previousState 状态保存`undo`，供终端渲染后续处理使用。
       const previousState = undo();
+      // 满足 `previousState` 时，终端渲染执行该分支。
       if (previousState) {
+        // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
         trackAndSetInput(previousState.text);
+        // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setCursorOffset(previousState.cursorOffset);
+        // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
         setPastedContents(previousState.pastedContents);
       }
     }
   }, [canUndo, undo, trackAndSetInput, setPastedContents]);
 
   // Handler for chat:newline - insert a newline at the cursor position
+  // handleNewline保存`useCallback`，供终端渲染后续处理使用。
   const handleNewline = useCallback(() => {
+    // 调用 pushToBuffer，触发终端渲染此处需要的副作用。
     pushToBuffer(input, cursorOffset, pastedContents);
+    // newInput格式化`input.slice`，供终端渲染后续处理使用。
     const newInput = input.slice(0, cursorOffset) + '\n' + input.slice(cursorOffset);
+    // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
     trackAndSetInput(newInput);
+    // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setCursorOffset(cursorOffset + 1);
   }, [input, cursorOffset, trackAndSetInput, setCursorOffset, pushToBuffer, pastedContents]);
 
   // Handler for chat:externalEditor - edit in $EDITOR
+  // handleExternalEditor保存`useCallback`，供终端渲染后续处理使用。
   const handleExternalEditor = useCallback(async () => {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_external_editor_used', {});
+    // setIsExternalEditorActive 写入新的状态值，使终端渲染后续读取保持一致。
     setIsExternalEditorActive(true);
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // Pass pastedContents to expand collapsed text references
+      // 结果保存`editPromptInEditor`，供终端渲染后续处理使用。
       const result = await editPromptInEditor(input, pastedContents);
+      // 满足 `result.error` 时，终端渲染执行该分支。
       if (result.error) {
+        // 调用 addNotification，触发终端渲染此处需要的副作用。
         addNotification({
           key: 'external-editor-error',
           text: result.error,
@@ -1333,16 +1936,23 @@ function PromptInput({
           priority: 'high'
         });
       }
+      // `result.content` 与 `null && result.content !== inp` 不一致时刷新派生状态，避免使用过期结果。
       if (result.content !== null && result.content !== input) {
         // Push current state to buffer before making changes
+        // 调用 pushToBuffer，触发终端渲染此处需要的副作用。
         pushToBuffer(input, cursorOffset, pastedContents);
+        // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
         trackAndSetInput(result.content);
+        // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setCursorOffset(result.content.length);
       }
     } catch (err) {
+      // 满足 `err instanceof Error` 时，终端渲染执行该分支。
       if (err instanceof Error) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logError(err);
       }
+      // 调用 addNotification，触发终端渲染此处需要的副作用。
       addNotification({
         key: 'external-editor-error',
         text: `External editor failed: ${errorMessage(err)}`,
@@ -1350,31 +1960,46 @@ function PromptInput({
         priority: 'high'
       });
     } finally {
+      // setIsExternalEditorActive 写入新的状态值，使终端渲染后续读取保持一致。
       setIsExternalEditorActive(false);
     }
   }, [input, cursorOffset, pastedContents, pushToBuffer, trackAndSetInput, addNotification]);
 
   // Handler for chat:stash - stash/unstash prompt
+  // handleStash保存`useCallback`，供终端渲染后续处理使用。
   const handleStash = useCallback(() => {
+    // `input.trim() === '' && stashedPrompt` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (input.trim() === '' && stashedPrompt !== undefined) {
       // Pop stash when input is empty
+      // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
       trackAndSetInput(stashedPrompt.text);
+      // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorOffset(stashedPrompt.cursorOffset);
+      // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedContents(stashedPrompt.pastedContents);
+      // setStashedPrompt 写入新的状态值，使终端渲染后续读取保持一致。
       setStashedPrompt(undefined);
+    // 提示输入组件 Prompt Input在这里处理 `} else if (input.trim() !== '') {`，完成这一小步状态转换。
     } else if (input.trim() !== '') {
       // Push to stash (save text, cursor position, and pasted contents)
+      // setStashedPrompt 写入新的状态值，使终端渲染后续读取保持一致。
       setStashedPrompt({
         text: input,
         cursorOffset,
         pastedContents
       });
+      // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
       trackAndSetInput('');
+      // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorOffset(0);
+      // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedContents({});
       // Track usage for /discover and stop showing hint
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(c => {
+        // 满足 `c.hasUsedStash` 时，终端渲染执行该分支。
         if (c.hasUsedStash) return c;
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...c,
           hasUsedStash: true
@@ -1384,51 +2009,76 @@ function PromptInput({
   }, [input, cursorOffset, stashedPrompt, trackAndSetInput, setStashedPrompt, pastedContents, setPastedContents]);
 
   // Handler for chat:modelPicker - toggle model picker
+  // handleModelPicker保存`useCallback`，供终端渲染后续处理使用。
   const handleModelPicker = useCallback(() => {
+    // setShowModelPicker 写入新的状态值，使终端渲染后续读取保持一致。
     setShowModelPicker(prev => !prev);
+    // 满足 `helpOpen` 时，终端渲染执行该分支。
     if (helpOpen) {
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   }, [helpOpen]);
 
   // Handler for chat:fastMode - toggle fast mode picker
+  // handleFastModePicker保存`useCallback`，供终端渲染后续处理使用。
   const handleFastModePicker = useCallback(() => {
+    // setShowFastModePicker 写入新的状态值，使终端渲染后续读取保持一致。
     setShowFastModePicker(prev => !prev);
+    // 满足 `helpOpen` 时，终端渲染执行该分支。
     if (helpOpen) {
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   }, [helpOpen]);
 
   // Handler for chat:thinkingToggle - toggle thinking mode
+  // handleThinkingToggle保存`useCallback`，供终端渲染后续处理使用。
   const handleThinkingToggle = useCallback(() => {
+    // setShowThinkingToggle 写入新的状态值，使终端渲染后续读取保持一致。
     setShowThinkingToggle(prev => !prev);
+    // 满足 `helpOpen` 时，终端渲染执行该分支。
     if (helpOpen) {
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   }, [helpOpen]);
 
   // Handler for chat:cycleMode - cycle through permission modes
+  // handleCycleMode保存`useCallback`，供终端渲染后续处理使用。
   const handleCycleMode = useCallback(() => {
     // When viewing a teammate, cycle their mode instead of the leader's
+    // 只有 `isAgentSwarmsEnabled() && viewedTeammate && viewingAgentTaskId` 满足时，终端渲染才执行该分支。
     if (isAgentSwarmsEnabled() && viewedTeammate && viewingAgentTaskId) {
+      // teammateContext 集中保存提示输入组件 Prompt Input要一起传递的字段。
       const teammateContext: ToolPermissionContext = {
         ...toolPermissionContext,
         mode: viewedTeammate.permissionMode
       };
       // Pass undefined for teamContext (unused but kept for API compatibility)
+      // nextMode读取`getNextPermissionMode`，供终端渲染后续处理使用。
       const nextMode = getNextPermissionMode(teammateContext, undefined);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_mode_cycle', {
         to: nextMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // teammateTaskId保存`viewingAgentTaskId`，供终端渲染提示输入组件 Prompt Input后续判断或输出使用。
       const teammateTaskId = viewingAgentTaskId;
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev => {
+        // task 命名 `prev.tasks[teammateTaskId]`，让后续代码直接表达这个值的用途。
         const task = prev.tasks[teammateTaskId];
+        // `!task || task.type` 与 `'in_process_teammate'` 不一致时刷新派生状态，避免使用过期结果。
         if (!task || task.type !== 'in_process_teammate') {
+          // 返回 `prev`，作为终端渲染这次计算的结果。
           return prev;
         }
+        // 满足 `task.permissionMode === nextMode` 时，终端渲染执行该分支。
         if (task.permissionMode === nextMode) {
+          // 返回 `prev`，作为终端渲染这次计算的结果。
           return prev;
         }
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...prev,
           tasks: {
@@ -1440,14 +2090,19 @@ function PromptInput({
           }
         };
       });
+      // 满足 `helpOpen` 时，终端渲染执行该分支。
       if (helpOpen) {
+        // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
         setHelpOpen(false);
       }
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Compute the next mode without triggering side effects first
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[auto-mode] handleCycleMode: currentMode=${toolPermissionContext.mode} isAutoModeAvailable=${toolPermissionContext.isAutoModeAvailable} showAutoModeOptIn=${showAutoModeOptIn} timeoutPending=${!!autoModeOptInTimeoutRef.current}`);
+    // nextMode读取`getNextPermissionMode`，供终端渲染后续处理使用。
     const nextMode = getNextPermissionMode(toolPermissionContext, teamContext);
 
     // Check if user is entering auto mode for the first time. Gated on the
@@ -1455,17 +2110,24 @@ function PromptInput({
     // hasAutoModeOptInAnySource so that --enable-auto-mode users still see
     // the warning dialog once — the CLI flag should grant carousel access,
     // not bypass the safety text.
+    // isEnteringAutoModeFirstTime标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
     let isEnteringAutoModeFirstTime = false;
+    // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，终端渲染执行该分支。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
+      // isEnteringAutoModeFirstTime更新为 `nextMode === 'auto' && toolPermissionContext.mode !== 'au...`，确保提示输入组件后续读取最新状态。
       isEnteringAutoModeFirstTime = nextMode === 'auto' && toolPermissionContext.mode !== 'auto' && !hasAutoModeOptIn() && !viewingAgentTaskId; // Only show for primary agent, not subagents
     }
+    // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，终端渲染执行该分支。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
+      // 满足 `isEnteringAutoModeFirstTime` 时，终端渲染执行该分支。
       if (isEnteringAutoModeFirstTime) {
         // Store previous mode so we can revert if user declines
+        // setPreviousModeBeforeAuto 写入新的状态值，使终端渲染后续读取保持一致。
         setPreviousModeBeforeAuto(toolPermissionContext.mode);
 
         // Only update the UI mode label — do NOT call transitionPermissionMode
         // or cyclePermissionMode yet; we haven't confirmed with the user.
+        // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
         setAppState(prev => ({
           ...prev,
           toolPermissionContext: {
@@ -1473,22 +2135,31 @@ function PromptInput({
             mode: 'auto'
           }
         }));
+        // setToolPermissionContext 写入新的状态值，使终端渲染后续读取保持一致。
         setToolPermissionContext({
           ...toolPermissionContext,
           mode: 'auto'
         });
 
         // Show opt-in dialog after 400ms debounce
+        // 满足 `autoModeOptInTimeoutRef.current` 时，终端渲染执行该分支。
         if (autoModeOptInTimeoutRef.current) {
+          // 调用 clearTimeout，触发终端渲染此处需要的副作用。
           clearTimeout(autoModeOptInTimeoutRef.current);
         }
+        // current更新为 `setTimeout((setShowAutoModeOptIn, autoModeOptInTimeoutRef...`，确保提示输入组件后续读取最新状态。
         autoModeOptInTimeoutRef.current = setTimeout((setShowAutoModeOptIn, autoModeOptInTimeoutRef) => {
+          // setShowAutoModeOptIn 写入新的状态值，使终端渲染后续读取保持一致。
           setShowAutoModeOptIn(true);
+          // current更新为 `null`，确保提示输入组件后续读取最新状态。
           autoModeOptInTimeoutRef.current = null;
         }, 400, setShowAutoModeOptIn, autoModeOptInTimeoutRef);
+        // 满足 `helpOpen` 时，终端渲染执行该分支。
         if (helpOpen) {
+          // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
           setHelpOpen(false);
         }
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
@@ -1498,16 +2169,25 @@ function PromptInput({
     // carousel", not "decline". Reverting causes a ping-pong loop: auto reverts to
     // the prior mode, whose next mode is auto again, forever.
     // The dialog's own decline button (handleAutoModeOptInDecline) handles revert.
+    // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，终端渲染执行该分支。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
+      // 只有 `showAutoModeOptIn || autoModeOptInTimeoutRef.curr` 满足时，终端渲染才执行该分支。
       if (showAutoModeOptIn || autoModeOptInTimeoutRef.current) {
+        // 满足 `showAutoModeOptIn` 时，终端渲染执行该分支。
         if (showAutoModeOptIn) {
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_auto_mode_opt_in_dialog_decline', {});
         }
+        // setShowAutoModeOptIn 写入新的状态值，使终端渲染后续读取保持一致。
         setShowAutoModeOptIn(false);
+        // 满足 `autoModeOptInTimeoutRef.current` 时，终端渲染执行该分支。
         if (autoModeOptInTimeoutRef.current) {
+          // 调用 clearTimeout，触发终端渲染此处需要的副作用。
           clearTimeout(autoModeOptInTimeoutRef.current);
+          // current更新为 `null`，确保提示输入组件后续读取最新状态。
           autoModeOptInTimeoutRef.current = null;
         }
+        // setPreviousModeBeforeAuto 写入新的状态值，使终端渲染后续读取保持一致。
         setPreviousModeBeforeAuto(null);
         // Fall through — mode is 'auto', cyclePermissionMode below goes to 'default'.
       }
@@ -1516,15 +2196,19 @@ function PromptInput({
     // Now that we know this is NOT the first-time auto mode path,
     // call cyclePermissionMode to apply side effects (e.g. strip
     // dangerous permissions, activate classifier)
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       context: preparedContext
     } = cyclePermissionMode(toolPermissionContext, teamContext);
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_mode_cycle', {
       to: nextMode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
 
     // Track when user enters plan mode
+    // 当 `nextMode` 匹配 `'plan'` 时，终端渲染执行对应分支。
     if (nextMode === 'plan') {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current => ({
         ...current,
         lastPlanModeUse: Date.now()
@@ -1535,6 +2219,7 @@ function PromptInput({
     // intentionally preserves the existing mode (to prevent coordinator mode
     // corruption from workers). Then call setToolPermissionContext to trigger
     // recheck of queued permission prompts.
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => ({
       ...prev,
       toolPermissionContext: {
@@ -1542,30 +2227,40 @@ function PromptInput({
         mode: nextMode
       }
     }));
+    // setToolPermissionContext 写入新的状态值，使终端渲染后续读取保持一致。
     setToolPermissionContext({
       ...preparedContext,
       mode: nextMode
     });
 
     // If this is a teammate, update config.json so team lead sees the change
+    // 调用 syncTeammateMode，触发终端渲染此处需要的副作用。
     syncTeammateMode(nextMode, teamContext?.teamName);
 
     // Close help tips if they're open when mode is cycled
+    // 满足 `helpOpen` 时，终端渲染执行该分支。
     if (helpOpen) {
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   }, [toolPermissionContext, teamContext, viewingAgentTaskId, viewedTeammate, setAppState, setToolPermissionContext, helpOpen, showAutoModeOptIn]);
 
   // Handler for auto mode opt-in dialog acceptance
+  // handleAutoModeOptInAccept保存`useCallback`，供终端渲染后续处理使用。
   const handleAutoModeOptInAccept = useCallback(() => {
+    // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，终端渲染执行该分支。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
+      // setShowAutoModeOptIn 写入新的状态值，使终端渲染后续读取保持一致。
       setShowAutoModeOptIn(false);
+      // setPreviousModeBeforeAuto 写入新的状态值，使终端渲染后续读取保持一致。
       setPreviousModeBeforeAuto(null);
 
       // Now that the user accepted, apply the full transition: activate the
       // auto mode backend (classifier, beta headers) and strip dangerous
       // permissions (e.g. Bash(*) always-allow rules).
+      // strippedContext保存`transitionPermissionMode`，供终端渲染后续处理使用。
       const strippedContext = transitionPermissionMode(previousModeBeforeAuto ?? toolPermissionContext.mode, 'auto', toolPermissionContext);
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev => ({
         ...prev,
         toolPermissionContext: {
@@ -1573,32 +2268,45 @@ function PromptInput({
           mode: 'auto'
         }
       }));
+      // setToolPermissionContext 写入新的状态值，使终端渲染后续读取保持一致。
       setToolPermissionContext({
         ...strippedContext,
         mode: 'auto'
       });
 
       // Close help tips if they're open when auto mode is enabled
+      // 满足 `helpOpen` 时，终端渲染执行该分支。
       if (helpOpen) {
+        // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
         setHelpOpen(false);
       }
     }
   }, [helpOpen, setHelpOpen, previousModeBeforeAuto, toolPermissionContext, setAppState, setToolPermissionContext]);
 
   // Handler for auto mode opt-in dialog decline
+  // handleAutoModeOptInDecline保存`useCallback`，供终端渲染后续处理使用。
   const handleAutoModeOptInDecline = useCallback(() => {
+    // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，终端渲染执行该分支。
     if (feature('TRANSCRIPT_CLASSIFIER')) {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[auto-mode] handleAutoModeOptInDecline: reverting to ${previousModeBeforeAuto}, setting isAutoModeAvailable=false`);
+      // setShowAutoModeOptIn 写入新的状态值，使终端渲染后续读取保持一致。
       setShowAutoModeOptIn(false);
+      // 满足 `autoModeOptInTimeoutRef.current` 时，终端渲染执行该分支。
       if (autoModeOptInTimeoutRef.current) {
+        // 调用 clearTimeout，触发终端渲染此处需要的副作用。
         clearTimeout(autoModeOptInTimeoutRef.current);
+        // current更新为 `null`，确保提示输入组件后续读取最新状态。
         autoModeOptInTimeoutRef.current = null;
       }
 
       // Revert to previous mode and remove auto from the carousel
       // for the rest of this session
+      // 满足 `previousModeBeforeAuto` 时，终端渲染执行该分支。
       if (previousModeBeforeAuto) {
+        // setAutoModeActive 写入新的状态值，使终端渲染后续读取保持一致。
         setAutoModeActive(false);
+        // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
         setAppState(prev => ({
           ...prev,
           toolPermissionContext: {
@@ -1607,24 +2315,33 @@ function PromptInput({
             isAutoModeAvailable: false
           }
         }));
+        // setToolPermissionContext 写入新的状态值，使终端渲染后续读取保持一致。
         setToolPermissionContext({
           ...toolPermissionContext,
           mode: previousModeBeforeAuto,
           isAutoModeAvailable: false
         });
+        // setPreviousModeBeforeAuto 写入新的状态值，使终端渲染后续读取保持一致。
         setPreviousModeBeforeAuto(null);
       }
     }
   }, [previousModeBeforeAuto, toolPermissionContext, setAppState, setToolPermissionContext]);
 
   // Handler for chat:imagePaste - paste image from clipboard
+  // handleImagePaste保存`useCallback`，供终端渲染后续处理使用。
   const handleImagePaste = useCallback(() => {
+    // 这个回调绑定到 void getImageFromClipboard().then(imageData => {，负责终端渲染在该局部场景下的响应。
     void getImageFromClipboard().then(imageData => {
+      // 满足 `imageData` 时，终端渲染执行该分支。
       if (imageData) {
+        // 调用 onImagePaste，触发终端渲染此处需要的副作用。
         onImagePaste(imageData.base64, imageData.mediaType);
       } else {
+        // shortcutDisplay读取`getShortcutDisplay`，供终端渲染后续处理使用。
         const shortcutDisplay = getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v');
+        // 消息保存`env.isSSH`，供终端渲染后续处理使用。
         const message = env.isSSH() ? "No image found in clipboard. You're SSH'd; try scp?" : `No image found in clipboard. Use ${shortcutDisplay} to paste images.`;
+        // 调用 addNotification，触发终端渲染此处需要的副作用。
         addNotification({
           key: 'no-image-in-clipboard',
           text: message,
@@ -1641,13 +2358,19 @@ function PromptInput({
   // handled by TextInput directly (via onSubmit prop) and useTypeahead (for
   // autocomplete acceptance). Using useKeybindings would cause
   // stopImmediatePropagation on Enter, blocking autocomplete from seeing the key.
+  // keybindingContext保存`useOptionalKeybindingContext`，供终端渲染后续处理使用。
   const keybindingContext = useOptionalKeybindingContext();
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `!keybindingContext || isModalOverlayActive` 满足时，终端渲染才执行该分支。
     if (!keybindingContext || isModalOverlayActive) return;
+    // 返回 `keybindingContext.registerHandler({`，作为终端渲染这次计算的结果。
     return keybindingContext.registerHandler({
       action: 'chat:submit',
       context: 'Chat',
+      // 这个回调绑定到 handler: () => {，负责终端渲染在该局部场景下的响应。
       handler: () => {
+        // 显式忽略 `onSubmit(input)` 的返回值，只保留它触发的副作用。
         void onSubmit(input);
       }
     });
@@ -1658,6 +2381,7 @@ function PromptInput({
   // onHistoryUp/onHistoryDown props to TextInput, so that useTextInput's
   // upOrHistoryUp/downOrHistoryDown can try cursor movement first and only
   // fall through to history when the cursor can't move further.
+  // chatHandlers 集合保存`useMemo`，供终端渲染后续处理使用。
   const chatHandlers = useMemo(() => ({
     'chat:undo': handleUndo,
     'chat:newline': handleNewline,
@@ -1668,6 +2392,7 @@ function PromptInput({
     'chat:cycleMode': handleCycleMode,
     'chat:imagePaste': handleImagePaste
   }), [handleUndo, handleNewline, handleExternalEditor, handleStash, handleModelPicker, handleThinkingToggle, handleCycleMode, handleImagePaste]);
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings(chatHandlers, {
     context: 'Chat',
     isActive: !isModalOverlayActive
@@ -1675,12 +2400,14 @@ function PromptInput({
 
   // Shift+↑ enters message-actions cursor. Separate isActive so ctrl+r search
   // doesn't leave stale isSearchingHistory on cursor-exit remount.
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('chat:messageActions', () => onMessageActionsEnter?.(), {
     context: 'Chat',
     isActive: !isModalOverlayActive && !isSearchingHistory
   });
 
   // Fast mode keybinding is only active when fast mode is enabled and available
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('chat:fastMode', handleFastModePicker, {
     context: 'Chat',
     isActive: !isModalOverlayActive && isFastModeEnabled() && isFastModeAvailable()
@@ -1689,7 +2416,9 @@ function PromptInput({
   // Handle help:dismiss keybinding (ESC closes help menu)
   // This is registered separately from Chat context so it has priority over
   // CancelRequestHandler when help menu is open
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('help:dismiss', () => {
+    // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
     setHelpOpen(false);
   }, {
     context: 'Help',
@@ -1699,28 +2428,41 @@ function PromptInput({
   // Quick Open / Global Search. Hook calls are unconditional (Rules of Hooks);
   // the handler body is feature()-gated so the setState calls and component
   // references get tree-shaken in external builds.
+  // quickSearchActive保存`feature`，供终端渲染后续处理使用。
   const quickSearchActive = feature('QUICK_SEARCH') ? !isModalOverlayActive : false;
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('app:quickOpen', () => {
+    // 满足 `feature('QUICK_SEARCH')` 时，终端渲染执行该分支。
     if (feature('QUICK_SEARCH')) {
+      // setShowQuickOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setShowQuickOpen(true);
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   }, {
     context: 'Global',
     isActive: quickSearchActive
   });
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('app:globalSearch', () => {
+    // 满足 `feature('QUICK_SEARCH')` 时，终端渲染执行该分支。
     if (feature('QUICK_SEARCH')) {
+      // setShowGlobalSearch 写入新的状态值，使终端渲染后续读取保持一致。
       setShowGlobalSearch(true);
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   }, {
     context: 'Global',
     isActive: quickSearchActive
   });
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('history:search', () => {
+    // 满足 `feature('HISTORY_PICKER')` 时，终端渲染执行该分支。
     if (feature('HISTORY_PICKER')) {
+      // setShowHistoryPicker 写入新的状态值，使终端渲染后续读取保持一致。
       setShowHistoryPicker(true);
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   }, {
@@ -1730,7 +2472,9 @@ function PromptInput({
 
   // Handle Ctrl+C to abort speculation when idle (not loading)
   // CancelRequestHandler only handles Ctrl+C during active tasks
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('app:interrupt', () => {
+    // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
     abortSpeculation(setAppState);
   }, {
     context: 'Global',
@@ -1740,81 +2484,132 @@ function PromptInput({
   // Footer indicator navigation keybindings. ↑/↓ live here (not in
   // handleHistoryUp/Down) because TextInput focus=false when a pill is
   // selected — its useInput is inactive, so this is the only path.
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'footer:up': () => {，负责终端渲染在该局部场景下的响应。
     'footer:up': () => {
       // ↑ scrolls within the coordinator task list before leaving the pill
+      // 只有 `tasksSelected && "external" === 'ant' && coordina` 满足时，终端渲染才执行该分支。
       if (tasksSelected && "external" === 'ant' && coordinatorTaskCount > 0 && coordinatorTaskIndex > minCoordinatorIndex) {
+        // setCoordinatorTaskIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setCoordinatorTaskIndex(prev => prev - 1);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 调用 navigateFooter，触发终端渲染此处需要的副作用。
       navigateFooter(-1, true);
     },
+    // 这个回调绑定到 'footer:down': () => {，负责终端渲染在该局部场景下的响应。
     'footer:down': () => {
       // ↓ scrolls within the coordinator task list, never leaves the pill
+      // 只有 `tasksSelected && "external" === 'ant' && coordina` 满足时，终端渲染才执行该分支。
       if (tasksSelected && "external" === 'ant' && coordinatorTaskCount > 0) {
+        // 满足 `coordinatorTaskIndex < coordinatorTaskCount - 1` 时，终端渲染执行该分支。
         if (coordinatorTaskIndex < coordinatorTaskCount - 1) {
+          // setCoordinatorTaskIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setCoordinatorTaskIndex(prev => prev + 1);
         }
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 只有 `tasksSelected && !isTeammateMode` 满足时，终端渲染才执行该分支。
       if (tasksSelected && !isTeammateMode) {
+        // setShowBashesDialog 写入新的状态值，使终端渲染后续读取保持一致。
         setShowBashesDialog(true);
+        // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
         selectFooterItem(null);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 调用 navigateFooter，触发终端渲染此处需要的副作用。
       navigateFooter(1);
     },
+    // 这个回调绑定到 'footer:next': () => {，负责终端渲染在该局部场景下的响应。
     'footer:next': () => {
       // Teammate mode: ←/→ cycles within the team member list
+      // 只有 `tasksSelected && isTeammateMode` 满足时，终端渲染才执行该分支。
       if (tasksSelected && isTeammateMode) {
+        // totalAgents 集合保存 `1 + inProcessTeammates.length` 的判断结果，供终端渲染提示输入组件 Prompt Input后续分支直接复用。
         const totalAgents = 1 + inProcessTeammates.length;
+        // setTeammateFooterIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setTeammateFooterIndex(prev => (prev + 1) % totalAgents);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 调用 navigateFooter，触发终端渲染此处需要的副作用。
       navigateFooter(1);
     },
+    // 这个回调绑定到 'footer:previous': () => {，负责终端渲染在该局部场景下的响应。
     'footer:previous': () => {
+      // 只有 `tasksSelected && isTeammateMode` 满足时，终端渲染才执行该分支。
       if (tasksSelected && isTeammateMode) {
+        // totalAgents 集合保存 `1 + inProcessTeammates.length` 的判断结果，供终端渲染提示输入组件 Prompt Input后续分支直接复用。
         const totalAgents = 1 + inProcessTeammates.length;
+        // setTeammateFooterIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setTeammateFooterIndex(prev => (prev - 1 + totalAgents) % totalAgents);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 调用 navigateFooter，触发终端渲染此处需要的副作用。
       navigateFooter(-1);
     },
+    // 这个回调绑定到 'footer:openSelected': () => {，负责终端渲染在该局部场景下的响应。
     'footer:openSelected': () => {
+      // 当 `viewSelectionMode` 匹配 `'selecting-agent'` 时，终端渲染执行对应分支。
       if (viewSelectionMode === 'selecting-agent') {
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 按照 footerItemSelected 的取值选择终端渲染的具体处理分支。
       switch (footerItemSelected) {
         case 'companion':
+          // 满足 `isBuddyEnabled()` 时，终端渲染执行该分支。
           if (isBuddyEnabled()) {
+            // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
             selectFooterItem(null);
+            // 显式忽略 `onSubmit('/buddy')` 的返回值，只保留它触发的副作用。
             void onSubmit('/buddy');
           }
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         case 'tasks':
+          // 满足 `isTeammateMode` 时，终端渲染执行该分支。
           if (isTeammateMode) {
             // Enter switches to the selected agent's view
+            // 满足 `teammateFooterIndex === 0` 时，终端渲染执行该分支。
             if (teammateFooterIndex === 0) {
+              // 调用 exitTeammateView，触发终端渲染此处需要的副作用。
               exitTeammateView(setAppState);
             } else {
+              // teammate 命名 `inProcessTeammates[teammateFooterIndex - 1]`，让后续代码直接表达这个值的用途。
               const teammate = inProcessTeammates[teammateFooterIndex - 1];
+              // 满足 `teammate) enterTeammateView(teammate.id, setAppState` 时，终端渲染执行该分支。
               if (teammate) enterTeammateView(teammate.id, setAppState);
             }
+          // 提示输入组件 Prompt Input在这里处理 `} else if (coordinatorTaskIndex === 0 && coordinatorTaskCount > 0) {`，完成这一小步状态转换。
           } else if (coordinatorTaskIndex === 0 && coordinatorTaskCount > 0) {
+            // 调用 exitTeammateView，触发终端渲染此处需要的副作用。
             exitTeammateView(setAppState);
           } else {
+            // selectedTaskId读取`getVisibleAgentTasks`，供终端渲染后续处理使用。
             const selectedTaskId = getVisibleAgentTasks(tasks)[coordinatorTaskIndex - 1]?.id;
+            // 满足 `selectedTaskId` 时，终端渲染执行该分支。
             if (selectedTaskId) {
+              // 调用 enterTeammateView，触发终端渲染此处需要的副作用。
               enterTeammateView(selectedTaskId, setAppState);
             } else {
+              // setShowBashesDialog 写入新的状态值，使终端渲染后续读取保持一致。
               setShowBashesDialog(true);
+              // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
               selectFooterItem(null);
             }
           }
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         case 'tmux':
+          // 当 `"external"` 匹配 `'ant'` 时，终端渲染执行对应分支。
           if ("external" === 'ant') {
+            // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
             setAppState(prev => prev.tungstenPanelAutoHidden ? {
               ...prev,
               tungstenPanelAutoHidden: false
@@ -1823,62 +2618,93 @@ function PromptInput({
               tungstenPanelVisible: !(prev.tungstenPanelVisible ?? true)
             });
           }
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         case 'bagel':
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         case 'teams':
+          // setShowTeamsDialog 写入新的状态值，使终端渲染后续读取保持一致。
           setShowTeamsDialog(true);
+          // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
           selectFooterItem(null);
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         case 'bridge':
+          // setShowBridgeDialog 写入新的状态值，使终端渲染后续读取保持一致。
           setShowBridgeDialog(true);
+          // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
           selectFooterItem(null);
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
       }
     },
+    // 这个回调绑定到 'footer:clearSelection': () => {，负责终端渲染在该局部场景下的响应。
     'footer:clearSelection': () => {
+      // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
       selectFooterItem(null);
     },
+    // 这个回调绑定到 'footer:close': () => {，负责终端渲染在该局部场景下的响应。
     'footer:close': () => {
+      // 只有 `tasksSelected && coordinatorTaskIndex >= 1` 满足时，终端渲染才执行该分支。
       if (tasksSelected && coordinatorTaskIndex >= 1) {
+        // task读取`getVisibleAgentTasks`，供终端渲染后续处理使用。
         const task = getVisibleAgentTasks(tasks)[coordinatorTaskIndex - 1];
+        // task缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!task) return false;
         // When the selected row IS the viewed agent, 'x' types into the
         // steering input. Any other row — dismiss it.
+        // 只有 `viewSelectionMode === 'viewing-agent' && task.id` 满足时，终端渲染才执行该分支。
         if (viewSelectionMode === 'viewing-agent' && task.id === viewingAgentTaskId) {
+          // 调用 onChange，触发终端渲染此处需要的副作用。
           onChange(input.slice(0, cursorOffset) + 'x' + input.slice(cursorOffset));
+          // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
           setCursorOffset(cursorOffset + 1);
+          // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // 调用 stopOrDismissAgent，触发终端渲染此处需要的副作用。
         stopOrDismissAgent(task.id, setAppState);
+        // `task.status` 与 `'running'` 不一致时刷新派生状态，避免使用过期结果。
         if (task.status !== 'running') {
+          // setCoordinatorTaskIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setCoordinatorTaskIndex(i => Math.max(minCoordinatorIndex, i - 1));
         }
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Not handled — let 'x' fall through to type-to-exit
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
   }, {
     context: 'Footer',
     isActive: !!footerItemSelected && !isModalOverlayActive
   });
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((char, key) => {
     // Skip all input handling when a full-screen dialog is open. These dialogs
     // render via early return, but hooks run unconditionally — so without this
     // guard, Escape inside a dialog leaks to the double-press message-selector.
+    // 只有 `showTeamsDialog || showQuickOpen || showGlobalSea` 满足时，终端渲染才执行该分支。
     if (showTeamsDialog || showQuickOpen || showGlobalSearch || showHistoryPicker) {
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Detect failed Alt shortcuts on macOS (Option key produces special characters)
+    // 只有 `getPlatform() === 'macos' && isMacosOptionChar(char)` 满足时，终端渲染才执行该分支。
     if (getPlatform() === 'macos' && isMacosOptionChar(char)) {
+      // shortcut 命名 `MACOS_OPTION_SPECIAL_CHARS[char]`，让后续代码直接表达这个值的用途。
       const shortcut = MACOS_OPTION_SPECIAL_CHARS[char];
+      // terminalName读取`getNativeCSIuTerminalDisplayName`，供终端渲染后续处理使用。
       const terminalName = getNativeCSIuTerminalDisplayName();
+      // jsx保存`terminalName ? <Text dimColor>`，供后续判断或组装使用。
       const jsx = terminalName ? <Text dimColor>
           To enable {shortcut}, set <Text bold>Option as Meta</Text> in{' '}
           {terminalName} preferences (⌘,)
         </Text> : <Text dimColor>To enable {shortcut}, run /terminal-setup</Text>;
+      // 调用 addNotification，触发终端渲染此处需要的副作用。
       addNotification({
         key: 'option-meta-hint',
         jsx,
@@ -1896,20 +2722,29 @@ function PromptInput({
     // the input and type the char. Nav keys are captured by useKeybindings
     // above, so anything reaching here is genuinely not a footer action.
     // onChange clears footerSelection, so no explicit deselect.
+    // 只有 `footerItemSelected && char && !key.ctrl && !key.m` 满足时，终端渲染才执行该分支。
     if (footerItemSelected && char && !key.ctrl && !key.meta && !key.escape && !key.return) {
+      // 调用 onChange，触发终端渲染此处需要的副作用。
       onChange(input.slice(0, cursorOffset) + char + input.slice(cursorOffset));
+      // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorOffset(cursorOffset + char.length);
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Exit special modes when backspace/escape/delete/ctrl+u is pressed at cursor position 0
+    // 只有 `cursorOffset === 0 && (key.escape || key.backspace || key.delete || key.ctr...` 满足时，终端渲染才执行该分支。
     if (cursorOffset === 0 && (key.escape || key.backspace || key.delete || key.ctrl && char === 'u')) {
+      // 调用 onModeChange，触发终端渲染此处需要的副作用。
       onModeChange('prompt');
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
 
     // Exit help mode when backspace is pressed and input is empty
+    // 只有 `helpOpen && input === '' && (key.backspace || key.delete)` 满足时，终端渲染才执行该分支。
     if (helpOpen && input === '' && (key.backspace || key.delete)) {
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
 
@@ -1920,60 +2755,90 @@ function PromptInput({
     // - when input is empty, pop from command queue
 
     // Handle ESC key press
+    // 满足 `key.escape` 时，终端渲染执行该分支。
     if (key.escape) {
       // Abort active speculation
+      // 当 `speculation.status` 匹配 `'active'` 时，终端渲染执行对应分支。
       if (speculation.status === 'active') {
+        // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
         abortSpeculation(setAppState);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Dismiss side question response if visible
+      // 只有 `isSideQuestionVisible && onDismissSideQuestion` 满足时，终端渲染才执行该分支。
       if (isSideQuestionVisible && onDismissSideQuestion) {
+        // 调用 onDismissSideQuestion，触发终端渲染此处需要的副作用。
         onDismissSideQuestion();
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Close help menu if open
+      // 满足 `helpOpen` 时，终端渲染执行该分支。
       if (helpOpen) {
+        // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
         setHelpOpen(false);
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Footer selection clearing is now handled via Footer context keybindings
       // (footer:clearSelection action bound to escape)
       // If a footer item is selected, let the Footer keybinding handle it
+      // 满足 `footerItemSelected` 时，终端渲染执行该分支。
       if (footerItemSelected) {
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // If there's an editable queued command, move it to the input for editing when ESC is pressed
+      // hasEditableCommand 命令数据记录 `queuedCommands.some` 是否成立，终端渲染随后按该结果分支。
       const hasEditableCommand = queuedCommands.some(isQueuedCommandEditable);
+      // 满足 `hasEditableCommand` 时，终端渲染执行该分支。
       if (hasEditableCommand) {
+        // 显式忽略 `popAllCommandsFromQueue()` 的返回值，只保留它触发的副作用。
         void popAllCommandsFromQueue();
+        // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 只有 `messages.length > 0 && !input && !isLoading` 满足时，终端渲染才执行该分支。
       if (messages.length > 0 && !input && !isLoading) {
+        // 调用 doublePressEscFromEmpty，触发终端渲染此处需要的副作用。
         doublePressEscFromEmpty();
       }
     }
+    // 只有 `key.return && helpOpen` 满足时，终端渲染才执行该分支。
     if (key.return && helpOpen) {
+      // setHelpOpen 写入新的状态值，使终端渲染后续读取保持一致。
       setHelpOpen(false);
     }
   });
+  // swarmBanner保存`useSwarmBanner`，供终端渲染后续处理使用。
   const swarmBanner = useSwarmBanner();
+  // fastModeCooldown保存`isFastModeEnabled`，供终端渲染后续处理使用。
   const fastModeCooldown = isFastModeEnabled() ? isFastModeCooldown() : false;
+  // showFastIcon保存`isFastModeEnabled`，供终端渲染后续处理使用。
   const showFastIcon = isFastModeEnabled() ? isFastMode && (isFastModeAvailable() || fastModeCooldown) : false;
+  // showFastIconHint保存`useShowFastIconHint`，供终端渲染后续处理使用。
   const showFastIconHint = useShowFastIconHint(showFastIcon ?? false);
 
   // Show effort notification on startup and when effort changes.
   // Suppressed in brief/assistant mode — the value reflects the local
   // client's effort, not the connected agent's.
+  // effortNotificationText读取`getEffortNotificationText`，供终端渲染后续处理使用。
   const effortNotificationText = briefOwnsGap ? undefined : getEffortNotificationText(effortValue, mainLoopModel);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // effortNotificationText缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!effortNotificationText) {
+      // 调用 removeNotification，触发终端渲染此处需要的副作用。
       removeNotification('effort-level');
+      // 提示输入组件 Prompt Input在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 调用 addNotification，触发终端渲染此处需要的副作用。
     addNotification({
       key: 'effort-level',
       text: effortNotificationText,
@@ -1981,12 +2846,16 @@ function PromptInput({
       timeoutMs: 12_000
     });
   }, [effortNotificationText, addNotification, removeNotification]);
+  // 调用 useBuddyNotification，触发终端渲染此处需要的副作用。
   useBuddyNotification();
+  // companionSpeaking保存`useAppState`，供终端渲染后续处理使用。
   const companionSpeaking = useAppState(s => s.companionReaction !== undefined) && isBuddyEnabled();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns,
     rows
   } = useTerminalSize();
+  // textInputColumns 集合保存`companionReservedColumns`，供终端渲染后续处理使用。
   const textInputColumns = columns - 3 - companionReservedColumns(columns, companionSpeaking);
 
   // POC: click-to-position-cursor. Mouse tracking is only enabled inside
@@ -1995,33 +2864,48 @@ function PromptInput({
   // tightly wraps the text input so they map directly to (column, line)
   // in the Cursor wrap model. MeasuredText.getOffsetFromPosition handles
   // wide chars, wrapped lines, and clamps past-end clicks to line end.
+  // maxVisibleLines 集合保存`isFullscreenEnvEnabled`，供终端渲染后续处理使用。
   const maxVisibleLines = isFullscreenEnvEnabled() ? Math.max(MIN_INPUT_VIEWPORT_LINES, Math.floor(rows / 2) - PROMPT_FOOTER_LINES) : undefined;
+  // handleInputClick保存`useCallback`，供终端渲染后续处理使用。
   const handleInputClick = useCallback((e: ClickEvent) => {
     // During history search the displayed text is historyMatch, not
     // input, and showCursor is false anyway — skip rather than
     // compute an offset against the wrong string.
+    // 只有 `!input || isSearchingHistory` 满足时，终端渲染才执行该分支。
     if (!input || isSearchingHistory) return;
+    // c保存`Cursor.fromText`，供终端渲染后续处理使用。
     const c = Cursor.fromText(input, textInputColumns, cursorOffset);
+    // viewportStart读取`c.getViewportStartLine`，供终端渲染后续处理使用。
     const viewportStart = c.getViewportStartLine(maxVisibleLines);
+    // offset读取`measuredText.getOffsetFromPosition`，供终端渲染后续处理使用。
     const offset = c.measuredText.getOffsetFromPosition({
       line: e.localRow + viewportStart,
       column: e.localCol
     });
+    // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setCursorOffset(offset);
   }, [input, textInputColumns, isSearchingHistory, cursorOffset, maxVisibleLines]);
+  // handleOpenTasksDialog保存`useCallback`，供终端渲染后续处理使用。
   const handleOpenTasksDialog = useCallback((taskId?: string) => setShowBashesDialog(taskId ?? true), [setShowBashesDialog]);
+  // placeholder标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
   const placeholder = showPromptSuggestion && promptSuggestion ? promptSuggestion : defaultPlaceholder;
 
   // Calculate if input has multiple lines
+  // isInputWrapped记录 `useMemo` 是否成立，终端渲染随后按该结果分支。
   const isInputWrapped = useMemo(() => input.includes('\n'), [input]);
 
   // Memoized callbacks for model picker to prevent re-renders when unrelated
   // state (like notifications) changes. This prevents the inline model picker
   // from visually "jumping" when notifications arrive.
+  // handleModelSelect保存`useCallback`，供终端渲染后续处理使用。
   const handleModelSelect = useCallback((model: string | null, _effort: EffortLevel | undefined) => {
+    // wasFastModeDisabled标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
     let wasFastModeDisabled = false;
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => {
+      // wasFastModeDisabled更新为 `isFastModeEnabled() && !isFastModeSupportedByModel(model)...`，确保提示输入组件后续读取最新状态。
       wasFastModeDisabled = isFastModeEnabled() && !isFastModeSupportedByModel(model) && !!prev.fastMode;
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         ...prev,
         mainLoopModel: model,
@@ -2032,40 +2916,58 @@ function PromptInput({
         })
       };
     });
+    // setShowModelPicker 写入新的状态值，使终端渲染后续读取保持一致。
     setShowModelPicker(false);
+    // effectiveFastMode标记终端渲染提示输入组件 Prompt Input是否启用对应路径。
     const effectiveFastMode = (isFastMode ?? false) && !wasFastModeDisabled;
+    // 消息保存`modelDisplayString`，供终端渲染后续处理使用。
     let message = `Model set to ${modelDisplayString(model)}`;
+    // 满足 `isBilledAsExtraUsage(model, effectiveFastMode, isOpus1mMergeEnabled())` 时，终端渲染执行该分支。
     if (isBilledAsExtraUsage(model, effectiveFastMode, isOpus1mMergeEnabled())) {
+      // 提示输入组件 Prompt Input在这里处理 `message += ' · Billed as extra usage'`，完成这一小步状态转换。
       message += ' · Billed as extra usage';
     }
+    // 满足 `wasFastModeDisabled` 时，终端渲染执行该分支。
     if (wasFastModeDisabled) {
+      // 提示输入组件 Prompt Input在这里处理 `message += ' · Fast mode OFF'`，完成这一小步状态转换。
       message += ' · Fast mode OFF';
     }
+    // 调用 addNotification，触发终端渲染此处需要的副作用。
     addNotification({
       key: 'model-switched',
       jsx: <Text>{message}</Text>,
       priority: 'immediate',
       timeoutMs: 3000
     });
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_model_picker_hotkey', {
       model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
   }, [setAppState, addNotification, isFastMode]);
+  // handleModelCancel保存`useCallback`，供终端渲染后续处理使用。
   const handleModelCancel = useCallback(() => {
+    // setShowModelPicker 写入新的状态值，使终端渲染后续读取保持一致。
     setShowModelPicker(false);
   }, []);
 
   // Memoize the model picker element to prevent unnecessary re-renders
   // when AppState changes for unrelated reasons (e.g., notifications arriving)
+  // modelPickerElement保存`useMemo`，供终端渲染后续处理使用。
   const modelPickerElement = useMemo(() => {
+    // showModelPicker缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!showModelPicker) return null;
+    // 返回 `<Box flexDirection="column" marginTop={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" marginTop={1}>
         <ModelPicker initial={mainLoopModel_} sessionModel={mainLoopModelForSession} onSelect={handleModelSelect} onCancel={handleModelCancel} isStandaloneCommand showFastModeNotice={isFastModeEnabled() && isFastMode && isFastModeSupportedByModel(mainLoopModel_) && isFastModeAvailable()} />
       </Box>;
   }, [showModelPicker, mainLoopModel_, mainLoopModelForSession, handleModelSelect, handleModelCancel]);
+  // handleFastModeSelect保存`useCallback`，供终端渲染后续处理使用。
   const handleFastModeSelect = useCallback((result?: string) => {
+    // setShowFastModePicker 写入新的状态值，使终端渲染后续读取保持一致。
     setShowFastModePicker(false);
+    // 满足 `result` 时，终端渲染执行该分支。
     if (result) {
+      // 调用 addNotification，触发终端渲染此处需要的副作用。
       addNotification({
         key: 'fast-mode-toggled',
         jsx: <Text>{result}</Text>,
@@ -2076,23 +2978,31 @@ function PromptInput({
   }, [addNotification]);
 
   // Memoize the fast mode picker element
+  // fastModePickerElement保存`useMemo`，供终端渲染后续处理使用。
   const fastModePickerElement = useMemo(() => {
+    // showFastModePicker缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!showFastModePicker) return null;
+    // 返回 `<Box flexDirection="column" marginTop={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" marginTop={1}>
         <FastModePicker onDone={handleFastModeSelect} unavailableReason={getFastModeUnavailableReason()} />
       </Box>;
   }, [showFastModePicker, handleFastModeSelect]);
 
   // Memoized callbacks for thinking toggle
+  // handleThinkingSelect保存`useCallback`，供终端渲染后续处理使用。
   const handleThinkingSelect = useCallback((enabled: boolean) => {
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => ({
       ...prev,
       thinkingEnabled: enabled
     }));
+    // setShowThinkingToggle 写入新的状态值，使终端渲染后续读取保持一致。
     setShowThinkingToggle(false);
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_thinking_toggled_hotkey', {
       enabled
     });
+    // 调用 addNotification，触发终端渲染此处需要的副作用。
     addNotification({
       key: 'thinking-toggled-hotkey',
       jsx: <Text color={enabled ? 'suggestion' : undefined} dimColor={!enabled}>
@@ -2102,13 +3012,18 @@ function PromptInput({
       timeoutMs: 3000
     });
   }, [setAppState, addNotification]);
+  // handleThinkingCancel保存`useCallback`，供终端渲染后续处理使用。
   const handleThinkingCancel = useCallback(() => {
+    // setShowThinkingToggle 写入新的状态值，使终端渲染后续读取保持一致。
     setShowThinkingToggle(false);
   }, []);
 
   // Memoize the thinking toggle element
+  // thinkingToggleElement保存`useMemo`，供终端渲染后续处理使用。
   const thinkingToggleElement = useMemo(() => {
+    // showThinkingToggle缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!showThinkingToggle) return null;
+    // 返回 `<Box flexDirection="column" marginTop={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" marginTop={1}>
         <ThinkingToggle currentValue={thinkingEnabled ?? true} onSelect={handleThinkingSelect} onCancel={handleThinkingCancel} isMidConversation={messages.some(m => m.type === 'assistant')} />
       </Box>;
@@ -2118,56 +3033,92 @@ function PromptInput({
   // slot's overflowY:hidden clip (same pattern as SuggestionsOverlay).
   // Must be called before early returns below to satisfy rules-of-hooks.
   // Memoized so the portal useEffect doesn't churn on every PromptInput render.
+  // autoModeOptInDialog保存`useMemo`，供终端渲染后续处理使用。
   const autoModeOptInDialog = useMemo(() => feature('TRANSCRIPT_CLASSIFIER') && showAutoModeOptIn ? <AutoModeOptInDialog onAccept={handleAutoModeOptInAccept} onDecline={handleAutoModeOptInDecline} /> : null, [showAutoModeOptIn, handleAutoModeOptInAccept, handleAutoModeOptInDecline]);
+  // 调用 useSetPromptOverlayDialog，触发终端渲染此处需要的副作用。
   useSetPromptOverlayDialog(isFullscreenEnvEnabled() ? autoModeOptInDialog : null);
+  // 满足 `showBashesDialog` 时，终端渲染执行该分支。
   if (showBashesDialog) {
+    // 返回 `<BackgroundTasksDialog onDone={() => setShowBashesDialog(false)} toolUs...`，作为终端渲染这次计算的结果。
     return <BackgroundTasksDialog onDone={() => setShowBashesDialog(false)} toolUseContext={getToolUseContext(messages, [], new AbortController(), mainLoopModel)} initialDetailTaskId={typeof showBashesDialog === 'string' ? showBashesDialog : undefined} />;
   }
+  // 只有 `isAgentSwarmsEnabled() && showTeamsDialog` 满足时，终端渲染才执行该分支。
   if (isAgentSwarmsEnabled() && showTeamsDialog) {
+    // 返回 `<TeamsDialog initialTeams={cachedTeams} onDone={() => {`，作为终端渲染这次计算的结果。
     return <TeamsDialog initialTeams={cachedTeams} onDone={() => {
+      // setShowTeamsDialog 写入新的状态值，使终端渲染后续读取保持一致。
       setShowTeamsDialog(false);
     }} />;
   }
+  // 满足 `feature('QUICK_SEARCH')` 时，终端渲染执行该分支。
   if (feature('QUICK_SEARCH')) {
+    // insertWithSpacing封装成回调，供终端渲染提示输入组件 Prompt Input在事件触发或异步步骤中调用。
     const insertWithSpacing = (text: string) => {
+      // cursorChar读取 `input[cursorOffset - 1] ?? ' '` 对应条目，后续围绕该成员继续处理。
       const cursorChar = input[cursorOffset - 1] ?? ' ';
+      // 调用 insertTextAtCursor，触发终端渲染此处需要的副作用。
       insertTextAtCursor(/\s/.test(cursorChar) ? text : ` ${text}`);
     };
+    // 满足 `showQuickOpen` 时，终端渲染执行该分支。
     if (showQuickOpen) {
+      // 返回 `<QuickOpenDialog onDone={() => setShowQuickOpen(false)} onInsert={inser...`，作为终端渲染这次计算的结果。
       return <QuickOpenDialog onDone={() => setShowQuickOpen(false)} onInsert={insertWithSpacing} />;
     }
+    // 满足 `showGlobalSearch` 时，终端渲染执行该分支。
     if (showGlobalSearch) {
+      // 返回 `<GlobalSearchDialog onDone={() => setShowGlobalSearch(false)} onInsert=...`，作为终端渲染这次计算的结果。
       return <GlobalSearchDialog onDone={() => setShowGlobalSearch(false)} onInsert={insertWithSpacing} />;
     }
   }
+  // 只有 `feature('HISTORY_PICKER') && showHistoryPicker` 满足时，终端渲染才执行该分支。
   if (feature('HISTORY_PICKER') && showHistoryPicker) {
+    // 返回 `<HistorySearchDialog initialQuery={input} onSelect={entry => {`，作为终端渲染这次计算的结果。
     return <HistorySearchDialog initialQuery={input} onSelect={entry => {
+      // entryMode读取`getModeFromInput`，供终端渲染后续处理使用。
       const entryMode = getModeFromInput(entry.display);
+      // 取值读取`getValueFromInput`，供终端渲染后续处理使用。
       const value = getValueFromInput(entry.display);
+      // 调用 onModeChange，触发终端渲染此处需要的副作用。
       onModeChange(entryMode);
+      // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
       trackAndSetInput(value);
+      // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedContents(entry.pastedContents);
+      // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorOffset(value.length);
+      // setShowHistoryPicker 写入新的状态值，使终端渲染后续读取保持一致。
       setShowHistoryPicker(false);
+    // 这个回调绑定到 }} onCancel={() => setShowHistoryPicker(false)} />;，负责终端渲染在该局部场景下的响应。
     }} onCancel={() => setShowHistoryPicker(false)} />;
   }
 
   // Show loop mode menu when requested (ant-only, eliminated from external builds)
+  // 满足 `modelPickerElement` 时，终端渲染执行该分支。
   if (modelPickerElement) {
+    // 返回 `modelPickerElement`，作为终端渲染这次计算的结果。
     return modelPickerElement;
   }
+  // 满足 `fastModePickerElement` 时，终端渲染执行该分支。
   if (fastModePickerElement) {
+    // 返回 `fastModePickerElement`，作为终端渲染这次计算的结果。
     return fastModePickerElement;
   }
+  // 满足 `thinkingToggleElement` 时，终端渲染执行该分支。
   if (thinkingToggleElement) {
+    // 返回 `thinkingToggleElement`，作为终端渲染这次计算的结果。
     return thinkingToggleElement;
   }
+  // 满足 `showBridgeDialog` 时，终端渲染执行该分支。
   if (showBridgeDialog) {
+    // 返回 `<BridgeDialog onDone={() => {`，作为终端渲染这次计算的结果。
     return <BridgeDialog onDone={() => {
+      // setShowBridgeDialog 写入新的状态值，使终端渲染后续读取保持一致。
       setShowBridgeDialog(false);
+      // 调用 selectFooterItem，触发终端渲染此处需要的副作用。
       selectFooterItem(null);
     }} />;
   }
+  // baseProps 集合 集中保存提示输入组件 Prompt Input要一起传递的字段。
   const baseProps: BaseTextInputProps = {
     multiline: true,
     onSubmit,
@@ -2182,6 +3133,7 @@ function PromptInput({
     onHistoryReset: resetHistory,
     placeholder,
     onExit,
+    // 这个回调绑定到 onExitMessage: (show, key) => setExitMessage({，负责终端渲染在该局部场景下的响应。
     onExitMessage: (show, key) => setExitMessage({
       show,
       key
@@ -2198,11 +3150,17 @@ function PromptInput({
     focus: !isSearchingHistory && !isModalOverlayActive && !footerItemSelected,
     showCursor: !footerItemSelected && !isSearchingHistory && !cursorAtImageChip,
     argumentHint: commandArgumentHint,
+    // 这个回调绑定到 onUndo: canUndo ? () => {，负责终端渲染在该局部场景下的响应。
     onUndo: canUndo ? () => {
+      // previousState 状态保存`undo`，供终端渲染后续处理使用。
       const previousState = undo();
+      // 满足 `previousState` 时，终端渲染执行该分支。
       if (previousState) {
+        // 调用 trackAndSetInput，触发终端渲染此处需要的副作用。
         trackAndSetInput(previousState.text);
+        // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setCursorOffset(previousState.cursorOffset);
+        // setPastedContents 写入新的状态值，使终端渲染后续读取保持一致。
         setPastedContents(previousState.pastedContents);
       }
     } : undefined,
@@ -2210,36 +3168,50 @@ function PromptInput({
     inlineGhostText,
     inputFilter: lazySpaceInputFilter
   };
+  // getBorderColor封装成回调，供终端渲染提示输入组件 Prompt Input在事件触发或异步步骤中调用。
   const getBorderColor = (): keyof Theme => {
+    // modeColors 集合 集中保存提示输入组件 Prompt Input要一起传递的字段。
     const modeColors: Record<string, keyof Theme> = {
       bash: 'bashBorder'
     };
 
     // Mode colors take priority, then teammate color, then default
+    // 满足 `modeColors[mode]` 时，终端渲染执行该分支。
     if (modeColors[mode]) {
+      // 返回 `modeColors[mode]`，作为终端渲染这次计算的结果。
       return modeColors[mode];
     }
 
     // In-process teammates run headless - don't apply teammate colors to leader UI
+    // 满足 `isInProcessTeammate()` 时，终端渲染执行该分支。
     if (isInProcessTeammate()) {
+      // 返回 `'promptBorder'`，作为终端渲染这次计算的结果。
       return 'promptBorder';
     }
 
     // Check for teammate color from environment
+    // teammateColorName读取`getTeammateColor`，供终端渲染后续处理使用。
     const teammateColorName = getTeammateColor();
+    // 只有 `teammateColorName && AGENT_COLORS.includes(teammateColorName as AgentColorN...` 满足时，终端渲染才执行该分支。
     if (teammateColorName && AGENT_COLORS.includes(teammateColorName as AgentColorName)) {
+      // 返回 `AGENT_COLOR_TO_THEME_COLOR[teammateColorName as AgentColorName]`，作为终端渲染这次计算的结果。
       return AGENT_COLOR_TO_THEME_COLOR[teammateColorName as AgentColorName];
     }
+    // 返回 `'promptBorder'`，作为终端渲染这次计算的结果。
     return 'promptBorder';
   };
+  // 满足 `isExternalEditorActive` 时，终端渲染执行该分支。
   if (isExternalEditorActive) {
+    // 返回 `<Box flexDirection="row" alignItems="center" justifyContent="center" bo...`，作为终端渲染这次计算的结果。
     return <Box flexDirection="row" alignItems="center" justifyContent="center" borderColor={getBorderColor()} borderStyle="round" borderLeft={false} borderRight={false} borderBottom width="100%">
         <Text dimColor italic>
           Save and close editor to continue...
         </Text>
       </Box>;
   }
+  // textInputElement保存`isVimModeEnabled`，供终端渲染后续处理使用。
   const textInputElement = isVimModeEnabled() ? <VimTextInput {...baseProps} initialMode={vimMode} onModeChange={setVimMode} /> : <TextInput {...baseProps} />;
+  // 返回 `<Box flexDirection="column" marginTop={briefOwnsGap ? 0 : 1}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" marginTop={briefOwnsGap ? 0 : 1}>
       {!isFullscreenEnvEnabled() && <PromptInputQueuedCommands />}
       {hasSuppressedDialogs && <Box marginTop={1} marginLeft={2}>
@@ -2299,22 +3271,35 @@ function PromptInput({
  * Compute the initial paste ID by finding the max ID used in existing messages.
  * This handles --continue/--resume scenarios where we need to avoid ID collisions.
  */
+// getInitialPasteId 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getInitialPasteId(messages: Message[]): number {
+  // maxId保存`0`，供终端渲染提示输入组件 Prompt Input后续判断或输出使用。
   let maxId = 0;
+  // 按顺序遍历 `messages` 中的消息，逐个交给终端渲染处理。
   for (const message of messages) {
+    // 当 `message.type` 匹配 `'user'` 时，终端渲染执行对应分支。
     if (message.type === 'user') {
       // Check image paste IDs
+      // 满足 `message.imagePasteIds` 时，终端渲染执行该分支。
       if (message.imagePasteIds) {
+        // 按顺序遍历 `message.imagePasteIds` 中的标识符，逐个交给终端渲染处理。
         for (const id of message.imagePasteIds) {
+          // 满足 `id > maxId` 时，终端渲染执行该分支。
           if (id > maxId) maxId = id;
         }
       }
       // Check text paste references in message content
+      // 满足 `Array.isArray(message.message.content)` 时，终端渲染执行该分支。
       if (Array.isArray(message.message.content)) {
+        // 按顺序遍历 `message.message.content` 中的block，逐个交给终端渲染处理。
         for (const block of message.message.content) {
+          // 当 `block.type` 匹配 `'text'` 时，终端渲染执行对应分支。
           if (block.type === 'text') {
+            // refs 集合解析`parseReferences`，供终端渲染后续处理使用。
             const refs = parseReferences(block.text);
+            // 按顺序遍历 `refs` 中的ref 引用，逐个交给终端渲染处理。
             for (const ref of refs) {
+              // 满足 `ref.id > maxId` 时，终端渲染执行该分支。
               if (ref.id > maxId) maxId = ref.id;
             }
           }
@@ -2322,11 +3307,16 @@ function getInitialPasteId(messages: Message[]): number {
       }
     }
   }
+  // 返回 `maxId + 1`，作为终端渲染这次计算的结果。
   return maxId + 1;
 }
+// buildBorderText 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildBorderText(showFastIcon: boolean, showFastIconHint: boolean, fastModeCooldown: boolean): BorderTextOptions | undefined {
+  // showFastIcon缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!showFastIcon) return undefined;
+  // fastSeg读取`getFastIconString`，供终端渲染后续处理使用。
   const fastSeg = showFastIconHint ? `${getFastIconString(true, fastModeCooldown)} ${chalk.dim('/fast')}` : getFastIconString(true, fastModeCooldown);
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     content: ` ${fastSeg} `,
     position: 'top',

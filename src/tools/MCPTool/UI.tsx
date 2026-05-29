@@ -1,79 +1,122 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { z } 来自 zod/v4，用于校准工具调用的数据契约。
 import type { z } from 'zod/v4';
+// 复用 ProgressBar 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ProgressBar } from '../../components/design-system/ProgressBar.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 复用 linkifyUrlsInText、OutputLine 终端界面组件，避免在这里重复拼装显示逻辑。
 import { linkifyUrlsInText, OutputLine } from '../../components/shell/OutputLine.js';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../ink/stringWidth.js';
+// 引入 Ansi、Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Ansi, Box, Text } from '../../ink.js';
+// 类型依赖 { ToolProgressData } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolProgressData } from '../../Tool.js';
+// 类型依赖 { ProgressMessage } 来自 ../../types/message.js，用于校准工具调用的数据契约。
 import type { ProgressMessage } from '../../types/message.js';
+// 类型依赖 { MCPProgress } 来自 ../../types/tools.js，用于校准工具调用的数据契约。
 import type { MCPProgress } from '../../types/tools.js';
+// 复用 formatNumber 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { formatNumber } from '../../utils/format.js';
+// 复用 createHyperlink 工具函数，把通用处理留在 ../../utils/hyperlink.js 中维护。
 import { createHyperlink } from '../../utils/hyperlink.js';
+// 复用 getContentSizeEstimate、MCPToolResult 工具函数，把通用处理留在 ../../utils/mcpValidation.js 中维护。
 import { getContentSizeEstimate, type MCPToolResult } from '../../utils/mcpValidation.js';
+// 复用 jsonParse、jsonStringify 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js';
+// 类型依赖 { inputSchema } 来自 ./MCPTool.js，用于校准工具调用的数据契约。
 import type { inputSchema } from './MCPTool.js';
 
 // Threshold for displaying warning about large MCP responses
+// MCP_OUTPUT_WARNING_THRESHOLD_TOKENS 警告信息保存`10_000`，供后续判断或组装使用。
 const MCP_OUTPUT_WARNING_THRESHOLD_TOKENS = 10_000;
 
 // In non-verbose mode, truncate individual input values to keep the header
 // compact. Matches BashTool's philosophy of showing enough to identify the
 // call without dumping the entire payload inline.
+// MAX_INPUT_VALUE_CHARS 集合 命名 `80`，让后续代码直接表达这个值的用途。
 const MAX_INPUT_VALUE_CHARS = 80;
 
 // Max number of top-level keys before we fall back to raw JSON display.
 // Beyond this a flat k:v list is more noise than help.
+// MAX_FLAT_JSON_KEYS 集合 命名 `12`，让后续代码直接表达这个值的用途。
 const MAX_FLAT_JSON_KEYS = 12;
 
 // Don't attempt flat-object parsing for large blobs.
+// MAX_FLAT_JSON_CHARS 集合 命名 `5_000`，让后续代码直接表达这个值的用途。
 const MAX_FLAT_JSON_CHARS = 5_000;
 
 // Don't attempt to parse JSON blobs larger than this (perf safety).
+// MAX_JSON_PARSE_CHARS 集合 命名 `200_000`，让后续代码直接表达这个值的用途。
 const MAX_JSON_PARSE_CHARS = 200_000;
 
 // A string value is "dominant text payload" if it has newlines or is
 // long enough that inline display would be worse than unwrapping.
+// UNWRAP_MIN_STRING_LEN 命名 `200`，让后续代码直接表达这个值的用途。
 const UNWRAP_MIN_STRING_LEN = 200;
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(input: z.infer<ReturnType<typeof inputSchema>>, {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // Object.keys(input)为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (Object.keys(input).length === 0) {
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return '';
   }
+  // 返回 `Object.entries(input).map(([key, value]) => {`，作为工具调用这次计算的结果。
   return Object.entries(input).map(([key, value]) => {
+    // rendered保存`jsonStringify`，供工具调用后续处理使用。
     let rendered = jsonStringify(value);
+    // 只有 `feature('MCP_RICH_OUTPUT') && !verbose && rendered.length > MAX_INPUT_VALUE...` 满足时，工具调用才执行该分支。
     if (feature('MCP_RICH_OUTPUT') && !verbose && rendered.length > MAX_INPUT_VALUE_CHARS) {
+      // rendered更新为 `rendered.slice(0, MAX_INPUT_VALUE_CHARS).trimEnd() + '…'`，确保工具调用后续读取最新状态。
       rendered = rendered.slice(0, MAX_INPUT_VALUE_CHARS).trimEnd() + '…';
     }
+    // 返回 ``${key}: ${rendered}``，作为工具调用这次计算的结果。
     return `${key}: ${rendered}`;
   }).join(', ');
 }
+// renderToolUseProgressMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseProgressMessage(progressMessagesForMessage: ProgressMessage<MCPProgress>[]): React.ReactNode {
+  // lastProgress 集合保存`progressMessagesForMessage.at`，供工具调用后续处理使用。
   const lastProgress = progressMessagesForMessage.at(-1);
+  // 满足 `!lastProgress?.data` 时，工具调用执行该分支。
   if (!lastProgress?.data) {
+    // 返回 `<MessageResponse height={1}>`，作为工具调用这次计算的结果。
     return <MessageResponse height={1}>
         <Text dimColor>Running…</Text>
       </MessageResponse>;
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     progress,
     total,
     progressMessage
   } = lastProgress.data;
+  // 满足 `progress === undefined` 时，工具调用执行该分支。
   if (progress === undefined) {
+    // 返回 `<MessageResponse height={1}>`，作为工具调用这次计算的结果。
     return <MessageResponse height={1}>
         <Text dimColor>Running…</Text>
       </MessageResponse>;
   }
+  // `total` 与 `undefined && total > 0` 不一致时刷新派生状态，避免使用过期结果。
   if (total !== undefined && total > 0) {
+    // ratio保存`Math.min`，供工具调用后续处理使用。
     const ratio = Math.min(1, Math.max(0, progress / total));
+    // percentage保存`Math.round`，供工具调用后续处理使用。
     const percentage = Math.round(ratio * 100);
+    // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
     return <MessageResponse>
         <Box flexDirection="column">
           {progressMessage && <Text dimColor>{progressMessage}</Text>}
@@ -84,10 +127,12 @@ export function renderToolUseProgressMessage(progressMessagesForMessage: Progres
         </Box>
       </MessageResponse>;
   }
+  // 返回 `<MessageResponse height={1}>`，作为工具调用这次计算的结果。
   return <MessageResponse height={1}>
       <Text dimColor>{progressMessage ?? `Processing… ${progress}`}</Text>
     </MessageResponse>;
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: string | MCPToolResult, _progressMessagesForMessage: ProgressMessage<ToolProgressData>[], {
   verbose,
   input
@@ -95,10 +140,15 @@ export function renderToolResultMessage(output: string | MCPToolResult, _progres
   verbose: boolean;
   input?: unknown;
 }): React.ReactNode {
+  // mcpOutput保存`output as MCPToolResult`，供后续判断或组装使用。
   const mcpOutput = output as MCPToolResult;
+  // verbose缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!verbose) {
+    // slackSend保存`trySlackSendCompact`，供工具调用后续处理使用。
     const slackSend = trySlackSendCompact(mcpOutput, input);
+    // `slackSend` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
     if (slackSend !== null) {
+      // 返回 `<MessageResponse height={1}>`，作为工具调用这次计算的结果。
       return <MessageResponse height={1}>
           <Text>
             Sent a message to{' '}
@@ -107,13 +157,21 @@ export function renderToolResultMessage(output: string | MCPToolResult, _progres
         </MessageResponse>;
     }
   }
+  // estimatedTokens 集合读取`getContentSizeEstimate`，供工具调用后续处理使用。
   const estimatedTokens = getContentSizeEstimate(mcpOutput);
+  // showWarning 警告信息保存`estimatedTokens > MCP_OUTPUT_WARNING_THRESHOLD_TOKENS`，供工具实现 UI后续判断或输出使用。
   const showWarning = estimatedTokens > MCP_OUTPUT_WARNING_THRESHOLD_TOKENS;
+  // warningMessage 消息数据保存`response`，供工具调用后续处理使用。
   const warningMessage = showWarning ? `${figures.warning} Large MCP response (~${formatNumber(estimatedTokens)} tokens), this can fill up context quickly` : null;
+  // contentElement 先占位，稍后的条件分支会根据实际输入补齐它。
   let contentElement: React.ReactNode;
+  // 满足 `Array.isArray(mcpOutput)` 时，工具调用执行该分支。
   if (Array.isArray(mcpOutput)) {
+    // contentBlocks 集合派生`mcpOutput.map`，供工具调用后续处理使用。
     const contentBlocks = mcpOutput.map((item, i) => {
+      // 当 `item.type` 匹配 `'image'` 时，工具调用执行对应分支。
       if (item.type === 'image') {
+        // 返回 `<Box key={i} justifyContent="space-between" overflowX="hidden" width="1...`，作为工具调用这次计算的结果。
         return <Box key={i} justifyContent="space-between" overflowX="hidden" width="100%">
             <MessageResponse height={1}>
               <Text>[Image]</Text>
@@ -121,24 +179,32 @@ export function renderToolResultMessage(output: string | MCPToolResult, _progres
           </Box>;
       }
       // For text blocks and any other block types, extract text if available
+      // textContent保存`String`，供工具调用后续处理使用。
       const textContent = item.type === 'text' && 'text' in item && item.text !== null && item.text !== undefined ? String(item.text) : '';
+      // 返回 `feature('MCP_RICH_OUTPUT') ? <MCPTextOutput key={i} content={textConten...`，作为工具调用这次计算的结果。
       return feature('MCP_RICH_OUTPUT') ? <MCPTextOutput key={i} content={textContent} verbose={verbose} /> : <OutputLine key={i} content={textContent} verbose={verbose} />;
     });
 
     // Wrap array content in a column layout
+    // contentElement更新为 `<Box flexDirection="column" width="100%">`，确保工具调用后续读取最新状态。
     contentElement = <Box flexDirection="column" width="100%">
         {contentBlocks}
       </Box>;
+  // 工具实现 UI在这里处理 `} else if (!mcpOutput) {`，完成这一小步状态转换。
   } else if (!mcpOutput) {
+    // contentElement更新为 `<Box justifyContent="space-between" overflowX="hidden" wi...`，确保工具调用后续读取最新状态。
     contentElement = <Box justifyContent="space-between" overflowX="hidden" width="100%">
         <MessageResponse height={1}>
           <Text dimColor>(No content)</Text>
         </MessageResponse>
       </Box>;
   } else {
+    // contentElement更新为 `feature('MCP_RICH_OUTPUT') ? <MCPTextOutput content={mcpO...`，确保工具调用后续读取最新状态。
     contentElement = feature('MCP_RICH_OUTPUT') ? <MCPTextOutput content={mcpOutput} verbose={verbose} /> : <OutputLine content={mcpOutput} verbose={verbose} />;
   }
+  // 满足 `warningMessage` 时，工具调用执行该分支。
   if (warningMessage) {
+    // 返回 `<Box flexDirection="column">`，作为工具调用这次计算的结果。
     return <Box flexDirection="column">
         <MessageResponse height={1}>
           <Text color="warning">{warningMessage}</Text>
@@ -146,6 +212,7 @@ export function renderToolResultMessage(output: string | MCPToolResult, _progres
         {contentElement}
       </Box>;
   }
+  // 返回 `contentElement`，作为工具调用这次计算的结果。
   return contentElement;
 }
 
@@ -156,98 +223,167 @@ export function renderToolResultMessage(output: string | MCPToolResult, _progres
  * 2. If JSON is a small flat-ish object, render as aligned key: value.
  * 3. Otherwise fall through to OutputLine (pretty-print + truncate).
  */
+// MCPTextOutput 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function MCPTextOutput(t0) {
+  // $保存`_c`，供工具调用后续处理使用。
   const $ = _c(18);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     content,
     verbose
   } = t0;
+  // t1 暂存 `Symbol.for("react.early_return_sentinel")` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== content || $[1] !== verbose) {
+    // t1 暂存 `Symbol.for("react.early_return_sentinel")` 生成的渲染片段，后续返回路径直接复用。
     t1 = Symbol.for("react.early_return_sentinel");
+    // 工具实现 UI在这里处理 `bb0: {`，完成这一小步状态转换。
     bb0: {
+      // unwrapped读取`tryUnwrapTextPayload`，供工具调用后续处理使用。
       const unwrapped = tryUnwrapTextPayload(content);
+      // `unwrapped` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (unwrapped !== null) {
+        // 临时值 t2派生`extras.map`，供工具调用后续处理使用。
         const t2 = unwrapped.extras.length > 0 && <Text dimColor={true}>{unwrapped.extras.map(_temp).join(" \xB7 ")}</Text>;
+        // t3 暂存 `<OutputLine content={unwrapped.body} verbose={verbose} li...` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[3] !== unwrapped || $[4] !== verbose) {
+          // t3 暂存 `<OutputLine content={unwrapped.body} verbose={verbose} li...` 生成的渲染片段，后续返回路径直接复用。
           t3 = <OutputLine content={unwrapped.body} verbose={verbose} linkifyUrls={true} />;
+          // $[3] 缓存 `unwrapped`，下次依赖未变时 React 编译产物可直接复用。
           $[3] = unwrapped;
+          // $[4] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
           $[4] = verbose;
+          // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[5] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[5];
         }
+        // t4 暂存 `<MessageResponse><Box flexDirection="column">{t2}{t3}</Bo...` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[6] !== t2 || $[7] !== t3) {
+          // t4 暂存 `<MessageResponse><Box flexDirection="column">{t2}{t3}</Bo...` 生成的渲染片段，后续返回路径直接复用。
           t4 = <MessageResponse><Box flexDirection="column">{t2}{t3}</Box></MessageResponse>;
+          // $[6] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[6] = t2;
+          // $[7] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[7] = t3;
+          // $[8] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[8] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[8];
         }
+        // t1 暂存 `t4` 生成的渲染片段，后续返回路径直接复用。
         t1 = t4;
+        // 结束这个分支或循环，避免工具调用继续落入后续路径。
         break bb0;
       }
     }
+    // $[0] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = content;
+    // $[1] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = verbose;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // `t1` 与 `Symbol.for("react.early_return_...` 不一致时刷新派生状态，避免使用过期结果。
   if (t1 !== Symbol.for("react.early_return_sentinel")) {
+    // 返回 `t1`，作为工具调用这次计算的结果。
     return t1;
   }
+  // t2 暂存 `Symbol.for("react.early_return_sentinel")` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== content) {
+    // t2 暂存 `Symbol.for("react.early_return_sentinel")` 生成的渲染片段，后续返回路径直接复用。
     t2 = Symbol.for("react.early_return_sentinel");
+    // 工具实现 UI在这里处理 `bb1: {`，完成这一小步状态转换。
     bb1: {
+      // flat保存`tryFlattenJson`，供工具调用后续处理使用。
       const flat = tryFlattenJson(content);
+      // `flat` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (flat !== null) {
+        // maxKeyWidth保存`Math.max`，供工具调用后续处理使用。
         const maxKeyWidth = Math.max(...flat.map(_temp2));
+        // t3 暂存 `(t4, i) => {` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[11] !== maxKeyWidth) {
+          // t3 暂存 `(t4, i) => {` 生成的渲染片段，后续返回路径直接复用。
           t3 = (t4, i) => {
+            // 从 `t4` 按位置拆出 key、value，让工具实现 UI分别处理这些返回值。
             const [key, value] = t4;
+            // 返回 `<Text key={i}><Text dimColor={true}>{key.padEnd(maxKeyWidth)}: </Text><...`，作为工具调用这次计算的结果。
             return <Text key={i}><Text dimColor={true}>{key.padEnd(maxKeyWidth)}: </Text><Ansi>{linkifyUrlsInText(value)}</Ansi></Text>;
           };
+          // $[11] 缓存 `maxKeyWidth`，下次依赖未变时 React 编译产物可直接复用。
           $[11] = maxKeyWidth;
+          // $[12] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[12] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[12];
         }
+        // 临时值 t4派生`flat.map`，供工具调用后续处理使用。
         const t4 = <Box flexDirection="column">{flat.map(t3)}</Box>;
+        // t5 暂存 `<MessageResponse>{t4}</MessageResponse>` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[13] !== t4) {
+          // t5 暂存 `<MessageResponse>{t4}</MessageResponse>` 生成的渲染片段，后续返回路径直接复用。
           t5 = <MessageResponse>{t4}</MessageResponse>;
+          // $[13] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[13] = t4;
+          // $[14] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[14] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[14];
         }
+        // t2 暂存 `t5` 生成的渲染片段，后续返回路径直接复用。
         t2 = t5;
+        // 结束这个分支或循环，避免工具调用继续落入后续路径。
         break bb1;
       }
     }
+    // $[9] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = content;
+    // $[10] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[10];
   }
+  // `t2` 与 `Symbol.for("react.early_return_...` 不一致时刷新派生状态，避免使用过期结果。
   if (t2 !== Symbol.for("react.early_return_sentinel")) {
+    // 返回 `t2`，作为工具调用这次计算的结果。
     return t2;
   }
+  // t3 暂存 `<OutputLine content={content} verbose={verbose} linkifyUr...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[15] !== content || $[16] !== verbose) {
+    // t3 暂存 `<OutputLine content={content} verbose={verbose} linkifyUr...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <OutputLine content={content} verbose={verbose} linkifyUrls={true} />;
+    // $[15] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = content;
+    // $[16] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = verbose;
+    // $[17] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[17];
   }
+  // 返回 `t3`，作为工具调用这次计算的结果。
   return t3;
 }
 
@@ -255,14 +391,21 @@ function MCPTextOutput(t0) {
  * Parse content as a JSON object and return its entries. Null if content
  * doesn't parse, isn't an object, is too large, or has 0/too-many keys.
  */
+// _temp2 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(t0) {
+  // 从 `t0` 按位置拆出 k_0，让工具实现 UI分别处理这些返回值。
   const [k_0] = t0;
+  // 返回 `stringWidth(k_0)`，作为工具调用这次计算的结果。
   return stringWidth(k_0);
 }
+// _temp 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(t0) {
+  // 从 `t0` 按位置拆出 k、v，让工具实现 UI分别处理这些返回值。
   const [k, v] = t0;
+  // 返回 ``${k}: ${v}``，作为工具调用这次计算的结果。
   return `${k}: ${v}`;
 }
+// parseJsonEntries 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function parseJsonEntries(content: string, {
   maxChars,
   maxKeys
@@ -270,23 +413,36 @@ function parseJsonEntries(content: string, {
   maxChars: number;
   maxKeys: number;
 }): [string, unknown][] | null {
+  // trimmed格式化`content.trim`，供工具调用后续处理使用。
   const trimmed = content.trim();
+  // 只有 `trimmed.length === 0 || trimmed.length > maxChars` 满足时，工具调用才执行该分支。
   if (trimmed.length === 0 || trimmed.length > maxChars || trimmed[0] !== '{') {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 解析结果 先占位，稍后的条件分支会根据实际输入补齐它。
   let parsed: unknown;
+  // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
   try {
+    // 解析结果更新为 `jsonParse(trimmed)`，确保工具调用后续读取最新状态。
     parsed = jsonParse(trimmed);
   } catch {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // `parsed === null || typeof parsed` 与 `'object' || Array.isArray(parse...` 不一致时刷新派生状态，避免使用过期结果。
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // entries 集合派生`Object.entries`，供工具调用后续处理使用。
   const entries = Object.entries(parsed);
+  // 只有 `entries.length === 0 || entries.length > maxKeys` 满足时，工具调用才执行该分支。
   if (entries.length === 0 || entries.length > maxKeys) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 返回 `entries`，作为工具调用这次计算的结果。
   return entries;
 }
 
@@ -295,26 +451,41 @@ function parseJsonEntries(content: string, {
  * small nested object, flatten it to [key, displayValue] pairs. Nested
  * objects get one-line JSON. Returns null if content doesn't qualify.
  */
+// tryFlattenJson 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function tryFlattenJson(content: string): [string, string][] | null {
+  // entries 集合解析`parseJsonEntries`，供工具调用后续处理使用。
   const entries = parseJsonEntries(content, {
     maxChars: MAX_FLAT_JSON_CHARS,
     maxKeys: MAX_FLAT_JSON_KEYS
   });
+  // 满足 `entries === null` 时，工具调用执行该分支。
   if (entries === null) return null;
+  // 结果 从空数组开始收集，后续循环会按处理顺序追加条目。
   const result: [string, string][] = [];
+  // 循环处理 `const [key, value] of entries`，让工具调用逐项把同类条目按顺序走完。
   for (const [key, value] of entries) {
+    // 当 `typeof value` 匹配 `'string'` 时，工具调用执行对应分支。
     if (typeof value === 'string') {
+      // 结果追加新条目，保持收集顺序与输入顺序一致。
       result.push([key, value]);
+    // 工具实现 UI在这里处理 `} else if (value === null || typeof value === 'number' || typeof value ...`，完成这一小步状态转换。
     } else if (value === null || typeof value === 'number' || typeof value === 'boolean') {
+      // 结果追加新条目，保持收集顺序与输入顺序一致。
       result.push([key, String(value)]);
+    // 工具实现 UI在这里处理 `} else if (typeof value === 'object') {`，完成这一小步状态转换。
     } else if (typeof value === 'object') {
+      // compact保存`jsonStringify`，供工具调用后续处理使用。
       const compact = jsonStringify(value);
+      // 满足 `compact.length > 120` 时，工具调用执行该分支。
       if (compact.length > 120) return null;
+      // 结果追加新条目，保持收集顺序与输入顺序一致。
       result.push([key, compact]);
     } else {
+      // 返回 `null`，作为工具调用这次计算的结果。
       return null;
     }
   }
+  // 返回 `result`，作为工具调用这次计算的结果。
   return result;
 }
 
@@ -324,42 +495,63 @@ export function tryFlattenJson(content: string): [string, string][] | null {
  * handles the common MCP pattern of {"messages":"line1\nline2..."} where
  * pretty-printing keeps \n escaped but we want real line breaks + truncation.
  */
+// tryUnwrapTextPayload 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function tryUnwrapTextPayload(content: string): {
   body: string;
   extras: [string, string][];
 } | null {
+  // entries 集合解析`parseJsonEntries`，供工具调用后续处理使用。
   const entries = parseJsonEntries(content, {
     maxChars: MAX_JSON_PARSE_CHARS,
     maxKeys: 4
   });
+  // 满足 `entries === null` 时，工具调用执行该分支。
   if (entries === null) return null;
   // Find the one dominant string payload. Trim first: a trailing \n on a
   // short sibling (e.g. pagination hints) shouldn't make it "dominant".
+  // 请求体初始化为空值，后续分支会在有数据时补齐。
   let body: string | null = null;
+  // extras 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const extras: [string, string][] = [];
+  // 循环处理 `const [key, value] of entries`，让工具调用逐项把同类条目按顺序走完。
   for (const [key, value] of entries) {
+    // 当 `typeof value` 匹配 `'string'` 时，工具调用执行对应分支。
     if (typeof value === 'string') {
+      // t格式化`value.trimEnd`，供工具调用后续处理使用。
       const t = value.trimEnd();
+      // isDominant记录 `t.includes` 是否成立，工具调用随后按该结果分支。
       const isDominant = t.length > UNWRAP_MIN_STRING_LEN || t.includes('\n') && t.length > 50;
+      // 满足 `isDominant` 时，工具调用执行该分支。
       if (isDominant) {
+        // `body` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
         if (body !== null) return null; // two big strings — ambiguous
+        // 请求体更新为 `t`，确保工具调用后续读取最新状态。
         body = t;
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue;
       }
+      // 满足 `t.length > 150` 时，工具调用执行该分支。
       if (t.length > 150) return null;
+      // extras 集合追加新条目，保持收集顺序与输入顺序一致。
       extras.push([key, t.replace(/\s+/g, ' ')]);
+    // 工具实现 UI在这里处理 `} else if (value === null || typeof value === 'number' || typeof value ...`，完成这一小步状态转换。
     } else if (value === null || typeof value === 'number' || typeof value === 'boolean') {
+      // extras 集合追加新条目，保持收集顺序与输入顺序一致。
       extras.push([key, String(value)]);
     } else {
+      // 返回 `null; // nested object/array — use flat or pretty-print path`，作为工具调用这次计算的结果。
       return null; // nested object/array — use flat or pretty-print path
     }
   }
+  // 满足 `body === null` 时，工具调用执行该分支。
   if (body === null) return null;
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     body,
     extras
   };
 }
+// SLACK_ARCHIVES_RE 命名 `/^https:\/\/[a-z0-9-]+\.slack\.com\/archives\/([A-Z0-9]+)...`，让后续代码直接表达这个值的用途。
 const SLACK_ARCHIVES_RE = /^https:\/\/[a-z0-9-]+\.slack\.com\/archives\/([A-Z0-9]+)\/p\d+$/;
 
 /**
@@ -369,32 +561,48 @@ const SLACK_ARCHIVES_RE = /^https:\/\/[a-z0-9-]+\.slack\.com\/archives\/([A-Z0-9
  * tool input (may be a name like "#foo" or an ID like "C09EVDAN1NK") and
  * falls back to the ID parsed from the archives URL.
  */
+// trySlackSendCompact 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function trySlackSendCompact(output: string | MCPToolResult, input: unknown): {
   channel: string;
   url: string;
 } | null {
+  // 文本 命名 `output`，让后续代码直接表达这个值的用途。
   let text: unknown = output;
+  // 满足 `Array.isArray(output)` 时，工具调用执行该分支。
   if (Array.isArray(output)) {
+    // block筛选`output.find`，供工具调用后续处理使用。
     const block = output.find(b => b.type === 'text');
+    // 文本更新为 `block && 'text' in block ? block.text : undefined`，确保工具调用后续读取最新状态。
     text = block && 'text' in block ? block.text : undefined;
   }
+  // `typeof text` 与 `'string' || !text.includes('"me...` 不一致时刷新派生状态，避免使用过期结果。
   if (typeof text !== 'string' || !text.includes('"message_link"')) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // entries 集合解析`parseJsonEntries`，供工具调用后续处理使用。
   const entries = parseJsonEntries(text, {
     maxChars: 2000,
     maxKeys: 6
   });
+  // URL筛选`find`，供工具调用后续处理使用。
   const url = entries?.find(([k]) => k === 'message_link')?.[1];
+  // `typeof url` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
   if (typeof url !== 'string') return null;
+  // m保存`SLACK_ARCHIVES_RE.exec`，供工具调用后续处理使用。
   const m = SLACK_ARCHIVES_RE.exec(url);
+  // m缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!m) return null;
+  // inp保存`input as {`，供后续判断或组装使用。
   const inp = input as {
     channel_id?: unknown;
     channel?: unknown;
   } | undefined;
+  // 原始文本 命名 `inp?.channel_id ?? inp?.channel ?? m[1]`，让后续代码直接表达这个值的用途。
   const raw = inp?.channel_id ?? inp?.channel ?? m[1];
+  // label标记工具实现 UI是否启用对应路径。
   const label = typeof raw === 'string' && raw ? raw : 'slack';
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     channel: label.startsWith('#') ? label : `#${label}`,
     url

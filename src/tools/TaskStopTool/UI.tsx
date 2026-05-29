@@ -1,36 +1,61 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../ink/stringWidth.js';
+// 引入 Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../../ink.js';
+// 复用 truncateToWidthNoEllipsis 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { truncateToWidthNoEllipsis } from '../../utils/format.js';
+// 类型依赖 { Output } 来自 ./TaskStopTool.js，用于校准工具调用的数据契约。
 import type { Output } from './TaskStopTool.js';
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(): React.ReactNode {
+  // 返回空字符串表示没有可用文本，调用方会按空输入处理。
   return '';
 }
+// MAX_COMMAND_DISPLAY_LINES 命令数据 命名 `2`，让后续代码直接表达这个值的用途。
 const MAX_COMMAND_DISPLAY_LINES = 2;
+// MAX_COMMAND_DISPLAY_CHARS 命令数据 命名 `160`，让后续代码直接表达这个值的用途。
 const MAX_COMMAND_DISPLAY_CHARS = 160;
+// truncateCommand 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function truncateCommand(command: string): string {
+  // 文本行格式化`command.split`，供工具调用后续处理使用。
   const lines = command.split('\n');
+  // truncated保存`command`，供后续判断或组装使用。
   let truncated = command;
+  // 满足 `lines.length > MAX_COMMAND_DISPLAY_LINES` 时，工具调用执行该分支。
   if (lines.length > MAX_COMMAND_DISPLAY_LINES) {
+    // truncated更新为 `lines.slice(0, MAX_COMMAND_DISPLAY_LINES).join('\n')`，确保工具调用后续读取最新状态。
     truncated = lines.slice(0, MAX_COMMAND_DISPLAY_LINES).join('\n');
   }
+  // 满足 `stringWidth(truncated) > MAX_COMMAND_DISPLAY_CHARS` 时，工具调用执行该分支。
   if (stringWidth(truncated) > MAX_COMMAND_DISPLAY_CHARS) {
+    // truncated更新为 `truncateToWidthNoEllipsis(truncated, MAX_COMMAND_DISPLAY_...`，确保工具调用后续读取最新状态。
     truncated = truncateToWidthNoEllipsis(truncated, MAX_COMMAND_DISPLAY_CHARS);
   }
+  // 返回 `truncated.trim()`，作为工具调用这次计算的结果。
   return truncated.trim();
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: Output, _progressMessagesForMessage: unknown[], {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // 当 `"external"` 匹配 `'ant'` 时，工具调用执行对应分支。
   if ("external" === 'ant') {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // rawCommand 命令数据 命名 `output.command ?? ''`，让后续代码直接表达这个值的用途。
   const rawCommand = output.command ?? '';
+  // 命令保存`truncateCommand`，供工具调用后续处理使用。
   const command = verbose ? rawCommand : truncateCommand(rawCommand);
+  // suffix标记工具实现 UI是否启用对应路径。
   const suffix = command !== rawCommand ? '… · stopped' : ' · stopped';
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Text>
         {command}

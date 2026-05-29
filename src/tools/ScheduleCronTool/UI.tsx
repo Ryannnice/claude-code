@@ -1,20 +1,31 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 引入 Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../../ink.js';
+// 复用 truncate 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { truncate } from '../../utils/format.js';
+// 类型依赖 { CreateOutput } 来自 ./CronCreateTool.js，用于校准工具调用的数据契约。
 import type { CreateOutput } from './CronCreateTool.js';
+// 类型依赖 { DeleteOutput } 来自 ./CronDeleteTool.js，用于校准工具调用的数据契约。
 import type { DeleteOutput } from './CronDeleteTool.js';
+// 类型依赖 { ListOutput } 来自 ./CronListTool.js，用于校准工具调用的数据契约。
 import type { ListOutput } from './CronListTool.js';
 
 // --- CronCreate -------------------------------------------------------------
 
+// renderCreateToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderCreateToolUseMessage(input: Partial<{
   cron: string;
   prompt: string;
 }>): React.ReactNode {
+  // 返回 ``${input.cron ?? ''}${input.prompt ? `: ${truncate(input.prompt, 60, tr...`，作为工具调用这次计算的结果。
   return `${input.cron ?? ''}${input.prompt ? `: ${truncate(input.prompt, 60, true)}` : ''}`;
 }
+// renderCreateResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderCreateResultMessage(output: CreateOutput): React.ReactNode {
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Text>
         Scheduled <Text bold>{output.id}</Text>{' '}
@@ -25,12 +36,16 @@ export function renderCreateResultMessage(output: CreateOutput): React.ReactNode
 
 // --- CronDelete -------------------------------------------------------------
 
+// renderDeleteToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderDeleteToolUseMessage(input: Partial<{
   id: string;
 }>): React.ReactNode {
+  // 返回 `input.id ?? ''`，作为工具调用这次计算的结果。
   return input.id ?? '';
 }
+// renderDeleteResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderDeleteResultMessage(output: DeleteOutput): React.ReactNode {
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Text>
         Cancelled <Text bold>{output.id}</Text>
@@ -40,16 +55,23 @@ export function renderDeleteResultMessage(output: DeleteOutput): React.ReactNode
 
 // --- CronList ---------------------------------------------------------------
 
+// renderListToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderListToolUseMessage(): React.ReactNode {
+  // 返回空字符串表示没有可用文本，调用方会按空输入处理。
   return '';
 }
+// renderListResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderListResultMessage(output: ListOutput): React.ReactNode {
+  // output.jobs 集合为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (output.jobs.length === 0) {
+    // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
     return <MessageResponse>
         <Text dimColor>No scheduled jobs</Text>
       </MessageResponse>;
   }
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
+      {/* 这个回调绑定到 {output.jobs.map(j => <Text key={j.id}>，负责工具调用在该局部场景下的响应。 */}
       {output.jobs.map(j => <Text key={j.id}>
           <Text bold>{j.id}</Text> <Text dimColor>{j.humanSchedule}</Text>
         </Text>)}

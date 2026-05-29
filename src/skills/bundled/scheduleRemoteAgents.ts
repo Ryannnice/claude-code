@@ -1,26 +1,41 @@
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+// 类型依赖 { MCPServerConnection } 来自 ../../services/mcp/types.js，用于校准schedule Remote Agents的数据契约。
 import type { MCPServerConnection } from '../../services/mcp/types.js'
+// 接入 isPolicyAllowed 服务层能力，把外部通信或共享状态交给 ../../services/policyLimits/index.js 处理。
 import { isPolicyAllowed } from '../../services/policyLimits/index.js'
+// 类型依赖 { ToolUseContext } 来自 ../../Tool.js，用于校准schedule Remote Agents的数据契约。
 import type { ToolUseContext } from '../../Tool.js'
+// 接入 ASK_USER_QUESTION_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
+// 接入 REMOTE_TRIGGER_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { REMOTE_TRIGGER_TOOL_NAME } from '../../tools/RemoteTriggerTool/prompt.js'
+// 复用 getClaudeAIOAuthTokens 工具函数，把通用处理留在 ../../utils/auth.js 中维护。
 import { getClaudeAIOAuthTokens } from '../../utils/auth.js'
+// 复用 checkRepoForRemoteAccess 工具函数，把通用处理留在 ../../utils/background/remote/preconditions.js 中维护。
 import { checkRepoForRemoteAccess } from '../../utils/background/remote/preconditions.js'
+// 复用 logForDebugging 工具函数，把通用处理留在 ../../utils/debug.js 中维护。
 import { logForDebugging } from '../../utils/debug.js'
+// 整理这一组导入，让schedule Remote Agents后续逻辑可以直接复用这些外部能力。
 import {
   detectCurrentRepositoryWithHost,
   parseGitRemote,
 } from '../../utils/detectRepository.js'
+// 复用 getRemoteUrl 工具函数，把通用处理留在 ../../utils/git.js 中维护。
 import { getRemoteUrl } from '../../utils/git.js'
+// 复用 jsonStringify 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonStringify } from '../../utils/slowOperations.js'
+// 整理这一组导入，让schedule Remote Agents后续逻辑可以直接复用这些外部能力。
 import {
   createDefaultCloudEnvironment,
   type EnvironmentResource,
   fetchEnvironments,
 } from '../../utils/teleport/environments.js'
+// 引入 registerBundledSkill，将 ../bundledSkills.js 中已经封装好的能力接到本文件流程里。
 import { registerBundledSkill } from '../bundledSkills.js'
 
 // Base58 alphabet (Bitcoin-style) used by the tagged ID system
+// BASE58保存`'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwx...`，作为后续固定文本处理的输入。
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 /**
@@ -32,61 +47,90 @@ const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
  * should return the raw UUID directly so we don't need this client-side decoding.
  * The tagged ID format is an internal implementation detail that could change.
  */
+// taggedIdToUUID 封装scheduleRemoteAgents的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function taggedIdToUUID(taggedId: string): string | null {
+  // prefix 命名 `'mcpsrv_'`，让后续代码直接表达这个值的用途。
   const prefix = 'mcpsrv_'
+  // 满足 `!taggedId.startsWith(prefix)` 时，schedule Remote Agents执行该分支。
   if (!taggedId.startsWith(prefix)) {
+    // 返回 `null`，作为schedule Remote Agents这次计算的结果。
     return null
   }
+  // rest格式化`taggedId.slice`，供schedule Remote Agents后续处理使用。
   const rest = taggedId.slice(prefix.length)
   // Skip version prefix (2 chars, always "01")
+  // base58Data格式化`rest.slice`，供schedule Remote Agents后续处理使用。
   const base58Data = rest.slice(2)
 
   // Decode base58 to bigint
+  // n 命名 `0n`，让后续代码直接表达这个值的用途。
   let n = 0n
+  // 按顺序遍历 `base58Data` 中的c，逐个交给schedule Remote Agents处理。
   for (const c of base58Data) {
+    // idx保存`BASE58.indexOf`，供schedule Remote Agents后续处理使用。
     const idx = BASE58.indexOf(c)
+    // 满足 `idx === -1` 时，schedule Remote Agents执行该分支。
     if (idx === -1) {
+      // 返回 `null`，作为schedule Remote Agents这次计算的结果。
       return null
     }
+    // n更新为 `n * 58n + BigInt(idx)`，确保scheduleRemoteAgents后续读取最新状态。
     n = n * 58n + BigInt(idx)
   }
 
   // Convert to UUID hex string
+  // hex格式化`n.toString`，供schedule Remote Agents后续处理使用。
   const hex = n.toString(16).padStart(32, '0')
+  // 返回 ``${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slic...`，作为schedule Remote Agents这次计算的结果。
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`
 }
 
+// ConnectorInfo 固化schedule Remote Agents里传递的数据形状，帮助调用方按同一结构读写字段。
 type ConnectorInfo = {
   uuid: string
   name: string
   url: string
 }
 
+// getConnectedClaudeAIConnectors 封装scheduleRemoteAgents的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getConnectedClaudeAIConnectors(
   mcpClients: MCPServerConnection[],
 ): ConnectorInfo[] {
+  // connectors 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const connectors: ConnectorInfo[] = []
+  // 按顺序遍历 `mcpClients` 中的API 客户端，逐个交给schedule Remote Agents处理。
   for (const client of mcpClients) {
+    // `client.type` 与 `'connected'` 不一致时刷新派生状态，避免使用过期结果。
     if (client.type !== 'connected') {
+      // 跳过当前项，继续处理schedule Remote Agents中的下一轮循环。
       continue
     }
+    // `client.config.type` 与 `'claudeai-proxy'` 不一致时刷新派生状态，避免使用过期结果。
     if (client.config.type !== 'claudeai-proxy') {
+      // 跳过当前项，继续处理schedule Remote Agents中的下一轮循环。
       continue
     }
+    // uuid保存`taggedIdToUUID`，供schedule Remote Agents后续处理使用。
     const uuid = taggedIdToUUID(client.config.id)
+    // uuid缺失时提前走兜底路径，避免schedule Remote Agents继续依赖无效输入。
     if (!uuid) {
+      // 跳过当前项，继续处理schedule Remote Agents中的下一轮循环。
       continue
     }
+    // connectors 集合追加新条目，保持收集顺序与输入顺序一致。
     connectors.push({
       uuid,
       name: client.name,
       url: client.config.url,
     })
   }
+  // 返回 `connectors`，作为schedule Remote Agents这次计算的结果。
   return connectors
 }
 
+// sanitizeConnectorName 封装scheduleRemoteAgents的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function sanitizeConnectorName(name: string): string {
+  // 返回 `name`，作为schedule Remote Agents这次计算的结果。
   return name
     .replace(/^claude[.\s-]ai[.\s-]/i, '')
     .replace(/[^a-zA-Z0-9_-]/g, '-')
@@ -94,20 +138,29 @@ function sanitizeConnectorName(name: string): string {
     .replace(/^-|-$/g, '')
 }
 
+// formatConnectorsInfo 封装scheduleRemoteAgents的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatConnectorsInfo(connectors: ConnectorInfo[]): string {
+  // connectors 集合为空时立即返回或跳过，避免schedule Remote Agents把空集合当成可处理内容。
   if (connectors.length === 0) {
+    // 返回 `'No connected MCP connectors found. The user may need to connect server...`，作为schedule Remote Agents这次计算的结果。
     return 'No connected MCP connectors found. The user may need to connect servers at https://claude.ai/settings/connectors'
   }
+  // 文本行保存`connectors`，供schedule Remote Agents后续处理使用。
   const lines = ['Connected connectors (available for triggers):']
+  // 按顺序遍历 `connectors` 中的c，逐个交给schedule Remote Agents处理。
   for (const c of connectors) {
+    // safeName保存`sanitizeConnectorName`，供schedule Remote Agents后续处理使用。
     const safeName = sanitizeConnectorName(c.name)
+    // 文本行追加新条目，保持收集顺序与输入顺序一致。
     lines.push(
       `- ${c.name} (connector_uuid: ${c.uuid}, name: ${safeName}, url: ${c.url})`,
     )
   }
+  // 返回 `lines.join('\n')`，作为schedule Remote Agents这次计算的结果。
   return lines.join('\n')
 }
 
+// BASE_QUESTION 命名 `'What would you like to do with scheduled remote agents?'`，让后续代码直接表达这个值的用途。
 const BASE_QUESTION = 'What would you like to do with scheduled remote agents?'
 
 /**
@@ -115,23 +168,35 @@ const BASE_QUESTION = 'What would you like to do with scheduled remote agents?'
  * initial AskUserQuestion dialog text (no-args path) and the prompt-body
  * section (args path) so notes are never silently dropped.
  */
+// formatSetupNotes 封装scheduleRemoteAgents的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatSetupNotes(notes: string[]): string {
+  // items 集合派生`notes.map`，供schedule Remote Agents后续处理使用。
   const items = notes.map(n => `- ${n}`).join('\n')
+  // 返回 ``⚠ Heads-up:\n${items}``，作为schedule Remote Agents这次计算的结果。
   return `⚠ Heads-up:\n${items}`
 }
 
+// getCurrentRepoHttpsUrl 封装scheduleRemoteAgents的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getCurrentRepoHttpsUrl(): Promise<string | null> {
+  // remoteUrl读取`getRemoteUrl`，供schedule Remote Agents后续处理使用。
   const remoteUrl = await getRemoteUrl()
+  // remoteUrl缺失时提前走兜底路径，避免schedule Remote Agents继续依赖无效输入。
   if (!remoteUrl) {
+    // 返回 `null`，作为schedule Remote Agents这次计算的结果。
     return null
   }
+  // 解析结果解析`parseGitRemote`，供schedule Remote Agents后续处理使用。
   const parsed = parseGitRemote(remoteUrl)
+  // 解析结果缺失时提前走兜底路径，避免schedule Remote Agents继续依赖无效输入。
   if (!parsed) {
+    // 返回 `null`，作为schedule Remote Agents这次计算的结果。
     return null
   }
+  // 返回 ``https://${parsed.host}/${parsed.owner}/${parsed.name}``，作为schedule Remote Agents这次计算的结果。
   return `https://${parsed.host}/${parsed.owner}/${parsed.name}`
 }
 
+// buildPrompt 封装scheduleRemoteAgents的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildPrompt(opts: {
   userTimezone: string
   connectorsInfo: string
@@ -142,6 +207,7 @@ function buildPrompt(opts: {
   needsGitHubAccessReminder: boolean
   userArgs: string
 }): string {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     userTimezone,
     connectorsInfo,
@@ -155,14 +221,17 @@ function buildPrompt(opts: {
   // When the user passes args, the initial AskUserQuestion dialog is skipped.
   // Setup notes must surface in the prompt body instead, otherwise they're
   // computed and silently discarded (regression vs. the old hard-block).
+  // setupNotesSection 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const setupNotesSection =
     userArgs && setupNotes.length > 0
       ? `\n## Setup Notes\n\n${formatSetupNotes(setupNotes)}\n`
       : ''
+  // initialQuestion 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const initialQuestion =
     setupNotes.length > 0
       ? `${formatSetupNotes(setupNotes)}\n\n${BASE_QUESTION}`
       : BASE_QUESTION
+  // firstStep 命名 `userArgs`，让后续代码直接表达这个值的用途。
   const firstStep = userArgs
     ? `The user has already told you what they want (see User Request at the bottom). Skip the initial question and go directly to the matching workflow.`
     : `Your FIRST action must be a single ${ASK_USER_QUESTION_TOOL_NAME} tool call (no preamble). Use this EXACT string for the \`question\` field — do not paraphrase or shorten it:
@@ -171,6 +240,7 @@ ${jsonStringify(initialQuestion)}
 
 Set \`header: "Action"\` and offer the four actions (create/list/update/run) as options. After the user picks, follow the matching workflow below.`
 
+  // 返回 ``# Schedule Remote Agents`，作为schedule Remote Agents这次计算的结果。
   return `# Schedule Remote Agents
 
 You are helping the user schedule, update, list, or run **remote** Claude Code agents. These are NOT local cron jobs — each trigger spawns a fully isolated remote session (CCR) in Anthropic's cloud infrastructure on a cron schedule. The agent runs in a sandboxed environment with its own git checkout, tools, and optional MCP connections.
@@ -390,20 +460,27 @@ export function registerScheduleRemoteAgentsSkill(): void {
         setupNotes.push(
           `Not in a git repo — you'll need to specify a repo URL manually (or skip repos entirely).`,
         )
+      // `repo.host === 'github.com'` 成立时，schedule Remote Agents切换到这个 else-if 分支。
       } else if (repo.host === 'github.com') {
+        // 从 `await checkRepoForRemoteAccess(` 解构 hasAccess，减少schedule Remote Agents对同一对象的重复访问。
         const { hasAccess } = await checkRepoForRemoteAccess(
           repo.owner,
           repo.name,
         )
+        // 访问权限标记缺失时提前走兜底路径，避免schedule Remote Agents继续依赖无效输入。
         if (!hasAccess) {
+          // GitHub 权限提醒标记更新为 `true`，确保技能调度后续读取最新状态。
           needsGitHubAccessReminder = true
+          // Web setup 开关读取`getFeatureValue_CACHED_MAY_BE_STALE`，供schedule Remote Agents后续处理使用。
           const webSetupEnabled = getFeatureValue_CACHED_MAY_BE_STALE(
             'tengu_cobalt_lantern',
             false,
           )
+          // 提示消息保存`webSetupEnabled`，供schedule Remote Agents后续步骤使用。
           const msg = webSetupEnabled
             ? `GitHub not connected for ${repo.owner}/${repo.name} \u2014 run /web-setup to sync your GitHub credentials, or install the Claude GitHub App at https://claude.ai/code/onboarding?magic=github-app-setup.`
             : `Claude GitHub App not installed on ${repo.owner}/${repo.name} \u2014 install at https://claude.ai/code/onboarding?magic=github-app-setup if your trigger needs this repo.`
+          // 设置提示列表追加新条目，保持收集顺序与输入顺序一致。
           setupNotes.push(msg)
         }
       }
@@ -412,25 +489,36 @@ export function registerScheduleRemoteAgentsSkill(): void {
       // would be factually wrong — getCurrentRepoHttpsUrl() below will
       // still populate gitRepoUrl with the GHE URL.
 
+      // 连接器列表读取`getConnectedClaudeAIConnectors`，供schedule Remote Agents后续处理使用。
       const connectors = getConnectedClaudeAIConnectors(
         context.options.mcpClients,
       )
+      // 连接器列表为空时立即返回或跳过，避免schedule Remote Agents把空集合当成可处理内容。
       if (connectors.length === 0) {
+        // 设置提示列表追加新条目，保持收集顺序与输入顺序一致。
         setupNotes.push(
           `No MCP connectors — connect at https://claude.ai/settings/connectors if needed.`,
         )
       }
 
+      // 用户时区记录时间`Intl.DateTimeFormat`，供schedule Remote Agents后续处理使用。
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      // 连接器说明格式化`formatConnectorsInfo`，供schedule Remote Agents后续处理使用。
       const connectorsInfo = formatConnectorsInfo(connectors)
+      // 仓库 URL读取`getCurrentRepoHttpsUrl`，供schedule Remote Agents后续处理使用。
       const gitRepoUrl = await getCurrentRepoHttpsUrl()
+      // 文本行聚合成有序列表，保持后续遍历顺序稳定。
       const lines = ['Available environments:']
+      // 遍历 const env of environments，让schedule Remote Agents逐项完成同一类处理。
       for (const env of environments) {
+        // 文本行追加新条目，保持收集顺序与输入顺序一致。
         lines.push(
           `- ${env.name} (id: ${env.environment_id}, kind: ${env.kind})`,
         )
       }
+      // 环境说明格式化`lines.join`，供schedule Remote Agents后续处理使用。
       const environmentsInfo = lines.join('\n')
+      // 提示词构建`buildPrompt`，供schedule Remote Agents后续处理使用。
       const prompt = buildPrompt({
         userTimezone,
         connectorsInfo,
@@ -441,6 +529,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
         needsGitHubAccessReminder,
         userArgs: args,
       })
+      // 返回 [{ type: 'text', text: prompt }]，把schedule Remote Agents这个分支的结果交还调用方。
       return [{ type: 'text', text: prompt }]
     },
   })

@@ -1,8 +1,13 @@
+// 复用 parseFrontmatter 工具函数，把通用处理留在 ../utils/frontmatterParser.js 中维护。
 import { parseFrontmatter } from '../utils/frontmatterParser.js'
+// 复用 parseSlashCommandToolsFromFrontmatter 工具函数，把通用处理留在 ../utils/markdownConfigLoader.js 中维护。
 import { parseSlashCommandToolsFromFrontmatter } from '../utils/markdownConfigLoader.js'
+// 复用 executeShellCommandsInPrompt 工具函数，把通用处理留在 ../utils/promptShellExecution.js 中维护。
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
+// 引入 createMovedToPluginCommand，将 ./createMovedToPluginCommand.js 中已经封装好的能力接到本文件流程里。
 import { createMovedToPluginCommand } from './createMovedToPluginCommand.js'
 
+// SECURITY_REVIEW_MARKDOWN 命名 ``---`，让后续代码直接表达这个值的用途。
 const SECURITY_REVIEW_MARKDOWN = `---
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Bash(git show:*), Bash(git remote show:*), Read, Glob, Grep, LS, Task
 description: Complete a security review of the pending changes on the current branch
@@ -202,22 +207,29 @@ export default createMovedToPluginCommand({
   progressMessage: 'analyzing code changes for security risks',
   pluginName: 'security-review',
   pluginCommand: 'security-review',
+  // getPromptWhileMarketplaceIsPrivate 根据 _args, context 读取或计算命令处理需要的结果。
   async getPromptWhileMarketplaceIsPrivate(_args, context) {
     // Parse frontmatter from the markdown
+    // 解析结果解析`parseFrontmatter`，供命令处理后续处理使用。
     const parsed = parseFrontmatter(SECURITY_REVIEW_MARKDOWN)
 
     // Parse allowed tools from frontmatter
+    // allowedTools 集合解析`parseSlashCommandToolsFromFrontmatter`，供命令处理后续处理使用。
     const allowedTools = parseSlashCommandToolsFromFrontmatter(
       parsed.frontmatter['allowed-tools'],
     )
 
     // Execute bash commands in the prompt
+    // processedContent保存`executeShellCommandsInPrompt`，供命令处理后续处理使用。
     const processedContent = await executeShellCommandsInPrompt(
       parsed.content,
       {
         ...context,
+        // getAppState不依赖额外参数，直接计算命令处理需要的结果。
         getAppState() {
+          // appState 状态读取`context.getAppState`，供命令处理后续处理使用。
           const appState = context.getAppState()
+          // 返回结构化结果，集中表达命令处理已经整理出的状态。
           return {
             ...appState,
             toolPermissionContext: {
@@ -233,6 +245,7 @@ export default createMovedToPluginCommand({
       'security-review',
     )
 
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [
       {
         type: 'text',

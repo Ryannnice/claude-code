@@ -1,12 +1,22 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useState } from 'react';
+// 引入 Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../../ink.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { logEvent } from '../../services/analytics/index.js';
+// 接入 formatGrantAmount、getCachedOverageCreditGrant、refreshOverageCreditGrantCache 服务层能力，把外部通信或共享状态交给 ../../services/api/overageCreditGrant.js 处理。
 import { formatGrantAmount, getCachedOverageCreditGrant, refreshOverageCreditGrantCache } from '../../services/api/overageCreditGrant.js';
+// 复用 getGlobalConfig、saveGlobalConfig 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+// 复用 truncate 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { truncate } from '../../utils/format.js';
+// 类型依赖 { FeedConfig } 来自 ./Feed.js，用于校准终端渲染的数据契约。
 import type { FeedConfig } from './Feed.js';
+// MAX_IMPRESSIONS 集合保存`3`，供终端 UI Overage Credit Upsell后续判断或输出使用。
 const MAX_IMPRESSIONS = 3;
 
 /**
@@ -24,16 +34,26 @@ const MAX_IMPRESSIONS = 3;
  *   hasVisitedExtraUsage dismiss. Use for promotional surfaces
  *   (welcome feed, tips).
  */
+// isEligibleForOverageCreditGrant 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isEligibleForOverageCreditGrant(): boolean {
+  // info读取`getCachedOverageCreditGrant`，供终端渲染后续处理使用。
   const info = getCachedOverageCreditGrant();
+  // 只有 `!info || !info.available || info.granted` 满足时，终端渲染才执行该分支。
   if (!info || !info.available || info.granted) return false;
+  // 返回 `formatGrantAmount(info) !== null`，作为终端渲染这次计算的结果。
   return formatGrantAmount(info) !== null;
 }
+// shouldShowOverageCreditUpsell 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldShowOverageCreditUpsell(): boolean {
+  // 满足 `!isEligibleForOverageCreditGrant()` 时，终端渲染执行该分支。
   if (!isEligibleForOverageCreditGrant()) return false;
+  // 配置读取`getGlobalConfig`，供终端渲染后续处理使用。
   const config = getGlobalConfig();
+  // 满足 `config.hasVisitedExtraUsage` 时，终端渲染执行该分支。
   if (config.hasVisitedExtraUsage) return false;
+  // 满足 `(config.overageCreditUpsellSeenCount ?? 0) >= MAX_IMPRESSIONS` 时，终端渲染执行该分支。
   if ((config.overageCreditUpsellSeenCount ?? 0) >= MAX_IMPRESSIONS) return false;
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
 
@@ -41,105 +61,171 @@ export function shouldShowOverageCreditUpsell(): boolean {
  * Kick off a background fetch if the cache is empty. Safe to call
  * unconditionally on mount — it no-ops if cache is fresh.
  */
+// maybeRefreshOverageCreditCache 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function maybeRefreshOverageCreditCache(): void {
+  // `getCachedOverageCreditGrant()` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
   if (getCachedOverageCreditGrant() !== null) return;
+  // 显式忽略 `refreshOverageCreditGrantCache()` 的返回值，只保留它触发的副作用。
   void refreshOverageCreditGrantCache();
 }
+// useShowOverageCreditUpsell 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useShowOverageCreditUpsell() {
+  // show 由 React state 持有，setter 会在用户操作或异步结果返回时触发刷新。
   const [show] = useState(_temp);
+  // 返回 `show`，作为终端渲染这次计算的结果。
   return show;
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp() {
+  // 调用 maybeRefreshOverageCreditCache，触发终端渲染此处需要的副作用。
   maybeRefreshOverageCreditCache();
+  // 返回 `shouldShowOverageCreditUpsell()`，作为终端渲染这次计算的结果。
   return shouldShowOverageCreditUpsell();
 }
+// incrementOverageCreditUpsellSeenCount 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function incrementOverageCreditUpsellSeenCount(): void {
+  // newCount 数量保存`0`，供后续判断或组装使用。
   let newCount = 0;
+  // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
   saveGlobalConfig(prev => {
+    // newCount 数量更新为 `(prev.overageCreditUpsellSeenCount ?? 0) + 1`，确保终端 UI后续读取最新状态。
     newCount = (prev.overageCreditUpsellSeenCount ?? 0) + 1;
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       ...prev,
       overageCreditUpsellSeenCount: newCount
     };
   });
+  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_overage_credit_upsell_shown', {
     seen_count: newCount
   });
 }
 
 // Copy from "OC & Bulk Overages copy" doc (#6 — CLI /usage)
+// getUsageText 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getUsageText(amount: string): string {
+  // 返回 ``${amount} in extra usage for third-party apps · /extra-usage``，作为终端渲染这次计算的结果。
   return `${amount} in extra usage for third-party apps · /extra-usage`;
 }
 
 // Copy from "OC & Bulk Overages copy" doc (#4 — CLI Welcome screen).
 // Char budgets: title ≤19, subtitle ≤48.
+// FEED_SUBTITLE 标题固定为 `'On us. Works on third-party apps · /extra-usage'`，作为终端 UI Overage Credit Upsell后续展示或比较的基准。
 const FEED_SUBTITLE = 'On us. Works on third-party apps · /extra-usage';
+// getFeedTitle 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getFeedTitle(amount: string): string {
+  // 返回 ``${amount} in extra usage``，作为终端渲染这次计算的结果。
   return `${amount} in extra usage`;
 }
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   maxWidth?: number;
   twoLine?: boolean;
 };
+// OverageCreditUpsell 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function OverageCreditUpsell(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(8);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     maxWidth,
     twoLine
   } = t0;
+  // t1 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t1;
+  // t2 暂存 `Symbol.for("react.early_return_sentinel")` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== maxWidth || $[1] !== twoLine) {
+    // t2 暂存 `Symbol.for("react.early_return_sentinel")` 生成的渲染片段，后续返回路径直接复用。
     t2 = Symbol.for("react.early_return_sentinel");
+    // 终端 UI 组件 Overage Credit Upsell在这里处理 `bb0: {`，完成这一小步状态转换。
     bb0: {
+      // info读取`getCachedOverageCreditGrant`，供终端渲染后续处理使用。
       const info = getCachedOverageCreditGrant();
+      // info缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!info) {
+        // t2 暂存 `null` 生成的渲染片段，后续返回路径直接复用。
         t2 = null;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb0;
       }
+      // amount格式化`formatGrantAmount`，供终端渲染后续处理使用。
       const amount = formatGrantAmount(info);
+      // amount缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!amount) {
+        // t2 暂存 `null` 生成的渲染片段，后续返回路径直接复用。
         t2 = null;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb0;
       }
+      // 满足 `twoLine` 时，终端渲染执行该分支。
       if (twoLine) {
+        // title 标题读取`getFeedTitle`，供终端渲染后续处理使用。
         const title = getFeedTitle(amount);
+        // t3 暂存 `maxWidth ? truncate(FEED_SUBTITLE, maxWidth) : FEED_SUBTI...` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[4] !== maxWidth) {
+          // t3 暂存 `maxWidth ? truncate(FEED_SUBTITLE, maxWidth) : FEED_SUBTI...` 生成的渲染片段，后续返回路径直接复用。
           t3 = maxWidth ? truncate(FEED_SUBTITLE, maxWidth) : FEED_SUBTITLE;
+          // $[4] 缓存 `maxWidth`，下次依赖未变时 React 编译产物可直接复用。
           $[4] = maxWidth;
+          // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[5] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[5];
         }
+        // t4 暂存 `<Text dimColor={true}>{t3}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[6] !== t3) {
+          // t4 暂存 `<Text dimColor={true}>{t3}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t4 = <Text dimColor={true}>{t3}</Text>;
+          // $[6] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[6] = t3;
+          // $[7] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[7] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[7];
         }
+        // t2 暂存 `<><Text color="claude">{maxWidth ? truncate(title, maxWid...` 生成的渲染片段，后续返回路径直接复用。
         t2 = <><Text color="claude">{maxWidth ? truncate(title, maxWidth) : title}</Text>{t4}</>;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb0;
       }
+      // 文本读取`getUsageText`，供终端渲染后续处理使用。
       const text = getUsageText(amount);
+      // display保存`truncate`，供终端渲染后续处理使用。
       const display = maxWidth ? truncate(text, maxWidth) : text;
+      // highlightLen保存`Math.min`，供终端渲染后续处理使用。
       const highlightLen = Math.min(getFeedTitle(amount).length, display.length);
+      // t1 暂存 `<Text dimColor={true}><Text color="claude">{display.slice...` 生成的渲染片段，后续返回路径直接复用。
       t1 = <Text dimColor={true}><Text color="claude">{display.slice(0, highlightLen)}</Text>{display.slice(highlightLen)}</Text>;
     }
+    // $[0] 缓存 `maxWidth`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = maxWidth;
+    // $[1] 缓存 `twoLine`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = twoLine;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
+    // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[3];
   }
+  // `t2` 与 `Symbol.for("react.early_return_...` 不一致时刷新派生状态，避免使用过期结果。
   if (t2 !== Symbol.for("react.early_return_sentinel")) {
+    // 返回 `t2`，作为终端渲染这次计算的结果。
     return t2;
   }
+  // 返回 `t1`，作为终端渲染这次计算的结果。
   return t1;
 }
 
@@ -150,10 +236,15 @@ export function OverageCreditUpsell(t0) {
  * Copy from "OC & Bulk Overages copy" doc (#4 — CLI Welcome screen).
  * Char budgets: title ≤19, subtitle ≤48.
  */
+// createOverageCreditFeed 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createOverageCreditFeed(): FeedConfig {
+  // info读取`getCachedOverageCreditGrant`，供终端渲染后续处理使用。
   const info = getCachedOverageCreditGrant();
+  // amount格式化`formatGrantAmount`，供终端渲染后续处理使用。
   const amount = info ? formatGrantAmount(info) : null;
+  // title 标题读取`getFeedTitle`，供终端渲染后续处理使用。
   const title = amount ? getFeedTitle(amount) : 'extra usage credit';
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     title,
     lines: [],

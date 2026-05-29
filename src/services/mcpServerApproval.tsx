@@ -1,10 +1,18 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 MCPServerApprovalDialog 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MCPServerApprovalDialog } from '../components/MCPServerApprovalDialog.js';
+// 复用 MCPServerMultiselectDialog 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MCPServerMultiselectDialog } from '../components/MCPServerMultiselectDialog.js';
+// 类型依赖 { Root } 来自 ../ink.js，用于校准服务层 mcp Server Approval的数据契约。
 import type { Root } from '../ink.js';
+// 引入 KeybindingSetup，将 ../keybindings/KeybindingProviderSetup.js 中已经封装好的能力接到本文件流程里。
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js';
+// 引入 AppStateProvider，将 ../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { AppStateProvider } from '../state/AppState.js';
+// 引入 getMcpConfigsByScope，将 ./mcp/config.js 中已经封装好的能力接到本文件流程里。
 import { getMcpConfigsByScope } from './mcp/config.js';
+// 引入 getProjectMcpServerStatus，将 ./mcp/utils.js 中已经封装好的能力接到本文件流程里。
 import { getProjectMcpServerStatus } from './mcp/utils.js';
 
 /**
@@ -12,24 +20,35 @@ import { getProjectMcpServerStatus } from './mcp/utils.js';
  * Uses the provided Ink root to render (reusing the existing instance
  * from main.tsx instead of creating a separate one).
  */
+// handleMcpjsonServerApprovals 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function handleMcpjsonServerApprovals(root: Root): Promise<void> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     servers: projectServers
   } = getMcpConfigsByScope('project');
+  // pendingServers 集合派生`Object.keys`，供服务层 mcp Server Approval后续处理使用。
   const pendingServers = Object.keys(projectServers).filter(serverName => getProjectMcpServerStatus(serverName) === 'pending');
+  // pendingServers 集合为空时立即返回或跳过，避免服务层 mcp Server Approval把空集合当成可处理内容。
   if (pendingServers.length === 0) {
+    // 服务层 mcp Server Approval在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
+  // 这个回调绑定到 await new Promise<void>(resolve => {，负责服务层 mcp Server Approval在该局部场景下的响应。
   await new Promise<void>(resolve => {
+    // done读取`resolve`，供服务层 mcp Server Approval后续处理使用。
     const done = (): void => void resolve();
+    // 组合条件 `pendingServers.length === 1 && pendingServers[0]` 成立时，服务层 mcp Server Approval才启用这条专门路径。
     if (pendingServers.length === 1 && pendingServers[0] !== undefined) {
+      // serverName保存`pendingServers[0]`，供服务层 mcp Server Approval后续判断或输出使用。
       const serverName = pendingServers[0];
+      // 调用 root.render，触发服务层 mcp Server Approval此处需要的副作用。
       root.render(<AppStateProvider>
           <KeybindingSetup>
             <MCPServerApprovalDialog serverName={serverName} onDone={done} />
           </KeybindingSetup>
         </AppStateProvider>);
     } else {
+      // 调用 root.render，触发服务层 mcp Server Approval此处需要的副作用。
       root.render(<AppStateProvider>
           <KeybindingSetup>
             <MCPServerMultiselectDialog serverNames={pendingServers} onDone={done} />

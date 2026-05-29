@@ -1,343 +1,601 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Text，将 src/ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from 'src/ink.js';
+// 类型依赖 { BackgroundTaskState } 来自 src/tasks/types.js，用于校准终端渲染的数据契约。
 import type { BackgroundTaskState } from 'src/tasks/types.js';
+// 类型依赖 { DeepImmutable } 来自 src/types/utils.js，用于校准终端渲染的数据契约。
 import type { DeepImmutable } from 'src/types/utils.js';
+// 复用 truncate 工具函数，把通用处理留在 src/utils/format.js 中维护。
 import { truncate } from 'src/utils/format.js';
+// 复用 toInkColor 工具函数，把通用处理留在 src/utils/ink.js 中维护。
 import { toInkColor } from 'src/utils/ink.js';
+// 复用 plural 工具函数，把通用处理留在 src/utils/stringUtils.js 中维护。
 import { plural } from 'src/utils/stringUtils.js';
+// 引入 DIAMOND_FILLED、DIAMOND_OPEN，将 ../../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { DIAMOND_FILLED, DIAMOND_OPEN } from '../../constants/figures.js';
+// 引入 RemoteSessionProgress，将 ./RemoteSessionProgress.js 中已经封装好的能力接到本文件流程里。
 import { RemoteSessionProgress } from './RemoteSessionProgress.js';
+// 引入 ShellProgress、TaskStatusText，将 ./ShellProgress.js 中已经封装好的能力接到本文件流程里。
 import { ShellProgress, TaskStatusText } from './ShellProgress.js';
+// 引入 describeTeammateActivity，将 ./taskStatusUtils.js 中已经封装好的能力接到本文件流程里。
 import { describeTeammateActivity } from './taskStatusUtils.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   task: DeepImmutable<BackgroundTaskState>;
   maxActivityWidth?: number;
 };
+// BackgroundTask 封装任务详情界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function BackgroundTask(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(92);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     task,
     maxActivityWidth
   } = t0;
+  // activityLimit保存`maxActivityWidth ?? 40`，供终端 UI Background Task后续判断或输出使用。
   const activityLimit = maxActivityWidth ?? 40;
+  // 按照 task.type 的取值选择终端渲染的具体处理分支。
   switch (task.type) {
     case "local_bash":
       {
+        // t1标记终端 UI Background Task是否启用对应路径。
         const t1 = task.kind === "monitor" ? task.description : task.command;
+        // t2 暂存 `truncate(t1, activityLimit, true)` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[0] !== activityLimit || $[1] !== t1) {
+          // t2 暂存 `truncate(t1, activityLimit, true)` 生成的渲染片段，后续返回路径直接复用。
           t2 = truncate(t1, activityLimit, true);
+          // $[0] 缓存 `activityLimit`，下次依赖未变时 React 编译产物可直接复用。
           $[0] = activityLimit;
+          // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[1] = t1;
+          // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[2] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[2];
         }
+        // t3 暂存 `<ShellProgress shell={task} />` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[3] !== task) {
+          // t3 暂存 `<ShellProgress shell={task} />` 生成的渲染片段，后续返回路径直接复用。
           t3 = <ShellProgress shell={task} />;
+          // $[3] 缓存 `task`，下次依赖未变时 React 编译产物可直接复用。
           $[3] = task;
+          // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[4] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[4];
         }
+        // t4 暂存 `<Text>{t2}{" "}{t3}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[5] !== t2 || $[6] !== t3) {
+          // t4 暂存 `<Text>{t2}{" "}{t3}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t4 = <Text>{t2}{" "}{t3}</Text>;
+          // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[5] = t2;
+          // $[6] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[6] = t3;
+          // $[7] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[7] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[7];
         }
+        // 返回 `t4`，作为终端渲染这次计算的结果。
         return t4;
       }
     case "remote_agent":
       {
+        // 满足 `task.isRemoteReview` 时，终端渲染执行该分支。
         if (task.isRemoteReview) {
+          // t1 暂存 `<Text><RemoteSessionProgress session={task} /></Text>` 的派生结果，便于缓存命中时直接复用。
           let t1;
+          // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
           if ($[8] !== task) {
+            // t1 暂存 `<Text><RemoteSessionProgress session={task} /></Text>` 生成的渲染片段，后续返回路径直接复用。
             t1 = <Text><RemoteSessionProgress session={task} /></Text>;
+            // $[8] 缓存 `task`，下次依赖未变时 React 编译产物可直接复用。
             $[8] = task;
+            // $[9] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
             $[9] = t1;
           } else {
+            // t1 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
             t1 = $[9];
           }
+          // 返回 `t1`，作为终端渲染这次计算的结果。
           return t1;
         }
+        // running标记终端 UI Background Task是否启用对应路径。
         const running = task.status === "running" || task.status === "pending";
+        // t1保存`running ? DIAMOND_OPEN : DIAMOND_FILLED`，供终端 UI Background Task后续判断或输出使用。
         const t1 = running ? DIAMOND_OPEN : DIAMOND_FILLED;
+        // t2 暂存 `<Text dimColor={true}>{t1} </Text>` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[10] !== t1) {
+          // t2 暂存 `<Text dimColor={true}>{t1} </Text>` 生成的渲染片段，后续返回路径直接复用。
           t2 = <Text dimColor={true}>{t1} </Text>;
+          // $[10] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[10] = t1;
+          // $[11] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[11] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[11];
         }
+        // t3 暂存 `truncate(task.title, activityLimit, true)` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[12] !== activityLimit || $[13] !== task.title) {
+          // t3 暂存 `truncate(task.title, activityLimit, true)` 生成的渲染片段，后续返回路径直接复用。
           t3 = truncate(task.title, activityLimit, true);
+          // $[12] 缓存 `activityLimit`，下次依赖未变时 React 编译产物可直接复用。
           $[12] = activityLimit;
+          // $[13] 缓存 `task.title`，下次依赖未变时 React 编译产物可直接复用。
           $[13] = task.title;
+          // $[14] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[14] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[14];
         }
+        // t4 暂存 `<Text dimColor={true}> · </Text>` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
+          // t4 暂存 `<Text dimColor={true}> · </Text>` 生成的渲染片段，后续返回路径直接复用。
           t4 = <Text dimColor={true}> · </Text>;
+          // $[15] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[15] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[15];
         }
+        // t5 暂存 `<RemoteSessionProgress session={task} />` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[16] !== task) {
+          // t5 暂存 `<RemoteSessionProgress session={task} />` 生成的渲染片段，后续返回路径直接复用。
           t5 = <RemoteSessionProgress session={task} />;
+          // $[16] 缓存 `task`，下次依赖未变时 React 编译产物可直接复用。
           $[16] = task;
+          // $[17] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[17] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[17];
         }
+        // t6 暂存 `<Text>{t2}{t3}{t4}{t5}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[18] !== t2 || $[19] !== t3 || $[20] !== t5) {
+          // t6 暂存 `<Text>{t2}{t3}{t4}{t5}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t6 = <Text>{t2}{t3}{t4}{t5}</Text>;
+          // $[18] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[18] = t2;
+          // $[19] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[19] = t3;
+          // $[20] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[20] = t5;
+          // $[21] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[21] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[21];
         }
+        // 返回 `t6`，作为终端渲染这次计算的结果。
         return t6;
       }
     case "local_agent":
       {
+        // t1 暂存 `truncate(task.description, activityLimit, true)` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[22] !== activityLimit || $[23] !== task.description) {
+          // t1 暂存 `truncate(task.description, activityLimit, true)` 生成的渲染片段，后续返回路径直接复用。
           t1 = truncate(task.description, activityLimit, true);
+          // $[22] 缓存 `activityLimit`，下次依赖未变时 React 编译产物可直接复用。
           $[22] = activityLimit;
+          // $[23] 缓存 `task.description`，下次依赖未变时 React 编译产物可直接复用。
           $[23] = task.description;
+          // $[24] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[24] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[24] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[24];
         }
+        // t2标记终端 UI Background Task是否启用对应路径。
         const t2 = task.status === "completed" ? "done" : undefined;
+        // t3标记终端 UI Background Task是否启用对应路径。
         const t3 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        // t4 暂存 `<TaskStatusText status={task.status} label={t2} suffix={t...` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[25] !== t2 || $[26] !== t3 || $[27] !== task.status) {
+          // t4 暂存 `<TaskStatusText status={task.status} label={t2} suffix={t...` 生成的渲染片段，后续返回路径直接复用。
           t4 = <TaskStatusText status={task.status} label={t2} suffix={t3} />;
+          // $[25] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[25] = t2;
+          // $[26] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[26] = t3;
+          // $[27] 缓存 `task.status`，下次依赖未变时 React 编译产物可直接复用。
           $[27] = task.status;
+          // $[28] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[28] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[28] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[28];
         }
+        // t5 暂存 `<Text>{t1}{" "}{t4}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[29] !== t1 || $[30] !== t4) {
+          // t5 暂存 `<Text>{t1}{" "}{t4}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t5 = <Text>{t1}{" "}{t4}</Text>;
+          // $[29] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[29] = t1;
+          // $[30] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[30] = t4;
+          // $[31] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[31] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[31] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[31];
         }
+        // 返回 `t5`，作为终端渲染这次计算的结果。
         return t5;
       }
     case "in_process_teammate":
       {
+        // T0 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
         let T0;
+        // T1 暂存 `Text` 的派生结果，便于缓存命中时直接复用。
         let T1;
+        // t1 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
         let t1;
+        // t2 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
         let t2;
+        // t3 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
         let t3;
+        // t4 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[32] !== activityLimit || $[33] !== task) {
+          // activity保存`describeTeammateActivity`，供终端渲染后续处理使用。
           const activity = describeTeammateActivity(task);
+          // T1 暂存 `Text` 生成的渲染片段，后续返回路径直接复用。
           T1 = Text;
+          // t5 暂存 `toInkColor(task.identity.color)` 的派生结果，便于缓存命中时直接复用。
           let t5;
+          // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
           if ($[40] !== task.identity.color) {
+            // t5 暂存 `toInkColor(task.identity.color)` 生成的渲染片段，后续返回路径直接复用。
             t5 = toInkColor(task.identity.color);
+            // $[40] 缓存 `task.identity.color`，下次依赖未变时 React 编译产物可直接复用。
             $[40] = task.identity.color;
+            // $[41] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
             $[41] = t5;
           } else {
+            // t5 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
             t5 = $[41];
           }
+          // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
           if ($[42] !== t5 || $[43] !== task.identity.agentName) {
+            // t4 暂存 `<Text color={t5}>@{task.identity.agentName}</Text>` 生成的渲染片段，后续返回路径直接复用。
             t4 = <Text color={t5}>@{task.identity.agentName}</Text>;
+            // $[42] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
             $[42] = t5;
+            // $[43] 缓存 `task.identity.agentName`，下次依赖未变时 React 编译产物可直接复用。
             $[43] = task.identity.agentName;
+            // $[44] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
             $[44] = t4;
           } else {
+            // t4 从 React 编译缓存槽 $[44] 取回渲染片段，避免依赖未变时重建 JSX。
             t4 = $[44];
           }
+          // T0 暂存 `Text` 生成的渲染片段，后续返回路径直接复用。
           T0 = Text;
+          // t1 暂存 `true` 生成的渲染片段，后续返回路径直接复用。
           t1 = true;
+          // t2 暂存 `": "` 生成的渲染片段，后续返回路径直接复用。
           t2 = ": ";
+          // t3 暂存 `truncate(activity, activityLimit, true)` 生成的渲染片段，后续返回路径直接复用。
           t3 = truncate(activity, activityLimit, true);
+          // $[32] 缓存 `activityLimit`，下次依赖未变时 React 编译产物可直接复用。
           $[32] = activityLimit;
+          // $[33] 缓存 `task`，下次依赖未变时 React 编译产物可直接复用。
           $[33] = task;
+          // $[34] 缓存 `T0`，下次依赖未变时 React 编译产物可直接复用。
           $[34] = T0;
+          // $[35] 缓存 `T1`，下次依赖未变时 React 编译产物可直接复用。
           $[35] = T1;
+          // $[36] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[36] = t1;
+          // $[37] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[37] = t2;
+          // $[38] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[38] = t3;
+          // $[39] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[39] = t4;
         } else {
+          // T0 从 React 编译缓存槽 $[34] 取回渲染片段，避免依赖未变时重建 JSX。
           T0 = $[34];
+          // T1 从 React 编译缓存槽 $[35] 取回渲染片段，避免依赖未变时重建 JSX。
           T1 = $[35];
+          // t1 从 React 编译缓存槽 $[36] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[36];
+          // t2 从 React 编译缓存槽 $[37] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[37];
+          // t3 从 React 编译缓存槽 $[38] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[38];
+          // t4 从 React 编译缓存槽 $[39] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[39];
         }
+        // t5 暂存 `<T0 dimColor={t1}>{t2}{t3}</T0>` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[45] !== T0 || $[46] !== t1 || $[47] !== t2 || $[48] !== t3) {
+          // t5 暂存 `<T0 dimColor={t1}>{t2}{t3}</T0>` 生成的渲染片段，后续返回路径直接复用。
           t5 = <T0 dimColor={t1}>{t2}{t3}</T0>;
+          // $[45] 缓存 `T0`，下次依赖未变时 React 编译产物可直接复用。
           $[45] = T0;
+          // $[46] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[46] = t1;
+          // $[47] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[47] = t2;
+          // $[48] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[48] = t3;
+          // $[49] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[49] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[49] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[49];
         }
+        // t6 暂存 `<T1>{t4}{t5}</T1>` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[50] !== T1 || $[51] !== t4 || $[52] !== t5) {
+          // t6 暂存 `<T1>{t4}{t5}</T1>` 生成的渲染片段，后续返回路径直接复用。
           t6 = <T1>{t4}{t5}</T1>;
+          // $[50] 缓存 `T1`，下次依赖未变时 React 编译产物可直接复用。
           $[50] = T1;
+          // $[51] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[51] = t4;
+          // $[52] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[52] = t5;
+          // $[53] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[53] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[53] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[53];
         }
+        // 返回 `t6`，作为终端渲染这次计算的结果。
         return t6;
       }
     case "local_workflow":
       {
+        // t1保存`task.workflowName ?? task.summary ?? task.description`，供后续判断或组装使用。
         const t1 = task.workflowName ?? task.summary ?? task.description;
+        // t2 暂存 `truncate(t1, activityLimit, true)` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[54] !== activityLimit || $[55] !== t1) {
+          // t2 暂存 `truncate(t1, activityLimit, true)` 生成的渲染片段，后续返回路径直接复用。
           t2 = truncate(t1, activityLimit, true);
+          // $[54] 缓存 `activityLimit`，下次依赖未变时 React 编译产物可直接复用。
           $[54] = activityLimit;
+          // $[55] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[55] = t1;
+          // $[56] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[56] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[56] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[56];
         }
+        // t3 暂存 `task.status === "running" ? `${task.agentCount} ${plural(...` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[57] !== task.agentCount || $[58] !== task.status) {
+          // t3 暂存 `task.status === "running" ? `${task.agentCount} ${plural(...` 生成的渲染片段，后续返回路径直接复用。
           t3 = task.status === "running" ? `${task.agentCount} ${plural(task.agentCount, "agent")}` : task.status === "completed" ? "done" : undefined;
+          // $[57] 缓存 `task.agentCount`，下次依赖未变时 React 编译产物可直接复用。
           $[57] = task.agentCount;
+          // $[58] 缓存 `task.status`，下次依赖未变时 React 编译产物可直接复用。
           $[58] = task.status;
+          // $[59] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[59] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[59] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[59];
         }
+        // t4标记终端 UI Background Task是否启用对应路径。
         const t4 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        // t5 暂存 `<TaskStatusText status={task.status} label={t3} suffix={t...` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[60] !== t3 || $[61] !== t4 || $[62] !== task.status) {
+          // t5 暂存 `<TaskStatusText status={task.status} label={t3} suffix={t...` 生成的渲染片段，后续返回路径直接复用。
           t5 = <TaskStatusText status={task.status} label={t3} suffix={t4} />;
+          // $[60] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[60] = t3;
+          // $[61] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[61] = t4;
+          // $[62] 缓存 `task.status`，下次依赖未变时 React 编译产物可直接复用。
           $[62] = task.status;
+          // $[63] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[63] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[63] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[63];
         }
+        // t6 暂存 `<Text>{t2}{" "}{t5}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[64] !== t2 || $[65] !== t5) {
+          // t6 暂存 `<Text>{t2}{" "}{t5}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t6 = <Text>{t2}{" "}{t5}</Text>;
+          // $[64] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[64] = t2;
+          // $[65] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[65] = t5;
+          // $[66] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[66] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[66] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[66];
         }
+        // 返回 `t6`，作为终端渲染这次计算的结果。
         return t6;
       }
     case "monitor_mcp":
       {
+        // t1 暂存 `truncate(task.description, activityLimit, true)` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[67] !== activityLimit || $[68] !== task.description) {
+          // t1 暂存 `truncate(task.description, activityLimit, true)` 生成的渲染片段，后续返回路径直接复用。
           t1 = truncate(task.description, activityLimit, true);
+          // $[67] 缓存 `activityLimit`，下次依赖未变时 React 编译产物可直接复用。
           $[67] = activityLimit;
+          // $[68] 缓存 `task.description`，下次依赖未变时 React 编译产物可直接复用。
           $[68] = task.description;
+          // $[69] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[69] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[69] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[69];
         }
+        // t2标记终端 UI Background Task是否启用对应路径。
         const t2 = task.status === "completed" ? "done" : undefined;
+        // t3标记终端 UI Background Task是否启用对应路径。
         const t3 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        // t4 暂存 `<TaskStatusText status={task.status} label={t2} suffix={t...` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[70] !== t2 || $[71] !== t3 || $[72] !== task.status) {
+          // t4 暂存 `<TaskStatusText status={task.status} label={t2} suffix={t...` 生成的渲染片段，后续返回路径直接复用。
           t4 = <TaskStatusText status={task.status} label={t2} suffix={t3} />;
+          // $[70] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[70] = t2;
+          // $[71] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[71] = t3;
+          // $[72] 缓存 `task.status`，下次依赖未变时 React 编译产物可直接复用。
           $[72] = task.status;
+          // $[73] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[73] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[73] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[73];
         }
+        // t5 暂存 `<Text>{t1}{" "}{t4}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[74] !== t1 || $[75] !== t4) {
+          // t5 暂存 `<Text>{t1}{" "}{t4}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t5 = <Text>{t1}{" "}{t4}</Text>;
+          // $[74] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[74] = t1;
+          // $[75] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[75] = t4;
+          // $[76] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[76] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[76] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[76];
         }
+        // 返回 `t5`，作为终端渲染这次计算的结果。
         return t5;
       }
     case "dream":
       {
+        // n记录 `task.filesTouched.length` 是否成立，下一步按该结果分支。
         const n = task.filesTouched.length;
+        // t1 暂存 `task.phase === "updating" && n > 0 ? `${n} ${plural(n, "f...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[77] !== n || $[78] !== task.phase || $[79] !== task.sessionsReviewing) {
+          // t1 暂存 `task.phase === "updating" && n > 0 ? `${n} ${plural(n, "f...` 生成的渲染片段，后续返回路径直接复用。
           t1 = task.phase === "updating" && n > 0 ? `${n} ${plural(n, "file")}` : `${task.sessionsReviewing} ${plural(task.sessionsReviewing, "session")}`;
+          // $[77] 缓存 `n`，下次依赖未变时 React 编译产物可直接复用。
           $[77] = n;
+          // $[78] 缓存 `task.phase`，下次依赖未变时 React 编译产物可直接复用。
           $[78] = task.phase;
+          // $[79] 缓存 `task.sessionsReviewing`，下次依赖未变时 React 编译产物可直接复用。
           $[79] = task.sessionsReviewing;
+          // $[80] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[80] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[80] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[80];
         }
+        // detail保存`t1`，作为后续临时缓存值处理的输入。
         const detail = t1;
+        // t2 暂存 `<Text dimColor={true}>· {task.phase} · {detail}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[81] !== detail || $[82] !== task.phase) {
+          // t2 暂存 `<Text dimColor={true}>· {task.phase} · {detail}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t2 = <Text dimColor={true}>· {task.phase} · {detail}</Text>;
+          // $[81] 缓存 `detail`，下次依赖未变时 React 编译产物可直接复用。
           $[81] = detail;
+          // $[82] 缓存 `task.phase`，下次依赖未变时 React 编译产物可直接复用。
           $[82] = task.phase;
+          // $[83] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[83] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[83] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[83];
         }
+        // t3标记终端 UI Background Task是否启用对应路径。
         const t3 = task.status === "completed" ? "done" : undefined;
+        // t4标记终端 UI Background Task是否启用对应路径。
         const t4 = task.status === "completed" && !task.notified ? ", unread" : undefined;
+        // t5 暂存 `<TaskStatusText status={task.status} label={t3} suffix={t...` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[84] !== t3 || $[85] !== t4 || $[86] !== task.status) {
+          // t5 暂存 `<TaskStatusText status={task.status} label={t3} suffix={t...` 生成的渲染片段，后续返回路径直接复用。
           t5 = <TaskStatusText status={task.status} label={t3} suffix={t4} />;
+          // $[84] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[84] = t3;
+          // $[85] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[85] = t4;
+          // $[86] 缓存 `task.status`，下次依赖未变时 React 编译产物可直接复用。
           $[86] = task.status;
+          // $[87] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[87] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[87] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[87];
         }
+        // t6 暂存 `<Text>{task.description}{" "}{t2}{" "}{t5}</Text>` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[88] !== t2 || $[89] !== t5 || $[90] !== task.description) {
+          // t6 暂存 `<Text>{task.description}{" "}{t2}{" "}{t5}</Text>` 生成的渲染片段，后续返回路径直接复用。
           t6 = <Text>{task.description}{" "}{t2}{" "}{t5}</Text>;
+          // $[88] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[88] = t2;
+          // $[89] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[89] = t5;
+          // $[90] 缓存 `task.description`，下次依赖未变时 React 编译产物可直接复用。
           $[90] = task.description;
+          // $[91] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[91] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[91] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[91];
         }
+        // 返回 `t6`，作为终端渲染这次计算的结果。
         return t6;
       }
   }

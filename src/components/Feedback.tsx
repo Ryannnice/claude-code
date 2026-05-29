@@ -1,38 +1,72 @@
+// 引入 axios，将 axios 中已经封装好的能力接到本文件流程里。
 import axios from 'axios';
+// 使用 Node/Bun 的 fs/promises 能力处理本地运行时资源。
 import { readFile, stat } from 'fs/promises';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useState } from 'react';
+// 引入 getLastAPIRequest，将 src/bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getLastAPIRequest } from 'src/bootstrap/state.js';
+// 接入 logEventTo1P 服务层能力，把外部通信或共享状态交给 src/services/analytics/firstPartyEventLogger.js 处理。
 import { logEventTo1P } from 'src/services/analytics/firstPartyEventLogger.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 复用 getLastAssistantMessage、normalizeMessagesForAPI 工具函数，把通用处理留在 src/utils/messages.js 中维护。
 import { getLastAssistantMessage, normalizeMessagesForAPI } from 'src/utils/messages.js';
+// 类型依赖 { CommandResultDisplay } 来自 ../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../commands.js';
+// 引入 useTerminalSize，将 ../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+// 引入 Box、Text、useInput，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useInput } from '../ink.js';
+// 引入 useKeybinding，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../keybindings/useKeybinding.js';
+// 接入 queryHaiku 服务层能力，把外部通信或共享状态交给 ../services/api/claude.js 处理。
 import { queryHaiku } from '../services/api/claude.js';
+// 接入 startsWithApiErrorPrefix 服务层能力，把外部通信或共享状态交给 ../services/api/errors.js 处理。
 import { startsWithApiErrorPrefix } from '../services/api/errors.js';
+// 类型依赖 { Message } 来自 ../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../types/message.js';
+// 复用 checkAndRefreshOAuthTokenIfNeeded 工具函数，把通用处理留在 ../utils/auth.js 中维护。
 import { checkAndRefreshOAuthTokenIfNeeded } from '../utils/auth.js';
+// 复用 openBrowser 工具函数，把通用处理留在 ../utils/browser.js 中维护。
 import { openBrowser } from '../utils/browser.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 env 工具函数，把通用处理留在 ../utils/env.js 中维护。
 import { env } from '../utils/env.js';
+// 复用 GitRepoState、getGitState、getIsGit 工具函数，把通用处理留在 ../utils/git.js 中维护。
 import { type GitRepoState, getGitState, getIsGit } from '../utils/git.js';
+// 复用 getAuthHeaders、getUserAgent 工具函数，把通用处理留在 ../utils/http.js 中维护。
 import { getAuthHeaders, getUserAgent } from '../utils/http.js';
+// 复用 getInMemoryErrors、logError 工具函数，把通用处理留在 ../utils/log.js 中维护。
 import { getInMemoryErrors, logError } from '../utils/log.js';
+// 复用 isEssentialTrafficOnly 工具函数，把通用处理留在 ../utils/privacyLevel.js 中维护。
 import { isEssentialTrafficOnly } from '../utils/privacyLevel.js';
+// 复用 extractTeammateTranscriptsFromTasks、getTranscriptPath、loadAllSubagentTranscriptsFromDisk、MAX_TRANSCRIPT_READ_BYTES 工具函数，把通用处理留在 ../utils/sessionStorage.js 中维护。
 import { extractTeammateTranscriptsFromTasks, getTranscriptPath, loadAllSubagentTranscriptsFromDisk, MAX_TRANSCRIPT_READ_BYTES } from '../utils/sessionStorage.js';
+// 复用 jsonStringify 工具函数，把通用处理留在 ../utils/slowOperations.js 中维护。
 import { jsonStringify } from '../utils/slowOperations.js';
+// 复用 asSystemPrompt 工具函数，把通用处理留在 ../utils/systemPromptType.js 中维护。
 import { asSystemPrompt } from '../utils/systemPromptType.js';
+// 引入 ConfigurableShortcutHint，将 ./ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
+// 引入 Byline，将 ./design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from './design-system/Byline.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// 引入 KeyboardShortcutHint，将 ./design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
+// 引入 TextInput，将 ./TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from './TextInput.js';
 
 // This value was determined experimentally by testing the URL length limit
+// GITHUB_URL_LIMIT保存`7250`，供后续判断或组装使用。
 const GITHUB_URL_LIMIT = 7250;
+// GITHUB_ISSUES_REPO_URL标记终端 UI Feedback是否启用对应路径。
 const GITHUB_ISSUES_REPO_URL = "external" === 'ant' ? 'https://github.com/anthropics/claude-cli-internal/issues' : 'https://github.com/anthropics/claude-code/issues';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   abortSignal: AbortSignal;
   messages: Message[];
@@ -50,7 +84,9 @@ type Props = {
     };
   };
 };
+// Step 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Step = 'userInput' | 'consent' | 'submitting' | 'done';
+// FeedbackData 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type FeedbackData = {
   // latestAssistantMessageId is the message ID from the latest main model call
   latestAssistantMessageId: string | null;
@@ -68,58 +104,75 @@ type FeedbackData = {
 };
 
 // Utility function to redact sensitive information from strings
+// redactSensitiveInfo 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function redactSensitiveInfo(text: string): string {
+  // redacted保存`text`，供终端 UI Feedback后续判断或输出使用。
   let redacted = text;
 
   // Anthropic API keys (sk-ant...) with or without quotes
   // First handle the case with quotes
+  // redacted更新为 `redacted.replace(/"(sk-ant[^\s"']{24,})"/g, '"[REDACTED_A...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/"(sk-ant[^\s"']{24,})"/g, '"[REDACTED_API_KEY]"');
   // Then handle the cases without quotes - more general pattern
+  // redacted更新为 `redacted.replace(`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(
   // eslint-disable-next-line custom-rules/no-lookbehind-regex -- .replace(re, string) on /bug path: no-match returns same string (Object.is)
   /(?<![A-Za-z0-9"'])(sk-ant-?[A-Za-z0-9_-]{10,})(?![A-Za-z0-9"'])/g, '[REDACTED_API_KEY]');
 
   // AWS keys - AWSXXXX format - add the pattern we need for the test
+  // redacted更新为 `redacted.replace(/AWS key: "(AWS[A-Z0-9]{20,})"/g, 'AWS k...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/AWS key: "(AWS[A-Z0-9]{20,})"/g, 'AWS key: "[REDACTED_AWS_KEY]"');
 
   // AWS AKIAXXX keys
+  // redacted更新为 `redacted.replace(/(AKIA[A-Z0-9]{16})/g, '[REDACTED_AWS_KE...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/(AKIA[A-Z0-9]{16})/g, '[REDACTED_AWS_KEY]');
 
   // Google Cloud keys
+  // redacted更新为 `redacted.replace(`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(
   // eslint-disable-next-line custom-rules/no-lookbehind-regex -- same as above
   /(?<![A-Za-z0-9])(AIza[A-Za-z0-9_-]{35})(?![A-Za-z0-9])/g, '[REDACTED_GCP_KEY]');
 
   // Vertex AI service account keys
+  // redacted更新为 `redacted.replace(`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(
   // eslint-disable-next-line custom-rules/no-lookbehind-regex -- same as above
   /(?<![A-Za-z0-9])([a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com)(?![A-Za-z0-9])/g, '[REDACTED_GCP_SERVICE_ACCOUNT]');
 
   // Generic API keys in headers
+  // redacted更新为 `redacted.replace(/(["']?x-api-key["']?\s*[:=]\s*["']?)[^"...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/(["']?x-api-key["']?\s*[:=]\s*["']?)[^"',\s)}\]]+/gi, '$1[REDACTED_API_KEY]');
 
   // Authorization headers and Bearer tokens
+  // redacted更新为 `redacted.replace(/(["']?authorization["']?\s*[:=]\s*["']?...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/(["']?authorization["']?\s*[:=]\s*["']?(bearer\s+)?)[^"',\s)}\]]+/gi, '$1[REDACTED_TOKEN]');
 
   // AWS environment variables
+  // redacted更新为 `redacted.replace(/(AWS[_-][A-Za-z0-9_]+\s*[=:]\s*)["']?[^...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/(AWS[_-][A-Za-z0-9_]+\s*[=:]\s*)["']?[^"',\s)}\]]+["']?/gi, '$1[REDACTED_AWS_VALUE]');
 
   // GCP environment variables
+  // redacted更新为 `redacted.replace(/(GOOGLE[_-][A-Za-z0-9_]+\s*[=:]\s*)["']...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/(GOOGLE[_-][A-Za-z0-9_]+\s*[=:]\s*)["']?[^"',\s)}\]]+["']?/gi, '$1[REDACTED_GCP_VALUE]');
 
   // Environment variables with keys
+  // redacted更新为 `redacted.replace(/((API[-_]?KEY|TOKEN|SECRET|PASSWORD)\s*...`，确保终端 UI后续读取最新状态。
   redacted = redacted.replace(/((API[-_]?KEY|TOKEN|SECRET|PASSWORD)\s*[=:]\s*)["']?[^"',\s)}\]]+["']?/gi, '$1[REDACTED]');
+  // 返回 `redacted`，作为终端渲染这次计算的结果。
   return redacted;
 }
 
 // Get sanitized error logs with sensitive information redacted
+// getSanitizedErrorLogs 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSanitizedErrorLogs(): Array<{
   error?: string;
   timestamp?: string;
 }> {
   // Sanitize error logs to remove any API keys
+  // 返回 `getInMemoryErrors().map(errorInfo => {`，作为终端渲染这次计算的结果。
   return getInMemoryErrors().map(errorInfo => {
     // Create a copy of the error info to avoid modifying the original
+    // errorCopy 错误信息集中保存终端 UI Feedback要一起传递的字段。
     const errorCopy = {
       ...errorInfo
     } as {
@@ -128,29 +181,42 @@ function getSanitizedErrorLogs(): Array<{
     };
 
     // Sanitize error if present and is a string
+    // 当 `errorCopy && typeof errorCopy.error` 匹配 `'string'` 时，终端渲染执行对应分支。
     if (errorCopy && typeof errorCopy.error === 'string') {
+      // 错误更新为 `redactSensitiveInfo(errorCopy.error)`，确保终端 UI后续读取最新状态。
       errorCopy.error = redactSensitiveInfo(errorCopy.error);
     }
+    // 返回 `errorCopy`，作为终端渲染这次计算的结果。
     return errorCopy;
   });
 }
+// loadRawTranscriptJsonl 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function loadRawTranscriptJsonl(): Promise<string | null> {
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // transcriptPath 路径数据读取`getTranscriptPath`，供终端渲染后续处理使用。
     const transcriptPath = getTranscriptPath();
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       size
     } = await stat(transcriptPath);
+    // 满足 `size > MAX_TRANSCRIPT_READ_BYTES` 时，终端渲染执行该分支。
     if (size > MAX_TRANSCRIPT_READ_BYTES) {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Skipping raw transcript read: file too large (${size} bytes)`, {
         level: 'warn'
       });
+      // 返回 `null`，作为终端渲染这次计算的结果。
       return null;
     }
+    // 等待并返回 `readFile(transcriptPath, 'utf-8')`，调用方直接接收异步结果。
     return await readFile(transcriptPath, 'utf-8');
   } catch {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 }
+// Feedback 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function Feedback({
   abortSignal,
   messages,
@@ -158,11 +224,17 @@ export function Feedback({
   onDone,
   backgroundTasks = {}
 }: Props): React.ReactNode {
+  // step 由 React state 持有，setStep 会在用户操作或异步结果返回时触发刷新。
   const [step, setStep] = useState<Step>('userInput');
+  // 光标偏移 由 React state 持有，setCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [cursorOffset, setCursorOffset] = useState(0);
+  // description 由 React state 持有，setDescription 会在用户操作或异步结果返回时触发刷新。
   const [description, setDescription] = useState(initialDescription ?? '');
+  // feedbackId 由 React state 持有，setFeedbackId 会在用户操作或异步结果返回时触发刷新。
   const [feedbackId, setFeedbackId] = useState<string | null>(null);
+  // 错误 由 React state 持有，setError 会在用户操作或异步结果返回时触发刷新。
   const [error, setError] = useState<string | null>(null);
+  // 从 `useState<{` 按位置拆出 envInfo、setEnvInfo，让终端 UI 组件 Feedback分别处理这些返回值。
   const [envInfo, setEnvInfo] = useState<{
     isGit: boolean;
     gitState: GitRepoState | null;
@@ -170,39 +242,60 @@ export function Feedback({
     isGit: false,
     gitState: null
   });
+  // title 标题 由 React state 持有，setTitle 会在用户操作或异步结果返回时触发刷新。
   const [title, setTitle] = useState<string | null>(null);
+  // textInputColumns 集合保存`useTerminalSize`，供终端渲染后续处理使用。
   const textInputColumns = useTerminalSize().columns - 4;
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // loadEnvInfo 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadEnvInfo() {
+      // isGit记录 `getIsGit` 是否成立，终端渲染随后按该结果分支。
       const isGit = await getIsGit();
+      // gitState 状态初始化为空值，后续分支会在有数据时补齐。
       let gitState: GitRepoState | null = null;
+      // 满足 `isGit` 时，终端渲染执行该分支。
       if (isGit) {
+        // gitState 状态更新为 `await getGitState()`，确保终端 UI后续读取最新状态。
         gitState = await getGitState();
       }
+      // setEnvInfo 写入新的状态值，使终端渲染后续读取保持一致。
       setEnvInfo({
         isGit,
         gitState
       });
     }
+    // 显式忽略 `loadEnvInfo()` 的返回值，只保留它触发的副作用。
     void loadEnvInfo();
   }, []);
+  // submitReport保存`useCallback`，供终端渲染后续处理使用。
   const submitReport = useCallback(async () => {
+    // setStep 写入新的状态值，使终端渲染后续读取保持一致。
     setStep('submitting');
+    // setError 写入新的状态值，使终端渲染后续读取保持一致。
     setError(null);
+    // setFeedbackId 写入新的状态值，使终端渲染后续读取保持一致。
     setFeedbackId(null);
 
     // Get sanitized errors for the report
+    // sanitizedErrors 错误信息读取`getSanitizedErrorLogs`，供终端渲染后续处理使用。
     const sanitizedErrors = getSanitizedErrorLogs();
 
     // Extract last assistant message ID from messages array
+    // lastAssistantMessage 消息数据读取`getLastAssistantMessage`，供终端渲染后续处理使用。
     const lastAssistantMessage = getLastAssistantMessage(messages);
+    // lastAssistantMessageId 消息数据 命名 `lastAssistantMessage?.requestId ?? null`，让后续代码直接表达这个值的用途。
     const lastAssistantMessageId = lastAssistantMessage?.requestId ?? null;
+    // 并行获取 diskTranscripts、rawTranscriptJsonl，缩短终端 UI 组件 Feedback等待多个独立异步任务的时间。
     const [diskTranscripts, rawTranscriptJsonl] = await Promise.all([loadAllSubagentTranscriptsFromDisk(), loadRawTranscriptJsonl()]);
+    // teammateTranscripts 集合保存`extractTeammateTranscriptsFromTasks`，供终端渲染后续处理使用。
     const teammateTranscripts = extractTeammateTranscriptsFromTasks(backgroundTasks);
+    // subagentTranscripts 集合集中保存终端 UI Feedback要一起传递的字段。
     const subagentTranscripts = {
       ...diskTranscripts,
       ...teammateTranscripts
     };
+    // reportData集中保存终端 UI Feedback要一起传递的字段。
     const reportData = {
       latestAssistantMessageId: lastAssistantMessageId,
       message_count: messages.length,
@@ -222,48 +315,67 @@ export function Feedback({
         rawTranscriptJsonl
       })
     };
+    // 并行获取 result、t，缩短终端 UI 组件 Feedback等待多个独立异步任务的时间。
     const [result, t] = await Promise.all([submitFeedback(reportData, abortSignal), generateTitle(description, abortSignal)]);
+    // setTitle 写入新的状态值，使终端渲染后续读取保持一致。
     setTitle(t);
+    // 满足 `result.success` 时，终端渲染执行该分支。
     if (result.success) {
+      // 满足 `result.feedbackId` 时，终端渲染执行该分支。
       if (result.feedbackId) {
+        // setFeedbackId 写入新的状态值，使终端渲染后续读取保持一致。
         setFeedbackId(result.feedbackId);
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_bug_report_submitted', {
           feedback_id: result.feedbackId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           last_assistant_message_id: lastAssistantMessageId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         // 1P-only: freeform text approved for BQ. Join on feedback_id.
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEventTo1P('tengu_bug_report_description', {
           feedback_id: result.feedbackId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           description: redactSensitiveInfo(description) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
+      // setStep 写入新的状态值，使终端渲染后续读取保持一致。
       setStep('done');
     } else {
+      // 满足 `result.isZdrOrg` 时，终端渲染执行该分支。
       if (result.isZdrOrg) {
+        // setError 写入新的状态值，使终端渲染后续读取保持一致。
         setError('Feedback collection is not available for organizations with custom data retention policies.');
       } else {
+        // setError 写入新的状态值，使终端渲染后续读取保持一致。
         setError('Could not submit feedback. Please try again later.');
       }
       // Stay on userInput step so user can retry with their content preserved
+      // setStep 写入新的状态值，使终端渲染后续读取保持一致。
       setStep('userInput');
     }
   }, [description, envInfo.isGit, messages]);
 
   // Handle cancel - this will be called by Dialog's automatic Esc handling
+  // handleCancel保存`useCallback`，供终端渲染后续处理使用。
   const handleCancel = useCallback(() => {
     // Don't cancel when done - let other keys close the dialog
+    // 当 `step` 匹配 `'done'` 时，终端渲染执行对应分支。
     if (step === 'done') {
+      // 满足 `error` 时，终端渲染执行该分支。
       if (error) {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone('Error submitting feedback / bug report', {
           display: 'system'
         });
       } else {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone('Feedback / bug report submitted', {
           display: 'system'
         });
       }
+      // 终端 UI 组件 Feedback在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 调用 onDone，触发终端渲染此处需要的副作用。
     onDone('Feedback / bug report cancelled', {
       display: 'system'
     });
@@ -271,42 +383,58 @@ export function Feedback({
 
   // During text input, use Settings context where only Escape (not 'n') triggers confirm:no.
   // This allows typing 'n' in the text field while still supporting Escape to cancel.
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleCancel, {
     context: 'Settings',
     isActive: step === 'userInput'
   });
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((input, key) => {
     // Allow any key press to close the dialog when done or when there's an error
+    // 当 `step` 匹配 `'done'` 时，终端渲染执行对应分支。
     if (step === 'done') {
+      // 只有 `key.return && title` 满足时，终端渲染才执行该分支。
       if (key.return && title) {
         // Open GitHub issue URL when Enter is pressed
+        // issueUrl构建`createGitHubIssueUrl`，供终端渲染后续处理使用。
         const issueUrl = createGitHubIssueUrl(feedbackId ?? '', title, description, getSanitizedErrorLogs());
+        // 显式忽略 `openBrowser(issueUrl)` 的返回值，只保留它触发的副作用。
         void openBrowser(issueUrl);
       }
+      // 满足 `error` 时，终端渲染执行该分支。
       if (error) {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone('Error submitting feedback / bug report', {
           display: 'system'
         });
       } else {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone('Feedback / bug report submitted', {
           display: 'system'
         });
       }
+      // 终端 UI 组件 Feedback在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // When in userInput step with error, allow user to edit and retry
     // (don't close on any keypress - they can still press Esc to cancel)
+    // `error && step` 与 `'userInput'` 不一致时刷新派生状态，避免使用过期结果。
     if (error && step !== 'userInput') {
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone('Error submitting feedback / bug report', {
         display: 'system'
       });
+      // 终端 UI 组件 Feedback在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 只有 `step === 'consent' && (key.return || input === ' ')` 满足时，终端渲染才执行该分支。
     if (step === 'consent' && (key.return || input === ' ')) {
+      // 显式忽略 `submitReport()` 的返回值，只保留它触发的副作用。
       void submitReport();
     }
   });
+  // 返回 `<Dialog title="Submit Feedback / Bug Report" onCancel={handleCancel} is...`，作为终端渲染这次计算的结果。
   return <Dialog title="Submit Feedback / Bug Report" onCancel={handleCancel} isCancelActive={step !== 'userInput'} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : step === 'userInput' ? <Byline>
             <KeyboardShortcutHint shortcut="Enter" action="continue" />
             <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
@@ -314,14 +442,19 @@ export function Feedback({
             <KeyboardShortcutHint shortcut="Enter" action="submit" />
             <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
           </Byline> : null}>
+      {/* 终端 UI 组件 Feedback处理 `{step === 'userInput' && <Box flexDirection="column" gap={1}>`，完成这一小步状态转换。 */}
       {step === 'userInput' && <Box flexDirection="column" gap={1}>
           <Text>Describe the issue below:</Text>
           <TextInput value={description} onChange={value => {
+        // setDescription 写入新的状态值，使终端渲染后续读取保持一致。
         setDescription(value);
         // Clear error when user starts editing to allow retry
+        // 满足 `error` 时，终端渲染执行该分支。
         if (error) {
+          // setError 写入新的状态值，使终端渲染后续读取保持一致。
           setError(null);
         }
+      // 这个回调绑定到 }} columns={textInputColumns} onSubmit={() => setStep('consent')} onExitMessage={() …，负责终端渲染在该局部场景下的响应。
       }} columns={textInputColumns} onSubmit={() => setStep('consent')} onExitMessage={() => onDone('Feedback cancelled', {
         display: 'system'
       })} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} showCursor />
@@ -390,62 +523,99 @@ export function Feedback({
         </Box>}
     </Dialog>;
 }
+// createGitHubIssueUrl 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createGitHubIssueUrl(feedbackId: string, title: string, description: string, errors: Array<{
   error?: string;
   timestamp?: string;
 }>): string {
+  // sanitizedTitle 标题保存`redactSensitiveInfo`，供终端渲染后续处理使用。
   const sanitizedTitle = redactSensitiveInfo(title);
+  // sanitizedDescription保存`redactSensitiveInfo`，供终端渲染后续处理使用。
   const sanitizedDescription = redactSensitiveInfo(description);
+  // bodyPrefix 命名 ``**Bug Description**\n${sanitizedDescription}\n\n` + `**E...`，让后续代码直接表达这个值的用途。
   const bodyPrefix = `**Bug Description**\n${sanitizedDescription}\n\n` + `**Environment Info**\n` + `- Platform: ${env.platform}\n` + `- Terminal: ${env.terminal}\n` + `- Version: ${MACRO.VERSION || 'unknown'}\n` + `- Feedback ID: ${feedbackId}\n` + `\n**Errors**\n\`\`\`json\n`;
+  // errorSuffix 错误信息保存``\n\`\`\`\n``，作为后续固定文本处理的输入。
   const errorSuffix = `\n\`\`\`\n`;
+  // errorsJson 错误信息保存`jsonStringify`，供终端渲染后续处理使用。
   const errorsJson = jsonStringify(errors);
+  // baseUrl保存`encodeURIComponent`，供终端渲染后续处理使用。
   const baseUrl = `${GITHUB_ISSUES_REPO_URL}/new?title=${encodeURIComponent(sanitizedTitle)}&labels=user-reported,bug&body=`;
+  // truncationNote固定为 ``\n**Note:** Content was truncated.\n``，作为终端 UI Feedback后续展示或比较的基准。
   const truncationNote = `\n**Note:** Content was truncated.\n`;
+  // encodedPrefix保存`encodeURIComponent`，供终端渲染后续处理使用。
   const encodedPrefix = encodeURIComponent(bodyPrefix);
+  // encodedSuffix保存`encodeURIComponent`，供终端渲染后续处理使用。
   const encodedSuffix = encodeURIComponent(errorSuffix);
+  // encodedNote保存`encodeURIComponent`，供终端渲染后续处理使用。
   const encodedNote = encodeURIComponent(truncationNote);
+  // encodedErrors 错误信息保存`encodeURIComponent`，供终端渲染后续处理使用。
   const encodedErrors = encodeURIComponent(errorsJson);
 
   // Calculate space available for errors
+  // spaceForErrors 错误信息保存 `GITHUB_URL_LIMIT - baseUrl.length - encodedPrefix.length ...` 的判断结果，供终端 UI Feedback后续分支直接复用。
   const spaceForErrors = GITHUB_URL_LIMIT - baseUrl.length - encodedPrefix.length - encodedSuffix.length - encodedNote.length;
 
   // If description alone exceeds limit, truncate everything
+  // 满足 `spaceForErrors <= 0` 时，终端渲染执行该分支。
   if (spaceForErrors <= 0) {
+    // ellipsis 集合保存`encodeURIComponent`，供终端渲染后续处理使用。
     const ellipsis = encodeURIComponent('…');
+    // buffer保存`50; // Extra safety margin`，供终端 UI Feedback后续判断或输出使用。
     const buffer = 50; // Extra safety margin
+    // maxEncodedLength 数量 命名 `GITHUB_URL_LIMIT - baseUrl.length - ellipsis.length - enc...`，让后续代码直接表达这个值的用途。
     const maxEncodedLength = GITHUB_URL_LIMIT - baseUrl.length - ellipsis.length - encodedNote.length - buffer;
+    // fullBody保存`bodyPrefix + errorsJson + errorSuffix`，供终端 UI Feedback后续判断或输出使用。
     const fullBody = bodyPrefix + errorsJson + errorSuffix;
+    // encodedFullBody保存`encodeURIComponent`，供终端渲染后续处理使用。
     let encodedFullBody = encodeURIComponent(fullBody);
+    // 满足 `encodedFullBody.length > maxEncodedLength` 时，终端渲染执行该分支。
     if (encodedFullBody.length > maxEncodedLength) {
+      // encodedFullBody更新为 `encodedFullBody.slice(0, maxEncodedLength)`，确保终端 UI后续读取最新状态。
       encodedFullBody = encodedFullBody.slice(0, maxEncodedLength);
       // Don't cut in middle of %XX sequence
+      // lastPercent保存`encodedFullBody.lastIndexOf`，供终端渲染后续处理使用。
       const lastPercent = encodedFullBody.lastIndexOf('%');
+      // 满足 `lastPercent >= encodedFullBody.length - 2` 时，终端渲染执行该分支。
       if (lastPercent >= encodedFullBody.length - 2) {
+        // encodedFullBody更新为 `encodedFullBody.slice(0, lastPercent)`，确保终端 UI后续读取最新状态。
         encodedFullBody = encodedFullBody.slice(0, lastPercent);
       }
     }
+    // 返回 `baseUrl + encodedFullBody + ellipsis + encodedNote`，作为终端渲染这次计算的结果。
     return baseUrl + encodedFullBody + ellipsis + encodedNote;
   }
 
   // If errors fit, no truncation needed
+  // 满足 `encodedErrors.length <= spaceForErrors` 时，终端渲染执行该分支。
   if (encodedErrors.length <= spaceForErrors) {
+    // 返回 `baseUrl + encodedPrefix + encodedErrors + encodedSuffix`，作为终端渲染这次计算的结果。
     return baseUrl + encodedPrefix + encodedErrors + encodedSuffix;
   }
 
   // Truncate errors to fit (prioritize keeping description)
   // Slice encoded errors directly, then trim to avoid cutting %XX sequences
+  // ellipsis 集合保存`encodeURIComponent`，供终端渲染后续处理使用。
   const ellipsis = encodeURIComponent('…');
+  // buffer保存`50; // Extra safety margin`，供终端 UI Feedback后续判断或输出使用。
   const buffer = 50; // Extra safety margin
+  // truncatedEncodedErrors 错误信息格式化`encodedErrors.slice`，供终端渲染后续处理使用。
   let truncatedEncodedErrors = encodedErrors.slice(0, spaceForErrors - ellipsis.length - buffer);
   // If we cut in middle of %XX, back up to before the %
+  // lastPercent保存`truncatedEncodedErrors.lastIndexOf`，供终端渲染后续处理使用。
   const lastPercent = truncatedEncodedErrors.lastIndexOf('%');
+  // 满足 `lastPercent >= truncatedEncodedErrors.length - 2` 时，终端渲染执行该分支。
   if (lastPercent >= truncatedEncodedErrors.length - 2) {
+    // truncatedEncodedErrors 错误信息更新为 `truncatedEncodedErrors.slice(0, lastPercent)`，确保终端 UI后续读取最新状态。
     truncatedEncodedErrors = truncatedEncodedErrors.slice(0, lastPercent);
   }
+  // 返回 `baseUrl + encodedPrefix + truncatedEncodedErrors + ellipsis + encodedSu...`，作为终端渲染这次计算的结果。
   return baseUrl + encodedPrefix + truncatedEncodedErrors + ellipsis + encodedSuffix + encodedNote;
 }
+// generateTitle 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function generateTitle(description: string, abortSignal: AbortSignal): Promise<string> {
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // 接口响应保存`queryHaiku`，供终端渲染后续处理使用。
     const response = await queryHaiku({
       systemPrompt: asSystemPrompt(['Generate a concise, technical issue title (max 80 chars) for a public GitHub issue based on this bug report for Claude Code.', 'Claude Code is an agentic coding CLI based on the Anthropic API.', 'The title should:', '- Include the type of issue [Bug] or [Feature Request] as the first thing in the title', '- Be concise, specific and descriptive of the actual problem', '- Use technical terminology appropriate for a software issue', '- For error messages, extract the key error (e.g., "Missing Tool Result Block" rather than the full message)', '- Be direct and clear for developers to understand the problem', '- If you cannot determine a clear issue, use "Bug Report: [brief description]"', '- Any LLM API errors are from the Anthropic API, not from any other model provider', 'Your response will be directly used as the title of the Github issue, and as such should not contain any other commentary or explaination', 'Examples of good titles include: "[Bug] Auto-Compact triggers to soon", "[Bug] Anthropic API Error: Missing Tool Result Block", "[Bug] Error: Invalid Model Name for Opus"']),
       userPrompt: description,
@@ -459,87 +629,122 @@ async function generateTitle(description: string, abortSignal: AbortSignal): Pro
         mcpTools: []
       }
     });
+    // title 标题标记终端 UI Feedback是否启用对应路径。
     const title = response.message.content[0]?.type === 'text' ? response.message.content[0].text : 'Bug Report';
 
     // Check if the title contains an API error message
+    // 满足 `startsWithApiErrorPrefix(title)` 时，终端渲染执行该分支。
     if (startsWithApiErrorPrefix(title)) {
+      // 返回 `createFallbackTitle(description)`，作为终端渲染这次计算的结果。
       return createFallbackTitle(description);
     }
+    // 返回 `title`，作为终端渲染这次计算的结果。
     return title;
   } catch (error) {
     // If there's any error in title generation, use a fallback title
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(error);
+    // 返回 `createFallbackTitle(description)`，作为终端渲染这次计算的结果。
     return createFallbackTitle(description);
   }
 }
+// createFallbackTitle 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createFallbackTitle(description: string): string {
   // Create a safe fallback title based on the bug description
 
   // Try to extract a meaningful title from the first line
+  // firstLine格式化`description.split`，供终端渲染后续处理使用。
   const firstLine = description.split('\n')[0] || '';
 
   // If the first line is very short, use it directly
+  // 只有 `firstLine.length <= 60 && firstLine.length > 5` 满足时，终端渲染才执行该分支。
   if (firstLine.length <= 60 && firstLine.length > 5) {
+    // 返回 `firstLine`，作为终端渲染这次计算的结果。
     return firstLine;
   }
 
   // For longer descriptions, create a truncated version
   // Truncate at word boundaries when possible
+  // truncated格式化`firstLine.slice`，供终端渲染后续处理使用。
   let truncated = firstLine.slice(0, 60);
+  // 满足 `firstLine.length > 60` 时，终端渲染执行该分支。
   if (firstLine.length > 60) {
     // Find the last space before the 60 char limit
+    // lastSpace保存`truncated.lastIndexOf`，供终端渲染后续处理使用。
     const lastSpace = truncated.lastIndexOf(' ');
+    // 满足 `lastSpace > 30` 时，终端渲染执行该分支。
     if (lastSpace > 30) {
       // Only trim at word if we're not cutting too much
+      // truncated更新为 `truncated.slice(0, lastSpace)`，确保终端 UI后续读取最新状态。
       truncated = truncated.slice(0, lastSpace);
     }
+    // 终端 UI 组件 Feedback在这里处理 `truncated += '...'`，完成这一小步状态转换。
     truncated += '...';
   }
+  // 返回 `truncated.length < 10 ? 'Bug Report' : truncated`，作为终端渲染这次计算的结果。
   return truncated.length < 10 ? 'Bug Report' : truncated;
 }
 
 // Helper function to sanitize and log errors without exposing API keys
+// sanitizeAndLogError 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function sanitizeAndLogError(err: unknown): void {
+  // 满足 `err instanceof Error` 时，终端渲染执行该分支。
   if (err instanceof Error) {
     // Create a copy with potentially sensitive info redacted
+    // safeError 错误信息保存`Error`，供终端渲染后续处理使用。
     const safeError = new Error(redactSensitiveInfo(err.message));
 
     // Also redact the stack trace if present
+    // 满足 `err.stack` 时，终端渲染执行该分支。
     if (err.stack) {
+      // stack更新为 `redactSensitiveInfo(err.stack)`，确保终端 UI后续读取最新状态。
       safeError.stack = redactSensitiveInfo(err.stack);
     }
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(safeError);
   } else {
     // For non-Error objects, convert to string and redact sensitive info
+    // errorString 错误信息保存`redactSensitiveInfo`，供终端渲染后续处理使用。
     const errorString = redactSensitiveInfo(String(err));
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(new Error(errorString));
   }
 }
+// submitFeedback 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise<{
   success: boolean;
   feedbackId?: string;
   isZdrOrg?: boolean;
 }> {
+  // 满足 `isEssentialTrafficOnly()` 时，终端渲染执行该分支。
   if (isEssentialTrafficOnly()) {
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       success: false
     };
   }
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
     // Ensure OAuth token is fresh before getting auth headers
     // This prevents 401 errors from stale cached tokens
+    // 等待 `checkAndRefreshOAuthTokenIfNeeded()` 完成，再继续终端 UI 组件 Feedback的异步流程。
     await checkAndRefreshOAuthTokenIfNeeded();
+    // authResult读取`getAuthHeaders`，供终端渲染后续处理使用。
     const authResult = getAuthHeaders();
+    // 满足 `authResult.error` 时，终端渲染执行该分支。
     if (authResult.error) {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         success: false
       };
     }
+    // 请求头 集中保存终端 UI 组件 Feedback要一起传递的字段。
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'User-Agent': getUserAgent(),
       ...authResult.headers
     };
+    // 接口响应保存`axios.post`，供终端渲染后续处理使用。
     const response = await axios.post('https://api.anthropic.com/api/claude_cli_feedback', {
       content: jsonStringify(data)
     }, {
@@ -548,34 +753,49 @@ async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise
       // 30 second timeout to prevent hanging
       signal
     });
+    // 满足 `response.status === 200` 时，终端渲染执行该分支。
     if (response.status === 200) {
+      // 结果 命名 `response.data`，让后续代码直接表达这个值的用途。
       const result = response.data;
+      // 满足 `result?.feedback_id` 时，终端渲染执行该分支。
       if (result?.feedback_id) {
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           success: true,
           feedbackId: result.feedback_id
         };
       }
+      // 调用 sanitizeAndLogError，触发终端渲染此处需要的副作用。
       sanitizeAndLogError(new Error('Failed to submit feedback: request did not return feedback_id'));
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         success: false
       };
     }
+    // 调用 sanitizeAndLogError，触发终端渲染此处需要的副作用。
     sanitizeAndLogError(new Error('Failed to submit feedback:' + response.status));
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       success: false
     };
   } catch (err) {
     // Handle cancellation/abort - don't log as error
+    // 满足 `axios.isCancel(err)` 时，终端渲染执行该分支。
     if (axios.isCancel(err)) {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         success: false
       };
     }
+    // 只有 `axios.isAxiosError(err) && err.response?.status === 403` 满足时，终端渲染才执行该分支。
     if (axios.isAxiosError(err) && err.response?.status === 403) {
+      // errorData 错误信息保存`err.response.data`，供终端 UI Feedback后续判断或输出使用。
       const errorData = err.response.data;
+      // 只有 `errorData?.error?.type === 'permission_error' && errorData?.error?.message?...` 满足时，终端渲染才执行该分支。
       if (errorData?.error?.type === 'permission_error' && errorData?.error?.message?.includes('Custom data retention settings')) {
+        // 调用 sanitizeAndLogError，触发终端渲染此处需要的副作用。
         sanitizeAndLogError(new Error('Cannot submit feedback because custom data retention settings are enabled'));
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           success: false,
           isZdrOrg: true
@@ -583,7 +803,9 @@ async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise
       }
     }
     // Use our safe error logging function to avoid leaking API keys
+    // 调用 sanitizeAndLogError，触发终端渲染此处需要的副作用。
     sanitizeAndLogError(err);
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       success: false
     };

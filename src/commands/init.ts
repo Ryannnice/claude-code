@@ -1,8 +1,13 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 类型依赖 { Command } 来自 ../commands.js，用于校准命令处理的数据契约。
 import type { Command } from '../commands.js'
+// 引入 maybeMarkProjectOnboardingComplete，将 ../projectOnboardingState.js 中已经封装好的能力接到本文件流程里。
 import { maybeMarkProjectOnboardingComplete } from '../projectOnboardingState.js'
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../utils/envUtils.js'
 
+// OLD_INIT_PROMPT 命名 ``Please analyze this codebase and create a CLAUDE.md file...`，让后续代码直接表达这个值的用途。
 const OLD_INIT_PROMPT = `Please analyze this codebase and create a CLAUDE.md file, which will be given to future instances of Claude Code to operate in this repository.
 
 What to add:
@@ -25,6 +30,7 @@ Usage notes:
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 \`\`\``
 
+// NEW_INIT_PROMPT保存`CLAUDE.md`，供命令处理后续处理使用。
 const NEW_INIT_PROMPT = `Set up a minimal CLAUDE.md (and optionally skills and hooks) for this repo. CLAUDE.md is loaded into every Claude Code session, so it must be concise — only include what Claude would get wrong without it.
 
 ## Phase 1: Ask what to set up
@@ -223,10 +229,13 @@ When building the list, work through these checks and include only what applies:
 - To help you create skills and optimize existing skills using evals, Claude Code has an official skill-creator plugin you can install. Install it with \`/plugin install skill-creator@claude-plugins-official\`, then run \`/skill-creator <skill-name>\` to create new skills or refine any existing skill. (Always include this one.)
 - Browse official plugins with \`/plugin\` — these bundle skills, agents, hooks, and MCP servers that you may find helpful. You can also create your own custom plugins to share them with others. (Always include this one.)`
 
+// 命令 集中保存命令处理斜杠命令 init要一起传递的字段。
 const command = {
   type: 'prompt',
   name: 'init',
+  // 斜杠命令 init在这里处理 `get description() {`，完成这一小步状态转换。
   get description() {
+    // 返回 `feature('NEW_INIT') &&`，作为命令处理这次计算的结果。
     return feature('NEW_INIT') &&
       (process.env.USER_TYPE === 'ant' ||
         isEnvTruthy(process.env.CLAUDE_CODE_NEW_INIT))
@@ -236,9 +245,12 @@ const command = {
   contentLength: 0, // Dynamic content
   progressMessage: 'analyzing your codebase',
   source: 'builtin',
+  // getPromptForCommand不依赖额外参数，直接计算命令处理需要的结果。
   async getPromptForCommand() {
+    // 调用 maybeMarkProjectOnboardingComplete，触发命令处理此处需要的副作用。
     maybeMarkProjectOnboardingComplete()
 
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [
       {
         type: 'text',

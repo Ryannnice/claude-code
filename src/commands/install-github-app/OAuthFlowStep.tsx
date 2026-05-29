@@ -1,19 +1,35 @@
+// 引入 React、useCallback、useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 复用 KeyboardShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js';
+// 复用 Spinner 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Spinner } from '../../components/Spinner.js';
+// 复用 TextInput 终端界面组件，避免在这里重复拼装显示逻辑。
 import TextInput from '../../components/TextInput.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 类型依赖 { KeyboardEvent } 来自 ../../ink/events/keyboard-event.js，用于校准命令处理的数据契约。
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
+// 复用 setClipboard 终端界面组件，避免在这里重复拼装显示逻辑。
 import { setClipboard } from '../../ink/termio/osc.js';
+// 引入 Box、Link、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Link, Text } from '../../ink.js';
+// 接入 OAuthService 服务层能力，把外部通信或共享状态交给 ../../services/oauth/index.js 处理。
 import { OAuthService } from '../../services/oauth/index.js';
+// 复用 saveOAuthTokensIfNeeded 工具函数，把通用处理留在 ../../utils/auth.js 中维护。
 import { saveOAuthTokensIfNeeded } from '../../utils/auth.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// OAuthFlowStepProps 描述命令处理需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface OAuthFlowStepProps {
+  // 这个回调绑定到 onSuccess: (token: string) => void;，负责命令处理在该局部场景下的响应。
   onSuccess: (token: string) => void;
+  // 这个回调绑定到 onCancel: () => void;，负责命令处理在该局部场景下的响应。
   onCancel: () => void;
 }
+// OAuthStatus 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type OAuthStatus = {
   state: 'starting';
 } | {
@@ -32,43 +48,68 @@ type OAuthStatus = {
   state: 'about_to_retry';
   nextState: OAuthStatus;
 };
+// PASTE_HERE_MSG保存`'Paste code here if prompted > '`，作为后续固定文本处理的输入。
 const PASTE_HERE_MSG = 'Paste code here if prompted > ';
+// OAuthFlowStep 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function OAuthFlowStep({
   onSuccess,
   onCancel
 }: OAuthFlowStepProps): React.ReactNode {
+  // 从 `useState<OAuthStatus>({` 按位置拆出 oauthStatus、setOAuthStatus，让斜杠命令 OAuth Flow Step分别处理这些返回值。
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>({
     state: 'starting'
   });
+  // 这个回调绑定到 const [oauthService] = useState(() => new OAuthService());，负责命令处理在该局部场景下的响应。
   const [oauthService] = useState(() => new OAuthService());
+  // pastedCode 由 React state 持有，setPastedCode 会在用户操作或异步结果返回时触发刷新。
   const [pastedCode, setPastedCode] = useState('');
+  // 光标偏移 由 React state 持有，setCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [cursorOffset, setCursorOffset] = useState(0);
+  // showPastePrompt 由 React state 持有，setShowPastePrompt 会在用户操作或异步结果返回时触发刷新。
   const [showPastePrompt, setShowPastePrompt] = useState(false);
+  // urlCopied 由 React state 持有，setUrlCopied 会在用户操作或异步结果返回时触发刷新。
   const [urlCopied, setUrlCopied] = useState(false);
+  // timersRef 引用保存`Set`，供命令处理后续处理使用。
   const timersRef = useRef<Set<NodeJS.Timeout>>(new Set());
   // Separate ref so startOAuth's timer clear doesn't cancel the urlCopied reset
+  // urlCopiedTimerRef 引用保存 hook 状态，让命令处理斜杠命令 OAuth Flow Step跨渲染复用同一个容器。
   const urlCopiedTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  // terminalSize保存`useTerminalSize`，供命令处理后续处理使用。
   const terminalSize = useTerminalSize();
+  // textInputColumns 集合保存`Math.max`，供命令处理后续处理使用。
   const textInputColumns = Math.max(50, terminalSize.columns - PASTE_HERE_MSG.length - 4);
+  // handleKeyDown 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleKeyDown(e: KeyboardEvent): void {
+    // `oauthStatus.state` 与 `'error'` 不一致时刷新派生状态，避免使用过期结果。
     if (oauthStatus.state !== 'error') return;
+    // 调用 e.preventDefault，触发命令处理此处需要的副作用。
     e.preventDefault();
+    // 只有 `e.key === 'return' && oauthStatus.toRetry` 满足时，命令处理才执行该分支。
     if (e.key === 'return' && oauthStatus.toRetry) {
+      // setPastedCode 写入新的状态值，使命令处理后续读取保持一致。
       setPastedCode('');
+      // setCursorOffset 写入新的状态值，使命令处理后续读取保持一致。
       setCursorOffset(0);
+      // setOAuthStatus 写入新的状态值，使命令处理后续读取保持一致。
       setOAuthStatus({
         state: 'about_to_retry',
         nextState: oauthStatus.toRetry
       });
     } else {
+      // 调用 onCancel，触发命令处理此处需要的副作用。
       onCancel();
     }
   }
+  // handleSubmitCode 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   async function handleSubmitCode(value: string, url: string) {
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
       // Expecting format "authorizationCode#state" from the authorization callback URL
+      // 从 `value.split('#')` 按位置拆出 authorizationCode、state，让斜杠命令 OAuth Flow Step分别处理这些返回值。
       const [authorizationCode, state] = value.split('#');
+      // 只有 `!authorizationCode || !state` 满足时，命令处理才执行该分支。
       if (!authorizationCode || !state) {
+        // setOAuthStatus 写入新的状态值，使命令处理后续读取保持一致。
         setOAuthStatus({
           state: 'error',
           message: 'Invalid code. Please make sure the full code was copied',
@@ -77,17 +118,22 @@ export function OAuthFlowStep({
             url
           }
         });
+        // 斜杠命令 OAuth Flow Step在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Track which path the user is taking (manual code entry)
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_oauth_manual_entry', {});
+      // 调用 oauthService.handleManualAuthCodeInput，触发命令处理此处需要的副作用。
       oauthService.handleManualAuthCodeInput({
         authorizationCode,
         state
       });
     } catch (err: unknown) {
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logError(err);
+      // setOAuthStatus 写入新的状态值，使命令处理后续读取保持一致。
       setOAuthStatus({
         state: 'error',
         message: (err as Error).message,
@@ -98,17 +144,25 @@ export function OAuthFlowStep({
       });
     }
   }
+  // startOAuth保存`useCallback`，供命令处理后续处理使用。
   const startOAuth = useCallback(async () => {
     // Clear any existing timers when starting new OAuth flow
+    // 调用 timersRef.current.forEach，触发命令处理此处需要的副作用。
     timersRef.current.forEach(timer => clearTimeout(timer));
+    // 调用 timersRef.current.clear，触发命令处理此处需要的副作用。
     timersRef.current.clear();
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // 结果保存`oauthService.startOAuthFlow`，供命令处理后续处理使用。
       const result = await oauthService.startOAuthFlow(async url_0 => {
+        // setOAuthStatus 写入新的状态值，使命令处理后续读取保持一致。
         setOAuthStatus({
           state: 'waiting_for_login',
           url: url_0
         });
+        // timer_0保存`setTimeout`，供命令处理后续处理使用。
         const timer_0 = setTimeout(setShowPastePrompt, 3000, true);
+        // 调用 timersRef.current.add，触发命令处理此处需要的副作用。
         timersRef.current.add(timer_0);
       }, {
         loginWithClaudeAi: true,
@@ -118,6 +172,7 @@ export function OAuthFlowStep({
       });
 
       // Show processing state
+      // setOAuthStatus 写入新的状态值，使命令处理后续读取保持一致。
       setOAuthStatus({
         state: 'processing'
       });
@@ -125,21 +180,29 @@ export function OAuthFlowStep({
       // OAuthFlowStep creates inference-only tokens for GitHub Actions, not a
       // replacement login. Use saveOAuthTokensIfNeeded directly to avoid
       // performLogout which would destroy the user's existing auth session.
+      // 调用 saveOAuthTokensIfNeeded，触发命令处理此处需要的副作用。
       saveOAuthTokensIfNeeded(result);
 
       // For OAuth flow, the access token can be used as an API key
+      // timer1保存`setTimeout`，供命令处理后续处理使用。
       const timer1 = setTimeout((setOAuthStatus_0, accessToken, onSuccess_0, timersRef_0) => {
+        // setOAuthStatus_0 写入新的状态值，使命令处理后续读取保持一致。
         setOAuthStatus_0({
           state: 'success',
           token: accessToken
         });
         // Auto-continue after brief delay to show success
+        // timer2保存`setTimeout`，供命令处理后续处理使用。
         const timer2 = setTimeout(onSuccess_0, 1000, accessToken);
+        // 调用 timersRef_0.current.add，触发命令处理此处需要的副作用。
         timersRef_0.current.add(timer2);
       }, 100, setOAuthStatus, result.accessToken, onSuccess, timersRef);
+      // 调用 timersRef.current.add，触发命令处理此处需要的副作用。
       timersRef.current.add(timer1);
     } catch (err_0) {
+      // errorMessage 消息数据保存`(err_0 as Error).message`，供命令处理斜杠命令 OAuth Flow Step后续判断或输出使用。
       const errorMessage = (err_0 as Error).message;
+      // setOAuthStatus 写入新的状态值，使命令处理后续读取保持一致。
       setOAuthStatus({
         state: 'error',
         message: errorMessage,
@@ -147,62 +210,92 @@ export function OAuthFlowStep({
           state: 'starting'
         } // Allow retry by starting fresh OAuth flow
       });
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logError(err_0);
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_oauth_error', {
         error: errorMessage as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
     }
   }, [oauthService, onSuccess]);
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 当 `oauthStatus.state` 匹配 `'starting'` 时，命令处理执行对应分支。
     if (oauthStatus.state === 'starting') {
+      // 显式忽略 `startOAuth()` 的返回值，只保留它触发的副作用。
       void startOAuth();
     }
   }, [oauthStatus.state, startOAuth]);
 
   // Retry logic
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 当 `oauthStatus.state` 匹配 `'about_to_retry'` 时，命令处理执行对应分支。
     if (oauthStatus.state === 'about_to_retry') {
+      // timer_1保存`setTimeout`，供命令处理后续处理使用。
       const timer_1 = setTimeout((nextState, setShowPastePrompt_0, setOAuthStatus_1) => {
         // Only show paste prompt when retrying to waiting_for_login
+        // setShowPastePrompt_0 写入新的状态值，使命令处理后续读取保持一致。
         setShowPastePrompt_0(nextState.state === 'waiting_for_login');
+        // setOAuthStatus_1 写入新的状态值，使命令处理后续读取保持一致。
         setOAuthStatus_1(nextState);
       }, 500, oauthStatus.nextState, setShowPastePrompt, setOAuthStatus);
+      // 调用 timersRef.current.add，触发命令处理此处需要的副作用。
       timersRef.current.add(timer_1);
     }
   }, [oauthStatus]);
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 只有 `pastedCode === 'c' && oauthStatus.state === 'wait` 满足时，命令处理才执行该分支。
     if (pastedCode === 'c' && oauthStatus.state === 'waiting_for_login' && showPastePrompt && !urlCopied) {
+      // 这个回调绑定到 void setClipboard(oauthStatus.url).then(raw => {，负责命令处理在该局部场景下的响应。
       void setClipboard(oauthStatus.url).then(raw => {
+        // 满足 `raw) process.stdout.write(raw` 时，命令处理执行该分支。
         if (raw) process.stdout.write(raw);
+        // setUrlCopied 写入新的状态值，使命令处理后续读取保持一致。
         setUrlCopied(true);
+        // 调用 clearTimeout，触发命令处理此处需要的副作用。
         clearTimeout(urlCopiedTimerRef.current);
+        // current更新为 `setTimeout(setUrlCopied, 2000, false)`，确保斜杠命令后续读取最新状态。
         urlCopiedTimerRef.current = setTimeout(setUrlCopied, 2000, false);
       });
+      // setPastedCode 写入新的状态值，使命令处理后续读取保持一致。
       setPastedCode('');
     }
   }, [pastedCode, oauthStatus, showPastePrompt, urlCopied]);
 
   // Cleanup OAuth service and timers when component unmounts
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // timers 集合保存`timersRef.current`，供命令处理斜杠命令 OAuth Flow Step后续判断或输出使用。
     const timers = timersRef.current;
+    // 返回 `() => {`，作为命令处理这次计算的结果。
     return () => {
+      // 调用 oauthService.cleanup，触发命令处理此处需要的副作用。
       oauthService.cleanup();
       // Clear all timers
+      // 调用 timers.forEach，触发命令处理此处需要的副作用。
       timers.forEach(timer_2 => clearTimeout(timer_2));
+      // 调用 timers.clear，触发命令处理此处需要的副作用。
       timers.clear();
+      // 调用 clearTimeout，触发命令处理此处需要的副作用。
       clearTimeout(urlCopiedTimerRef.current);
     };
   }, [oauthService]);
 
   // Helper function to render the appropriate status message
+  // renderStatusMessage 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function renderStatusMessage(): React.ReactNode {
+    // 按照 oauthStatus.state 的取值选择命令处理的具体处理分支。
     switch (oauthStatus.state) {
       case 'starting':
+        // 返回 `<Box>`，作为命令处理这次计算的结果。
         return <Box>
             <Spinner />
             <Text>Starting authentication…</Text>
           </Box>;
       case 'waiting_for_login':
+        // 返回 `<Box flexDirection="column" gap={1}>`，作为命令处理这次计算的结果。
         return <Box flexDirection="column" gap={1}>
             {!showPastePrompt && <Box>
                 <Spinner />
@@ -211,17 +304,20 @@ export function OAuthFlowStep({
                 </Text>
               </Box>}
 
+            {/* 斜杠命令 OAuth Flow Step处理 `{showPastePrompt && <Box>`，完成这一小步状态转换。 */}
             {showPastePrompt && <Box>
                 <Text>{PASTE_HERE_MSG}</Text>
                 <TextInput value={pastedCode} onChange={setPastedCode} onSubmit={(value_0: string) => handleSubmitCode(value_0, oauthStatus.url)} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} columns={textInputColumns} />
               </Box>}
           </Box>;
       case 'processing':
+        // 返回 `<Box>`，作为命令处理这次计算的结果。
         return <Box>
             <Spinner />
             <Text>Processing authentication…</Text>
           </Box>;
       case 'success':
+        // 返回 `<Box flexDirection="column" gap={1}>`，作为命令处理这次计算的结果。
         return <Box flexDirection="column" gap={1}>
             <Text color="success">
               ✓ Authentication token created successfully!
@@ -229,6 +325,7 @@ export function OAuthFlowStep({
             <Text dimColor>Using token for GitHub Actions setup…</Text>
           </Box>;
       case 'error':
+        // 返回 `<Box flexDirection="column" gap={1}>`，作为命令处理这次计算的结果。
         return <Box flexDirection="column" gap={1}>
             <Text color="error">OAuth error: {oauthStatus.message}</Text>
             {oauthStatus.toRetry ? <Text dimColor>
@@ -236,13 +333,16 @@ export function OAuthFlowStep({
               </Text> : <Text dimColor>Press any key to return to API key selection</Text>}
           </Box>;
       case 'about_to_retry':
+        // 返回 `<Box flexDirection="column" gap={1}>`，作为命令处理这次计算的结果。
         return <Box flexDirection="column" gap={1}>
             <Text color="permission">Retrying…</Text>
           </Box>;
       default:
+        // 返回 `null`，作为命令处理这次计算的结果。
         return null;
     }
   }
+  // 返回 `<Box flexDirection="column" gap={1} tabIndex={0} autoFocus onKeyDown={h...`，作为命令处理这次计算的结果。
   return <Box flexDirection="column" gap={1} tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
       {/* Show header inline only for initial starting state */}
       {oauthStatus.state === 'starting' && <Box flexDirection="column" gap={1} paddingBottom={1}>

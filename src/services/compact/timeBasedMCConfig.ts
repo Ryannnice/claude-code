@@ -1,3 +1,4 @@
+// 引入 getFeatureValue_CACHED_MAY_BE_STALE，将 ../analytics/growthbook.js 中已经封装好的能力接到本文件流程里。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 
 /**
@@ -15,6 +16,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
  * Main thread only — subagents have short lifetimes where gap-based eviction
  * doesn't apply.
  */
+// TimeBasedMCConfig 固化服务层 time Based MCConfig里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TimeBasedMCConfig = {
   /** Master switch. When false, time-based microcompact is a no-op. */
   enabled: boolean
@@ -27,15 +29,18 @@ export type TimeBasedMCConfig = {
   keepRecent: number
 }
 
+// TIME_BASED_MC_CONFIG_DEFAULTS 配置 集中保存服务层 time Based MCConfig要一起传递的字段。
 const TIME_BASED_MC_CONFIG_DEFAULTS: TimeBasedMCConfig = {
   enabled: false,
   gapThresholdMinutes: 60,
   keepRecent: 5,
 }
 
+// getTimeBasedMCConfig 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getTimeBasedMCConfig(): TimeBasedMCConfig {
   // Hoist the GB read so exposure fires on every eval path, not just when
   // the caller's other conditions (querySource, messages.length) pass.
+  // 返回 `getFeatureValue_CACHED_MAY_BE_STALE<TimeBasedMCConfig>(`，作为服务层 time Based MCConfig这次计算的结果。
   return getFeatureValue_CACHED_MAY_BE_STALE<TimeBasedMCConfig>(
     'tengu_slate_heron',
     TIME_BASED_MC_CONFIG_DEFAULTS,

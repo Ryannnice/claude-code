@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
 
 /**
@@ -5,6 +6,7 @@ import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
  * bridge/replBridge.ts can import it without transitively pulling in
  * api/errors.ts → utils/messages.ts → BashTool.tsx → the world.
  */
+// EMPTY_USAGE 集中保存API 服务 empty Usage要一起传递的字段。
 export const EMPTY_USAGE: Readonly<NonNullableUsage> = {
   input_tokens: 0,
   cache_creation_input_tokens: 0,

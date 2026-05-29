@@ -1,5 +1,8 @@
+// 引入 getBridgeDebugHandle，将 ../bridge/bridgeDebug.js 中已经封装好的能力接到本文件流程里。
 import { getBridgeDebugHandle } from '../bridge/bridgeDebug.js'
+// 类型依赖 { Command } 来自 ../commands.js，用于校准命令处理的数据契约。
 import type { Command } from '../commands.js'
+// 类型依赖 { LocalCommandCall } 来自 ../types/command.js，用于校准命令处理的数据契约。
 import type { LocalCommandCall } from '../types/command.js'
 
 /**
@@ -37,6 +40,7 @@ import type { LocalCommandCall } from '../types/command.js'
  *     after fix: tengu_bridge_repl_env_lost → doReconnect
  */
 
+// USAGE 命名 ``/bridge-kick <subcommand>`，让后续代码直接表达这个值的用途。
 const USAGE = `/bridge-kick <subcommand>
   close <code>              fire ws_closed with the given code (e.g. 1002)
   poll <status> [type]      next poll throws BridgeFatalError(status, type)
@@ -48,9 +52,13 @@ const USAGE = `/bridge-kick <subcommand>
   reconnect                 call reconnectEnvironmentWithSession directly
   status                    print bridge state`
 
+// 这个回调绑定到 const call: LocalCommandCall = async args => {，负责命令处理在该局部场景下的响应。
 const call: LocalCommandCall = async args => {
+  // h读取`getBridgeDebugHandle`，供命令处理后续处理使用。
   const h = getBridgeDebugHandle()
+  // h缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!h) {
+    // 返回结构化结果，集中表达命令处理已经整理出的状态。
     return {
       type: 'text',
       value:
@@ -58,15 +66,22 @@ const call: LocalCommandCall = async args => {
     }
   }
 
+  // 从 `args.trim().split(/\s+/)` 按位置拆出 sub、a、b，让斜杠命令 bridge kick分别处理这些返回值。
   const [sub, a, b] = args.trim().split(/\s+/)
 
+  // 按照 sub 的取值选择命令处理的具体处理分支。
   switch (sub) {
     case 'close': {
+      // code保存`Number`，供命令处理后续处理使用。
       const code = Number(a)
+      // 满足 `!Number.isFinite(code)` 时，命令处理执行该分支。
       if (!Number.isFinite(code)) {
+        // 返回结构化结果，集中表达命令处理已经整理出的状态。
         return { type: 'text', value: `close: need a numeric code\n${USAGE}` }
       }
+      // 调用 h.fireClose，触发命令处理此处需要的副作用。
       h.fireClose(code)
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         type: 'text',
         value: `Fired transport close(${code}). Watch debug.log for [bridge:repl] recovery.`,
@@ -74,22 +89,29 @@ const call: LocalCommandCall = async args => {
     }
 
     case 'poll': {
+      // 当 `a` 匹配 `'transient'` 时，命令处理执行对应分支。
       if (a === 'transient') {
+        // 调用 h.injectFault，触发命令处理此处需要的副作用。
         h.injectFault({
           method: 'pollForWork',
           kind: 'transient',
           status: 503,
           count: 1,
         })
+        // 调用 h.wakePollLoop，触发命令处理此处需要的副作用。
         h.wakePollLoop()
+        // 返回结构化结果，集中表达命令处理已经整理出的状态。
         return {
           type: 'text',
           value:
             'Next poll will throw a transient (axios rejection). Poll loop woken.',
         }
       }
+      // status 集合保存`Number`，供命令处理后续处理使用。
       const status = Number(a)
+      // 满足 `!Number.isFinite(status)` 时，命令处理执行该分支。
       if (!Number.isFinite(status)) {
+        // 返回结构化结果，集中表达命令处理已经整理出的状态。
         return {
           type: 'text',
           value: `poll: need 'transient' or a status code\n${USAGE}`,
@@ -97,8 +119,10 @@ const call: LocalCommandCall = async args => {
       }
       // Default to what the server ACTUALLY sends for 404 (BQ-verified),
       // so `/bridge-kick poll 404` reproduces the real 147K/week state.
+      // errorType 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
       const errorType =
         b ?? (status === 404 ? 'not_found_error' : 'authentication_error')
+      // 调用 h.injectFault，触发命令处理此处需要的副作用。
       h.injectFault({
         method: 'pollForWork',
         kind: 'fatal',
@@ -106,7 +130,9 @@ const call: LocalCommandCall = async args => {
         errorType,
         count: 1,
       })
+      // 调用 h.wakePollLoop，触发命令处理此处需要的副作用。
       h.wakePollLoop()
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         type: 'text',
         value: `Next poll will throw BridgeFatalError(${status}, ${errorType}). Poll loop woken.`,
@@ -114,7 +140,9 @@ const call: LocalCommandCall = async args => {
     }
 
     case 'register': {
+      // 当 `a` 匹配 `'fatal'` 时，命令处理执行对应分支。
       if (a === 'fatal') {
+        // 调用 h.injectFault，触发命令处理此处需要的副作用。
         h.injectFault({
           method: 'registerBridgeEnvironment',
           kind: 'fatal',
@@ -122,19 +150,23 @@ const call: LocalCommandCall = async args => {
           errorType: 'permission_error',
           count: 1,
         })
+        // 返回结构化结果，集中表达命令处理已经整理出的状态。
         return {
           type: 'text',
           value:
             'Next registerBridgeEnvironment will 403. Trigger with close/reconnect.',
         }
       }
+      // n保存`Number`，供命令处理后续处理使用。
       const n = Number(b) || 1
+      // 调用 h.injectFault，触发命令处理此处需要的副作用。
       h.injectFault({
         method: 'registerBridgeEnvironment',
         kind: 'transient',
         status: 503,
         count: n,
       })
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         type: 'text',
         value: `Next ${n} registerBridgeEnvironment call(s) will transient-fail. Trigger with close/reconnect.`,
@@ -142,6 +174,7 @@ const call: LocalCommandCall = async args => {
     }
 
     case 'reconnect-session': {
+      // 调用 h.injectFault，触发命令处理此处需要的副作用。
       h.injectFault({
         method: 'reconnectSession',
         kind: 'fatal',
@@ -149,6 +182,7 @@ const call: LocalCommandCall = async args => {
         errorType: 'not_found_error',
         count: 2,
       })
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         type: 'text',
         value:
@@ -157,7 +191,9 @@ const call: LocalCommandCall = async args => {
     }
 
     case 'heartbeat': {
+      // status 集合保存`Number`，供命令处理后续处理使用。
       const status = Number(a) || 401
+      // 调用 h.injectFault，触发命令处理此处需要的副作用。
       h.injectFault({
         method: 'heartbeatWork',
         kind: 'fatal',
@@ -165,6 +201,7 @@ const call: LocalCommandCall = async args => {
         errorType: status === 401 ? 'authentication_error' : 'not_found_error',
         count: 1,
       })
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         type: 'text',
         value: `Next heartbeat will ${status}. Watch for onHeartbeatFatal → work-state teardown.`,
@@ -172,7 +209,9 @@ const call: LocalCommandCall = async args => {
     }
 
     case 'reconnect': {
+      // 调用 h.forceReconnect，触发命令处理此处需要的副作用。
       h.forceReconnect()
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return {
         type: 'text',
         value: 'Called reconnectEnvironmentWithSession(). Watch debug.log.',
@@ -180,20 +219,25 @@ const call: LocalCommandCall = async args => {
     }
 
     case 'status': {
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return { type: 'text', value: h.describe() }
     }
 
     default:
+      // 返回结构化结果，集中表达命令处理已经整理出的状态。
       return { type: 'text', value: USAGE }
   }
 }
 
+// bridgeKick 集中保存命令处理斜杠命令 bridge kick要一起传递的字段。
 const bridgeKick = {
   type: 'local',
   name: 'bridge-kick',
   description: 'Inject bridge failure states for manual recovery testing',
+  // 这个回调绑定到 isEnabled: () => process.env.USER_TYPE === 'ant',，负责命令处理在该局部场景下的响应。
   isEnabled: () => process.env.USER_TYPE === 'ant',
   supportsNonInteractive: false,
+  // 这个回调绑定到 load: () => Promise.resolve({ call }),，负责命令处理在该局部场景下的响应。
   load: () => Promise.resolve({ call }),
 } satisfies Command
 

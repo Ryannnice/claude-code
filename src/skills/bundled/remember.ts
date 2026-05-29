@@ -1,11 +1,17 @@
+// 引入 isAutoMemoryEnabled，将 ../../memdir/paths.js 中已经封装好的能力接到本文件流程里。
 import { isAutoMemoryEnabled } from '../../memdir/paths.js'
+// 引入 registerBundledSkill，将 ../bundledSkills.js 中已经封装好的能力接到本文件流程里。
 import { registerBundledSkill } from '../bundledSkills.js'
 
+// registerRememberSkill 封装remember的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function registerRememberSkill(): void {
+  // `process.env.USER_TYPE` 与 `'ant'` 不一致时刷新派生状态，避免使用过期结果。
   if (process.env.USER_TYPE !== 'ant') {
+    // remember在这里结束当前路径，避免继续执行不适用的后续分支。
     return
   }
 
+  // SKILL_PROMPT 命名 ``# Memory Review`，让后续代码直接表达这个值的用途。
   const SKILL_PROMPT = `# Memory Review
 
 ## Goal
@@ -61,6 +67,7 @@ If auto-memory is empty, say so and offer to review CLAUDE.md for cleanup.
 - Ask about ambiguous entries — don't guess
 `
 
+  // 调用 registerBundledSkill，触发remember此处需要的副作用。
   registerBundledSkill({
     name: 'remember',
     description:
@@ -68,14 +75,20 @@ If auto-memory is empty, say so and offer to review CLAUDE.md for cleanup.
     whenToUse:
       'Use when the user wants to review, organize, or promote their auto-memory entries. Also useful for cleaning up outdated or conflicting entries across CLAUDE.md, CLAUDE.local.md, and auto-memory.',
     userInvocable: true,
+    // 这个回调绑定到 isEnabled: () => isAutoMemoryEnabled(),，负责remember在该局部场景下的响应。
     isEnabled: () => isAutoMemoryEnabled(),
+    // getPromptForCommand 根据 args 读取或计算remember需要的结果。
     async getPromptForCommand(args) {
+      // 提示词 命名 `SKILL_PROMPT`，让后续代码直接表达这个值的用途。
       let prompt = SKILL_PROMPT
 
+      // 满足 `args` 时，remember执行该分支。
       if (args) {
+        // remember在这里处理 `prompt += `\n## Additional context from user\n\n${args}``，完成这一小步状态转换。
         prompt += `\n## Additional context from user\n\n${args}`
       }
 
+      // 返回列表结果，保留remember已经排好的条目顺序。
       return [{ type: 'text', text: prompt }]
     },
   })

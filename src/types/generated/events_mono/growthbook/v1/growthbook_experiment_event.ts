@@ -5,7 +5,9 @@
 // source: events_mono/growthbook/v1/growthbook_experiment_event.proto
 
 /* eslint-disable */
+// 引入 Timestamp，将 ../../../google/protobuf/timestamp.js 中已经封装好的能力接到本文件流程里。
 import { Timestamp } from '../../../google/protobuf/timestamp.js'
+// 引入 PublicApiAuth，将 ../../common/v1/auth.js 中已经封装好的能力接到本文件流程里。
 import { PublicApiAuth } from '../../common/v1/auth.js'
 
 /**
@@ -13,6 +15,7 @@ import { PublicApiAuth } from '../../common/v1/auth.js'
  * This event tracks when a user is exposed to an experiment variant
  * See: https://docs.growthbook.io/guide/bigquery
  */
+// GrowthbookExperimentEvent 描述growthbook experiment event需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface GrowthbookExperimentEvent {
   /** Unique event identifier (for deduplication) */
   event_id?: string | undefined
@@ -40,7 +43,9 @@ export interface GrowthbookExperimentEvent {
   event_metadata_vars?: string | undefined
 }
 
+// createBaseGrowthbookExperimentEvent 封装growthbook_experiment_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createBaseGrowthbookExperimentEvent(): GrowthbookExperimentEvent {
+  // 返回结构化结果，集中表达growthbook experiment event已经整理出的状态。
   return {
     event_id: '',
     timestamp: undefined,
@@ -57,9 +62,12 @@ function createBaseGrowthbookExperimentEvent(): GrowthbookExperimentEvent {
   }
 }
 
+// GrowthbookExperimentEvent 先占位，稍后的条件分支会根据实际输入补齐它。
 export const GrowthbookExperimentEvent: MessageFns<GrowthbookExperimentEvent> =
   {
+    // fromJSON 使用 object: any 完成growthbook experiment event里的对应操作。
     fromJSON(object: any): GrowthbookExperimentEvent {
+      // 返回结构化结果，集中表达growthbook experiment event已经整理出的状态。
       return {
         event_id: isSet(object.event_id)
           ? globalThis.String(object.event_id)
@@ -100,75 +108,120 @@ export const GrowthbookExperimentEvent: MessageFns<GrowthbookExperimentEvent> =
       }
     },
 
+    // toJSON 使用 message: GrowthbookExperimentEvent 完成growthbook experiment event里的对应操作。
     toJSON(message: GrowthbookExperimentEvent): unknown {
+      // obj 从空对象开始收集键值，后续按名称补齐内容。
       const obj: any = {}
+      // `message.event_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.event_id !== undefined) {
+        // event_id更新为 `message.event_id`，确保growthbook_experiment_event后续读取最新状态。
         obj.event_id = message.event_id
       }
+      // `message.timestamp` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.timestamp !== undefined) {
+        // timestamp更新为 `message.timestamp.toISOString()`，确保growthbook_experiment_event后续读取最新状态。
         obj.timestamp = message.timestamp.toISOString()
       }
+      // `message.experiment_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.experiment_id !== undefined) {
+        // experiment_id更新为 `message.experiment_id`，确保growthbook_experiment_event后续读取最新状态。
         obj.experiment_id = message.experiment_id
       }
+      // `message.variation_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.variation_id !== undefined) {
+        // variation_id更新为 `Math.round(message.variation_id)`，确保growthbook_experiment_event后续读取最新状态。
         obj.variation_id = Math.round(message.variation_id)
       }
+      // `message.environment` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.environment !== undefined) {
+        // environment更新为 `message.environment`，确保growthbook_experiment_event后续读取最新状态。
         obj.environment = message.environment
       }
+      // `message.user_attributes` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.user_attributes !== undefined) {
+        // user_attributes 集合更新为 `message.user_attributes`，确保growthbook_experiment_event后续读取最新状态。
         obj.user_attributes = message.user_attributes
       }
+      // `message.experiment_metadata` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.experiment_metadata !== undefined) {
+        // experiment_metadata更新为 `message.experiment_metadata`，确保growthbook_experiment_event后续读取最新状态。
         obj.experiment_metadata = message.experiment_metadata
       }
+      // `message.device_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.device_id !== undefined) {
+        // device_id更新为 `message.device_id`，确保growthbook_experiment_event后续读取最新状态。
         obj.device_id = message.device_id
       }
+      // `message.auth` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.auth !== undefined) {
+        // auth更新为 `PublicApiAuth.toJSON(message.auth)`，确保growthbook_experiment_event后续读取最新状态。
         obj.auth = PublicApiAuth.toJSON(message.auth)
       }
+      // `message.session_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.session_id !== undefined) {
+        // session_id 会话数据更新为 `message.session_id`，确保growthbook_experiment_event后续读取最新状态。
         obj.session_id = message.session_id
       }
+      // `message.anonymous_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.anonymous_id !== undefined) {
+        // anonymous_id更新为 `message.anonymous_id`，确保growthbook_experiment_event后续读取最新状态。
         obj.anonymous_id = message.anonymous_id
       }
+      // `message.event_metadata_vars` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (message.event_metadata_vars !== undefined) {
+        // event_metadata_vars 集合更新为 `message.event_metadata_vars`，确保growthbook_experiment_event后续读取最新状态。
         obj.event_metadata_vars = message.event_metadata_vars
       }
+      // 返回 `obj`，作为growthbook experiment event这次计算的结果。
       return obj
     },
 
+    // growthbook experiment event在这里处理 `create<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(`，完成这一小步状态转换。
     create<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(
       base?: I,
     ): GrowthbookExperimentEvent {
+      // 返回 `GrowthbookExperimentEvent.fromPartial(base ?? ({} as any))`，作为growthbook experiment event这次计算的结果。
       return GrowthbookExperimentEvent.fromPartial(base ?? ({} as any))
     },
+    // growthbook experiment event在这里处理 `fromPartial<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(`，完成这一小步状态转换。
     fromPartial<I extends Exact<DeepPartial<GrowthbookExperimentEvent>, I>>(
       object: I,
     ): GrowthbookExperimentEvent {
+      // 消息构建`createBaseGrowthbookExperimentEvent`，供growthbook experiment event后续处理使用。
       const message = createBaseGrowthbookExperimentEvent()
+      // event_id更新为 `object.event_id ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.event_id = object.event_id ?? ''
+      // timestamp更新为 `object.timestamp ?? undefined`，确保growthbook_experiment_event后续读取最新状态。
       message.timestamp = object.timestamp ?? undefined
+      // experiment_id更新为 `object.experiment_id ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.experiment_id = object.experiment_id ?? ''
+      // variation_id更新为 `object.variation_id ?? 0`，确保growthbook_experiment_event后续读取最新状态。
       message.variation_id = object.variation_id ?? 0
+      // environment更新为 `object.environment ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.environment = object.environment ?? ''
+      // user_attributes 集合更新为 `object.user_attributes ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.user_attributes = object.user_attributes ?? ''
+      // experiment_metadata更新为 `object.experiment_metadata ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.experiment_metadata = object.experiment_metadata ?? ''
+      // device_id更新为 `object.device_id ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.device_id = object.device_id ?? ''
+      // growthbook experiment event在这里处理 `message.auth =`，完成这一小步状态转换。
       message.auth =
         object.auth !== undefined && object.auth !== null
           ? PublicApiAuth.fromPartial(object.auth)
           : undefined
+      // session_id 会话数据更新为 `object.session_id ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.session_id = object.session_id ?? ''
+      // anonymous_id更新为 `object.anonymous_id ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.anonymous_id = object.anonymous_id ?? ''
+      // event_metadata_vars 集合更新为 `object.event_metadata_vars ?? ''`，确保growthbook_experiment_event后续读取最新状态。
       message.event_metadata_vars = object.event_metadata_vars ?? ''
+      // 返回 `message`，作为growthbook experiment event这次计算的结果。
       return message
     },
   }
 
+// Builtin 固化growthbook experiment event里传递的数据形状，帮助调用方按同一结构读写字段。
 type Builtin =
   | Date
   | Function
@@ -178,6 +231,7 @@ type Builtin =
   | boolean
   | undefined
 
+// DeepPartial 固化growthbook experiment event里传递的数据形状，帮助调用方按同一结构读写字段。
 type DeepPartial<T> = T extends Builtin
   ? T
   : T extends globalThis.Array<infer U>
@@ -188,33 +242,48 @@ type DeepPartial<T> = T extends Builtin
         ? { [K in keyof T]?: DeepPartial<T[K]> }
         : Partial<T>
 
+// KeysOfUnion 固化growthbook experiment event里传递的数据形状，帮助调用方按同一结构读写字段。
 type KeysOfUnion<T> = T extends T ? keyof T : never
+// Exact 固化growthbook experiment event里传递的数据形状，帮助调用方按同一结构读写字段。
 type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
+// fromTimestamp 封装growthbook_experiment_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function fromTimestamp(t: Timestamp): Date {
+  // millis 集合标记growthbook experiment event是否启用对应路径。
   let millis = (t.seconds || 0) * 1_000
+  // growthbook experiment event在这里处理 `millis += (t.nanos || 0) / 1_000_000`，完成这一小步状态转换。
   millis += (t.nanos || 0) / 1_000_000
+  // 返回 `new globalThis.Date(millis)`，作为growthbook experiment event这次计算的结果。
   return new globalThis.Date(millis)
 }
 
+// fromJsonTimestamp 封装growthbook_experiment_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function fromJsonTimestamp(o: any): Date {
+  // 满足 `o instanceof globalThis.Date` 时，growthbook experiment event执行该分支。
   if (o instanceof globalThis.Date) {
+    // 返回 `o`，作为growthbook experiment event这次计算的结果。
     return o
+  // growthbook experiment event在这里处理 `} else if (typeof o === 'string') {`，完成这一小步状态转换。
   } else if (typeof o === 'string') {
+    // 返回 `new globalThis.Date(o)`，作为growthbook experiment event这次计算的结果。
     return new globalThis.Date(o)
   } else {
+    // 返回 `fromTimestamp(Timestamp.fromJSON(o))`，作为growthbook experiment event这次计算的结果。
     return fromTimestamp(Timestamp.fromJSON(o))
   }
 }
 
+// isSet 封装growthbook_experiment_event的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isSet(value: any): boolean {
+  // 返回 `value !== null && value !== undefined`，作为growthbook experiment event这次计算的结果。
   return value !== null && value !== undefined
 }
 
+// MessageFns 描述growthbook experiment event需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface MessageFns<T> {
   fromJSON(object: any): T
   toJSON(message: T): unknown

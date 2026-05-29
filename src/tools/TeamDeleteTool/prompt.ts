@@ -1,4 +1,6 @@
+// getPrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getPrompt(): string {
+  // 返回 ```，作为工具调用这次计算的结果。
   return `
 # TeamDelete
 

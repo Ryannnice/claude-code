@@ -1,50 +1,87 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect、useMemo、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// 复用 ConfigurableShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
+// 复用 Byline 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Byline } from '../../components/design-system/Byline.js';
+// 复用 SearchBox 终端界面组件，避免在这里重复拼装显示逻辑。
 import { SearchBox } from '../../components/SearchBox.js';
+// 引入 useSearchInput，将 ../../hooks/useSearchInput.js 中已经封装好的能力接到本文件流程里。
 import { useSearchInput } from '../../hooks/useSearchInput.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input
+// 引入 Box、Text、useInput、useTerminalFocus，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useInput, useTerminalFocus } from '../../ink.js';
+// 引入 useKeybinding、useKeybindings，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
+// 类型依赖 { LoadedPlugin } 来自 ../../types/plugin.js，用于校准命令处理的数据契约。
 import type { LoadedPlugin } from '../../types/plugin.js';
+// 复用 count 工具函数，把通用处理留在 ../../utils/array.js 中维护。
 import { count } from '../../utils/array.js';
+// 复用 openBrowser 工具函数，把通用处理留在 ../../utils/browser.js 中维护。
 import { openBrowser } from '../../utils/browser.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../../utils/debug.js 中维护。
 import { logForDebugging } from '../../utils/debug.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { errorMessage } from '../../utils/errors.js';
+// 复用 clearAllCaches 工具函数，把通用处理留在 ../../utils/plugins/cacheUtils.js 中维护。
 import { clearAllCaches } from '../../utils/plugins/cacheUtils.js';
+// 复用 formatInstallCount、getInstallCounts 工具函数，把通用处理留在 ../../utils/plugins/installCounts.js 中维护。
 import { formatInstallCount, getInstallCounts } from '../../utils/plugins/installCounts.js';
+// 复用 isPluginGloballyInstalled 工具函数，把通用处理留在 ../../utils/plugins/installedPluginsManager.js 中维护。
 import { isPluginGloballyInstalled } from '../../utils/plugins/installedPluginsManager.js';
+// 复用 createPluginId、detectEmptyMarketplaceReason、EmptyMarketplaceReason、formatFailureDetails、formatMarketplaceLoadingErrors、loadMarketplacesWithGracefulDegradation 工具函数，把通用处理留在 ../../utils/plugins/marketplaceHelpers.js 中维护。
 import { createPluginId, detectEmptyMarketplaceReason, type EmptyMarketplaceReason, formatFailureDetails, formatMarketplaceLoadingErrors, loadMarketplacesWithGracefulDegradation } from '../../utils/plugins/marketplaceHelpers.js';
+// 复用 loadKnownMarketplacesConfig 工具函数，把通用处理留在 ../../utils/plugins/marketplaceManager.js 中维护。
 import { loadKnownMarketplacesConfig } from '../../utils/plugins/marketplaceManager.js';
+// 复用 OFFICIAL_MARKETPLACE_NAME 工具函数，把通用处理留在 ../../utils/plugins/officialMarketplace.js 中维护。
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js';
+// 复用 installPluginFromMarketplace 工具函数，把通用处理留在 ../../utils/plugins/pluginInstallationHelpers.js 中维护。
 import { installPluginFromMarketplace } from '../../utils/plugins/pluginInstallationHelpers.js';
+// 复用 isPluginBlockedByPolicy 工具函数，把通用处理留在 ../../utils/plugins/pluginPolicy.js 中维护。
 import { isPluginBlockedByPolicy } from '../../utils/plugins/pluginPolicy.js';
+// 复用 plural 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { plural } from '../../utils/stringUtils.js';
+// 复用 truncateToWidth 工具函数，把通用处理留在 ../../utils/truncate.js 中维护。
 import { truncateToWidth } from '../../utils/truncate.js';
+// 引入 findPluginOptionsTarget、PluginOptionsFlow，将 ./PluginOptionsFlow.js 中已经封装好的能力接到本文件流程里。
 import { findPluginOptionsTarget, PluginOptionsFlow } from './PluginOptionsFlow.js';
+// 引入 PluginTrustWarning，将 ./PluginTrustWarning.js 中已经封装好的能力接到本文件流程里。
 import { PluginTrustWarning } from './PluginTrustWarning.js';
+// 引入 buildPluginDetailsMenuOptions、extractGitHubRepo、InstallablePlugin，将 ./pluginDetailsHelpers.js 中已经封装好的能力接到本文件流程里。
 import { buildPluginDetailsMenuOptions, extractGitHubRepo, type InstallablePlugin } from './pluginDetailsHelpers.js';
+// 类型依赖 { ViewState as ParentViewState } 来自 ./types.js，用于校准命令处理的数据契约。
 import type { ViewState as ParentViewState } from './types.js';
+// 引入 usePagination，将 ./usePagination.js 中已经封装好的能力接到本文件流程里。
 import { usePagination } from './usePagination.js';
+// Props 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   error: string | null;
+  // 这个回调绑定到 setError: (error: string | null) => void;，负责命令处理在该局部场景下的响应。
   setError: (error: string | null) => void;
   result: string | null;
+  // 这个回调绑定到 setResult: (result: string | null) => void;，负责命令处理在该局部场景下的响应。
   setResult: (result: string | null) => void;
+  // 这个回调绑定到 setViewState: (state: ParentViewState) => void;，负责命令处理在该局部场景下的响应。
   setViewState: (state: ParentViewState) => void;
   onInstallComplete?: () => void | Promise<void>;
   onSearchModeChange?: (isActive: boolean) => void;
   targetPlugin?: string;
 };
+// ViewState 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type ViewState = 'plugin-list' | 'plugin-details' | {
   type: 'plugin-options';
   plugin: LoadedPlugin;
   pluginId: string;
 };
+// DiscoverPlugins 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function DiscoverPlugins({
   error,
   setError,
@@ -56,90 +93,130 @@ export function DiscoverPlugins({
   targetPlugin
 }: Props): React.ReactNode {
   // View state
+  // viewState 状态 由 React state 持有，setViewState 会在用户操作或异步结果返回时触发刷新。
   const [viewState, setViewState] = useState<ViewState>('plugin-list');
+  // selectedPlugin 插件数据 由 React state 持有，setSelectedPlugin 会在用户操作或异步结果返回时触发刷新。
   const [selectedPlugin, setSelectedPlugin] = useState<InstallablePlugin | null>(null);
 
   // Data state
+  // availablePlugins 插件数据 由 React state 持有，setAvailablePlugins 会在用户操作或异步结果返回时触发刷新。
   const [availablePlugins, setAvailablePlugins] = useState<InstallablePlugin[]>([]);
+  // 加载状态 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [loading, setLoading] = useState(true);
+  // 从 `useState<Map<string, number> | null>(null)` 按位置拆出 installCounts、setInstallCounts，让插件命令界面 Discover Plugins分别处理这些返回值。
   const [installCounts, setInstallCounts] = useState<Map<string, number> | null>(null);
 
   // Search state
+  // isSearchMode 由 React state 持有，setIsSearchModeRaw 会在用户操作或异步结果返回时触发刷新。
   const [isSearchMode, setIsSearchModeRaw] = useState(false);
+  // setIsSearchMode保存`useCallback`，供命令处理后续处理使用。
   const setIsSearchMode = useCallback((active: boolean) => {
+    // setIsSearchModeRaw 写入新的状态值，使命令处理后续读取保持一致。
     setIsSearchModeRaw(active);
+    // 调用 onSearchModeChange?.(active);，完成这一处局部操作。
     onSearchModeChange?.(active);
   }, [onSearchModeChange]);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     query: searchQuery,
     setQuery: setSearchQuery,
     cursorOffset: searchCursorOffset
   } = useSearchInput({
     isActive: viewState === 'plugin-list' && isSearchMode && !loading,
+    // 这个回调绑定到 onExit: () => {，负责命令处理在该局部场景下的响应。
     onExit: () => {
+      // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
       setIsSearchMode(false);
     }
   });
+  // isTerminalFocused记录 `useTerminalFocus` 是否成立，命令处理随后按该结果分支。
   const isTerminalFocused = useTerminalFocus();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns: terminalWidth
   } = useTerminalSize();
 
   // Filter plugins based on search query
+  // filteredPlugins 插件数据保存`useMemo`，供命令处理后续处理使用。
   const filteredPlugins = useMemo(() => {
+    // searchQuery缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!searchQuery) return availablePlugins;
+    // lowerQuery保存`searchQuery.toLowerCase`，供命令处理后续处理使用。
     const lowerQuery = searchQuery.toLowerCase();
+    // 返回 `availablePlugins.filter(plugin => plugin.entry.name.toLowerCase().inclu...`，作为命令处理这次计算的结果。
     return availablePlugins.filter(plugin => plugin.entry.name.toLowerCase().includes(lowerQuery) || plugin.entry.description?.toLowerCase().includes(lowerQuery) || plugin.marketplaceName.toLowerCase().includes(lowerQuery));
   }, [availablePlugins, searchQuery]);
 
   // Selection state
+  // 选中索引 由 React state 持有，setSelectedIndex 会在用户操作或异步结果返回时触发刷新。
   const [selectedIndex, setSelectedIndex] = useState(0);
+  // 从 `useState<Set<string>>(new Set())` 按位置拆出 selectedForInstall、setSelectedForInstall，让插件命令界面 Discover Plugins分别处理这些返回值。
   const [selectedForInstall, setSelectedForInstall] = useState<Set<string>>(new Set());
+  // 从 `useState<Set<string>>(new Set())` 按位置拆出 installingPlugins、setInstallingPlugins，让插件命令界面 Discover Plugins分别处理这些返回值。
   const [installingPlugins, setInstallingPlugins] = useState<Set<string>>(new Set());
 
   // Pagination for plugin list (continuous scrolling)
+  // pagination读取 hook 状态，供插件命令界面 Discover Plugins本轮渲染使用。
   const pagination = usePagination<InstallablePlugin>({
     totalItems: filteredPlugins.length,
     selectedIndex
   });
 
   // Reset selection when search query changes
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
     setSelectedIndex(0);
   }, [searchQuery]);
 
   // Details view state
+  // detailsMenuIndex 索引 由 React state 持有，setDetailsMenuIndex 会在用户操作或异步结果返回时触发刷新。
   const [detailsMenuIndex, setDetailsMenuIndex] = useState(0);
+  // isInstalling 由 React state 持有，setIsInstalling 会在用户操作或异步结果返回时触发刷新。
   const [isInstalling, setIsInstalling] = useState(false);
+  // installError 错误信息 由 React state 持有，setInstallError 会在用户操作或异步结果返回时触发刷新。
   const [installError, setInstallError] = useState<string | null>(null);
 
   // Warning state for non-critical errors
+  // warning 警告信息 由 React state 持有，setWarning 会在用户操作或异步结果返回时触发刷新。
   const [warning, setWarning] = useState<string | null>(null);
 
   // Empty state reason
+  // emptyReason 由 React state 持有，setEmptyReason 会在用户操作或异步结果返回时触发刷新。
   const [emptyReason, setEmptyReason] = useState<EmptyMarketplaceReason | null>(null);
 
   // Load all plugins from all marketplaces
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // loadAllPlugins 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadAllPlugins() {
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 配置读取`loadKnownMarketplacesConfig`，供命令处理后续处理使用。
         const config = await loadKnownMarketplacesConfig();
 
         // Load marketplaces with graceful degradation
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           marketplaces,
           failures
         } = await loadMarketplacesWithGracefulDegradation(config);
 
         // Collect all plugins from all marketplaces
+        // allPlugins 插件数据 从空数组开始收集，后续循环会按处理顺序追加条目。
         const allPlugins: InstallablePlugin[] = [];
+        // 调用 for，触发命令处理此处需要的副作用。
         for (const {
           name,
           data: marketplace
         } of marketplaces) {
+          // 满足 `marketplace` 时，命令处理执行该分支。
           if (marketplace) {
+            // 按顺序遍历 `marketplace.plugins` 中的entry，逐个交给命令处理处理。
             for (const entry of marketplace.plugins) {
+              // pluginId 插件数据构建`createPluginId`，供命令处理后续处理使用。
               const pluginId = createPluginId(entry.name, name);
+              // allPlugins 插件数据追加新条目，保持收集顺序与输入顺序一致。
               allPlugins.push({
                 entry,
                 marketplaceName: name,
@@ -154,172 +231,256 @@ export function DiscoverPlugins({
         }
 
         // Filter out installed and policy-blocked plugins
+        // uninstalledPlugins 插件数据筛选`allPlugins.filter`，供命令处理后续处理使用。
         const uninstalledPlugins = allPlugins.filter(p => !p.isInstalled && !isPluginBlockedByPolicy(p.pluginId));
 
         // Fetch install counts and sort by popularity
+        // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
         try {
+          // counts 数量读取`getInstallCounts`，供命令处理后续处理使用。
           const counts = await getInstallCounts();
+          // setInstallCounts 写入新的状态值，使命令处理后续读取保持一致。
           setInstallCounts(counts);
+          // 满足 `counts` 时，命令处理执行该分支。
           if (counts) {
             // Sort by install count (descending), then alphabetically
+            // 调用 uninstalledPlugins.sort，触发命令处理此处需要的副作用。
             uninstalledPlugins.sort((a_0, b_0) => {
+              // countA 数量读取`counts.get`，供命令处理后续处理使用。
               const countA = counts.get(a_0.pluginId) ?? 0;
+              // countB 数量读取`counts.get`，供命令处理后续处理使用。
               const countB = counts.get(b_0.pluginId) ?? 0;
+              // `countA` 与 `countB` 不一致时刷新派生状态，避免使用过期结果。
               if (countA !== countB) return countB - countA;
+              // 返回 `a_0.entry.name.localeCompare(b_0.entry.name)`，作为命令处理这次计算的结果。
               return a_0.entry.name.localeCompare(b_0.entry.name);
             });
           } else {
             // No counts available - sort alphabetically
+            // 调用 uninstalledPlugins.sort，触发命令处理此处需要的副作用。
             uninstalledPlugins.sort((a_1, b_1) => a_1.entry.name.localeCompare(b_1.entry.name));
           }
         } catch (error_0) {
           // Log the error, then gracefully degrade to alphabetical sort
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Failed to fetch install counts: ${errorMessage(error_0)}`);
+          // 调用 uninstalledPlugins.sort，触发命令处理此处需要的副作用。
           uninstalledPlugins.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
         }
+        // setAvailablePlugins 写入新的状态值，使命令处理后续读取保持一致。
         setAvailablePlugins(uninstalledPlugins);
 
         // Detect empty reason if no plugins available
+        // configuredCount 配置派生`Object.keys`，供命令处理后续处理使用。
         const configuredCount = Object.keys(config).length;
+        // uninstalledPlugins 插件数据为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
         if (uninstalledPlugins.length === 0) {
+          // reason读取`detectEmptyMarketplaceReason`，供命令处理后续处理使用。
           const reason = await detectEmptyMarketplaceReason({
             configuredMarketplaceCount: configuredCount,
             failedMarketplaceCount: failures.length
           });
+          // setEmptyReason 写入新的状态值，使命令处理后续读取保持一致。
           setEmptyReason(reason);
         }
 
         // Handle marketplace loading errors/warnings
+        // successCount 数量统计`count`，供命令处理后续处理使用。
         const successCount = count(marketplaces, m => m.data !== null);
+        // errorResult 错误信息格式化`formatMarketplaceLoadingErrors`，供命令处理后续处理使用。
         const errorResult = formatMarketplaceLoadingErrors(failures, successCount);
+        // 满足 `errorResult` 时，命令处理执行该分支。
         if (errorResult) {
+          // 当 `errorResult.type` 匹配 `'warning'` 时，命令处理执行对应分支。
           if (errorResult.type === 'warning') {
+            // setWarning 写入新的状态值，使命令处理后续读取保持一致。
             setWarning(errorResult.message + '. Showing available plugins.');
           } else {
+            // 抛出 new Error(errorResult.message);，阻止命令处理在无效状态下继续运行。
             throw new Error(errorResult.message);
           }
         }
 
         // Handle targetPlugin - navigate directly to plugin details
         // Search in allPlugins (before filtering) to handle installed plugins gracefully
+        // 满足 `targetPlugin` 时，命令处理执行该分支。
         if (targetPlugin) {
+          // foundPlugin 插件数据筛选`allPlugins.find`，供命令处理后续处理使用。
           const foundPlugin = allPlugins.find(p_0 => p_0.entry.name === targetPlugin);
+          // 满足 `foundPlugin` 时，命令处理执行该分支。
           if (foundPlugin) {
+            // 满足 `foundPlugin.isInstalled` 时，命令处理执行该分支。
             if (foundPlugin.isInstalled) {
+              // setError 写入新的状态值，使命令处理后续读取保持一致。
               setError(`Plugin '${foundPlugin.pluginId}' is already installed. Use '/plugin' to manage existing plugins.`);
             } else {
+              // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
               setSelectedPlugin(foundPlugin);
+              // setViewState 写入新的状态值，使命令处理后续读取保持一致。
               setViewState('plugin-details');
             }
           } else {
+            // setError 写入新的状态值，使命令处理后续读取保持一致。
             setError(`Plugin "${targetPlugin}" not found in any marketplace`);
           }
         }
       } catch (err) {
+        // setError 写入新的状态值，使命令处理后续读取保持一致。
         setError(err instanceof Error ? err.message : 'Failed to load plugins');
       } finally {
+        // setLoading 写入新的状态值，使命令处理后续读取保持一致。
         setLoading(false);
       }
     }
+    // 显式忽略 `loadAllPlugins()` 的返回值，只保留它触发的副作用。
     void loadAllPlugins();
   }, [setError, targetPlugin]);
 
   // Install selected plugins
+  // installSelectedPlugins 插件数据保存`async`，供命令处理后续处理使用。
   const installSelectedPlugins = async () => {
+    // 满足 `selectedForInstall.size === 0` 时，命令处理执行该分支。
     if (selectedForInstall.size === 0) return;
+    // pluginsToInstall 插件数据筛选`availablePlugins.filter`，供命令处理后续处理使用。
     const pluginsToInstall = availablePlugins.filter(p_1 => selectedForInstall.has(p_1.pluginId));
+    // setInstallingPlugins 写入新的状态值，使命令处理后续读取保持一致。
     setInstallingPlugins(new Set(pluginsToInstall.map(p_2 => p_2.pluginId)));
+    // successCount_0 数量保存`0`，供后续判断或组装使用。
     let successCount_0 = 0;
+    // failureCount 数量保存`0`，供后续判断或组装使用。
     let failureCount = 0;
+    // newFailedPlugins 插件数据 先占位，稍后的条件分支会根据实际输入补齐它。
     const newFailedPlugins: Array<{
       name: string;
       reason: string;
     }> = [];
+    // 按顺序遍历 `pluginsToInstall` 中的plugin_0 插件数据，逐个交给命令处理处理。
     for (const plugin_0 of pluginsToInstall) {
+      // 结果保存`installPluginFromMarketplace`，供命令处理后续处理使用。
       const result = await installPluginFromMarketplace({
         pluginId: plugin_0.pluginId,
         entry: plugin_0.entry,
         marketplaceName: plugin_0.marketplaceName,
         scope: 'user'
       });
+      // 满足 `result.success` 时，命令处理执行该分支。
       if (result.success) {
+        // 插件命令界面 Discover Plugins在这里处理 `successCount_0++`，完成这一小步状态转换。
         successCount_0++;
       } else {
+        // 插件命令界面 Discover Plugins在这里处理 `failureCount++`，完成这一小步状态转换。
         failureCount++;
+        // newFailedPlugins 插件数据追加新条目，保持收集顺序与输入顺序一致。
         newFailedPlugins.push({
           name: plugin_0.entry.name,
           reason: result.error
         });
       }
     }
+    // setInstallingPlugins 写入新的状态值，使命令处理后续读取保持一致。
     setInstallingPlugins(new Set());
+    // setSelectedForInstall 写入新的状态值，使命令处理后续读取保持一致。
     setSelectedForInstall(new Set());
+    // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
     clearAllCaches();
 
     // Handle installation results
+    // 满足 `failureCount === 0` 时，命令处理执行该分支。
     if (failureCount === 0) {
+      // 消息保存`plural`，供命令处理后续处理使用。
       const message = `✓ Installed ${successCount_0} ${plural(successCount_0, 'plugin')}. ` + `Run /reload-plugins to activate.`;
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(message);
+    // 插件命令界面 Discover Plugins在这里处理 `} else if (successCount_0 === 0) {`，完成这一小步状态转换。
     } else if (successCount_0 === 0) {
+      // setError 写入新的状态值，使命令处理后续读取保持一致。
       setError(`Failed to install: ${formatFailureDetails(newFailedPlugins, true)}`);
     } else {
+      // message_0 消息数据格式化`formatFailureDetails`，供命令处理后续处理使用。
       const message_0 = `✓ Installed ${successCount_0} of ${successCount_0 + failureCount} plugins. ` + `Failed: ${formatFailureDetails(newFailedPlugins, false)}. ` + `Run /reload-plugins to activate successfully installed plugins.`;
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(message_0);
     }
+    // 满足 `successCount_0 > 0` 时，命令处理执行该分支。
     if (successCount_0 > 0) {
+      // 满足 `onInstallComplete` 时，命令处理执行该分支。
       if (onInstallComplete) {
+        // 等待 `onInstallComplete()` 完成，再继续插件命令界面 Discover Plugins的异步流程。
         await onInstallComplete();
       }
     }
+    // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
     setParentViewState({
       type: 'menu'
     });
   };
 
   // Install single plugin from details view
+  // handleSinglePluginInstall 插件数据保存`async`，供命令处理后续处理使用。
   const handleSinglePluginInstall = async (plugin_1: InstallablePlugin, scope: 'user' | 'project' | 'local' = 'user') => {
+    // setIsInstalling 写入新的状态值，使命令处理后续读取保持一致。
     setIsInstalling(true);
+    // setInstallError 写入新的状态值，使命令处理后续读取保持一致。
     setInstallError(null);
+    // result_0保存`installPluginFromMarketplace`，供命令处理后续处理使用。
     const result_0 = await installPluginFromMarketplace({
       pluginId: plugin_1.pluginId,
       entry: plugin_1.entry,
       marketplaceName: plugin_1.marketplaceName,
       scope
     });
+    // 满足 `result_0.success` 时，命令处理执行该分支。
     if (result_0.success) {
+      // loaded筛选`findPluginOptionsTarget`，供命令处理后续处理使用。
       const loaded = await findPluginOptionsTarget(plugin_1.pluginId);
+      // 满足 `loaded` 时，命令处理执行该分支。
       if (loaded) {
+        // setIsInstalling 写入新的状态值，使命令处理后续读取保持一致。
         setIsInstalling(false);
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState({
           type: 'plugin-options',
           plugin: loaded,
           pluginId: plugin_1.pluginId
         });
+        // 插件命令界面 Discover Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(result_0.message);
+      // 满足 `onInstallComplete` 时，命令处理执行该分支。
       if (onInstallComplete) {
+        // 等待 `onInstallComplete()` 完成，再继续插件命令界面 Discover Plugins的异步流程。
         await onInstallComplete();
       }
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     } else {
+      // setIsInstalling 写入新的状态值，使命令处理后续读取保持一致。
       setIsInstalling(false);
+      // setInstallError 写入新的状态值，使命令处理后续读取保持一致。
       setInstallError(result_0.error);
     }
   };
 
   // Handle error state
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 满足 `error` 时，命令处理执行该分支。
     if (error) {
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(error);
     }
   }, [error, setResult]);
 
   // Escape in plugin-details view - go back to plugin-list
+  // 调用 useKeybinding，触发命令处理此处需要的副作用。
   useKeybinding('confirm:no', () => {
+    // setViewState 写入新的状态值，使命令处理后续读取保持一致。
     setViewState('plugin-list');
+    // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
     setSelectedPlugin(null);
   }, {
     context: 'Confirmation',
@@ -327,7 +488,9 @@ export function DiscoverPlugins({
   });
 
   // Escape in plugin-list view (not search mode) - exit to parent menu
+  // 调用 useKeybinding，触发命令处理此处需要的副作用。
   useKeybinding('confirm:no', () => {
+    // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
     setParentViewState({
       type: 'menu'
     });
@@ -337,17 +500,26 @@ export function DiscoverPlugins({
   });
 
   // Handle entering search mode (non-escape keys)
+  // 调用 useInput，触发命令处理此处需要的副作用。
   useInput((input, _key) => {
+    // keyIsNotCtrlOrMeta标记插件命令界面 Discover Plugins是否启用对应路径。
     const keyIsNotCtrlOrMeta = !_key.ctrl && !_key.meta;
+    // isSearchMode缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!isSearchMode) {
       // Enter search mode with '/' or any printable character
+      // 只有 `input === '/' && keyIsNotCtrlOrMeta` 满足时，命令处理才执行该分支。
       if (input === '/' && keyIsNotCtrlOrMeta) {
+        // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
         setIsSearchMode(true);
+        // setSearchQuery 写入新的状态值，使命令处理后续读取保持一致。
         setSearchQuery('');
+      // 插件命令界面 Discover Plugins在这里处理 `} else if (keyIsNotCtrlOrMeta && input.length > 0 && !/^\s+$/.test(inpu...`，完成这一小步状态转换。
       } else if (keyIsNotCtrlOrMeta && input.length > 0 && !/^\s+$/.test(input) &&
       // Don't enter search mode for navigation keys
       input !== 'j' && input !== 'k' && input !== 'i') {
+        // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
         setIsSearchMode(true);
+        // setSearchQuery 写入新的状态值，使命令处理后续读取保持一致。
         setSearchQuery(input);
       }
     }
@@ -356,35 +528,55 @@ export function DiscoverPlugins({
   });
 
   // Plugin-list navigation (non-search mode)
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责命令处理在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `selectedIndex === 0` 时，命令处理执行该分支。
       if (selectedIndex === 0) {
+        // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
         setIsSearchMode(true);
       } else {
+        // 调用 pagination.handleSelectionChange，触发命令处理此处需要的副作用。
         pagination.handleSelectionChange(selectedIndex - 1, setSelectedIndex);
       }
     },
+    // 这个回调绑定到 'select:next': () => {，负责命令处理在该局部场景下的响应。
     'select:next': () => {
+      // 满足 `selectedIndex < filteredPlugins.length - 1` 时，命令处理执行该分支。
       if (selectedIndex < filteredPlugins.length - 1) {
+        // 调用 pagination.handleSelectionChange，触发命令处理此处需要的副作用。
         pagination.handleSelectionChange(selectedIndex + 1, setSelectedIndex);
       }
     },
+    // 这个回调绑定到 'select:accept': () => {，负责命令处理在该局部场景下的响应。
     'select:accept': () => {
+      // 只有 `selectedIndex === filteredPlugins.length && selec` 满足时，命令处理才执行该分支。
       if (selectedIndex === filteredPlugins.length && selectedForInstall.size > 0) {
+        // 显式忽略 `installSelectedPlugins()` 的返回值，只保留它触发的副作用。
         void installSelectedPlugins();
+      // 插件命令界面 Discover Plugins在这里处理 `} else if (selectedIndex < filteredPlugins.length) {`，完成这一小步状态转换。
       } else if (selectedIndex < filteredPlugins.length) {
+        // plugin_2 插件数据 命名 `filteredPlugins[selectedIndex]`，让后续代码直接表达这个值的用途。
         const plugin_2 = filteredPlugins[selectedIndex];
+        // 满足 `plugin_2` 时，命令处理执行该分支。
         if (plugin_2) {
+          // 满足 `plugin_2.isInstalled` 时，命令处理执行该分支。
           if (plugin_2.isInstalled) {
+            // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
             setParentViewState({
               type: 'manage-plugins',
               targetPlugin: plugin_2.entry.name,
               targetMarketplace: plugin_2.marketplaceName
             });
           } else {
+            // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
             setSelectedPlugin(plugin_2);
+            // setViewState 写入新的状态值，使命令处理后续读取保持一致。
             setViewState('plugin-details');
+            // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
             setDetailsMenuIndex(0);
+            // setInstallError 写入新的状态值，使命令处理后续读取保持一致。
             setInstallError(null);
           }
         }
@@ -394,23 +586,36 @@ export function DiscoverPlugins({
     context: 'Select',
     isActive: viewState === 'plugin-list' && !isSearchMode
   });
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'plugin:toggle': () => {，负责命令处理在该局部场景下的响应。
     'plugin:toggle': () => {
+      // 满足 `selectedIndex < filteredPlugins.length` 时，命令处理执行该分支。
       if (selectedIndex < filteredPlugins.length) {
+        // plugin_3 插件数据读取 `filteredPlugins[selectedIndex]` 对应条目，后续围绕该成员继续处理。
         const plugin_3 = filteredPlugins[selectedIndex];
+        // 只有 `plugin_3 && !plugin_3.isInstalled` 满足时，命令处理才执行该分支。
         if (plugin_3 && !plugin_3.isInstalled) {
+          // newSelection保存`Set`，供命令处理后续处理使用。
           const newSelection = new Set(selectedForInstall);
+          // 满足 `newSelection.has(plugin_3.pluginId)` 时，命令处理执行该分支。
           if (newSelection.has(plugin_3.pluginId)) {
+            // 调用 newSelection.delete，触发命令处理此处需要的副作用。
             newSelection.delete(plugin_3.pluginId);
           } else {
+            // 调用 newSelection.add，触发命令处理此处需要的副作用。
             newSelection.add(plugin_3.pluginId);
           }
+          // setSelectedForInstall 写入新的状态值，使命令处理后续读取保持一致。
           setSelectedForInstall(newSelection);
         }
       }
     },
+    // 这个回调绑定到 'plugin:install': () => {，负责命令处理在该局部场景下的响应。
     'plugin:install': () => {
+      // 满足 `selectedForInstall.size > 0` 时，命令处理执行该分支。
       if (selectedForInstall.size > 0) {
+        // 显式忽略 `installSelectedPlugins()` 的返回值，只保留它触发的副作用。
         void installSelectedPlugins();
       }
     }
@@ -420,40 +625,70 @@ export function DiscoverPlugins({
   });
 
   // Plugin-details navigation
+  // detailsMenuOptions 集合保存`React.useMemo`，供命令处理后续处理使用。
   const detailsMenuOptions = React.useMemo(() => {
+    // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!selectedPlugin) return [];
+    // hasHomepage标记插件命令界面 Discover Plugins是否启用对应路径。
     const hasHomepage = selectedPlugin.entry.homepage;
+    // githubRepo保存`extractGitHubRepo`，供命令处理后续处理使用。
     const githubRepo = extractGitHubRepo(selectedPlugin);
+    // 返回 `buildPluginDetailsMenuOptions(hasHomepage, githubRepo)`，作为命令处理这次计算的结果。
     return buildPluginDetailsMenuOptions(hasHomepage, githubRepo);
   }, [selectedPlugin]);
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责命令处理在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `detailsMenuIndex > 0` 时，命令处理执行该分支。
       if (detailsMenuIndex > 0) {
+        // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
         setDetailsMenuIndex(detailsMenuIndex - 1);
       }
     },
+    // 这个回调绑定到 'select:next': () => {，负责命令处理在该局部场景下的响应。
     'select:next': () => {
+      // 满足 `detailsMenuIndex < detailsMenuOptions.length - 1` 时，命令处理执行该分支。
       if (detailsMenuIndex < detailsMenuOptions.length - 1) {
+        // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
         setDetailsMenuIndex(detailsMenuIndex + 1);
       }
     },
+    // 这个回调绑定到 'select:accept': () => {，负责命令处理在该局部场景下的响应。
     'select:accept': () => {
+      // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
       if (!selectedPlugin) return;
+      // action 命名 `detailsMenuOptions[detailsMenuIndex]?.action`，让后续代码直接表达这个值的用途。
       const action = detailsMenuOptions[detailsMenuIndex]?.action;
+      // hasHomepage_0标记插件命令界面 Discover Plugins是否启用对应路径。
       const hasHomepage_0 = selectedPlugin.entry.homepage;
+      // githubRepo_0保存`extractGitHubRepo`，供命令处理后续处理使用。
       const githubRepo_0 = extractGitHubRepo(selectedPlugin);
+      // 当 `action` 匹配 `'install-user'` 时，命令处理执行对应分支。
       if (action === 'install-user') {
+        // 显式忽略 `handleSinglePluginInstall(selectedPlugin, 'user')` 的返回值，只保留它触发的副作用。
         void handleSinglePluginInstall(selectedPlugin, 'user');
+      // 插件命令界面 Discover Plugins在这里处理 `} else if (action === 'install-project') {`，完成这一小步状态转换。
       } else if (action === 'install-project') {
+        // 显式忽略 `handleSinglePluginInstall(selectedPlugin, 'project')` 的返回值，只保留它触发的副作用。
         void handleSinglePluginInstall(selectedPlugin, 'project');
+      // 插件命令界面 Discover Plugins在这里处理 `} else if (action === 'install-local') {`，完成这一小步状态转换。
       } else if (action === 'install-local') {
+        // 显式忽略 `handleSinglePluginInstall(selectedPlugin, 'local')` 的返回值，只保留它触发的副作用。
         void handleSinglePluginInstall(selectedPlugin, 'local');
+      // 插件命令界面 Discover Plugins在这里处理 `} else if (action === 'homepage' && hasHomepage_0) {`，完成这一小步状态转换。
       } else if (action === 'homepage' && hasHomepage_0) {
+        // 显式忽略 `openBrowser(hasHomepage_0)` 的返回值，只保留它触发的副作用。
         void openBrowser(hasHomepage_0);
+      // 插件命令界面 Discover Plugins在这里处理 `} else if (action === 'github' && githubRepo_0) {`，完成这一小步状态转换。
       } else if (action === 'github' && githubRepo_0) {
+        // 显式忽略 `openBrowser(`https://github.com/${githubRepo_0}`)` 的返回值，只保留它触发的副作用。
         void openBrowser(`https://github.com/${githubRepo_0}`);
+      // 插件命令界面 Discover Plugins在这里处理 `} else if (action === 'back') {`，完成这一小步状态转换。
       } else if (action === 'back') {
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('plugin-list');
+        // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedPlugin(null);
       }
     }
@@ -461,50 +696,74 @@ export function DiscoverPlugins({
     context: 'Select',
     isActive: viewState === 'plugin-details' && !!selectedPlugin
   });
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'plugin-options') {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       plugin: plugin_4,
       pluginId: pluginId_0
     } = viewState;
+    // finish 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function finish(msg: string): void {
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(msg);
+      // 满足 `onInstallComplete` 时，命令处理执行该分支。
       if (onInstallComplete) {
+        // 显式忽略 `onInstallComplete()` 的返回值，只保留它触发的副作用。
         void onInstallComplete();
       }
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     }
+    // 返回 `<PluginOptionsFlow plugin={plugin_4} pluginId={pluginId_0} onDone={(out...`，作为命令处理这次计算的结果。
     return <PluginOptionsFlow plugin={plugin_4} pluginId={pluginId_0} onDone={(outcome, detail) => {
+      // 按照 outcome 的取值选择命令处理的具体处理分支。
       switch (outcome) {
         case 'configured':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`✓ Installed and configured ${plugin_4.name}. Run /reload-plugins to apply.`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
         case 'skipped':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`✓ Installed ${plugin_4.name}. Run /reload-plugins to apply.`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
         case 'error':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`Installed but failed to save config: ${detail}`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
       }
     }} />;
   }
 
   // Loading state
+  // 满足 `loading` 时，命令处理执行该分支。
   if (loading) {
+    // 返回 `<Text>Loading…</Text>`，作为命令处理这次计算的结果。
     return <Text>Loading…</Text>;
   }
 
   // Error state
+  // 满足 `error` 时，命令处理执行该分支。
   if (error) {
+    // 返回 `<Text color="error">{error}</Text>`，作为命令处理这次计算的结果。
     return <Text color="error">{error}</Text>;
   }
 
   // Plugin details view
+  // 只有 `viewState === 'plugin-details' && selectedPlugin` 满足时，命令处理才执行该分支。
   if (viewState === 'plugin-details' && selectedPlugin) {
+    // hasHomepage_1标记插件命令界面 Discover Plugins是否启用对应路径。
     const hasHomepage_1 = selectedPlugin.entry.homepage;
+    // githubRepo_1保存`extractGitHubRepo`，供命令处理后续处理使用。
     const githubRepo_1 = extractGitHubRepo(selectedPlugin);
+    // menuOptions 集合构建`buildPluginDetailsMenuOptions`，供命令处理后续处理使用。
     const menuOptions = buildPluginDetailsMenuOptions(hasHomepage_1, githubRepo_1);
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text bold>Plugin details</Text>
@@ -532,6 +791,7 @@ export function DiscoverPlugins({
           </Box>}
 
         <Box flexDirection="column">
+          {/* 这个回调绑定到 {menuOptions.map((option, index) => <Box key={option.action}>，负责命令处理在该局部场景下的响应。 */}
           {menuOptions.map((option, index) => <Box key={option.action}>
               {detailsMenuIndex === index && <Text>{'> '}</Text>}
               {detailsMenuIndex !== index && <Text>{'  '}</Text>}
@@ -553,7 +813,9 @@ export function DiscoverPlugins({
   }
 
   // Empty state
+  // availablePlugins 插件数据为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
   if (availablePlugins.length === 0) {
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text bold>Discover plugins</Text>
@@ -568,7 +830,9 @@ export function DiscoverPlugins({
   }
 
   // Get visible plugins from pagination
+  // visiblePlugins 插件数据读取`pagination.getVisibleItems`，供命令处理后续处理使用。
   const visiblePlugins = pagination.getVisibleItems(filteredPlugins);
+  // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
   return <Box flexDirection="column">
       <Box>
         <Text bold>Discover plugins</Text>
@@ -602,12 +866,19 @@ export function DiscoverPlugins({
         </Box>}
 
       {/* Plugin list - use startIndex in key to force re-render on scroll */}
+      {/* 这个回调绑定到 {visiblePlugins.map((plugin_5, visibleIndex) => {，负责命令处理在该局部场景下的响应。 */}
       {visiblePlugins.map((plugin_5, visibleIndex) => {
+      // actualIndex 索引保存`pagination.toActualIndex`，供命令处理后续处理使用。
       const actualIndex = pagination.toActualIndex(visibleIndex);
+      // isSelected标记插件命令界面 Discover Plugins是否启用对应路径。
       const isSelected = selectedIndex === actualIndex;
+      // isSelectedForInstall记录 `selectedForInstall.has` 是否成立，命令处理随后按该结果分支。
       const isSelectedForInstall = selectedForInstall.has(plugin_5.pluginId);
+      // isInstallingThis 集合记录 `installingPlugins.has` 是否成立，命令处理随后按该结果分支。
       const isInstallingThis = installingPlugins.has(plugin_5.pluginId);
+      // isLast标记插件命令界面 Discover Plugins是否启用对应路径。
       const isLast = visibleIndex === visiblePlugins.length - 1;
+      // 返回 `<Box key={`${pagination.startIndex}-${plugin_5.pluginId}`} flexDirectio...`，作为命令处理这次计算的结果。
       return <Box key={`${pagination.startIndex}-${plugin_5.pluginId}`} flexDirection="column" marginBottom={isLast && !error ? 0 : 1}>
             <Box>
               <Text color={isSelected && !isSearchMode ? 'suggestion' : undefined}>
@@ -648,132 +919,209 @@ export function DiscoverPlugins({
       <DiscoverPluginsKeyHint hasSelection={selectedForInstall.size > 0} canToggle={selectedIndex < filteredPlugins.length && !filteredPlugins[selectedIndex]?.isInstalled} />
     </Box>;
 }
+// DiscoverPluginsKeyHint 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function DiscoverPluginsKeyHint(t0) {
+  // $保存`_c`，供命令处理后续处理使用。
   const $ = _c(10);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     hasSelection,
     canToggle
   } = t0;
+  // t1 暂存 `hasSelection && <ConfigurableShortcutHint action="plugin:...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== hasSelection) {
+    // t1 暂存 `hasSelection && <ConfigurableShortcutHint action="plugin:...` 生成的渲染片段，后续返回路径直接复用。
     t1 = hasSelection && <ConfigurableShortcutHint action="plugin:install" context="Plugin" fallback="i" description="install" bold={true} />;
+    // $[0] 缓存 `hasSelection`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = hasSelection;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // t2 暂存 `<Text>type to search</Text>` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    // t2 暂存 `<Text>type to search</Text>` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Text>type to search</Text>;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // t3 暂存 `canToggle && <ConfigurableShortcutHint action="plugin:tog...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== canToggle) {
+    // t3 暂存 `canToggle && <ConfigurableShortcutHint action="plugin:tog...` 生成的渲染片段，后续返回路径直接复用。
     t3 = canToggle && <ConfigurableShortcutHint action="plugin:toggle" context="Plugin" fallback="Space" description="toggle" />;
+    // $[3] 缓存 `canToggle`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = canToggle;
+    // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[4];
   }
+  // t4 暂存 `<ConfigurableShortcutHint action="select:accept" context=...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // t5 暂存 `<ConfigurableShortcutHint action="confirm:no" context="Co...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+    // t4 暂存 `<ConfigurableShortcutHint action="select:accept" context=...` 生成的渲染片段，后续返回路径直接复用。
     t4 = <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="details" />;
+    // t5 暂存 `<ConfigurableShortcutHint action="confirm:no" context="Co...` 生成的渲染片段，后续返回路径直接复用。
     t5 = <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />;
+    // $[5] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t4;
+    // $[6] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t5;
   } else {
+    // t4 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[5];
+    // t5 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[6];
   }
+  // t6 暂存 `<Box marginTop={1}><Text dimColor={true} italic={true}><B...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== t1 || $[8] !== t3) {
+    // t6 暂存 `<Box marginTop={1}><Text dimColor={true} italic={true}><B...` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{t1}{t2}{t3}{t4}{t5}</Byline></Text></Box>;
+    // $[7] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t1;
+    // $[8] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t3;
+    // $[9] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[9];
   }
+  // 返回 `t6`，作为命令处理这次计算的结果。
   return t6;
 }
 
 /**
  * Context-aware empty state message for the Discover screen
  */
+// EmptyStateMessage 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function EmptyStateMessage(t0) {
+  // $保存`_c`，供命令处理后续处理使用。
   const $ = _c(6);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     reason
   } = t0;
+  // 按照 reason 的取值选择命令处理的具体处理分支。
   switch (reason) {
     case "git-not-installed":
       {
+        // t1 暂存 `<><Text dimColor={true}>Git is required to install market...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<><Text dimColor={true}>Git is required to install market...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <><Text dimColor={true}>Git is required to install marketplaces.</Text><Text dimColor={true}>Please install git and restart Claude Code.</Text></>;
+          // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[0] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[0];
         }
+        // 返回 `t1`，作为命令处理这次计算的结果。
         return t1;
       }
     case "all-blocked-by-policy":
       {
+        // t1 暂存 `<><Text dimColor={true}>Your organization policy does not...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<><Text dimColor={true}>Your organization policy does not...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <><Text dimColor={true}>Your organization policy does not allow any external marketplaces.</Text><Text dimColor={true}>Contact your administrator.</Text></>;
+          // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[1] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[1];
         }
+        // 返回 `t1`，作为命令处理这次计算的结果。
         return t1;
       }
     case "policy-restricts-sources":
       {
+        // t1 暂存 `<><Text dimColor={true}>Your organization restricts which...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<><Text dimColor={true}>Your organization restricts which...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <><Text dimColor={true}>Your organization restricts which marketplaces can be added.</Text><Text dimColor={true}>Switch to the Marketplaces tab to view allowed sources.</Text></>;
+          // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[2] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[2];
         }
+        // 返回 `t1`，作为命令处理这次计算的结果。
         return t1;
       }
     case "all-marketplaces-failed":
       {
+        // t1 暂存 `<><Text dimColor={true}>Failed to load marketplace data.<...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<><Text dimColor={true}>Failed to load marketplace data.<...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <><Text dimColor={true}>Failed to load marketplace data.</Text><Text dimColor={true}>Check your network connection.</Text></>;
+          // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[3] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[3];
         }
+        // 返回 `t1`，作为命令处理这次计算的结果。
         return t1;
       }
     case "all-plugins-installed":
       {
+        // t1 暂存 `<><Text dimColor={true}>All available plugins are already...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<><Text dimColor={true}>All available plugins are already...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <><Text dimColor={true}>All available plugins are already installed.</Text><Text dimColor={true}>Check for new plugins later or add more marketplaces.</Text></>;
+          // $[4] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[4] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[4];
         }
+        // 返回 `t1`，作为命令处理这次计算的结果。
         return t1;
       }
     case "no-marketplaces-configured":
     default:
       {
+        // t1 暂存 `<><Text dimColor={true}>No plugins available.</Text><Text...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<><Text dimColor={true}>No plugins available.</Text><Text...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <><Text dimColor={true}>No plugins available.</Text><Text dimColor={true}>Add a marketplace first using the Marketplaces tab.</Text></>;
+          // $[5] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[5] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[5];
         }
+        // 返回 `t1`，作为命令处理这次计算的结果。
         return t1;
       }
   }

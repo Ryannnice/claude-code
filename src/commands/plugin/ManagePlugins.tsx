@@ -1,58 +1,113 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 类型依赖 { Dirent } 来自 fs，用于校准命令处理的数据契约。
 import type { Dirent } from 'fs';
+// 使用 Node/Bun 的 fs/promises 能力处理本地运行时资源。
 import * as fs from 'fs/promises';
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import * as path from 'path';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 复用 ConfigurableShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
+// 复用 Byline 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Byline } from '../../components/design-system/Byline.js';
+// 复用 MCPRemoteServerMenu 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MCPRemoteServerMenu } from '../../components/mcp/MCPRemoteServerMenu.js';
+// 复用 MCPStdioServerMenu 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MCPStdioServerMenu } from '../../components/mcp/MCPStdioServerMenu.js';
+// 复用 MCPToolDetailView 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MCPToolDetailView } from '../../components/mcp/MCPToolDetailView.js';
+// 复用 MCPToolListView 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MCPToolListView } from '../../components/mcp/MCPToolListView.js';
+// 类型依赖 { ClaudeAIServerInfo, HTTPServerInfo, SSEServerInfo, StdioS… 来自 ../../components/mcp/types.js，用于校准命令处理的数据契约。
 import type { ClaudeAIServerInfo, HTTPServerInfo, SSEServerInfo, StdioServerInfo } from '../../components/mcp/types.js';
+// 复用 SearchBox 终端界面组件，避免在这里重复拼装显示逻辑。
 import { SearchBox } from '../../components/SearchBox.js';
+// 引入 useSearchInput，将 ../../hooks/useSearchInput.js 中已经封装好的能力接到本文件流程里。
 import { useSearchInput } from '../../hooks/useSearchInput.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input
+// 引入 Box、Text、useInput、useTerminalFocus，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useInput, useTerminalFocus } from '../../ink.js';
+// 引入 useKeybinding、useKeybindings，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
+// 引入 getBuiltinPluginDefinition，将 ../../plugins/builtinPlugins.js 中已经封装好的能力接到本文件流程里。
 import { getBuiltinPluginDefinition } from '../../plugins/builtinPlugins.js';
+// 接入 useMcpToggleEnabled 服务层能力，把外部通信或共享状态交给 ../../services/mcp/MCPConnectionManager.js 处理。
 import { useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js';
+// 类型依赖 { MCPServerConnection, McpClaudeAIProxyServerConfig, McpHTT… 来自 ../../services/mcp/types.js，用于校准命令处理的数据契约。
 import type { MCPServerConnection, McpClaudeAIProxyServerConfig, McpHTTPServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
+// 接入 filterToolsByServer 服务层能力，把外部通信或共享状态交给 ../../services/mcp/utils.js 处理。
 import { filterToolsByServer } from '../../services/mcp/utils.js';
+// 接入 disablePluginOp、enablePluginOp、getPluginInstallationFromV2、isInstallableScope、isPluginEnabledAtProjectScope、uninstallPluginOp、updatePluginOp 服务层能力，把外部通信或共享状态交给 ../../services/plugins/pluginOperations.js 处理。
 import { disablePluginOp, enablePluginOp, getPluginInstallationFromV2, isInstallableScope, isPluginEnabledAtProjectScope, uninstallPluginOp, updatePluginOp } from '../../services/plugins/pluginOperations.js';
+// 引入 useAppState，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../state/AppState.js';
+// 类型依赖 { Tool } 来自 ../../Tool.js，用于校准命令处理的数据契约。
 import type { Tool } from '../../Tool.js';
+// 类型依赖 { LoadedPlugin, PluginError } 来自 ../../types/plugin.js，用于校准命令处理的数据契约。
 import type { LoadedPlugin, PluginError } from '../../types/plugin.js';
+// 复用 count 工具函数，把通用处理留在 ../../utils/array.js 中维护。
 import { count } from '../../utils/array.js';
+// 复用 openBrowser 工具函数，把通用处理留在 ../../utils/browser.js 中维护。
 import { openBrowser } from '../../utils/browser.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../../utils/debug.js 中维护。
 import { logForDebugging } from '../../utils/debug.js';
+// 复用 errorMessage、toError 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { errorMessage, toError } from '../../utils/errors.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 clearAllCaches 工具函数，把通用处理留在 ../../utils/plugins/cacheUtils.js 中维护。
 import { clearAllCaches } from '../../utils/plugins/cacheUtils.js';
+// 复用 loadInstalledPluginsV2 工具函数，把通用处理留在 ../../utils/plugins/installedPluginsManager.js 中维护。
 import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js';
+// 复用 getMarketplace 工具函数，把通用处理留在 ../../utils/plugins/marketplaceManager.js 中维护。
 import { getMarketplace } from '../../utils/plugins/marketplaceManager.js';
+// 复用 isMcpbSource、loadMcpbFile、McpbNeedsConfigResult、UserConfigValues 工具函数，把通用处理留在 ../../utils/plugins/mcpbHandler.js 中维护。
 import { isMcpbSource, loadMcpbFile, type McpbNeedsConfigResult, type UserConfigValues } from '../../utils/plugins/mcpbHandler.js';
+// 复用 getPluginDataDirSize、pluginDataDirPath 工具函数，把通用处理留在 ../../utils/plugins/pluginDirectories.js 中维护。
 import { getPluginDataDirSize, pluginDataDirPath } from '../../utils/plugins/pluginDirectories.js';
+// 复用 getFlaggedPlugins、markFlaggedPluginsSeen、removeFlaggedPlugin 工具函数，把通用处理留在 ../../utils/plugins/pluginFlagging.js 中维护。
 import { getFlaggedPlugins, markFlaggedPluginsSeen, removeFlaggedPlugin } from '../../utils/plugins/pluginFlagging.js';
+// 复用 PersistablePluginScope、parsePluginIdentifier 工具函数，把通用处理留在 ../../utils/plugins/pluginIdentifier.js 中维护。
 import { type PersistablePluginScope, parsePluginIdentifier } from '../../utils/plugins/pluginIdentifier.js';
+// 复用 loadAllPlugins 工具函数，把通用处理留在 ../../utils/plugins/pluginLoader.js 中维护。
 import { loadAllPlugins } from '../../utils/plugins/pluginLoader.js';
+// 复用 loadPluginOptions、PluginOptionSchema、savePluginOptions 工具函数，把通用处理留在 ../../utils/plugins/pluginOptionsStorage.js 中维护。
 import { loadPluginOptions, type PluginOptionSchema, savePluginOptions } from '../../utils/plugins/pluginOptionsStorage.js';
+// 复用 isPluginBlockedByPolicy 工具函数，把通用处理留在 ../../utils/plugins/pluginPolicy.js 中维护。
 import { isPluginBlockedByPolicy } from '../../utils/plugins/pluginPolicy.js';
+// 复用 getPluginEditableScopes 工具函数，把通用处理留在 ../../utils/plugins/pluginStartupCheck.js 中维护。
 import { getPluginEditableScopes } from '../../utils/plugins/pluginStartupCheck.js';
+// 复用 getSettings_DEPRECATED、getSettingsForSource、updateSettingsForSource 工具函数，把通用处理留在 ../../utils/settings/settings.js 中维护。
 import { getSettings_DEPRECATED, getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js';
+// 复用 jsonParse 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonParse } from '../../utils/slowOperations.js';
+// 复用 plural 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { plural } from '../../utils/stringUtils.js';
+// 引入 formatErrorMessage、getErrorGuidance，将 ./PluginErrors.js 中已经封装好的能力接到本文件流程里。
 import { formatErrorMessage, getErrorGuidance } from './PluginErrors.js';
+// 引入 PluginOptionsDialog，将 ./PluginOptionsDialog.js 中已经封装好的能力接到本文件流程里。
 import { PluginOptionsDialog } from './PluginOptionsDialog.js';
+// 引入 PluginOptionsFlow，将 ./PluginOptionsFlow.js 中已经封装好的能力接到本文件流程里。
 import { PluginOptionsFlow } from './PluginOptionsFlow.js';
+// 类型依赖 { ViewState as ParentViewState } 来自 ./types.js，用于校准命令处理的数据契约。
 import type { ViewState as ParentViewState } from './types.js';
+// 引入 UnifiedInstalledCell，将 ./UnifiedInstalledCell.js 中已经封装好的能力接到本文件流程里。
 import { UnifiedInstalledCell } from './UnifiedInstalledCell.js';
+// 类型依赖 { UnifiedInstalledItem } 来自 ./unifiedTypes.js，用于校准命令处理的数据契约。
 import type { UnifiedInstalledItem } from './unifiedTypes.js';
+// 引入 usePagination，将 ./usePagination.js 中已经封装好的能力接到本文件流程里。
 import { usePagination } from './usePagination.js';
+// Props 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
+  // 这个回调绑定到 setViewState: (state: ParentViewState) => void;，负责命令处理在该局部场景下的响应。
   setViewState: (state: ParentViewState) => void;
+  // 这个回调绑定到 setResult: (result: string | null) => void;，负责命令处理在该局部场景下的响应。
   setResult: (result: string | null) => void;
   onManageComplete?: () => void | Promise<void>;
   onSearchModeChange?: (isActive: boolean) => void;
@@ -60,6 +115,7 @@ type Props = {
   targetMarketplace?: string;
   action?: 'enable' | 'disable' | 'uninstall';
 };
+// FlaggedPluginInfo 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type FlaggedPluginInfo = {
   id: string;
   name: string;
@@ -68,6 +124,7 @@ type FlaggedPluginInfo = {
   text: string;
   flaggedAt: string;
 };
+// FailedPluginInfo 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type FailedPluginInfo = {
   id: string;
   name: string;
@@ -75,6 +132,7 @@ type FailedPluginInfo = {
   errors: PluginError[];
   scope: PersistablePluginScope;
 };
+// ViewState 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type ViewState = 'plugin-list' | 'plugin-details' | 'configuring' | {
   type: 'plugin-options';
 } | {
@@ -103,12 +161,14 @@ type ViewState = 'plugin-list' | 'plugin-details' | 'configuring' | {
   client: MCPServerConnection;
   tool: Tool;
 };
+// MarketplaceInfo 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type MarketplaceInfo = {
   name: string;
   installedPlugins: LoadedPlugin[];
   enabledCount?: number;
   disabledCount?: number;
 };
+// PluginState 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type PluginState = {
   plugin: LoadedPlugin;
   marketplace: string;
@@ -126,23 +186,33 @@ type PluginState = {
  * await getBaseFileNames('/path/to/agents')
  * // Returns: ['agent-sdk-verifier-py', 'agent-sdk-verifier-ts']
  */
+// getBaseFileNames 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getBaseFileNames(dirPath: string): Promise<string[]> {
+  // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
   try {
+    // entries 集合读取`fs.readdir`，供命令处理后续处理使用。
     const entries = await fs.readdir(dirPath, {
       withFileTypes: true
     });
+    // 返回 `entries.filter((entry: Dirent) => entry.isFile() && entry.name.endsWith...`，作为命令处理这次计算的结果。
     return entries.filter((entry: Dirent) => entry.isFile() && entry.name.endsWith('.md')).map((entry: Dirent) => {
       // Remove .md extension specifically
+      // baseName保存`path.basename`，供命令处理后续处理使用。
       const baseName = path.basename(entry.name, '.md');
+      // 返回 `baseName`，作为命令处理这次计算的结果。
       return baseName;
     });
   } catch (error) {
+    // errorMsg 错误信息保存`errorMessage`，供命令处理后续处理使用。
     const errorMsg = errorMessage(error);
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Failed to read plugin components from ${dirPath}: ${errorMsg}`, {
       level: 'error'
     });
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logError(toError(error));
     // Return empty array to allow graceful degradation - plugin details can still be shown
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [];
   }
 }
@@ -157,20 +227,31 @@ async function getBaseFileNames(dirPath: string): Promise<string[]> {
  * await getSkillDirNames('/path/to/skills')
  * // Returns: ['my-skill', 'another-skill']
  */
+// getSkillDirNames 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getSkillDirNames(dirPath: string): Promise<string[]> {
+  // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
   try {
+    // entries 集合读取`fs.readdir`，供命令处理后续处理使用。
     const entries = await fs.readdir(dirPath, {
       withFileTypes: true
     });
+    // skillNames 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     const skillNames: string[] = [];
+    // 按顺序遍历 `entries` 中的entry，逐个交给命令处理处理。
     for (const entry of entries) {
       // Check if it's a directory or symlink (symlinks may point to skill directories)
+      // 只有 `entry.isDirectory() || entry.isSymbolicLink()` 满足时，命令处理才执行该分支。
       if (entry.isDirectory() || entry.isSymbolicLink()) {
         // Check if this directory contains a SKILL.md file
+        // skillFilePath 路径数据格式化`path.join`，供命令处理后续处理使用。
         const skillFilePath = path.join(dirPath, entry.name, 'SKILL.md');
+        // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
         try {
+          // st保存`fs.stat`，供命令处理后续处理使用。
           const st = await fs.stat(skillFilePath);
+          // 满足 `st.isFile()` 时，命令处理执行该分支。
           if (st.isFile()) {
+            // skillNames 集合追加新条目，保持收集顺序与输入顺序一致。
             skillNames.push(entry.name);
           }
         } catch {
@@ -178,19 +259,25 @@ async function getSkillDirNames(dirPath: string): Promise<string[]> {
         }
       }
     }
+    // 返回 `skillNames`，作为命令处理这次计算的结果。
     return skillNames;
   } catch (error) {
+    // errorMsg 错误信息保存`errorMessage`，供命令处理后续处理使用。
     const errorMsg = errorMessage(error);
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Failed to read skill directories from ${dirPath}: ${errorMsg}`, {
       level: 'error'
     });
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logError(toError(error));
     // Return empty array to allow graceful degradation - plugin details can still be shown
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [];
   }
 }
 
 // Component to display installed plugin components
+// PluginComponentsDisplay 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function PluginComponentsDisplay({
   plugin,
   marketplace
@@ -198,6 +285,7 @@ function PluginComponentsDisplay({
   plugin: LoadedPlugin;
   marketplace: string;
 }): React.ReactNode {
+  // 从 `useState<{` 按位置拆出 components、setComponents，让插件命令界面 Manage Plugins分别处理这些返回值。
   const [components, setComponents] = useState<{
     commands?: string | string[] | Record<string, unknown> | null;
     agents?: string | string[] | Record<string, unknown> | null;
@@ -205,19 +293,31 @@ function PluginComponentsDisplay({
     hooks?: unknown;
     mcpServers?: unknown;
   } | null>(null);
+  // 加载状态 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [loading, setLoading] = useState(true);
+  // 错误 由 React state 持有，setError 会在用户操作或异步结果返回时触发刷新。
   const [error, setError] = useState<string | null>(null);
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // loadComponents 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadComponents() {
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
         // Built-in plugins don't have a marketplace entry — read from the
         // registered definition directly.
+        // 当 `marketplace` 匹配 `'builtin'` 时，命令处理执行对应分支。
         if (marketplace === 'builtin') {
+          // builtinDef读取`getBuiltinPluginDefinition`，供命令处理后续处理使用。
           const builtinDef = getBuiltinPluginDefinition(plugin.name);
+          // 满足 `builtinDef` 时，命令处理执行该分支。
           if (builtinDef) {
+            // skillNames 集合派生`map`，供命令处理后续处理使用。
             const skillNames = builtinDef.skills?.map(s => s.name) ?? [];
+            // hookEvents 集合派生`Object.keys`，供命令处理后续处理使用。
             const hookEvents = builtinDef.hooks ? Object.keys(builtinDef.hooks) : [];
+            // mcpServerNames 集合派生`Object.keys`，供命令处理后续处理使用。
             const mcpServerNames = builtinDef.mcpServers ? Object.keys(builtinDef.mcpServers) : [];
+            // setComponents 写入新的状态值，使命令处理后续读取保持一致。
             setComponents({
               commands: null,
               agents: null,
@@ -226,90 +326,137 @@ function PluginComponentsDisplay({
               mcpServers: mcpServerNames.length > 0 ? mcpServerNames : null
             });
           } else {
+            // setError 写入新的状态值，使命令处理后续读取保持一致。
             setError(`Built-in plugin ${plugin.name} not found`);
           }
+          // setLoading 写入新的状态值，使命令处理后续读取保持一致。
           setLoading(false);
+          // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // marketplaceData 市场数据读取`getMarketplace`，供命令处理后续处理使用。
         const marketplaceData = await getMarketplace(marketplace);
         // Find the plugin entry in the array
+        // pluginEntry 插件数据筛选`plugins.find`，供命令处理后续处理使用。
         const pluginEntry = marketplaceData.plugins.find(p => p.name === plugin.name);
+        // 满足 `pluginEntry` 时，命令处理执行该分支。
         if (pluginEntry) {
           // Combine commands from both sources
+          // commandPathList 命令数据 从空数组开始收集，后续循环会按处理顺序追加条目。
           const commandPathList = [];
+          // 满足 `plugin.commandsPath` 时，命令处理执行该分支。
           if (plugin.commandsPath) {
+            // commandPathList 命令数据追加新条目，保持收集顺序与输入顺序一致。
             commandPathList.push(plugin.commandsPath);
           }
+          // 满足 `plugin.commandsPaths` 时，命令处理执行该分支。
           if (plugin.commandsPaths) {
+            // commandPathList 命令数据追加新条目，保持收集顺序与输入顺序一致。
             commandPathList.push(...plugin.commandsPaths);
           }
 
           // Get base file names from all command paths
+          // commandList 命令数据 从空数组开始收集，后续循环会按处理顺序追加条目。
           const commandList: string[] = [];
+          // 按顺序遍历 `commandPathList` 中的commandPath 命令数据，逐个交给命令处理处理。
           for (const commandPath of commandPathList) {
+            // 当 `typeof commandPath` 匹配 `'string'` 时，命令处理执行对应分支。
             if (typeof commandPath === 'string') {
               // commandPath is already a full path
+              // baseNames 集合读取`getBaseFileNames`，供命令处理后续处理使用。
               const baseNames = await getBaseFileNames(commandPath);
+              // commandList 命令数据追加新条目，保持收集顺序与输入顺序一致。
               commandList.push(...baseNames);
             }
           }
 
           // Combine agents from both sources
+          // agentPathList 路径数据 从空数组开始收集，后续循环会按处理顺序追加条目。
           const agentPathList = [];
+          // 满足 `plugin.agentsPath` 时，命令处理执行该分支。
           if (plugin.agentsPath) {
+            // agentPathList 路径数据追加新条目，保持收集顺序与输入顺序一致。
             agentPathList.push(plugin.agentsPath);
           }
+          // 满足 `plugin.agentsPaths` 时，命令处理执行该分支。
           if (plugin.agentsPaths) {
+            // agentPathList 路径数据追加新条目，保持收集顺序与输入顺序一致。
             agentPathList.push(...plugin.agentsPaths);
           }
 
           // Get base file names from all agent paths
+          // agentList 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
           const agentList: string[] = [];
+          // 按顺序遍历 `agentPathList` 中的agentPath 路径数据，逐个交给命令处理处理。
           for (const agentPath of agentPathList) {
+            // 当 `typeof agentPath` 匹配 `'string'` 时，命令处理执行对应分支。
             if (typeof agentPath === 'string') {
               // agentPath is already a full path
+              // baseNames_0读取`getBaseFileNames`，供命令处理后续处理使用。
               const baseNames_0 = await getBaseFileNames(agentPath);
+              // agentList 集合追加新条目，保持收集顺序与输入顺序一致。
               agentList.push(...baseNames_0);
             }
           }
 
           // Combine skills from both sources
+          // skillPathList 路径数据 从空数组开始收集，后续循环会按处理顺序追加条目。
           const skillPathList = [];
+          // 满足 `plugin.skillsPath` 时，命令处理执行该分支。
           if (plugin.skillsPath) {
+            // skillPathList 路径数据追加新条目，保持收集顺序与输入顺序一致。
             skillPathList.push(plugin.skillsPath);
           }
+          // 满足 `plugin.skillsPaths` 时，命令处理执行该分支。
           if (plugin.skillsPaths) {
+            // skillPathList 路径数据追加新条目，保持收集顺序与输入顺序一致。
             skillPathList.push(...plugin.skillsPaths);
           }
 
           // Get skill directory names from all skill paths
           // Skills are directories containing SKILL.md files
+          // skillList 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
           const skillList: string[] = [];
+          // 按顺序遍历 `skillPathList` 中的skillPath 路径数据，逐个交给命令处理处理。
           for (const skillPath of skillPathList) {
+            // 当 `typeof skillPath` 匹配 `'string'` 时，命令处理执行对应分支。
             if (typeof skillPath === 'string') {
               // skillPath is already a full path to a skills directory
+              // skillDirNames 集合读取`getSkillDirNames`，供命令处理后续处理使用。
               const skillDirNames = await getSkillDirNames(skillPath);
+              // skillList 集合追加新条目，保持收集顺序与输入顺序一致。
               skillList.push(...skillDirNames);
             }
           }
 
           // Combine hooks from both sources
+          // hooksList 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
           const hooksList = [];
+          // 满足 `plugin.hooksConfig` 时，命令处理执行该分支。
           if (plugin.hooksConfig) {
+            // hooksList 集合追加新条目，保持收集顺序与输入顺序一致。
             hooksList.push(Object.keys(plugin.hooksConfig));
           }
+          // 满足 `pluginEntry.hooks` 时，命令处理执行该分支。
           if (pluginEntry.hooks) {
+            // hooksList 集合追加新条目，保持收集顺序与输入顺序一致。
             hooksList.push(pluginEntry.hooks);
           }
 
           // Combine MCP servers from both sources
+          // mcpServersList 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
           const mcpServersList = [];
+          // 满足 `plugin.mcpServers` 时，命令处理执行该分支。
           if (plugin.mcpServers) {
+            // mcpServersList 集合追加新条目，保持收集顺序与输入顺序一致。
             mcpServersList.push(Object.keys(plugin.mcpServers));
           }
+          // 满足 `pluginEntry.mcpServers` 时，命令处理执行该分支。
           if (pluginEntry.mcpServers) {
+            // mcpServersList 集合追加新条目，保持收集顺序与输入顺序一致。
             mcpServersList.push(pluginEntry.mcpServers);
           }
+          // setComponents 写入新的状态值，使命令处理后续读取保持一致。
           setComponents({
             commands: commandList.length > 0 ? commandList : null,
             agents: agentList.length > 0 ? agentList : null,
@@ -318,32 +465,46 @@ function PluginComponentsDisplay({
             mcpServers: mcpServersList.length > 0 ? mcpServersList : null
           });
         } else {
+          // setError 写入新的状态值，使命令处理后续读取保持一致。
           setError(`Plugin ${plugin.name} not found in marketplace`);
         }
       } catch (err) {
+        // setError 写入新的状态值，使命令处理后续读取保持一致。
         setError(err instanceof Error ? err.message : 'Failed to load components');
       } finally {
+        // setLoading 写入新的状态值，使命令处理后续读取保持一致。
         setLoading(false);
       }
     }
+    // 显式忽略 `loadComponents()` 的返回值，只保留它触发的副作用。
     void loadComponents();
   }, [plugin.name, plugin.commandsPath, plugin.commandsPaths, plugin.agentsPath, plugin.agentsPaths, plugin.skillsPath, plugin.skillsPaths, plugin.hooksConfig, plugin.mcpServers, marketplace]);
+  // 满足 `loading` 时，命令处理执行该分支。
   if (loading) {
+    // 返回 `null; // Don't show loading state for cleaner UI`，作为命令处理这次计算的结果。
     return null; // Don't show loading state for cleaner UI
   }
+  // 满足 `error` 时，命令处理执行该分支。
   if (error) {
+    // 返回 `<Box flexDirection="column" marginBottom={1}>`，作为命令处理这次计算的结果。
     return <Box flexDirection="column" marginBottom={1}>
         <Text bold>Components:</Text>
         <Text dimColor>Error: {error}</Text>
       </Box>;
   }
+  // components 集合缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!components) {
+    // 返回 `null; // No components info available`，作为命令处理这次计算的结果。
     return null; // No components info available
   }
+  // hasComponents 集合标记插件命令界面 Manage Plugins是否启用对应路径。
   const hasComponents = components.commands || components.agents || components.skills || components.hooks || components.mcpServers;
+  // hasComponents 集合缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!hasComponents) {
+    // 返回 `null; // No components defined`，作为命令处理这次计算的结果。
     return null; // No components defined
   }
+  // 返回 `<Box flexDirection="column" marginBottom={1}>`，作为命令处理这次计算的结果。
   return <Box flexDirection="column" marginBottom={1}>
       <Text bold>Installed components:</Text>
       {components.commands ? <Text dimColor>
@@ -373,12 +534,18 @@ function PluginComponentsDisplay({
  * Check if a plugin is from a local source and cannot be remotely updated
  * @returns Error message if local, null if remote/updatable
  */
+// checkIfLocalPlugin 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function checkIfLocalPlugin(pluginName: string, marketplaceName: string): Promise<string | null> {
+  // marketplace 市场数据读取`getMarketplace`，供命令处理后续处理使用。
   const marketplace = await getMarketplace(marketplaceName);
+  // entry筛选`plugins.find`，供命令处理后续处理使用。
   const entry = marketplace?.plugins.find(p => p.name === pluginName);
+  // 当 `entry && typeof entry.source` 匹配 `'string'` 时，命令处理执行对应分支。
   if (entry && typeof entry.source === 'string') {
+    // 返回 ``Local plugins cannot be updated remotely. To update, modify the source...`，作为命令处理这次计算的结果。
     return `Local plugins cannot be updated remotely. To update, modify the source at: ${entry.source}`;
   }
+  // 返回 `null`，作为命令处理这次计算的结果。
   return null;
 }
 
@@ -388,12 +555,17 @@ async function checkIfLocalPlugin(pluginName: string, marketplaceName: string): 
  * Checks policySettings directly rather than installation scope, since managed
  * settings don't create installation records with scope 'managed'.
  */
+// filterManagedDisabledPlugins 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function filterManagedDisabledPlugins(plugins: LoadedPlugin[]): LoadedPlugin[] {
+  // 返回 `plugins.filter(plugin => {`，作为命令处理这次计算的结果。
   return plugins.filter(plugin => {
+    // marketplace 市场数据格式化`source.split`，供命令处理后续处理使用。
     const marketplace = plugin.source.split('@')[1] || 'local';
+    // 返回 `!isPluginBlockedByPolicy(`${plugin.name}@${marketplace}`)`，作为命令处理这次计算的结果。
     return !isPluginBlockedByPolicy(`${plugin.name}@${marketplace}`);
   });
 }
+// ManagePlugins 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function ManagePlugins({
   setViewState: setParentViewState,
   setResult,
@@ -404,95 +576,148 @@ export function ManagePlugins({
   action
 }: Props): React.ReactNode {
   // App state for MCP access
+  // mcpClients 集合保存`useAppState`，供命令处理后续处理使用。
   const mcpClients = useAppState(s => s.mcp.clients);
+  // mcpTools 集合保存`useAppState`，供命令处理后续处理使用。
   const mcpTools = useAppState(s_0 => s_0.mcp.tools);
+  // pluginErrors 插件数据保存`useAppState`，供命令处理后续处理使用。
   const pluginErrors = useAppState(s_1 => s_1.plugins.errors);
+  // flaggedPlugins 插件数据读取`getFlaggedPlugins`，供命令处理后续处理使用。
   const flaggedPlugins = getFlaggedPlugins();
 
   // Search state
+  // isSearchMode 由 React state 持有，setIsSearchModeRaw 会在用户操作或异步结果返回时触发刷新。
   const [isSearchMode, setIsSearchModeRaw] = useState(false);
+  // setIsSearchMode保存`useCallback`，供命令处理后续处理使用。
   const setIsSearchMode = useCallback((active: boolean) => {
+    // setIsSearchModeRaw 写入新的状态值，使命令处理后续读取保持一致。
     setIsSearchModeRaw(active);
+    // 调用 onSearchModeChange?.(active);，完成这一处局部操作。
     onSearchModeChange?.(active);
   }, [onSearchModeChange]);
+  // isTerminalFocused记录 `useTerminalFocus` 是否成立，命令处理随后按该结果分支。
   const isTerminalFocused = useTerminalFocus();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns: terminalWidth
   } = useTerminalSize();
 
   // View state
+  // viewState 状态 由 React state 持有，setViewState 会在用户操作或异步结果返回时触发刷新。
   const [viewState, setViewState] = useState<ViewState>('plugin-list');
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     query: searchQuery,
     setQuery: setSearchQuery,
     cursorOffset: searchCursorOffset
   } = useSearchInput({
     isActive: viewState === 'plugin-list' && isSearchMode,
+    // 这个回调绑定到 onExit: () => {，负责命令处理在该局部场景下的响应。
     onExit: () => {
+      // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
       setIsSearchMode(false);
     }
   });
+  // selectedPlugin 插件数据 由 React state 持有，setSelectedPlugin 会在用户操作或异步结果返回时触发刷新。
   const [selectedPlugin, setSelectedPlugin] = useState<PluginState | null>(null);
 
   // Data state
+  // marketplaces 市场数据 由 React state 持有，setMarketplaces 会在用户操作或异步结果返回时触发刷新。
   const [marketplaces, setMarketplaces] = useState<MarketplaceInfo[]>([]);
+  // pluginStates 插件数据 由 React state 持有，setPluginStates 会在用户操作或异步结果返回时触发刷新。
   const [pluginStates, setPluginStates] = useState<PluginState[]>([]);
+  // 加载状态 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [loading, setLoading] = useState(true);
+  // 从 `useState<Map<string, 'will-enable' | 'will-disable'>>(n...` 按位置拆出 pendingToggles、setPendingToggles，让插件命令界面 Manage Plugins分别处理这些返回值。
   const [pendingToggles, setPendingToggles] = useState<Map<string, 'will-enable' | 'will-disable'>>(new Map());
 
   // Guard to prevent auto-navigation from re-triggering after the user
   // navigates away (targetPlugin is never cleared by the parent).
+  // hasAutoNavigated记录 `useRef` 是否成立，命令处理随后按该结果分支。
   const hasAutoNavigated = useRef(false);
   // Auto-action (enable/disable/uninstall) to fire after auto-navigation lands.
   // Ref, not state: it's consumed by a one-shot effect that already re-runs on
   // viewState/selectedPlugin, so a render-triggering state var would be redundant.
+  // pendingAutoActionRef 引用保存 hook 状态，让插件命令界面 Manage Plugins跨渲染复用同一个容器。
   const pendingAutoActionRef = useRef<'enable' | 'disable' | 'uninstall' | undefined>(undefined);
 
   // MCP toggle hook
+  // toggleMcpServer保存`useMcpToggleEnabled`，供命令处理后续处理使用。
   const toggleMcpServer = useMcpToggleEnabled();
 
   // Handle escape to go back - viewState-dependent navigation
+  // handleBack保存`React.useCallback`，供命令处理后续处理使用。
   const handleBack = React.useCallback(() => {
+    // 当 `viewState` 匹配 `'plugin-details'` 时，命令处理执行对应分支。
     if (viewState === 'plugin-details') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
+      // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
       setSelectedPlugin(null);
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (typeof viewState === 'object' && viewState.type === 'failed-...`，完成这一小步状态转换。
     } else if (typeof viewState === 'object' && viewState.type === 'failed-plugin-details') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (viewState === 'configuring') {`，完成这一小步状态转换。
     } else if (viewState === 'configuring') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-details');
+      // setConfigNeeded 写入新的状态值，使命令处理后续读取保持一致。
       setConfigNeeded(null);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (typeof viewState === 'object' && (viewState.type === 'plugin...`，完成这一小步状态转换。
     } else if (typeof viewState === 'object' && (viewState.type === 'plugin-options' || viewState.type === 'configuring-options')) {
       // Cancel mid-sequence — plugin is already enabled, just bail to list.
       // User can configure later via the Configure options menu if they want.
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
+      // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
       setSelectedPlugin(null);
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult('Plugin enabled. Configuration skipped — run /reload-plugins to apply.');
+      // 满足 `onManageComplete` 时，命令处理执行该分支。
       if (onManageComplete) {
+        // 显式忽略 `onManageComplete()` 的返回值，只保留它触发的副作用。
         void onManageComplete();
       }
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (typeof viewState === 'object' && viewState.type === 'flagged...`，完成这一小步状态转换。
     } else if (typeof viewState === 'object' && viewState.type === 'flagged-detail') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (typeof viewState === 'object' && viewState.type === 'mcp-det...`，完成这一小步状态转换。
     } else if (typeof viewState === 'object' && viewState.type === 'mcp-detail') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (typeof viewState === 'object' && viewState.type === 'mcp-too...`，完成这一小步状态转换。
     } else if (typeof viewState === 'object' && viewState.type === 'mcp-tools') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState({
         type: 'mcp-detail',
         client: viewState.client
       });
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (typeof viewState === 'object' && viewState.type === 'mcp-too...`，完成这一小步状态转换。
     } else if (typeof viewState === 'object' && viewState.type === 'mcp-tool-detail') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState({
         type: 'mcp-tools',
         client: viewState.client
       });
     } else {
+      // 满足 `pendingToggles.size > 0` 时，命令处理执行该分支。
       if (pendingToggles.size > 0) {
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult('Run /reload-plugins to apply plugin changes.');
+        // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
@@ -504,47 +729,67 @@ export function ManagePlugins({
   // Confirmation context — letting this fire would create competing handlers)
   // and confirm-data-cleanup (uses raw useInput where n and escape are
   // DIFFERENT actions: keep-data vs cancel).
+  // 调用 useKeybinding，触发命令处理此处需要的副作用。
   useKeybinding('confirm:no', handleBack, {
     context: 'Confirmation',
     isActive: (viewState !== 'plugin-list' || !isSearchMode) && viewState !== 'confirm-project-uninstall' && !(typeof viewState === 'object' && viewState.type === 'confirm-data-cleanup')
   });
 
   // Helper to get MCP status
+  // getMcpStatus 集合 命名 `(client: MCPServerConnection): 'connected' | 'disabled' |...`，让后续代码直接表达这个值的用途。
   const getMcpStatus = (client: MCPServerConnection): 'connected' | 'disabled' | 'pending' | 'needs-auth' | 'failed' => {
+    // 当 `client.type` 匹配 `'connected'` 时，命令处理执行对应分支。
     if (client.type === 'connected') return 'connected';
+    // 当 `client.type` 匹配 `'disabled'` 时，命令处理执行对应分支。
     if (client.type === 'disabled') return 'disabled';
+    // 当 `client.type` 匹配 `'pending'` 时，命令处理执行对应分支。
     if (client.type === 'pending') return 'pending';
+    // 当 `client.type` 匹配 `'needs-auth'` 时，命令处理执行对应分支。
     if (client.type === 'needs-auth') return 'needs-auth';
+    // 返回 `'failed'`，作为命令处理这次计算的结果。
     return 'failed';
   };
 
   // Derive unified items from plugins and MCP servers
+  // unifiedItems 集合保存`useMemo`，供命令处理后续处理使用。
   const unifiedItems = useMemo(() => {
+    // mergedSettings 集合读取`getSettings_DEPRECATED`，供命令处理后续处理使用。
     const mergedSettings = getSettings_DEPRECATED();
 
     // Build map of plugin name -> child MCPs
     // Plugin MCPs have names like "plugin:pluginName:serverName"
+    // pluginMcpMap 插件数据构建`new Map<string, Array<{`，供后续判断或组装使用。
     const pluginMcpMap = new Map<string, Array<{
       displayName: string;
       client: MCPServerConnection;
     }>>();
+    // 按顺序遍历 `mcpClients` 中的client_0，逐个交给命令处理处理。
     for (const client_0 of mcpClients) {
+      // 满足 `client_0.name.startsWith('plugin:')` 时，命令处理执行该分支。
       if (client_0.name.startsWith('plugin:')) {
+        // 片段列表格式化`name.split`，供命令处理后续处理使用。
         const parts = client_0.name.split(':');
+        // 满足 `parts.length >= 3` 时，命令处理执行该分支。
         if (parts.length >= 3) {
+          // pluginName 插件数据读取 `parts[1]!` 对应条目，后续围绕该成员继续处理。
           const pluginName = parts[1]!;
+          // serverName格式化`parts.slice`，供命令处理后续处理使用。
           const serverName = parts.slice(2).join(':');
+          // existing读取`pluginMcpMap.get`，供命令处理后续处理使用。
           const existing = pluginMcpMap.get(pluginName) || [];
+          // existing追加新条目，保持收集顺序与输入顺序一致。
           existing.push({
             displayName: serverName,
             client: client_0
           });
+          // pluginMcpMap.set 写入新的状态值，使命令处理后续读取保持一致。
           pluginMcpMap.set(pluginName, existing);
         }
       }
     }
 
     // Build plugin items (unsorted for now)
+    // PluginWithChildren 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
     type PluginWithChildren = {
       item: UnifiedInstalledItem & {
         type: 'plugin';
@@ -555,14 +800,21 @@ export function ManagePlugins({
         client: MCPServerConnection;
       }>;
     };
+    // pluginsWithChildren 插件数据 从空数组开始收集，后续循环会按处理顺序追加条目。
     const pluginsWithChildren: PluginWithChildren[] = [];
+    // 按顺序遍历 `pluginStates` 中的状态，逐个交给命令处理处理。
     for (const state of pluginStates) {
+      // pluginId 插件数据 命名 ``${state.plugin.name}@${state.marketplace}``，让后续代码直接表达这个值的用途。
       const pluginId = `${state.plugin.name}@${state.marketplace}`;
+      // isEnabled标记插件命令界面 Manage Plugins是否启用对应路径。
       const isEnabled = mergedSettings?.enabledPlugins?.[pluginId] !== false;
+      // 错误列表筛选`pluginErrors.filter`，供命令处理后续处理使用。
       const errors = pluginErrors.filter(e => 'plugin' in e && e.plugin === state.plugin.name || e.source === pluginId || e.source.startsWith(`${state.plugin.name}@`));
 
       // Built-in plugins use 'builtin' scope; others look up from V2 data.
+      // originalScope标记插件命令界面 Manage Plugins是否启用对应路径。
       const originalScope = state.plugin.isBuiltin ? 'builtin' : state.scope || 'user';
+      // pluginsWithChildren 插件数据追加新条目，保持收集顺序与输入顺序一致。
       pluginsWithChildren.push({
         item: {
           type: 'plugin',
@@ -585,34 +837,53 @@ export function ManagePlugins({
     }
 
     // Find orphan errors (errors for plugins that failed to load entirely)
+    // matchedPluginIds 插件数据保存`Set`，供命令处理后续处理使用。
     const matchedPluginIds = new Set(pluginsWithChildren.map(({
       item
     }) => item.id));
+    // matchedPluginNames 插件数据保存`Set`，供命令处理后续处理使用。
     const matchedPluginNames = new Set(pluginsWithChildren.map(({
       item: item_0
     }) => item_0.name));
+    // orphanErrorsBySource 错误信息 命名 `new Map<string, typeof pluginErrors>()`，让后续代码直接表达这个值的用途。
     const orphanErrorsBySource = new Map<string, typeof pluginErrors>();
+    // 按顺序遍历 `pluginErrors` 中的错误，逐个交给命令处理处理。
     for (const error of pluginErrors) {
+      // 只有 `matchedPluginIds.has(error.source) || 'plugin' in error && typeof error.plu...` 满足时，命令处理才执行该分支。
       if (matchedPluginIds.has(error.source) || 'plugin' in error && typeof error.plugin === 'string' && matchedPluginNames.has(error.plugin)) {
+        // 跳过当前项，继续处理命令处理中的下一轮循环。
         continue;
       }
+      // existing_0读取`orphanErrorsBySource.get`，供命令处理后续处理使用。
       const existing_0 = orphanErrorsBySource.get(error.source) || [];
+      // existing_0追加新条目，保持收集顺序与输入顺序一致。
       existing_0.push(error);
+      // orphanErrorsBySource.set 写入新的状态值，使命令处理后续读取保持一致。
       orphanErrorsBySource.set(error.source, existing_0);
     }
+    // pluginScopes 插件数据读取`getPluginEditableScopes`，供命令处理后续处理使用。
     const pluginScopes = getPluginEditableScopes();
+    // failedPluginItems 插件数据 从空数组开始收集，后续循环会按处理顺序追加条目。
     const failedPluginItems: UnifiedInstalledItem[] = [];
+    // 循环处理 `const [pluginId_0, errors_0] of orphanErrorsBySou`，让命令处理逐项把同类条目按顺序走完。
     for (const [pluginId_0, errors_0] of orphanErrorsBySource) {
       // Skip plugins that are already shown in the flagged section
+      // 满足 `pluginId_0 in flaggedPlugins` 时，命令处理执行该分支。
       if (pluginId_0 in flaggedPlugins) continue;
+      // 解析结果解析`parsePluginIdentifier`，供命令处理后续处理使用。
       const parsed = parsePluginIdentifier(pluginId_0);
+      // pluginName_0 插件数据标记插件命令界面 Manage Plugins是否启用对应路径。
       const pluginName_0 = parsed.name || pluginId_0;
+      // marketplace 市场数据标记插件命令界面 Manage Plugins是否启用对应路径。
       const marketplace = parsed.marketplace || 'unknown';
+      // rawScope读取`pluginScopes.get`，供命令处理后续处理使用。
       const rawScope = pluginScopes.get(pluginId_0);
       // 'flag' is session-only (from --plugin-dir / flagSettings) and undefined
       // means the plugin isn't in any settings source. Default both to 'user'
       // since UnifiedInstalledItem doesn't have a 'flag' scope variant.
+      // scope标记插件命令界面 Manage Plugins是否启用对应路径。
       const scope = rawScope === 'flag' || rawScope === undefined ? 'user' : rawScope;
+      // failedPluginItems 插件数据追加新条目，保持收集顺序与输入顺序一致。
       failedPluginItems.push({
         type: 'failed-plugin',
         id: pluginId_0,
@@ -625,10 +896,15 @@ export function ManagePlugins({
     }
 
     // Build standalone MCP items
+    // standaloneMcps 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     const standaloneMcps: UnifiedInstalledItem[] = [];
+    // 按顺序遍历 `mcpClients` 中的client_1，逐个交给命令处理处理。
     for (const client_1 of mcpClients) {
+      // 当 `client_1.name` 匹配 `'ide'` 时，命令处理执行对应分支。
       if (client_1.name === 'ide') continue;
+      // 满足 `client_1.name.startsWith('plugin:')` 时，命令处理执行该分支。
       if (client_1.name.startsWith('plugin:')) continue;
+      // standaloneMcps 集合追加新条目，保持收集顺序与输入顺序一致。
       standaloneMcps.push({
         type: 'mcp',
         id: `mcp:${client_1.name}`,
@@ -641,6 +917,7 @@ export function ManagePlugins({
     }
 
     // Define scope order for display
+    // scopeOrder 集中保存插件命令界面 Manage Plugins要一起传递的字段。
     const scopeOrder: Record<string, number> = {
       flagged: -1,
       project: 0,
@@ -654,32 +931,44 @@ export function ManagePlugins({
 
     // Build final list by merging plugins (with their child MCPs) and standalone MCPs
     // Group by scope to avoid duplicate scope headers
+    // unified 从空数组开始收集，后续循环会按处理顺序追加条目。
     const unified: UnifiedInstalledItem[] = [];
 
     // Create a map of scope -> items for proper merging
+    // itemsByScope构建`new Map<string, UnifiedInstalledItem[]>()` 整理出中间结果，供插件命令界面 Manage Plugins后续步骤使用。
     const itemsByScope = new Map<string, UnifiedInstalledItem[]>();
 
     // Add plugins with their child MCPs
+    // 调用 for，触发命令处理此处需要的副作用。
     for (const {
       item: item_1,
       originalScope: originalScope_0,
       childMcps
     } of pluginsWithChildren) {
+      // scope_0保存`item_1.scope`，供后续判断或组装使用。
       const scope_0 = item_1.scope;
+      // 满足 `!itemsByScope.has(scope_0)` 时，命令处理执行该分支。
       if (!itemsByScope.has(scope_0)) {
+        // itemsByScope.set 写入新的状态值，使命令处理后续读取保持一致。
         itemsByScope.set(scope_0, []);
       }
+      // 调用 itemsByScope.get，触发命令处理此处需要的副作用。
       itemsByScope.get(scope_0)!.push(item_1);
       // Add child MCPs right after the plugin, indented (use original scope, not 'flagged').
       // Built-in plugins map to 'user' for display since MCP ConfigScope doesn't include 'builtin'.
+      // 调用 for，触发命令处理此处需要的副作用。
       for (const {
         displayName,
         client: client_2
       } of childMcps) {
+        // displayScope标记插件命令界面 Manage Plugins是否启用对应路径。
         const displayScope = originalScope_0 === 'builtin' ? 'user' : originalScope_0;
+        // 满足 `!itemsByScope.has(displayScope)` 时，命令处理执行该分支。
         if (!itemsByScope.has(displayScope)) {
+          // itemsByScope.set 写入新的状态值，使命令处理后续读取保持一致。
           itemsByScope.set(displayScope, []);
         }
+        // 调用 itemsByScope.get，触发命令处理此处需要的副作用。
         itemsByScope.get(displayScope)!.push({
           type: 'mcp',
           id: `mcp:${client_2.name}`,
@@ -694,32 +983,49 @@ export function ManagePlugins({
     }
 
     // Add standalone MCPs to their respective scope groups
+    // 按顺序遍历 `standaloneMcps` 中的mcp，逐个交给命令处理处理。
     for (const mcp of standaloneMcps) {
+      // scope_1保存`mcp.scope`，供后续判断或组装使用。
       const scope_1 = mcp.scope;
+      // 满足 `!itemsByScope.has(scope_1)` 时，命令处理执行该分支。
       if (!itemsByScope.has(scope_1)) {
+        // itemsByScope.set 写入新的状态值，使命令处理后续读取保持一致。
         itemsByScope.set(scope_1, []);
       }
+      // 调用 itemsByScope.get，触发命令处理此处需要的副作用。
       itemsByScope.get(scope_1)!.push(mcp);
     }
 
     // Add failed plugins to their respective scope groups
+    // 按顺序遍历 `failedPluginItems` 中的failedPlugin 插件数据，逐个交给命令处理处理。
     for (const failedPlugin of failedPluginItems) {
+      // scope_2保存`failedPlugin.scope`，供后续判断或组装使用。
       const scope_2 = failedPlugin.scope;
+      // 满足 `!itemsByScope.has(scope_2)` 时，命令处理执行该分支。
       if (!itemsByScope.has(scope_2)) {
+        // itemsByScope.set 写入新的状态值，使命令处理后续读取保持一致。
         itemsByScope.set(scope_2, []);
       }
+      // 调用 itemsByScope.get，触发命令处理此处需要的副作用。
       itemsByScope.get(scope_2)!.push(failedPlugin);
     }
 
     // Add flagged (delisted) plugins from user settings.
     // Reason/text are looked up from the cached security messages file.
+    // 循环处理 `const [pluginId_1, entry] of Object.entries(flaggedPlugins)`，让命令处理把同类条目按顺序走完。
     for (const [pluginId_1, entry] of Object.entries(flaggedPlugins)) {
+      // parsed_0解析`parsePluginIdentifier`，供命令处理后续处理使用。
       const parsed_0 = parsePluginIdentifier(pluginId_1);
+      // pluginName_1 插件数据标记插件命令界面 Manage Plugins是否启用对应路径。
       const pluginName_1 = parsed_0.name || pluginId_1;
+      // marketplace_0 市场数据标记插件命令界面 Manage Plugins是否启用对应路径。
       const marketplace_0 = parsed_0.marketplace || 'unknown';
+      // 满足 `!itemsByScope.has('flagged')` 时，命令处理执行该分支。
       if (!itemsByScope.has('flagged')) {
+        // itemsByScope.set 写入新的状态值，使命令处理后续读取保持一致。
         itemsByScope.set('flagged', []);
       }
+      // 调用 itemsByScope.get，触发命令处理此处需要的副作用。
       itemsByScope.get('flagged')!.push({
         type: 'flagged-plugin',
         id: pluginId_1,
@@ -733,74 +1039,111 @@ export function ManagePlugins({
     }
 
     // Sort scopes and build final list
+    // sortedScopes 集合保存`itemsByScope.keys`，供命令处理后续处理使用。
     const sortedScopes = [...itemsByScope.keys()].sort((a, b) => (scopeOrder[a] ?? 99) - (scopeOrder[b] ?? 99));
+    // 按顺序遍历 `sortedScopes` 中的scope_3，逐个交给命令处理处理。
     for (const scope_3 of sortedScopes) {
+      // items 集合读取`itemsByScope.get`，供命令处理后续处理使用。
       const items = itemsByScope.get(scope_3)!;
 
       // Separate items into plugin groups (with their child MCPs) and standalone MCPs
       // This preserves parent-child relationships that would be broken by naive sorting
+      // pluginGroups 插件数据 从空数组开始收集，后续循环会按处理顺序追加条目。
       const pluginGroups: UnifiedInstalledItem[][] = [];
+      // standaloneMcpsInScope 从空数组开始收集，后续循环会按处理顺序追加条目。
       const standaloneMcpsInScope: UnifiedInstalledItem[] = [];
+      // i保存`0`，供后续判断或组装使用。
       let i = 0;
+      // while 使用 i < items.length 完成命令处理里的对应操作。
       while (i < items.length) {
+        // item_2 命名 `items[i]!`，让后续代码直接表达这个值的用途。
         const item_2 = items[i]!;
+        // 只有 `item_2.type === 'plugin' || item_2.type === 'fail` 满足时，命令处理才执行该分支。
         if (item_2.type === 'plugin' || item_2.type === 'failed-plugin' || item_2.type === 'flagged-plugin') {
           // Collect the plugin and its child MCPs as a group
+          // group 聚合成有序列表，保持后续遍历顺序稳定。
           const group: UnifiedInstalledItem[] = [item_2];
+          // 插件命令界面 Manage Plugins在这里处理 `i++`，完成这一小步状态转换。
           i++;
           // Look ahead for indented child MCPs
+          // nextItem 命名 `items[i]`，让后续代码直接表达这个值的用途。
           let nextItem = items[i];
+          // while 使用 nextItem?.type === 'mcp' && nextItem.indented 完成命令处理里的对应操作。
           while (nextItem?.type === 'mcp' && nextItem.indented) {
+            // group追加新条目，保持收集顺序与输入顺序一致。
             group.push(nextItem);
+            // 插件命令界面 Manage Plugins在这里处理 `i++`，完成这一小步状态转换。
             i++;
+            // nextItem更新为 `items[i]`，确保插件命令界面后续读取最新状态。
             nextItem = items[i];
           }
+          // pluginGroups 插件数据追加新条目，保持收集顺序与输入顺序一致。
           pluginGroups.push(group);
+        // 插件命令界面 Manage Plugins在这里处理 `} else if (item_2.type === 'mcp' && !item_2.indented) {`，完成这一小步状态转换。
         } else if (item_2.type === 'mcp' && !item_2.indented) {
           // Standalone MCP (not a child of a plugin)
+          // standaloneMcpsInScope追加新条目，保持收集顺序与输入顺序一致。
           standaloneMcpsInScope.push(item_2);
+          // 插件命令界面 Manage Plugins在这里处理 `i++`，完成这一小步状态转换。
           i++;
         } else {
           // Skip orphaned indented MCPs (shouldn't happen)
+          // 插件命令界面 Manage Plugins在这里处理 `i++`，完成这一小步状态转换。
           i++;
         }
       }
 
       // Sort plugin groups by the plugin name (first item in each group)
+      // 调用 pluginGroups.sort，触发命令处理此处需要的副作用。
       pluginGroups.sort((a_0, b_0) => a_0[0]!.name.localeCompare(b_0[0]!.name));
 
       // Sort standalone MCPs by name
+      // 调用 standaloneMcpsInScope.sort，触发命令处理此处需要的副作用。
       standaloneMcpsInScope.sort((a_1, b_1) => a_1.name.localeCompare(b_1.name));
 
       // Build final list: plugins (with their children) first, then standalone MCPs
+      // 按顺序遍历 `pluginGroups` 中的group_0，逐个交给命令处理处理。
       for (const group_0 of pluginGroups) {
+        // unified追加新条目，保持收集顺序与输入顺序一致。
         unified.push(...group_0);
       }
+      // unified追加新条目，保持收集顺序与输入顺序一致。
       unified.push(...standaloneMcpsInScope);
     }
+    // 返回 `unified`，作为命令处理这次计算的结果。
     return unified;
   }, [pluginStates, mcpClients, pluginErrors, pendingToggles, flaggedPlugins]);
 
   // Mark flagged plugins as seen when the Installed view renders them.
   // After 48 hours from seenAt, they auto-clear on next load.
+  // flaggedIds 集合保存`useMemo`，供命令处理后续处理使用。
   const flaggedIds = useMemo(() => unifiedItems.filter(item_3 => item_3.type === 'flagged-plugin').map(item_4 => item_4.id), [unifiedItems]);
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 满足 `flaggedIds.length > 0` 时，命令处理执行该分支。
     if (flaggedIds.length > 0) {
+      // 显式忽略 `markFlaggedPluginsSeen(flaggedIds)` 的返回值，只保留它触发的副作用。
       void markFlaggedPluginsSeen(flaggedIds);
     }
   }, [flaggedIds]);
 
   // Filter items based on search query (matches name or description)
+  // filteredItems 集合保存`useMemo`，供命令处理后续处理使用。
   const filteredItems = useMemo(() => {
+    // searchQuery缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!searchQuery) return unifiedItems;
+    // lowerQuery保存`searchQuery.toLowerCase`，供命令处理后续处理使用。
     const lowerQuery = searchQuery.toLowerCase();
+    // 返回 `unifiedItems.filter(item_5 => item_5.name.toLowerCase().includes(lowerQ...`，作为命令处理这次计算的结果。
     return unifiedItems.filter(item_5 => item_5.name.toLowerCase().includes(lowerQuery) || 'description' in item_5 && item_5.description?.toLowerCase().includes(lowerQuery));
   }, [unifiedItems, searchQuery]);
 
   // Selection state
+  // 选中索引 由 React state 持有，setSelectedIndex 会在用户操作或异步结果返回时触发刷新。
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Pagination for unified list (continuous scrolling)
+  // pagination读取 hook 状态，供插件命令界面 Manage Plugins本轮渲染使用。
   const pagination = usePagination<UnifiedInstalledItem>({
     totalItems: filteredItems.length,
     selectedIndex,
@@ -808,85 +1151,133 @@ export function ManagePlugins({
   });
 
   // Details view state
+  // detailsMenuIndex 索引 由 React state 持有，setDetailsMenuIndex 会在用户操作或异步结果返回时触发刷新。
   const [detailsMenuIndex, setDetailsMenuIndex] = useState(0);
+  // isProcessing 由 React state 持有，setIsProcessing 会在用户操作或异步结果返回时触发刷新。
   const [isProcessing, setIsProcessing] = useState(false);
+  // processError 错误信息 由 React state 持有，setProcessError 会在用户操作或异步结果返回时触发刷新。
   const [processError, setProcessError] = useState<string | null>(null);
 
   // Configuration state
+  // configNeeded 配置 由 React state 持有，setConfigNeeded 会在用户操作或异步结果返回时触发刷新。
   const [configNeeded, setConfigNeeded] = useState<McpbNeedsConfigResult | null>(null);
+  // _isLoadingConfig 配置 由 React state 持有，setIsLoadingConfig 会在用户操作或异步结果返回时触发刷新。
   const [_isLoadingConfig, setIsLoadingConfig] = useState(false);
+  // selectedPluginHasMcpb 插件数据 由 React state 持有，setSelectedPluginHasMcpb 会在用户操作或异步结果返回时触发刷新。
   const [selectedPluginHasMcpb, setSelectedPluginHasMcpb] = useState(false);
 
   // Detect if selected plugin has MCPB
   // Reads raw marketplace.json to work with old cached marketplaces
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!selectedPlugin) {
+      // setSelectedPluginHasMcpb 写入新的状态值，使命令处理后续读取保持一致。
       setSelectedPluginHasMcpb(false);
+      // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // detectMcpb 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function detectMcpb() {
       // Check plugin manifest first
+      // mcpServersSpec保存`selectedPlugin!.plugin.manifest.mcpServers`，供插件命令界面 Manage Plugins后续判断或输出使用。
       const mcpServersSpec = selectedPlugin!.plugin.manifest.mcpServers;
+      // hasMcpb标记插件命令界面 Manage Plugins是否启用对应路径。
       let hasMcpb = false;
+      // 满足 `mcpServersSpec` 时，命令处理执行该分支。
       if (mcpServersSpec) {
+        // hasMcpb更新为 `typeof mcpServersSpec === 'string' && isMcpbSource(mcpSer...`，确保插件命令界面后续读取最新状态。
         hasMcpb = typeof mcpServersSpec === 'string' && isMcpbSource(mcpServersSpec) || Array.isArray(mcpServersSpec) && mcpServersSpec.some(s_2 => typeof s_2 === 'string' && isMcpbSource(s_2));
       }
 
       // If not in manifest, read raw marketplace.json directly (bypassing schema validation)
       // This works even with old cached marketplaces from before MCPB support
+      // hasMcpb缺失时直接走兜底路径，避免命令处理使用无效输入。
       if (!hasMcpb) {
+        // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
         try {
+          // marketplaceDir 市场数据格式化`path.join`，供命令处理后续处理使用。
           const marketplaceDir = path.join(selectedPlugin!.plugin.path, '..');
+          // marketplaceJsonPath 市场数据格式化`path.join`，供命令处理后续处理使用。
           const marketplaceJsonPath = path.join(marketplaceDir, '.claude-plugin', 'marketplace.json');
+          // 文本内容读取`fs.readFile`，供命令处理后续处理使用。
           const content = await fs.readFile(marketplaceJsonPath, 'utf-8');
+          // marketplace_1 市场数据解析`jsonParse`，供命令处理后续处理使用。
           const marketplace_1 = jsonParse(content);
+          // entry_0筛选`find`，供命令处理后续处理使用。
           const entry_0 = marketplace_1.plugins?.find((p: {
             name: string;
           }) => p.name === selectedPlugin!.plugin.name);
+          // 满足 `entry_0?.mcpServers` 时，命令处理执行该分支。
           if (entry_0?.mcpServers) {
+            // spec 命名 `entry_0.mcpServers`，让后续代码直接表达这个值的用途。
             const spec = entry_0.mcpServers;
+            // hasMcpb更新为 `typeof spec === 'string' && isMcpbSource(spec) || Array.i...`，确保插件命令界面后续读取最新状态。
             hasMcpb = typeof spec === 'string' && isMcpbSource(spec) || Array.isArray(spec) && spec.some((s_3: unknown) => typeof s_3 === 'string' && isMcpbSource(s_3));
           }
         } catch (err) {
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Failed to read raw marketplace.json: ${err}`);
         }
       }
+      // setSelectedPluginHasMcpb 写入新的状态值，使命令处理后续读取保持一致。
       setSelectedPluginHasMcpb(hasMcpb);
     }
+    // 显式忽略 `detectMcpb()` 的返回值，只保留它触发的副作用。
     void detectMcpb();
   }, [selectedPlugin]);
 
   // Load installed plugins grouped by marketplace
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // loadInstalledPlugins 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadInstalledPlugins() {
+      // setLoading 写入新的状态值，使命令处理后续读取保持一致。
       setLoading(true);
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           enabled,
           disabled
         } = await loadAllPlugins();
+        // mergedSettings 集合读取`getSettings_DEPRECATED`，供命令处理后续处理使用。
         const mergedSettings = getSettings_DEPRECATED(); // Use merged settings to respect all layers
 
+        // allPlugins 插件数据筛选`filterManagedDisabledPlugins`，供命令处理后续处理使用。
         const allPlugins = filterManagedDisabledPlugins([...enabled, ...disabled]);
 
         // Group plugins by marketplace
+        // pluginsByMarketplace 插件数据 从空对象开始收集键值，后续按名称补齐内容。
         const pluginsByMarketplace: Record<string, LoadedPlugin[]> = {};
+        // 按顺序遍历 `allPlugins` 中的plugin 插件数据，逐个交给命令处理处理。
         for (const plugin of allPlugins) {
+          // marketplace 市场数据格式化`source.split`，供命令处理后续处理使用。
           const marketplace = plugin.source.split('@')[1] || 'local';
+          // 满足 `!pluginsByMarketplace[marketplace]` 时，命令处理执行该分支。
           if (!pluginsByMarketplace[marketplace]) {
+            // pluginsByMarketplace[marketplace 插件数据更新为 `[]`，确保插件命令界面 Manage Plugins后续读取最新状态。
             pluginsByMarketplace[marketplace] = [];
           }
+          // 插件命令界面 Manage Plugins在这里处理 `pluginsByMarketplace[marketplace]!.push(plugin)`，完成这一小步状态转换。
           pluginsByMarketplace[marketplace]!.push(plugin);
         }
 
         // Create marketplace info array with enabled/disabled counts
+        // marketplaceInfos 市场数据 从空数组开始收集，后续循环会按处理顺序追加条目。
         const marketplaceInfos: MarketplaceInfo[] = [];
+        // 循环处理 `const [name, plugins] of Object.entries(pluginsByMarketplace)`，让命令处理把同类条目按顺序走完。
         for (const [name, plugins] of Object.entries(pluginsByMarketplace)) {
+          // enabledCount 数量统计`count`，供命令处理后续处理使用。
           const enabledCount = count(plugins, p => {
+            // pluginId 插件数据固定为 ``${p.name}@${name}``，作为插件命令界面 Manage Plugins后续展示或比较的基准。
             const pluginId = `${p.name}@${name}`;
+            // 返回 `mergedSettings?.enabledPlugins?.[pluginId] !== false`，作为命令处理这次计算的结果。
             return mergedSettings?.enabledPlugins?.[pluginId] !== false;
           });
+          // disabledCount 数量 命名 `plugins.length - enabledCount`，让后续代码直接表达这个值的用途。
           const disabledCount = plugins.length - enabledCount;
+          // marketplaceInfos 市场数据追加新条目，保持收集顺序与输入顺序一致。
           marketplaceInfos.push({
             name,
             installedPlugins: plugins,
@@ -896,20 +1287,31 @@ export function ManagePlugins({
         }
 
         // Sort marketplaces: claude-plugin-directory first, then alphabetically
+        // 调用 marketplaceInfos.sort，触发命令处理此处需要的副作用。
         marketplaceInfos.sort((a, b) => {
+          // 当 `a.name` 匹配 `'claude-plugin-directory'` 时，命令处理执行对应分支。
           if (a.name === 'claude-plugin-directory') return -1;
+          // 当 `b.name` 匹配 `'claude-plugin-directory'` 时，命令处理执行对应分支。
           if (b.name === 'claude-plugin-directory') return 1;
+          // 返回 `a.name.localeCompare(b.name)`，作为命令处理这次计算的结果。
           return a.name.localeCompare(b.name);
         });
+        // setMarketplaces 写入新的状态值，使命令处理后续读取保持一致。
         setMarketplaces(marketplaceInfos);
 
         // Build flat list of all plugin states
+        // allStates 状态 从空数组开始收集，后续循环会按处理顺序追加条目。
         const allStates: PluginState[] = [];
+        // 按顺序遍历 `marketplaceInfos` 中的marketplace 市场数据，逐个交给命令处理处理。
         for (const marketplace of marketplaceInfos) {
+          // 按顺序遍历 `marketplace.installedPlugins` 中的plugin 插件数据，逐个交给命令处理处理。
           for (const plugin of marketplace.installedPlugins) {
+            // pluginId 插件数据固定为 ``${plugin.name}@${marketplace.name}``，作为插件命令界面 Manage Plugins后续展示或比较的基准。
             const pluginId = `${plugin.name}@${marketplace.name}`;
             // Built-in plugins don't have V2 install entries — skip the lookup.
+            // scope读取`getPluginInstallationFromV2`，供命令处理后续处理使用。
             const scope = plugin.isBuiltin ? 'builtin' : getPluginInstallationFromV2(pluginId).scope;
+            // allStates 状态追加新条目，保持收集顺序与输入顺序一致。
             allStates.push({
               plugin,
               marketplace: marketplace.name,
@@ -919,39 +1321,55 @@ export function ManagePlugins({
             });
           }
         }
+        // setPluginStates 写入新的状态值，使命令处理后续读取保持一致。
         setPluginStates(allStates);
+        // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedIndex(0);
       } finally {
+        // setLoading 写入新的状态值，使命令处理后续读取保持一致。
         setLoading(false);
       }
     }
+    // 显式忽略 `loadInstalledPlugins()` 的返回值，只保留它触发的副作用。
     void loadInstalledPlugins();
   }, []);
 
   // Auto-navigate to target plugin if specified (once only)
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 满足 `hasAutoNavigated.current` 时，命令处理执行该分支。
     if (hasAutoNavigated.current) return;
+    // 只有 `targetPlugin && marketplaces.length > 0 && !loadi` 满足时，命令处理才执行该分支。
     if (targetPlugin && marketplaces.length > 0 && !loading) {
       // targetPlugin may be `name` or `name@marketplace` (parseArgs passes the
       // raw arg through). Parse it so p.name matching works either way.
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         name: targetName,
         marketplace: targetMktFromId
       } = parsePluginIdentifier(targetPlugin);
+      // effectiveTargetMarketplace 市场数据 命名 `targetMarketplace ?? targetMktFromId`，让后续代码直接表达这个值的用途。
       const effectiveTargetMarketplace = targetMarketplace ?? targetMktFromId;
 
       // Use targetMarketplace if provided, otherwise search all
+      // marketplacesToSearch 市场数据筛选`marketplaces.filter`，供命令处理后续处理使用。
       const marketplacesToSearch = effectiveTargetMarketplace ? marketplaces.filter(m => m.name === effectiveTargetMarketplace) : marketplaces;
 
       // First check successfully loaded plugins
+      // 按顺序遍历 `marketplacesToSearch` 中的marketplace_2 市场数据，逐个交给命令处理处理。
       for (const marketplace_2 of marketplacesToSearch) {
+        // plugin 插件数据筛选`installedPlugins.find`，供命令处理后续处理使用。
         const plugin = marketplace_2.installedPlugins.find(p_0 => p_0.name === targetName);
+        // 满足 `plugin` 时，命令处理执行该分支。
         if (plugin) {
           // Get scope from V2 data for proper operation handling
+          // pluginId_2 插件数据固定为 ``${plugin.name}@${marketplace_2.name}``，作为插件命令界面 Manage Plugins后续展示或比较的基准。
           const pluginId_2 = `${plugin.name}@${marketplace_2.name}`;
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             scope: scope_4
           } = getPluginInstallationFromV2(pluginId_2);
+          // pluginState 插件数据 集中保存插件命令界面 Manage Plugins要一起传递的字段。
           const pluginState: PluginState = {
             plugin,
             marketplace: marketplace_2.name,
@@ -959,17 +1377,25 @@ export function ManagePlugins({
             pendingEnable: undefined,
             pendingUpdate: false
           };
+          // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
           setSelectedPlugin(pluginState);
+          // setViewState 写入新的状态值，使命令处理后续读取保持一致。
           setViewState('plugin-details');
+          // current更新为 `action`，确保插件命令界面后续读取最新状态。
           pendingAutoActionRef.current = action;
+          // current更新为 `true`，确保插件命令界面后续读取最新状态。
           hasAutoNavigated.current = true;
+          // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
       }
 
       // Fall back to failed plugins (those with errors but not loaded)
+      // failedItem筛选`unifiedItems.find`，供命令处理后续处理使用。
       const failedItem = unifiedItems.find(item_6 => item_6.type === 'failed-plugin' && item_6.name === targetName);
+      // 当 `failedItem && failedItem.type` 匹配 `'failed-plugin'` 时，命令处理执行对应分支。
       if (failedItem && failedItem.type === 'failed-plugin') {
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState({
           type: 'failed-plugin-details',
           plugin: {
@@ -980,6 +1406,7 @@ export function ManagePlugins({
             scope: failedItem.scope
           }
         });
+        // current更新为 `true`，确保插件命令界面后续读取最新状态。
         hasAutoNavigated.current = true;
       }
 
@@ -987,61 +1414,91 @@ export function ManagePlugins({
       // message rather than silently landing on the plugin list. Only do
       // this when an action was requested (e.g. /plugin uninstall X);
       // plain navigation (/plugin manage) should still just show the list.
+      // 只有 `!hasAutoNavigated.current && action` 满足时，命令处理才执行该分支。
       if (!hasAutoNavigated.current && action) {
+        // current更新为 `true`，确保插件命令界面后续读取最新状态。
         hasAutoNavigated.current = true;
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult(`Plugin "${targetPlugin}" is not installed in this project`);
       }
     }
   }, [targetPlugin, targetMarketplace, marketplaces, loading, unifiedItems, action, setResult]);
 
   // Handle single plugin operations from details view
+  // handleSingleOperation保存`async`，供命令处理后续处理使用。
   const handleSingleOperation = async (operation: 'enable' | 'disable' | 'update' | 'uninstall') => {
+    // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!selectedPlugin) return;
+    // pluginScope 插件数据标记插件命令界面 Manage Plugins是否启用对应路径。
     const pluginScope = selectedPlugin.scope || 'user';
+    // isBuiltin标记插件命令界面 Manage Plugins是否启用对应路径。
     const isBuiltin = pluginScope === 'builtin';
 
     // Built-in plugins can only be enabled/disabled, not updated/uninstalled.
+    // 只有 `isBuiltin && (operation === 'update' || operation === 'uninstall')` 满足时，命令处理才执行该分支。
     if (isBuiltin && (operation === 'update' || operation === 'uninstall')) {
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError('Built-in plugins cannot be updated or uninstalled.');
+      // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Managed scope plugins can only be updated, not enabled/disabled/uninstalled
+    // `!isBuiltin && !isInstallableScope(pluginSco...` 与 `'update'` 不一致时刷新派生状态，避免使用过期结果。
     if (!isBuiltin && !isInstallableScope(pluginScope) && operation !== 'update') {
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError('This plugin is managed by your organization. Contact your admin to disable it.');
+      // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
     setIsProcessing(true);
+    // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
     setProcessError(null);
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // pluginId_3 插件数据固定为 ``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，作为插件命令界面 Manage Plugins后续展示或比较的基准。
       const pluginId_3 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+      // reverseDependents 集合 先占位，稍后的条件分支会根据实际输入补齐它。
       let reverseDependents: string[] | undefined;
 
       // enable/disable omit scope — pluginScope is the install scope from
       // installed_plugins.json (where files are cached), which can diverge
       // from the settings scope (where enablement lives). Passing it trips
       // the cross-scope guard. Auto-detect finds the right scope. #38084
+      // 按照 operation 的取值选择命令处理的具体处理分支。
       switch (operation) {
         case 'enable':
           {
+            // enableResult保存`enablePluginOp`，供命令处理后续处理使用。
             const enableResult = await enablePluginOp(pluginId_3);
+            // enableResult.success 集合缺失时直接走兜底路径，避免命令处理使用无效输入。
             if (!enableResult.success) {
+              // 抛出 new Error(enableResult.message);，阻止命令处理在无效状态下继续运行。
               throw new Error(enableResult.message);
             }
+            // 结束这个分支或循环，避免命令处理继续落入后续路径。
             break;
           }
         case 'disable':
           {
+            // disableResult保存`disablePluginOp`，供命令处理后续处理使用。
             const disableResult = await disablePluginOp(pluginId_3);
+            // disableResult.success 集合缺失时直接走兜底路径，避免命令处理使用无效输入。
             if (!disableResult.success) {
+              // 抛出 new Error(disableResult.message);，阻止命令处理在无效状态下继续运行。
               throw new Error(disableResult.message);
             }
+            // reverseDependents 集合更新为 `disableResult.reverseDependents`，确保插件命令界面后续读取最新状态。
             reverseDependents = disableResult.reverseDependents;
+            // 结束这个分支或循环，避免命令处理继续落入后续路径。
             break;
           }
         case 'uninstall':
           {
+            // 满足 `isBuiltin` 时，命令处理执行该分支。
             if (isBuiltin) break; // guarded above; narrows pluginScope
+            // 满足 `!isInstallableScope(pluginScope)` 时，命令处理执行该分支。
             if (!isInstallableScope(pluginScope)) break;
             // If the plugin is enabled in .claude/settings.json (shared with the
             // team), divert to a confirmation dialog that offers to disable in
@@ -1049,9 +1506,13 @@ export function ManagePlugins({
             // `pluginScope` (from installed_plugins.json) can be 'user' even when
             // the plugin is ALSO project-enabled, and uninstalling the user-scope
             // install would leave the project enablement active.
+            // 满足 `isPluginEnabledAtProjectScope(pluginId_3)` 时，命令处理执行该分支。
             if (isPluginEnabledAtProjectScope(pluginId_3)) {
+              // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
               setIsProcessing(false);
+              // setViewState 写入新的状态值，使命令处理后续读取保持一致。
               setViewState('confirm-project-uninstall');
+              // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
             // If the plugin has persistent data (${CLAUDE_PLUGIN_DATA}) AND this
@@ -1059,49 +1520,73 @@ export function ManagePlugins({
             // installs, the op's isLastScope check won't delete regardless of
             // the user's y/n — showing the dialog would mislead ("y" → nothing
             // happens). Length check mirrors pluginOperations.ts:513.
+            // installs 集合读取`loadInstalledPluginsV2`，供命令处理后续处理使用。
             const installs = loadInstalledPluginsV2().plugins[pluginId_3];
+            // isLastScope标记插件命令界面 Manage Plugins是否启用对应路径。
             const isLastScope = !installs || installs.length <= 1;
+            // dataSize读取`getPluginDataDirSize`，供命令处理后续处理使用。
             const dataSize = isLastScope ? await getPluginDataDirSize(pluginId_3) : null;
+            // 满足 `dataSize` 时，命令处理执行该分支。
             if (dataSize) {
+              // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
               setIsProcessing(false);
+              // setViewState 写入新的状态值，使命令处理后续读取保持一致。
               setViewState({
                 type: 'confirm-data-cleanup',
                 size: dataSize
               });
+              // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
+            // result_0保存`uninstallPluginOp`，供命令处理后续处理使用。
             const result_0 = await uninstallPluginOp(pluginId_3, pluginScope);
+            // result_0.success 集合缺失时直接走兜底路径，避免命令处理使用无效输入。
             if (!result_0.success) {
+              // 抛出 new Error(result_0.message);，阻止命令处理在无效状态下继续运行。
               throw new Error(result_0.message);
             }
+            // reverseDependents 集合更新为 `result_0.reverseDependents`，确保插件命令界面后续读取最新状态。
             reverseDependents = result_0.reverseDependents;
+            // 结束这个分支或循环，避免命令处理继续落入后续路径。
             break;
           }
         case 'update':
           {
+            // 满足 `isBuiltin` 时，命令处理执行该分支。
             if (isBuiltin) break; // guarded above; narrows pluginScope
+            // 结果保存`updatePluginOp`，供命令处理后续处理使用。
             const result = await updatePluginOp(pluginId_3, pluginScope);
+            // result.success 集合缺失时直接走兜底路径，避免命令处理使用无效输入。
             if (!result.success) {
+              // 抛出 new Error(result.message);，阻止命令处理在无效状态下继续运行。
               throw new Error(result.message);
             }
             // If already up to date, show message and exit
+            // 满足 `result.alreadyUpToDate` 时，命令处理执行该分支。
             if (result.alreadyUpToDate) {
+              // setResult 写入新的状态值，使命令处理后续读取保持一致。
               setResult(`${selectedPlugin.plugin.name} is already at the latest version (${result.newVersion}).`);
+              // 满足 `onManageComplete` 时，命令处理执行该分支。
               if (onManageComplete) {
+                // 等待 `onManageComplete()` 完成，再继续插件命令界面 Manage Plugins的异步流程。
                 await onManageComplete();
               }
+              // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
               setParentViewState({
                 type: 'menu'
               });
+              // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
             // Success - will show standard message below
+            // 结束这个分支或循环，避免命令处理继续落入后续路径。
             break;
           }
       }
 
       // Operations (enable, disable, uninstall, update) now use centralized functions
       // that handle their own settings updates, so we only need to clear caches here
+      // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
       clearAllCaches();
 
       // Prompt for manifest.userConfig + channel userConfig if the plugin ends
@@ -1109,117 +1594,187 @@ export function ManagePlugins({
       // 'enable'`: install enables on install, so the menu shows "Disable"
       // first. PluginOptionsFlow itself checks getUnconfiguredOptions — if
       // nothing needs filling, it calls onDone('skipped') immediately.
+      // pluginIdNow 插件数据 命名 ``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，让后续代码直接表达这个值的用途。
       const pluginIdNow = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+      // settingsAfter读取`getSettings_DEPRECATED`，供命令处理后续处理使用。
       const settingsAfter = getSettings_DEPRECATED();
+      // enabledAfter标记插件命令界面 Manage Plugins是否启用对应路径。
       const enabledAfter = settingsAfter?.enabledPlugins?.[pluginIdNow] !== false;
+      // 满足 `enabledAfter` 时，命令处理执行该分支。
       if (enabledAfter) {
+        // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
         setIsProcessing(false);
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState({
           type: 'plugin-options'
         });
+        // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // operationName标记插件命令界面 Manage Plugins是否启用对应路径。
       const operationName = operation === 'enable' ? 'Enabled' : operation === 'disable' ? 'Disabled' : operation === 'update' ? 'Updated' : 'Uninstalled';
 
       // Single-line warning — notification timeout is ~8s, multi-line would scroll off.
       // The persistent record is in the Errors tab (dependency-unsatisfied after reload).
+      // depWarn格式化`reverseDependents.join`，供命令处理后续处理使用。
       const depWarn = reverseDependents && reverseDependents.length > 0 ? ` · required by ${reverseDependents.join(', ')}` : '';
+      // 消息 命名 ``✓ ${operationName} ${selectedPlugin.plugin.name}${depWar...`，让后续代码直接表达这个值的用途。
       const message = `✓ ${operationName} ${selectedPlugin.plugin.name}${depWarn}. Run /reload-plugins to apply.`;
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(message);
+      // 满足 `onManageComplete` 时，命令处理执行该分支。
       if (onManageComplete) {
+        // 等待 `onManageComplete()` 完成，再继续插件命令界面 Manage Plugins的异步流程。
         await onManageComplete();
       }
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     } catch (error_0) {
+      // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
       setIsProcessing(false);
+      // errorMessage 消息数据保存`String`，供命令处理后续处理使用。
       const errorMessage = error_0 instanceof Error ? error_0.message : String(error_0);
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(`Failed to ${operation}: ${errorMessage}`);
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logError(toError(error_0));
     }
   };
 
   // Latest-ref: lets the auto-action effect call the current closure without
   // adding handleSingleOperation (recreated every render) to its deps.
+  // handleSingleOperationRef 引用保存`useRef`，供命令处理后续处理使用。
   const handleSingleOperationRef = useRef(handleSingleOperation);
+  // current更新为 `handleSingleOperation`，确保插件命令界面后续读取最新状态。
   handleSingleOperationRef.current = handleSingleOperation;
 
   // Auto-execute the action prop (/plugin uninstall X, /plugin enable X, etc.)
   // once auto-navigation has landed on plugin-details.
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 只有 `viewState === 'plugin-details' && selectedPlugin` 满足时，命令处理才执行该分支。
     if (viewState === 'plugin-details' && selectedPlugin && pendingAutoActionRef.current) {
+      // pending保存`pendingAutoActionRef.current`，供插件命令界面 Manage Plugins后续判断或输出使用。
       const pending = pendingAutoActionRef.current;
+      // current更新为 `undefined`，确保插件命令界面后续读取最新状态。
       pendingAutoActionRef.current = undefined;
+      // 显式忽略 `handleSingleOperationRef.current(pending)` 的返回值，只保留它触发的副作用。
       void handleSingleOperationRef.current(pending);
     }
   }, [viewState, selectedPlugin]);
 
   // Handle toggle enable/disable
+  // handleToggle保存`React.useCallback`，供命令处理后续处理使用。
   const handleToggle = React.useCallback(() => {
+    // 满足 `selectedIndex >= filteredItems.length` 时，命令处理执行该分支。
     if (selectedIndex >= filteredItems.length) return;
+    // item_7读取 `filteredItems[selectedIndex]` 对应条目，后续围绕该成员继续处理。
     const item_7 = filteredItems[selectedIndex];
+    // 当 `item_7?.type` 匹配 `'flagged-plugin'` 时，命令处理执行对应分支。
     if (item_7?.type === 'flagged-plugin') return;
+    // 当 `item_7?.type` 匹配 `'plugin'` 时，命令处理执行对应分支。
     if (item_7?.type === 'plugin') {
+      // pluginId_4 插件数据固定为 ``${item_7.plugin.name}@${item_7.marketplace}``，作为插件命令界面 Manage Plugins后续展示或比较的基准。
       const pluginId_4 = `${item_7.plugin.name}@${item_7.marketplace}`;
+      // mergedSettings_0读取`getSettings_DEPRECATED`，供命令处理后续处理使用。
       const mergedSettings_0 = getSettings_DEPRECATED();
+      // currentPending读取`pendingToggles.get`，供命令处理后续处理使用。
       const currentPending = pendingToggles.get(pluginId_4);
+      // isEnabled_0标记插件命令界面 Manage Plugins是否启用对应路径。
       const isEnabled_0 = mergedSettings_0?.enabledPlugins?.[pluginId_4] !== false;
+      // pluginScope_0 插件数据保存`item_7.scope`，供后续判断或组装使用。
       const pluginScope_0 = item_7.scope;
+      // isBuiltin_0标记插件命令界面 Manage Plugins是否启用对应路径。
       const isBuiltin_0 = pluginScope_0 === 'builtin';
+      // 只有 `isBuiltin_0 || isInstallableScope(pluginScope_0)` 满足时，命令处理才执行该分支。
       if (isBuiltin_0 || isInstallableScope(pluginScope_0)) {
+        // newPending保存`Map`，供命令处理后续处理使用。
         const newPending = new Map(pendingToggles);
         // Omit scope — see handleSingleOperation's enable/disable comment.
+        // 满足 `currentPending` 时，命令处理执行该分支。
         if (currentPending) {
           // Cancel: reverse the operation back to the original state
+          // 调用 newPending.delete，触发命令处理此处需要的副作用。
           newPending.delete(pluginId_4);
+          // 调用 void，触发命令处理此处需要的副作用。
           void (async () => {
+            // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
             try {
+              // 当 `currentPending` 匹配 `'will-disable'` 时，命令处理执行对应分支。
               if (currentPending === 'will-disable') {
+                // 等待 `enablePluginOp(pluginId_4)` 完成，再继续插件命令界面 Manage Plugins的异步流程。
                 await enablePluginOp(pluginId_4);
               } else {
+                // 等待 `disablePluginOp(pluginId_4)` 完成，再继续插件命令界面 Manage Plugins的异步流程。
                 await disablePluginOp(pluginId_4);
               }
+              // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
               clearAllCaches();
             } catch (err_0) {
+              // 记录命令处理运行诊断，方便排查异常路径或性能问题。
               logError(err_0);
             }
           })();
         } else {
+          // newPending.set 写入新的状态值，使命令处理后续读取保持一致。
           newPending.set(pluginId_4, isEnabled_0 ? 'will-disable' : 'will-enable');
+          // 调用 void，触发命令处理此处需要的副作用。
           void (async () => {
+            // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
             try {
+              // 满足 `isEnabled_0` 时，命令处理执行该分支。
               if (isEnabled_0) {
+                // 等待 `disablePluginOp(pluginId_4)` 完成，再继续插件命令界面 Manage Plugins的异步流程。
                 await disablePluginOp(pluginId_4);
               } else {
+                // 等待 `enablePluginOp(pluginId_4)` 完成，再继续插件命令界面 Manage Plugins的异步流程。
                 await enablePluginOp(pluginId_4);
               }
+              // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
               clearAllCaches();
             } catch (err_1) {
+              // 记录命令处理运行诊断，方便排查异常路径或性能问题。
               logError(err_1);
             }
           })();
         }
+        // setPendingToggles 写入新的状态值，使命令处理后续读取保持一致。
         setPendingToggles(newPending);
       }
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (item_7?.type === 'mcp') {`，完成这一小步状态转换。
     } else if (item_7?.type === 'mcp') {
+      // 显式忽略 `toggleMcpServer(item_7.client.name)` 的返回值，只保留它触发的副作用。
       void toggleMcpServer(item_7.client.name);
     }
   }, [selectedIndex, filteredItems, pendingToggles, pluginStates, toggleMcpServer]);
 
   // Handle accept (Enter) in plugin-list
+  // handleAccept保存`React.useCallback`，供命令处理后续处理使用。
   const handleAccept = React.useCallback(() => {
+    // 满足 `selectedIndex >= filteredItems.length` 时，命令处理执行该分支。
     if (selectedIndex >= filteredItems.length) return;
+    // item_8筛选`filteredItems[selectedIndex]` 整理出中间结果，供插件命令界面 Manage Plugins后续步骤使用。
     const item_8 = filteredItems[selectedIndex];
+    // 当 `item_8?.type` 匹配 `'plugin'` 时，命令处理执行对应分支。
     if (item_8?.type === 'plugin') {
+      // state_0 状态筛选`pluginStates.find`，供命令处理后续处理使用。
       const state_0 = pluginStates.find(s_4 => s_4.plugin.name === item_8.plugin.name && s_4.marketplace === item_8.marketplace);
+      // 满足 `state_0` 时，命令处理执行该分支。
       if (state_0) {
+        // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedPlugin(state_0);
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('plugin-details');
+        // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
         setDetailsMenuIndex(0);
+        // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
         setProcessError(null);
       }
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (item_8?.type === 'flagged-plugin') {`，完成这一小步状态转换。
     } else if (item_8?.type === 'flagged-plugin') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState({
         type: 'flagged-detail',
         plugin: {
@@ -1231,8 +1786,11 @@ export function ManagePlugins({
           flaggedAt: item_8.flaggedAt
         }
       });
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (item_8?.type === 'failed-plugin') {`，完成这一小步状态转换。
     } else if (item_8?.type === 'failed-plugin') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState({
         type: 'failed-plugin-details',
         plugin: {
@@ -1243,28 +1801,41 @@ export function ManagePlugins({
           scope: item_8.scope
         }
       });
+      // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
       setDetailsMenuIndex(0);
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (item_8?.type === 'mcp') {`，完成这一小步状态转换。
     } else if (item_8?.type === 'mcp') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState({
         type: 'mcp-detail',
         client: item_8.client
       });
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
     }
   }, [selectedIndex, filteredItems, pluginStates]);
 
   // Plugin-list navigation (non-search mode)
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责命令处理在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `selectedIndex === 0` 时，命令处理执行该分支。
       if (selectedIndex === 0) {
+        // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
         setIsSearchMode(true);
       } else {
+        // 调用 pagination.handleSelectionChange，触发命令处理此处需要的副作用。
         pagination.handleSelectionChange(selectedIndex - 1, setSelectedIndex);
       }
     },
+    // 这个回调绑定到 'select:next': () => {，负责命令处理在该局部场景下的响应。
     'select:next': () => {
+      // 满足 `selectedIndex < filteredItems.length - 1` 时，命令处理执行该分支。
       if (selectedIndex < filteredItems.length - 1) {
+        // 调用 pagination.handleSelectionChange，触发命令处理此处需要的副作用。
         pagination.handleSelectionChange(selectedIndex + 1, setSelectedIndex);
       }
     },
@@ -1273,6 +1844,7 @@ export function ManagePlugins({
     context: 'Select',
     isActive: viewState === 'plugin-list' && !isSearchMode
   });
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
     'plugin:toggle': handleToggle
   }, {
@@ -1281,11 +1853,16 @@ export function ManagePlugins({
   });
 
   // Handle dismiss action in flagged-detail view
+  // handleFlaggedDismiss 集合保存`React.useCallback`，供命令处理后续处理使用。
   const handleFlaggedDismiss = React.useCallback(() => {
+    // `typeof viewState` 与 `'object' || viewState.type !== ...` 不一致时刷新派生状态，避免使用过期结果。
     if (typeof viewState !== 'object' || viewState.type !== 'flagged-detail') return;
+    // 显式忽略 `removeFlaggedPlugin(viewState.plugin.id)` 的返回值，只保留它触发的副作用。
     void removeFlaggedPlugin(viewState.plugin.id);
+    // setViewState 写入新的状态值，使命令处理后续读取保持一致。
     setViewState('plugin-list');
   }, [viewState]);
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
     'select:accept': handleFlaggedDismiss
   }, {
@@ -1294,91 +1871,147 @@ export function ManagePlugins({
   });
 
   // Build details menu items (needed for navigation)
+  // detailsMenuItems 集合保存`React.useMemo`，供命令处理后续处理使用。
   const detailsMenuItems = React.useMemo(() => {
+    // `viewState` 与 `'plugin-details' || !selectedPl...` 不一致时刷新派生状态，避免使用过期结果。
     if (viewState !== 'plugin-details' || !selectedPlugin) return [];
+    // mergedSettings_1读取`getSettings_DEPRECATED`，供命令处理后续处理使用。
     const mergedSettings_1 = getSettings_DEPRECATED();
+    // pluginId_5 插件数据保存``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，作为后续固定文本处理的输入。
     const pluginId_5 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+    // isEnabled_1标记插件命令界面 Manage Plugins是否启用对应路径。
     const isEnabled_1 = mergedSettings_1?.enabledPlugins?.[pluginId_5] !== false;
+    // isBuiltin_1标记插件命令界面 Manage Plugins是否启用对应路径。
     const isBuiltin_1 = selectedPlugin.marketplace === 'builtin';
+    // menuItems 集合 先占位，稍后的条件分支会根据实际输入补齐它。
     const menuItems: Array<{
       label: string;
+      // 这个回调绑定到 action: () => void;，负责命令处理在该局部场景下的响应。
       action: () => void;
     }> = [];
+    // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
     menuItems.push({
       label: isEnabled_1 ? 'Disable plugin' : 'Enable plugin',
+      // 这个回调绑定到 action: () => void handleSingleOperation(isEnabled_1 ? 'disable' : 'enable')，负责命令处理在该局部场景下的响应。
       action: () => void handleSingleOperation(isEnabled_1 ? 'disable' : 'enable')
     });
 
     // Update/Uninstall options — not available for built-in plugins
+    // isBuiltin_1缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!isBuiltin_1) {
+      // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
       menuItems.push({
         label: selectedPlugin.pendingUpdate ? 'Unmark for update' : 'Mark for update',
+        // 这个回调绑定到 action: async () => {，负责命令处理在该局部场景下的响应。
         action: async () => {
+          // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
           try {
+            // localError 错误信息读取`checkIfLocalPlugin`，供命令处理后续处理使用。
             const localError = await checkIfLocalPlugin(selectedPlugin.plugin.name, selectedPlugin.marketplace);
+            // 满足 `localError` 时，命令处理执行该分支。
             if (localError) {
+              // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
               setProcessError(localError);
+              // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
+            // newStates 状态 聚合成有序列表，保持后续遍历顺序稳定。
             const newStates = [...pluginStates];
+            // index 索引筛选`newStates.findIndex`，供命令处理后续处理使用。
             const index = newStates.findIndex(s_5 => s_5.plugin.name === selectedPlugin.plugin.name && s_5.marketplace === selectedPlugin.marketplace);
+            // `index` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
             if (index !== -1) {
+              // 插件命令界面 Manage Plugins在这里处理 `newStates[index]!.pendingUpdate = !selectedPlugin.pendingUpdate`，完成这一小步状态转换。
               newStates[index]!.pendingUpdate = !selectedPlugin.pendingUpdate;
+              // setPluginStates 写入新的状态值，使命令处理后续读取保持一致。
               setPluginStates(newStates);
+              // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
               setSelectedPlugin({
                 ...selectedPlugin,
                 pendingUpdate: !selectedPlugin.pendingUpdate
               });
             }
           } catch (error_1) {
+            // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
             setProcessError(error_1 instanceof Error ? error_1.message : 'Failed to check plugin update availability');
           }
         }
       });
+      // 满足 `selectedPluginHasMcpb` 时，命令处理执行该分支。
       if (selectedPluginHasMcpb) {
+        // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
         menuItems.push({
           label: 'Configure',
+          // 这个回调绑定到 action: async () => {，负责命令处理在该局部场景下的响应。
           action: async () => {
+            // setIsLoadingConfig 写入新的状态值，使命令处理后续读取保持一致。
             setIsLoadingConfig(true);
+            // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
             try {
+              // mcpServersSpec_0保存`selectedPlugin.plugin.manifest.mcpServers`，供后续判断或组装使用。
               const mcpServersSpec_0 = selectedPlugin.plugin.manifest.mcpServers;
+              // mcpbPath 路径数据初始化为空值，后续分支会在有数据时补齐。
               let mcpbPath: string | null = null;
+              // 只有 `typeof mcpServersSpec_0 === 'string' && isMcpbSource(mcpServersSpec_0)` 满足时，命令处理才执行该分支。
               if (typeof mcpServersSpec_0 === 'string' && isMcpbSource(mcpServersSpec_0)) {
+                // mcpbPath 路径数据更新为 `mcpServersSpec_0`，确保插件命令界面后续读取最新状态。
                 mcpbPath = mcpServersSpec_0;
+              // 插件命令界面 Manage Plugins在这里处理 `} else if (Array.isArray(mcpServersSpec_0)) {`，完成这一小步状态转换。
               } else if (Array.isArray(mcpServersSpec_0)) {
+                // 按顺序遍历 `mcpServersSpec_0` 中的spec_0，逐个交给命令处理处理。
                 for (const spec_0 of mcpServersSpec_0) {
+                  // 只有 `typeof spec_0 === 'string' && isMcpbSource(spec_0)` 满足时，命令处理才执行该分支。
                   if (typeof spec_0 === 'string' && isMcpbSource(spec_0)) {
+                    // mcpbPath 路径数据更新为 `spec_0`，确保插件命令界面后续读取最新状态。
                     mcpbPath = spec_0;
+                    // 结束这个分支或循环，避免命令处理继续落入后续路径。
                     break;
                   }
                 }
               }
+              // mcpbPath 路径数据缺失时直接走兜底路径，避免命令处理使用无效输入。
               if (!mcpbPath) {
+                // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
                 setProcessError('No MCPB file found in plugin');
+                // setIsLoadingConfig 写入新的状态值，使命令处理后续读取保持一致。
                 setIsLoadingConfig(false);
+                // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
                 return;
               }
+              // pluginId_6 插件数据 命名 ``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，让后续代码直接表达这个值的用途。
               const pluginId_6 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+              // result_1读取`loadMcpbFile`，供命令处理后续处理使用。
               const result_1 = await loadMcpbFile(mcpbPath, selectedPlugin.plugin.path, pluginId_6, undefined, undefined, true);
+              // 只有 `'status' in result_1 && result_1.status === 'need` 满足时，命令处理才执行该分支。
               if ('status' in result_1 && result_1.status === 'needs-config') {
+                // setConfigNeeded 写入新的状态值，使命令处理后续读取保持一致。
                 setConfigNeeded(result_1);
+                // setViewState 写入新的状态值，使命令处理后续读取保持一致。
                 setViewState('configuring');
               } else {
+                // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
                 setProcessError('Failed to load MCPB for configuration');
               }
             } catch (err_2) {
+              // errorMsg 错误信息保存`errorMessage`，供命令处理后续处理使用。
               const errorMsg = errorMessage(err_2);
+              // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
               setProcessError(`Failed to load configuration: ${errorMsg}`);
             } finally {
+              // setIsLoadingConfig 写入新的状态值，使命令处理后续读取保持一致。
               setIsLoadingConfig(false);
             }
           }
         });
       }
+      // 只有 `selectedPlugin.plugin.manifest.userConfig && Object.keys(selectedPlugin.plu...` 满足时，命令处理才执行该分支。
       if (selectedPlugin.plugin.manifest.userConfig && Object.keys(selectedPlugin.plugin.manifest.userConfig).length > 0) {
+        // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
         menuItems.push({
           label: 'Configure options',
+          // 这个回调绑定到 action: () => {，负责命令处理在该局部场景下的响应。
           action: () => {
+            // setViewState 写入新的状态值，使命令处理后续读取保持一致。
             setViewState({
               type: 'configuring-options',
               schema: selectedPlugin.plugin.manifest.userConfig!
@@ -1386,55 +2019,81 @@ export function ManagePlugins({
           }
         });
       }
+      // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
       menuItems.push({
         label: 'Update now',
+        // 这个回调绑定到 action: () => void handleSingleOperation('update')，负责命令处理在该局部场景下的响应。
         action: () => void handleSingleOperation('update')
       });
+      // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
       menuItems.push({
         label: 'Uninstall',
+        // 这个回调绑定到 action: () => void handleSingleOperation('uninstall')，负责命令处理在该局部场景下的响应。
         action: () => void handleSingleOperation('uninstall')
       });
     }
+    // 满足 `selectedPlugin.plugin.manifest.homepage` 时，命令处理执行该分支。
     if (selectedPlugin.plugin.manifest.homepage) {
+      // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
       menuItems.push({
         label: 'Open homepage',
+        // 这个回调绑定到 action: () => void openBrowser(selectedPlugin.plugin.manifest.homepage!)，负责命令处理在该局部场景下的响应。
         action: () => void openBrowser(selectedPlugin.plugin.manifest.homepage!)
       });
     }
+    // 满足 `selectedPlugin.plugin.manifest.repository` 时，命令处理执行该分支。
     if (selectedPlugin.plugin.manifest.repository) {
+      // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
       menuItems.push({
         // Generic label — manifest.repository can be GitLab, Bitbucket,
         // Azure DevOps, etc. (gh-31598). pluginDetailsHelpers.tsx:74 keeps
         // 'View on GitHub' because that path has an explicit isGitHub check.
         label: 'View repository',
+        // 这个回调绑定到 action: () => void openBrowser(selectedPlugin.plugin.manifest.repository!)，负责命令处理在该局部场景下的响应。
         action: () => void openBrowser(selectedPlugin.plugin.manifest.repository!)
       });
     }
+    // menuItems 集合追加新条目，保持收集顺序与输入顺序一致。
     menuItems.push({
       label: 'Back to plugin list',
+      // 这个回调绑定到 action: () => {，负责命令处理在该局部场景下的响应。
       action: () => {
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('plugin-list');
+        // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedPlugin(null);
+        // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
         setProcessError(null);
       }
     });
+    // 返回 `menuItems`，作为命令处理这次计算的结果。
     return menuItems;
   }, [viewState, selectedPlugin, selectedPluginHasMcpb, pluginStates]);
 
   // Plugin-details navigation
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责命令处理在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `detailsMenuIndex > 0` 时，命令处理执行该分支。
       if (detailsMenuIndex > 0) {
+        // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
         setDetailsMenuIndex(detailsMenuIndex - 1);
       }
     },
+    // 这个回调绑定到 'select:next': () => {，负责命令处理在该局部场景下的响应。
     'select:next': () => {
+      // 满足 `detailsMenuIndex < detailsMenuItems.length - 1` 时，命令处理执行该分支。
       if (detailsMenuIndex < detailsMenuItems.length - 1) {
+        // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
         setDetailsMenuIndex(detailsMenuIndex + 1);
       }
     },
+    // 这个回调绑定到 'select:accept': () => {，负责命令处理在该局部场景下的响应。
     'select:accept': () => {
+      // 满足 `detailsMenuItems[detailsMenuIndex]` 时，命令处理执行该分支。
       if (detailsMenuItems[detailsMenuIndex]) {
+        // 插件命令界面 Manage Plugins在这里处理 `detailsMenuItems[detailsMenuIndex]!.action()`，完成这一小步状态转换。
         detailsMenuItems[detailsMenuIndex]!.action();
       }
     }
@@ -1444,13 +2103,21 @@ export function ManagePlugins({
   });
 
   // Failed-plugin-details: only "Uninstall" option, handle Enter
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:accept': () => {，负责命令处理在该局部场景下的响应。
     'select:accept': () => {
+      // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
       if (typeof viewState === 'object' && viewState.type === 'failed-plugin-details') {
+        // 调用 void，触发命令处理此处需要的副作用。
         void (async () => {
+          // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
           setIsProcessing(true);
+          // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
           setProcessError(null);
+          // pluginId_7 插件数据保存`viewState.plugin.id`，供插件命令界面 Manage Plugins后续判断或输出使用。
           const pluginId_7 = viewState.plugin.id;
+          // pluginScope_1 插件数据保存`viewState.plugin.scope`，供后续判断或组装使用。
           const pluginScope_1 = viewState.plugin.scope;
           // Pass scope to uninstallPluginOp so it can find the correct V2
           // installation record and clean up on-disk files. Fall back to
@@ -1459,36 +2126,53 @@ export function ManagePlugins({
           // is a recovery path for a plugin that failed to load — it may
           // be reinstallable, so don't nuke ${CLAUDE_PLUGIN_DATA} silently.
           // The normal uninstall path prompts; this one preserves.
+          // result_2保存`isInstallableScope`，供命令处理后续处理使用。
           const result_2 = isInstallableScope(pluginScope_1) ? await uninstallPluginOp(pluginId_7, pluginScope_1, false) : await uninstallPluginOp(pluginId_7, 'user', false);
+          // success 集合 命名 `result_2.success`，让后续代码直接表达这个值的用途。
           let success = result_2.success;
+          // success 集合缺失时直接走兜底路径，避免命令处理使用无效输入。
           if (!success) {
             // Plugin was never installed (only in enabledPlugins settings).
             // Remove directly from all editable settings sources.
+            // editableSources 集合 聚合成有序列表，保持后续遍历顺序稳定。
             const editableSources = ['userSettings' as const, 'projectSettings' as const, 'localSettings' as const];
+            // 按顺序遍历 `editableSources` 中的source，逐个交给命令处理处理。
             for (const source of editableSources) {
+              // settings 集合读取`getSettingsForSource`，供命令处理后续处理使用。
               const settings = getSettingsForSource(source);
+              // `settings?.enabledPlugins?.[pluginId_7]` 与 `undefi` 不一致时刷新派生状态，避免使用过期结果。
               if (settings?.enabledPlugins?.[pluginId_7] !== undefined) {
+                // 调用 updateSettingsForSource，触发命令处理此处需要的副作用。
                 updateSettingsForSource(source, {
                   enabledPlugins: {
                     ...settings.enabledPlugins,
                     [pluginId_7]: undefined
                   }
                 });
+                // success 集合更新为 `true`，确保插件命令界面后续读取最新状态。
                 success = true;
               }
             }
             // Clear memoized caches so next loadAllPlugins() picks up settings changes
+            // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
             clearAllCaches();
           }
+          // 满足 `success` 时，命令处理执行该分支。
           if (success) {
+            // 满足 `onManageComplete` 时，命令处理执行该分支。
             if (onManageComplete) {
+              // 等待 `onManageComplete()` 完成，再继续插件命令界面 Manage Plugins的异步流程。
               await onManageComplete();
             }
+            // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
             setIsProcessing(false);
             // Return to list (don't setResult — that closes the whole dialog)
+            // setViewState 写入新的状态值，使命令处理后续读取保持一致。
             setViewState('plugin-list');
           } else {
+            // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
             setIsProcessing(false);
+            // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
             setProcessError(result_2.message);
           }
         })();
@@ -1500,15 +2184,22 @@ export function ManagePlugins({
   });
 
   // Confirm-project-uninstall: y/enter disables in settings.local.json, n/escape cancels
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'confirm:yes': () => {，负责命令处理在该局部场景下的响应。
     'confirm:yes': () => {
+      // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
       if (!selectedPlugin) return;
+      // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
       setIsProcessing(true);
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+      // pluginId_8 插件数据固定为 ``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，作为插件命令界面 Manage Plugins后续展示或比较的基准。
       const pluginId_8 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
       // Write `false` directly — disablePluginOp's cross-scope guard would
       // reject this (plugin isn't in localSettings yet; the override IS the
       // point).
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         error: error_2
       } = updateSettingsForSource('localSettings', {
@@ -1517,20 +2208,31 @@ export function ManagePlugins({
           [pluginId_8]: false
         }
       });
+      // 满足 `error_2` 时，命令处理执行该分支。
       if (error_2) {
+        // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
         setIsProcessing(false);
+        // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
         setProcessError(`Failed to write settings: ${error_2.message}`);
+        // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
       clearAllCaches();
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(`✓ Disabled ${selectedPlugin.plugin.name} in .claude/settings.local.json. Run /reload-plugins to apply.`);
+      // 满足 `onManageComplete) void onManageComplete(` 时，命令处理执行该分支。
       if (onManageComplete) void onManageComplete();
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     },
+    // 这个回调绑定到 'confirm:no': () => {，负责命令处理在该局部场景下的响应。
     'confirm:no': () => {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-details');
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
     }
   }, {
@@ -1546,37 +2248,62 @@ export function ManagePlugins({
   // where n and escape both map to confirm:no), here n and escape are DIFFERENT
   // actions (keep-data vs cancel), so this deliberately stays on raw useInput.
   // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw y/n/esc; Enter must not trigger destructive delete
+  // 调用 useInput，触发命令处理此处需要的副作用。
   useInput((input, key) => {
+    // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!selectedPlugin) return;
+    // pluginId_9 插件数据 命名 ``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，让后续代码直接表达这个值的用途。
     const pluginId_9 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+    // pluginScope_2 插件数据保存`selectedPlugin.scope`，供插件命令界面 Manage Plugins后续判断或输出使用。
     const pluginScope_2 = selectedPlugin.scope;
     // Dialog is only reachable from the uninstall case (which guards on
     // isBuiltin), but TS can't track that across viewState transitions.
+    // 只有 `!pluginScope_2 || pluginScope_2 === 'builtin' || !isInstallableScope(plugin...` 满足时，命令处理才执行该分支。
     if (!pluginScope_2 || pluginScope_2 === 'builtin' || !isInstallableScope(pluginScope_2)) return;
+    // doUninstall保存`async`，供命令处理后续处理使用。
     const doUninstall = async (deleteDataDir: boolean) => {
+      // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
       setIsProcessing(true);
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // result_3保存`uninstallPluginOp`，供命令处理后续处理使用。
         const result_3 = await uninstallPluginOp(pluginId_9, pluginScope_2, deleteDataDir);
+        // 满足 `!result_3.success) throw new Error(result_3.message` 时，命令处理执行该分支。
         if (!result_3.success) throw new Error(result_3.message);
+        // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
         clearAllCaches();
+        // suffix保存`deleteDataDir ? '' : ' · data preserved'`，供后续判断或组装使用。
         const suffix = deleteDataDir ? '' : ' · data preserved';
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult(`${figures.tick} ${result_3.message}${suffix}`);
+        // 满足 `onManageComplete) void onManageComplete(` 时，命令处理执行该分支。
         if (onManageComplete) void onManageComplete();
+        // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
         setParentViewState({
           type: 'menu'
         });
       } catch (e_0) {
+        // setIsProcessing 写入新的状态值，使命令处理后续读取保持一致。
         setIsProcessing(false);
+        // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
         setProcessError(e_0 instanceof Error ? e_0.message : String(e_0));
       }
     };
+    // 当 `input` 匹配 `'y' || input === 'Y'` 时，命令处理执行对应分支。
     if (input === 'y' || input === 'Y') {
+      // 显式忽略 `doUninstall(true)` 的返回值，只保留它触发的副作用。
       void doUninstall(true);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (input === 'n' || input === 'N') {`，完成这一小步状态转换。
     } else if (input === 'n' || input === 'N') {
+      // 显式忽略 `doUninstall(false)` 的返回值，只保留它触发的副作用。
       void doUninstall(false);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (key.escape) {`，完成这一小步状态转换。
     } else if (key.escape) {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-details');
+      // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
       setProcessError(null);
     }
   }, {
@@ -1584,27 +2311,41 @@ export function ManagePlugins({
   });
 
   // Reset selection when search query changes
+  // 调用 React.useEffect，触发命令处理此处需要的副作用。
   React.useEffect(() => {
+    // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
     setSelectedIndex(0);
   }, [searchQuery]);
 
   // Handle input for entering search mode (text input handled by useSearchInput hook)
   // eslint-disable-next-line custom-rules/prefer-use-keybindings -- useInput needed for raw search mode text input
+  // 调用 useInput，触发命令处理此处需要的副作用。
   useInput((input_0, key_0) => {
+    // keyIsNotCtrlOrMeta标记插件命令界面 Manage Plugins是否启用对应路径。
     const keyIsNotCtrlOrMeta = !key_0.ctrl && !key_0.meta;
+    // 满足 `isSearchMode` 时，命令处理执行该分支。
     if (isSearchMode) {
       // Text input is handled by useSearchInput hook
+      // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Enter search mode with '/' or any printable character (except navigation keys)
+    // 只有 `input_0 === '/' && keyIsNotCtrlOrMeta` 满足时，命令处理才执行该分支。
     if (input_0 === '/' && keyIsNotCtrlOrMeta) {
+      // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
       setIsSearchMode(true);
+      // setSearchQuery 写入新的状态值，使命令处理后续读取保持一致。
       setSearchQuery('');
+      // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
       setSelectedIndex(0);
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (keyIsNotCtrlOrMeta && input_0.length > 0 && !/^\s+$/.test(in...`，完成这一小步状态转换。
     } else if (keyIsNotCtrlOrMeta && input_0.length > 0 && !/^\s+$/.test(input_0) && input_0 !== 'j' && input_0 !== 'k' && input_0 !== ' ') {
+      // setIsSearchMode 写入新的状态值，使命令处理后续读取保持一致。
       setIsSearchMode(true);
+      // setSearchQuery 写入新的状态值，使命令处理后续读取保持一致。
       setSearchQuery(input_0);
+      // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
       setSelectedIndex(0);
     }
   }, {
@@ -1612,12 +2353,16 @@ export function ManagePlugins({
   });
 
   // Loading state
+  // 满足 `loading` 时，命令处理执行该分支。
   if (loading) {
+    // 返回 `<Text>Loading installed plugins…</Text>`，作为命令处理这次计算的结果。
     return <Text>Loading installed plugins…</Text>;
   }
 
   // No plugins or MCPs installed
+  // unifiedItems 集合为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
   if (unifiedItems.length === 0) {
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text bold>Manage plugins</Text>
@@ -1628,99 +2373,157 @@ export function ManagePlugins({
         </Box>
       </Box>;
   }
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'plugin-options' && selectedPlugin) {
+    // pluginId_10 插件数据保存``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，作为后续固定文本处理的输入。
     const pluginId_10 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+    // finish 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function finish(msg: string): void {
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(msg);
       // Plugin is enabled regardless of whether config was saved or
       // skipped — onManageComplete → markPluginsChanged → the
       // persistent "run /reload-plugins" notice.
+      // 满足 `onManageComplete` 时，命令处理执行该分支。
       if (onManageComplete) {
+        // 显式忽略 `onManageComplete()` 的返回值，只保留它触发的副作用。
         void onManageComplete();
       }
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     }
+    // 返回 `<PluginOptionsFlow plugin={selectedPlugin.plugin} pluginId={pluginId_10...`，作为命令处理这次计算的结果。
     return <PluginOptionsFlow plugin={selectedPlugin.plugin} pluginId={pluginId_10} onDone={(outcome, detail) => {
+      // 按照 outcome 的取值选择命令处理的具体处理分支。
       switch (outcome) {
         case 'configured':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`✓ Enabled and configured ${selectedPlugin.plugin.name}. Run /reload-plugins to apply.`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
         case 'skipped':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`✓ Enabled ${selectedPlugin.plugin.name}. Run /reload-plugins to apply.`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
         case 'error':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`Failed to save configuration: ${detail}`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
       }
     }} />;
   }
 
   // Configure options (from the Manage menu)
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'configuring-options' && selectedPlugin) {
+    // pluginId_11 插件数据保存``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，作为后续固定文本处理的输入。
     const pluginId_11 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+    // 返回 `<PluginOptionsDialog title={`Configure ${selectedPlugin.plugin.name}`} ...`，作为命令处理这次计算的结果。
     return <PluginOptionsDialog title={`Configure ${selectedPlugin.plugin.name}`} subtitle="Plugin options" configSchema={viewState.schema} initialValues={loadPluginOptions(pluginId_11)} onSave={values => {
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 调用 savePluginOptions，触发命令处理此处需要的副作用。
         savePluginOptions(pluginId_11, values, viewState.schema);
+        // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
         clearAllCaches();
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult('Configuration saved. Run /reload-plugins for changes to take effect.');
       } catch (err_3) {
+        // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
         setProcessError(`Failed to save configuration: ${errorMessage(err_3)}`);
       }
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-details');
+    // 这个回调绑定到 }} onCancel={() => setViewState('plugin-details')} />;，负责命令处理在该局部场景下的响应。
     }} onCancel={() => setViewState('plugin-details')} />;
   }
 
   // Configuration view
+  // 只有 `viewState === 'configuring' && configNeeded && se` 满足时，命令处理才执行该分支。
   if (viewState === 'configuring' && configNeeded && selectedPlugin) {
+    // pluginId_12 插件数据保存``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，作为后续固定文本处理的输入。
     const pluginId_12 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+    // handleSave 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function handleSave(config: UserConfigValues) {
+      // 只有 `!configNeeded || !selectedPlugin` 满足时，命令处理才执行该分支。
       if (!configNeeded || !selectedPlugin) return;
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
         // Find MCPB path again
+        // mcpServersSpec_1保存`selectedPlugin.plugin.manifest.mcpServers`，供后续判断或组装使用。
         const mcpServersSpec_1 = selectedPlugin.plugin.manifest.mcpServers;
+        // mcpbPath_0 路径数据保存`null`，作为后续空值处理的输入。
         let mcpbPath_0: string | null = null;
+        // 只有 `typeof mcpServersSpec_1 === 'string' && isMcpbSource(mcpServersSpec_1)` 满足时，命令处理才执行该分支。
         if (typeof mcpServersSpec_1 === 'string' && isMcpbSource(mcpServersSpec_1)) {
+          // mcpbPath_0 路径数据更新为 `mcpServersSpec_1`，确保插件命令界面后续读取最新状态。
           mcpbPath_0 = mcpServersSpec_1;
+        // 插件命令界面 Manage Plugins在这里处理 `} else if (Array.isArray(mcpServersSpec_1)) {`，完成这一小步状态转换。
         } else if (Array.isArray(mcpServersSpec_1)) {
+          // 按顺序遍历 `mcpServersSpec_1` 中的spec_1，逐个交给命令处理处理。
           for (const spec_1 of mcpServersSpec_1) {
+            // 只有 `typeof spec_1 === 'string' && isMcpbSource(spec_1)` 满足时，命令处理才执行该分支。
             if (typeof spec_1 === 'string' && isMcpbSource(spec_1)) {
+              // mcpbPath_0 路径数据更新为 `spec_1`，确保插件命令界面后续读取最新状态。
               mcpbPath_0 = spec_1;
+              // 结束这个分支或循环，避免命令处理继续落入后续路径。
               break;
             }
           }
         }
+        // mcpbPath_0 路径数据缺失时直接走兜底路径，避免命令处理使用无效输入。
         if (!mcpbPath_0) {
+          // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
           setProcessError('No MCPB file found');
+          // setViewState 写入新的状态值，使命令处理后续读取保持一致。
           setViewState('plugin-details');
+          // 插件命令界面 Manage Plugins在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
 
         // Reload with provided config
+        // 等待 `loadMcpbFile(mcpbPath_0, selectedPlugin.plugin.path, pluginId_12, undef...` 完成，再继续插件命令界面 Manage Plugins的异步流程。
         await loadMcpbFile(mcpbPath_0, selectedPlugin.plugin.path, pluginId_12, undefined, config);
 
         // Success - go back to details
+        // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
         setProcessError(null);
+        // setConfigNeeded 写入新的状态值，使命令处理后续读取保持一致。
         setConfigNeeded(null);
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('plugin-details');
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult('Configuration saved. Run /reload-plugins for changes to take effect.');
       } catch (err_4) {
+        // errorMsg_0 错误信息保存`errorMessage`，供命令处理后续处理使用。
         const errorMsg_0 = errorMessage(err_4);
+        // setProcessError 写入新的状态值，使命令处理后续读取保持一致。
         setProcessError(`Failed to save configuration: ${errorMsg_0}`);
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('plugin-details');
       }
     }
+    // handleCancel 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function handleCancel() {
+      // setConfigNeeded 写入新的状态值，使命令处理后续读取保持一致。
       setConfigNeeded(null);
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-details');
     }
+    // 返回 `<PluginOptionsDialog title={`Configure ${configNeeded.manifest.name}`} ...`，作为命令处理这次计算的结果。
     return <PluginOptionsDialog title={`Configure ${configNeeded.manifest.name}`} subtitle={`Plugin: ${selectedPlugin.plugin.name}`} configSchema={configNeeded.configSchema} initialValues={configNeeded.existingConfig} onSave={handleSave} onCancel={handleCancel} />;
   }
 
   // Flagged plugin detail view
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'flagged-detail') {
+    // fp保存`viewState.plugin`，供插件命令界面 Manage Plugins后续判断或输出使用。
     const fp = viewState.plugin;
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box>
           <Text bold>
@@ -1759,7 +2562,9 @@ export function ManagePlugins({
 
   // Confirm-project-uninstall: warn about shared .claude/settings.json,
   // offer to disable in settings.local.json instead.
+  // 只有 `viewState === 'confirm-project-uninstall' && sele` 满足时，命令处理才执行该分支。
   if (viewState === 'confirm-project-uninstall' && selectedPlugin) {
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Text bold color="warning">
           {selectedPlugin.plugin.name} is enabled in .claude/settings.json
@@ -1785,7 +2590,9 @@ export function ManagePlugins({
   }
 
   // Confirm-data-cleanup: prompt before deleting ${CLAUDE_PLUGIN_DATA} dir
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'confirm-data-cleanup' && selectedPlugin) {
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Text bold>
           {selectedPlugin.plugin.name} has {viewState.size.human} of persistent
@@ -1810,20 +2617,29 @@ export function ManagePlugins({
   }
 
   // Plugin details view
+  // 只有 `viewState === 'plugin-details' && selectedPlugin` 满足时，命令处理才执行该分支。
   if (viewState === 'plugin-details' && selectedPlugin) {
+    // mergedSettings_2读取`getSettings_DEPRECATED`，供命令处理后续处理使用。
     const mergedSettings_2 = getSettings_DEPRECATED(); // Use merged settings to respect all layers
+    // pluginId_13 插件数据保存``${selectedPlugin.plugin.name}@${selectedPlugin.marketpla...`，作为后续固定文本处理的输入。
     const pluginId_13 = `${selectedPlugin.plugin.name}@${selectedPlugin.marketplace}`;
+    // isEnabled_2标记插件命令界面 Manage Plugins是否启用对应路径。
     const isEnabled_2 = mergedSettings_2?.enabledPlugins?.[pluginId_13] !== false;
 
     // Compute plugin errors section
+    // filteredPluginErrors 插件数据筛选`pluginErrors.filter`，供命令处理后续处理使用。
     const filteredPluginErrors = pluginErrors.filter(e_1 => 'plugin' in e_1 && e_1.plugin === selectedPlugin.plugin.name || e_1.source === pluginId_13 || e_1.source.startsWith(`${selectedPlugin.plugin.name}@`));
+    // pluginErrorsSection 插件数据标记插件命令界面 Manage Plugins是否启用对应路径。
     const pluginErrorsSection = filteredPluginErrors.length === 0 ? null : <Box flexDirection="column" marginBottom={1}>
           <Text bold color="error">
             {filteredPluginErrors.length}{' '}
             {plural(filteredPluginErrors.length, 'error')}:
           </Text>
+          {/* 这个回调绑定到 {filteredPluginErrors.map((error_3, i_0) => {，负责命令处理在该局部场景下的响应。 */}
           {filteredPluginErrors.map((error_3, i_0) => {
+        // guidance读取`getErrorGuidance`，供命令处理后续处理使用。
         const guidance = getErrorGuidance(error_3);
+        // 返回 `<Box key={i_0} flexDirection="column" marginLeft={2}>`，作为命令处理这次计算的结果。
         return <Box key={i_0} flexDirection="column" marginLeft={2}>
                 <Text color="error">{formatErrorMessage(error_3)}</Text>
                 {guidance && <Text dimColor italic>
@@ -1832,6 +2648,7 @@ export function ManagePlugins({
               </Box>;
       })}
         </Box>;
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box>
           <Text bold>
@@ -1877,8 +2694,11 @@ export function ManagePlugins({
 
         {/* Menu */}
         <Box marginTop={1} flexDirection="column">
+          {/* 这个回调绑定到 {detailsMenuItems.map((item_9, index_0) => {，负责命令处理在该局部场景下的响应。 */}
           {detailsMenuItems.map((item_9, index_0) => {
+          // isSelected标记插件命令界面 Manage Plugins是否启用对应路径。
           const isSelected = index_0 === detailsMenuIndex;
+          // 返回 `<Box key={index_0}>`，作为命令处理这次计算的结果。
           return <Box key={index_0}>
                 {isSelected && <Text>{figures.pointer} </Text>}
                 {!isSelected && <Text>{'  '}</Text>}
@@ -1912,10 +2732,15 @@ export function ManagePlugins({
   }
 
   // Failed plugin detail view
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'failed-plugin-details') {
+    // failedPlugin_0 插件数据 命名 `viewState.plugin`，让后续代码直接表达这个值的用途。
     const failedPlugin_0 = viewState.plugin;
+    // firstError 错误信息保存`failedPlugin_0.errors[0]`，供插件命令界面 Manage Plugins后续判断或输出使用。
     const firstError = failedPlugin_0.errors[0];
+    // errorMessage_0 消息数据格式化`formatErrorMessage`，供命令处理后续处理使用。
     const errorMessage_0 = firstError ? formatErrorMessage(firstError) : 'Failed to load';
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Text>
           <Text bold>{failedPlugin_0.name}</Text>
@@ -1948,31 +2773,46 @@ export function ManagePlugins({
   }
 
   // MCP detail view
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'mcp-detail') {
+    // client_3保存`viewState.client`，供插件命令界面 Manage Plugins后续判断或输出使用。
     const client_3 = viewState.client;
+    // serverToolsCount 数量筛选`filterToolsByServer`，供命令处理后续处理使用。
     const serverToolsCount = filterToolsByServer(mcpTools, client_3.name).length;
 
     // Common handlers for MCP menus
+    // handleMcpViewTools 集合封装成回调，供插件命令界面 Manage Plugins在事件触发或异步步骤中调用。
     const handleMcpViewTools = () => {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState({
         type: 'mcp-tools',
         client: client_3
       });
     };
+    // handleMcpCancel封装成回调，供插件命令界面 Manage Plugins在事件触发或异步步骤中调用。
     const handleMcpCancel = () => {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
     };
+    // handleMcpComplete封装成回调，供插件命令界面 Manage Plugins在事件触发或异步步骤中调用。
     const handleMcpComplete = (result_4?: string) => {
+      // 满足 `result_4` 时，命令处理执行该分支。
       if (result_4) {
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult(result_4);
       }
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
     };
 
     // Transform MCPServerConnection to appropriate ServerInfo type
+    // scope_5 命名 `client_3.config.scope`，让后续代码直接表达这个值的用途。
     const scope_5 = client_3.config.scope;
+    // configType 配置保存`client_3.config.type`，供插件命令界面 Manage Plugins后续判断或输出使用。
     const configType = client_3.config.type;
+    // 当 `configType` 匹配 `'stdio'` 时，命令处理执行对应分支。
     if (configType === 'stdio') {
+      // server 集中保存插件命令界面 Manage Plugins要一起传递的字段。
       const server: StdioServerInfo = {
         name: client_3.name,
         client: client_3,
@@ -1980,8 +2820,11 @@ export function ManagePlugins({
         transport: 'stdio',
         config: client_3.config as McpStdioServerConfig
       };
+      // 返回 `<MCPStdioServerMenu server={server} serverToolsCount={serverToolsCount}...`，作为命令处理这次计算的结果。
       return <MCPStdioServerMenu server={server} serverToolsCount={serverToolsCount} onViewTools={handleMcpViewTools} onCancel={handleMcpCancel} onComplete={handleMcpComplete} borderless />;
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (configType === 'sse') {`，完成这一小步状态转换。
     } else if (configType === 'sse') {
+      // server_0 集中保存插件命令界面 Manage Plugins要一起传递的字段。
       const server_0: SSEServerInfo = {
         name: client_3.name,
         client: client_3,
@@ -1990,8 +2833,11 @@ export function ManagePlugins({
         isAuthenticated: undefined,
         config: client_3.config as McpSSEServerConfig
       };
+      // 返回 `<MCPRemoteServerMenu server={server_0} serverToolsCount={serverToolsCou...`，作为命令处理这次计算的结果。
       return <MCPRemoteServerMenu server={server_0} serverToolsCount={serverToolsCount} onViewTools={handleMcpViewTools} onCancel={handleMcpCancel} onComplete={handleMcpComplete} borderless />;
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (configType === 'http') {`，完成这一小步状态转换。
     } else if (configType === 'http') {
+      // server_1 集中保存插件命令界面 Manage Plugins要一起传递的字段。
       const server_1: HTTPServerInfo = {
         name: client_3.name,
         client: client_3,
@@ -2000,8 +2846,11 @@ export function ManagePlugins({
         isAuthenticated: undefined,
         config: client_3.config as McpHTTPServerConfig
       };
+      // 返回 `<MCPRemoteServerMenu server={server_1} serverToolsCount={serverToolsCou...`，作为命令处理这次计算的结果。
       return <MCPRemoteServerMenu server={server_1} serverToolsCount={serverToolsCount} onViewTools={handleMcpViewTools} onCancel={handleMcpCancel} onComplete={handleMcpComplete} borderless />;
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (configType === 'claudeai-proxy') {`，完成这一小步状态转换。
     } else if (configType === 'claudeai-proxy') {
+      // server_2 集中保存插件命令界面 Manage Plugins要一起传递的字段。
       const server_2: ClaudeAIServerInfo = {
         name: client_3.name,
         client: client_3,
@@ -2010,23 +2859,33 @@ export function ManagePlugins({
         isAuthenticated: undefined,
         config: client_3.config as McpClaudeAIProxyServerConfig
       };
+      // 返回 `<MCPRemoteServerMenu server={server_2} serverToolsCount={serverToolsCou...`，作为命令处理这次计算的结果。
       return <MCPRemoteServerMenu server={server_2} serverToolsCount={serverToolsCount} onViewTools={handleMcpViewTools} onCancel={handleMcpCancel} onComplete={handleMcpComplete} borderless />;
     }
 
     // Fallback - shouldn't happen but handle gracefully
+    // setViewState 写入新的状态值，使命令处理后续读取保持一致。
     setViewState('plugin-list');
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
 
   // MCP tools view
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'mcp-tools') {
+    // client_4保存`viewState.client`，供插件命令界面 Manage Plugins后续判断或输出使用。
     const client_4 = viewState.client;
+    // scope_6保存`client_4.config.scope`，供插件命令界面 Manage Plugins后续判断或输出使用。
     const scope_6 = client_4.config.scope;
+    // configType_0 配置保存`client_4.config.type`，供后续判断或组装使用。
     const configType_0 = client_4.config.type;
 
     // Build ServerInfo for MCPToolListView
+    // server_3 先占位，稍后的条件分支会根据实际输入补齐它。
     let server_3: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ClaudeAIServerInfo;
+    // 当 `configType_0` 匹配 `'stdio'` 时，命令处理执行对应分支。
     if (configType_0 === 'stdio') {
+      // server_3更新为 `{`，确保插件命令界面后续读取最新状态。
       server_3 = {
         name: client_4.name,
         client: client_4,
@@ -2034,7 +2893,9 @@ export function ManagePlugins({
         transport: 'stdio',
         config: client_4.config as McpStdioServerConfig
       };
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (configType_0 === 'sse') {`，完成这一小步状态转换。
     } else if (configType_0 === 'sse') {
+      // server_3更新为 `{`，确保插件命令界面后续读取最新状态。
       server_3 = {
         name: client_4.name,
         client: client_4,
@@ -2043,7 +2904,9 @@ export function ManagePlugins({
         isAuthenticated: undefined,
         config: client_4.config as McpSSEServerConfig
       };
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (configType_0 === 'http') {`，完成这一小步状态转换。
     } else if (configType_0 === 'http') {
+      // server_3更新为 `{`，确保插件命令界面后续读取最新状态。
       server_3 = {
         name: client_4.name,
         client: client_4,
@@ -2053,6 +2916,7 @@ export function ManagePlugins({
         config: client_4.config as McpHTTPServerConfig
       };
     } else {
+      // server_3更新为 `{`，确保插件命令界面后续读取最新状态。
       server_3 = {
         name: client_4.name,
         client: client_4,
@@ -2062,12 +2926,15 @@ export function ManagePlugins({
         config: client_4.config as McpClaudeAIProxyServerConfig
       };
     }
+    // 返回 `<MCPToolListView server={server_3} onSelectTool={(tool: Tool) => {`，作为命令处理这次计算的结果。
     return <MCPToolListView server={server_3} onSelectTool={(tool: Tool) => {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState({
         type: 'mcp-tool-detail',
         client: client_4,
         tool
       });
+    // 这个回调绑定到 }} onBack={() => setViewState({，负责命令处理在该局部场景下的响应。
     }} onBack={() => setViewState({
       type: 'mcp-detail',
       client: client_4
@@ -2075,17 +2942,24 @@ export function ManagePlugins({
   }
 
   // MCP tool detail view
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'mcp-tool-detail') {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       client: client_5,
       tool: tool_0
     } = viewState;
+    // scope_7 命名 `client_5.config.scope`，让后续代码直接表达这个值的用途。
     const scope_7 = client_5.config.scope;
+    // configType_1 配置 命名 `client_5.config.type`，让后续代码直接表达这个值的用途。
     const configType_1 = client_5.config.type;
 
     // Build ServerInfo for MCPToolDetailView
+    // server_4 先占位，稍后的条件分支会根据实际输入补齐它。
     let server_4: StdioServerInfo | SSEServerInfo | HTTPServerInfo | ClaudeAIServerInfo;
+    // 当 `configType_1` 匹配 `'stdio'` 时，命令处理执行对应分支。
     if (configType_1 === 'stdio') {
+      // server_4更新为 `{`，确保插件命令界面后续读取最新状态。
       server_4 = {
         name: client_5.name,
         client: client_5,
@@ -2093,7 +2967,9 @@ export function ManagePlugins({
         transport: 'stdio',
         config: client_5.config as McpStdioServerConfig
       };
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (configType_1 === 'sse') {`，完成这一小步状态转换。
     } else if (configType_1 === 'sse') {
+      // server_4更新为 `{`，确保插件命令界面后续读取最新状态。
       server_4 = {
         name: client_5.name,
         client: client_5,
@@ -2102,7 +2978,9 @@ export function ManagePlugins({
         isAuthenticated: undefined,
         config: client_5.config as McpSSEServerConfig
       };
+    // 插件命令界面 Manage Plugins在这里处理 `} else if (configType_1 === 'http') {`，完成这一小步状态转换。
     } else if (configType_1 === 'http') {
+      // server_4更新为 `{`，确保插件命令界面后续读取最新状态。
       server_4 = {
         name: client_5.name,
         client: client_5,
@@ -2112,6 +2990,7 @@ export function ManagePlugins({
         config: client_5.config as McpHTTPServerConfig
       };
     } else {
+      // server_4更新为 `{`，确保插件命令界面后续读取最新状态。
       server_4 = {
         name: client_5.name,
         client: client_5,
@@ -2121,6 +3000,7 @@ export function ManagePlugins({
         config: client_5.config as McpClaudeAIProxyServerConfig
       };
     }
+    // 返回 `<MCPToolDetailView tool={tool_0} server={server_4} onBack={() => setVie...`，作为命令处理这次计算的结果。
     return <MCPToolDetailView tool={tool_0} server={server_4} onBack={() => setViewState({
       type: 'mcp-tools',
       client: client_5
@@ -2128,7 +3008,9 @@ export function ManagePlugins({
   }
 
   // Plugin list view (main management interface)
+  // visibleItems 集合读取`pagination.getVisibleItems`，供命令处理后续处理使用。
   const visibleItems = pagination.getVisibleItems(filteredItems);
+  // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
   return <Box flexDirection="column">
       {/* Search box */}
       <Box marginBottom={1}>
@@ -2146,37 +3028,54 @@ export function ManagePlugins({
         </Box>}
 
       {/* Unified list of plugins and MCPs grouped by scope */}
+      {/* 这个回调绑定到 {visibleItems.map((item_10, visibleIndex) => {，负责命令处理在该局部场景下的响应。 */}
       {visibleItems.map((item_10, visibleIndex) => {
+      // actualIndex 索引保存`pagination.toActualIndex`，供命令处理后续处理使用。
       const actualIndex = pagination.toActualIndex(visibleIndex);
+      // isSelected_0标记插件命令界面 Manage Plugins是否启用对应路径。
       const isSelected_0 = actualIndex === selectedIndex && !isSearchMode;
 
       // Check if we need to show a scope header
+      // prevItem读取 `visibleIndex > 0 ? visibleItems[visibleIndex - 1] : null` 对应条目，后续围绕该成员继续处理。
       const prevItem = visibleIndex > 0 ? visibleItems[visibleIndex - 1] : null;
+      // showScopeHeader标记插件命令界面 Manage Plugins是否启用对应路径。
       const showScopeHeader = !prevItem || prevItem.scope !== item_10.scope;
 
       // Get scope label
+      {/* 插件列表按来源分组展示，这个 helper 负责把内部 scope 转成用户可读标题。 */}
       const getScopeLabel = (scope_8: string): string => {
+        // 按照 scope_8 的取值选择命令处理的具体处理分支。
         switch (scope_8) {
           case 'flagged':
+            // 返回 `'Flagged'`，作为命令处理这次计算的结果。
             return 'Flagged';
           case 'project':
+            // 返回 `'Project'`，作为命令处理这次计算的结果。
             return 'Project';
           case 'local':
+            // 返回 `'Local'`，作为命令处理这次计算的结果。
             return 'Local';
           case 'user':
+            // 返回 `'User'`，作为命令处理这次计算的结果。
             return 'User';
           case 'enterprise':
+            // 返回 `'Enterprise'`，作为命令处理这次计算的结果。
             return 'Enterprise';
           case 'managed':
+            // 返回 `'Managed'`，作为命令处理这次计算的结果。
             return 'Managed';
           case 'builtin':
+            // 返回 `'Built-in'`，作为命令处理这次计算的结果。
             return 'Built-in';
           case 'dynamic':
+            // 返回 `'Built-in'`，作为命令处理这次计算的结果。
             return 'Built-in';
           default:
+            // 返回 `scope_8`，作为命令处理这次计算的结果。
             return scope_8;
         }
       };
+      // 返回 `<React.Fragment key={item_10.id}>`，作为命令处理这次计算的结果。
       return <React.Fragment key={item_10.id}>
             {showScopeHeader && <Box marginTop={visibleIndex > 0 ? 1 : 0} paddingLeft={2}>
                 <Text dimColor={item_10.scope !== 'flagged'} color={item_10.scope === 'flagged' ? 'warning' : undefined} bold={item_10.scope === 'flagged'}>

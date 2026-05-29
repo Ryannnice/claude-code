@@ -1,5 +1,7 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
 
+// PROMPT固定为 ``Use this tool to create and manage a structured task lis...`，作为工具实现 prompt后续展示或比较的基准。
 export const PROMPT = `Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
 It also helps the user understand the progress of the task and overall progress of their requests.
 
@@ -180,5 +182,6 @@ The assistant did not use the todo list because this is a single command executi
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 `
 
+// DESCRIPTION 先占位，稍后的条件分支会根据实际输入补齐它。
 export const DESCRIPTION =
   'Update the todo list for the current session. To be used proactively and often to track progress and pending tasks. Make sure that at least one task is in_progress at all times. Always provide both content (imperative) and activeForm (present continuous) for each task.'

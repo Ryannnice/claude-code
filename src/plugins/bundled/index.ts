@@ -17,6 +17,7 @@
 /**
  * Initialize built-in plugins. Called during CLI startup.
  */
+// initBuiltinPlugins 封装index的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function initBuiltinPlugins(): void {
   // No built-in plugins registered yet — this is the scaffolding for
   // migrating bundled skills that should be user-toggleable.

@@ -4,11 +4,13 @@
  * -- it doesn't affect permission logic or auto-approval.
  */
 
+// DestructivePattern 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type DestructivePattern = {
   pattern: RegExp
   warning: string
 }
 
+// DESTRUCTIVE_PATTERNS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
   // Remove-Item with -Recurse and/or -Force (and common aliases)
   // Anchored to statement start (^, |, ;, &, newline, {, () so `git rm --force`
@@ -99,11 +101,16 @@ const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
  * Checks if a PowerShell command matches known destructive patterns.
  * Returns a human-readable warning string, or null if no destructive pattern is detected.
  */
+// getDestructiveCommandWarning 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getDestructiveCommandWarning(command: string): string | null {
+  // 循环处理 `const { pattern, warning } of DESTRUCTIVE_PATTERNS`，让工具调用逐项把同类条目按顺序走完。
   for (const { pattern, warning } of DESTRUCTIVE_PATTERNS) {
+    // 满足 `pattern.test(command)` 时，工具调用执行该分支。
     if (pattern.test(command)) {
+      // 返回 `warning`，作为工具调用这次计算的结果。
       return warning
     }
   }
+  // 返回 `null`，作为工具调用这次计算的结果。
   return null
 }

@@ -1,169 +1,274 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useState } from 'react';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 接入 getDynamicConfig_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../../services/analytics/growthbook.js 处理。
 import { getDynamicConfig_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { logEvent } from '../../services/analytics/index.js';
+// 复用 getGlobalConfig、saveGlobalConfig 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+// 引入 Select，将 ../CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../CustomSelect/select.js';
+// 引入 DesktopHandoff，将 ../DesktopHandoff.js 中已经封装好的能力接到本文件流程里。
 import { DesktopHandoff } from '../DesktopHandoff.js';
+// 引入 PermissionDialog，将 ../permissions/PermissionDialog.js 中已经封装好的能力接到本文件流程里。
 import { PermissionDialog } from '../permissions/PermissionDialog.js';
+// DesktopUpsellConfig 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type DesktopUpsellConfig = {
   enable_shortcut_tip: boolean;
   enable_startup_dialog: boolean;
 };
+// DESKTOP_UPSELL_DEFAULT 集中保存终端 UI 组件 Desktop Upsell Startup要一起传递的字段。
 const DESKTOP_UPSELL_DEFAULT: DesktopUpsellConfig = {
   enable_shortcut_tip: false,
   enable_startup_dialog: false
 };
+// getDesktopUpsellConfig 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getDesktopUpsellConfig(): DesktopUpsellConfig {
+  // 返回 `getDynamicConfig_CACHED_MAY_BE_STALE('tengu_desktop_upsell', DESKTOP_UP...`，作为终端渲染这次计算的结果。
   return getDynamicConfig_CACHED_MAY_BE_STALE('tengu_desktop_upsell', DESKTOP_UPSELL_DEFAULT);
 }
+// isSupportedPlatform 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isSupportedPlatform(): boolean {
+  // 返回 `process.platform === 'darwin' || process.platform === 'win32' && proces...`，作为终端渲染这次计算的结果。
   return process.platform === 'darwin' || process.platform === 'win32' && process.arch === 'x64';
 }
+// shouldShowDesktopUpsellStartup 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldShowDesktopUpsellStartup(): boolean {
+  // 满足 `!isSupportedPlatform()` 时，终端渲染执行该分支。
   if (!isSupportedPlatform()) return false;
+  // 满足 `!getDesktopUpsellConfig().enable_startup_dialog` 时，终端渲染执行该分支。
   if (!getDesktopUpsellConfig().enable_startup_dialog) return false;
+  // 配置读取`getGlobalConfig`，供终端渲染后续处理使用。
   const config = getGlobalConfig();
+  // 满足 `config.desktopUpsellDismissed` 时，终端渲染执行该分支。
   if (config.desktopUpsellDismissed) return false;
+  // 满足 `(config.desktopUpsellSeenCount ?? 0) >= 3` 时，终端渲染执行该分支。
   if ((config.desktopUpsellSeenCount ?? 0) >= 3) return false;
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
+// DesktopUpsellSelection 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type DesktopUpsellSelection = 'try' | 'not-now' | 'never';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
+  // 这个回调绑定到 onDone: () => void;，负责终端渲染在该局部场景下的响应。
   onDone: () => void;
 };
+// DesktopUpsellStartup 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function DesktopUpsellStartup(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(14);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onDone
   } = t0;
+  // showHandoff 由 React state 持有，setShowHandoff 会在用户操作或异步结果返回时触发刷新。
   const [showHandoff, setShowHandoff] = useState(false);
+  // t1 暂存 `[]` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `[]` 生成的渲染片段，后续返回路径直接复用。
     t1 = [];
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(_temp, t1);
+  // 满足 `showHandoff` 时，终端渲染执行该分支。
   if (showHandoff) {
+    // t2 暂存 `<DesktopHandoff onDone={() => onDone()} />` 的派生结果，便于缓存命中时直接复用。
     let t2;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[1] !== onDone) {
+      // t2 暂存 `<DesktopHandoff onDone={() => onDone()} />` 生成的渲染片段，后续返回路径直接复用。
       t2 = <DesktopHandoff onDone={() => onDone()} />;
+      // $[1] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
       $[1] = onDone;
+      // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
       $[2] = t2;
     } else {
+      // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
       t2 = $[2];
     }
+    // 返回 `t2`，作为终端渲染这次计算的结果。
     return t2;
   }
+  // t2 暂存 `function handleSelect(value) {` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== onDone) {
+    // t2 暂存 `function handleSelect(value) {` 生成的渲染片段，后续返回路径直接复用。
     t2 = function handleSelect(value) {
+      // 按照 value 的取值选择终端渲染的具体处理分支。
       switch (value) {
         case "try":
           {
+            // setShowHandoff 写入新的状态值，使终端渲染后续读取保持一致。
             setShowHandoff(true);
+            // 终端 UI 组件 Desktop Upsell Startup在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
         case "never":
           {
+            // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
             saveGlobalConfig(_temp2);
+            // 调用 onDone，触发终端渲染此处需要的副作用。
             onDone();
+            // 终端 UI 组件 Desktop Upsell Startup在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
         case "not-now":
           {
+            // 调用 onDone，触发终端渲染此处需要的副作用。
             onDone();
+            // 终端 UI 组件 Desktop Upsell Startup在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
       }
     };
+    // $[3] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = onDone;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[4];
   }
+  // handleSelect保存`t2`，作为后续临时缓存值处理的输入。
   const handleSelect = t2;
+  // t3 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+    // t3 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t3 = {
       label: "Open in Claude Code Desktop",
       value: "try" as const
     };
+    // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[5];
   }
+  // t4 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+    // t4 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t4 = {
       label: "Not now",
       value: "not-now" as const
     };
+    // $[6] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[6];
   }
+  // t5 暂存 `[t3, t4, {` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+    // t5 暂存 `[t3, t4, {` 生成的渲染片段，后续返回路径直接复用。
     t5 = [t3, t4, {
       label: "Don't ask again",
       value: "never" as const
     }];
+    // $[7] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[7];
   }
+  // 选项沿用 `t5` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const options = t5;
+  // t6 暂存 `<Box marginBottom={1}><Text>Same Claude Code with visual ...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
+    // t6 暂存 `<Box marginBottom={1}><Text>Same Claude Code with visual ...` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Box marginBottom={1}><Text>Same Claude Code with visual diffs, live app preview, parallel sessions, and more.</Text></Box>;
+    // $[8] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[8];
   }
+  // t7 暂存 `() => handleSelect("not-now")` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== handleSelect) {
+    // t7 暂存 `() => handleSelect("not-now")` 生成的渲染片段，后续返回路径直接复用。
     t7 = () => handleSelect("not-now");
+    // $[9] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = handleSelect;
+    // $[10] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[10];
   }
+  // t8 暂存 `<PermissionDialog title="Try Claude Code Desktop"><Box fl...` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[11] !== handleSelect || $[12] !== t7) {
+    // t8 暂存 `<PermissionDialog title="Try Claude Code Desktop"><Box fl...` 生成的渲染片段，后续返回路径直接复用。
     t8 = <PermissionDialog title="Try Claude Code Desktop"><Box flexDirection="column" paddingX={2} paddingY={1}>{t6}<Select options={options} onChange={handleSelect} onCancel={t7} /></Box></PermissionDialog>;
+    // $[11] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = handleSelect;
+    // $[12] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t7;
+    // $[13] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[13];
   }
+  // 返回 `t8`，作为终端渲染这次计算的结果。
   return t8;
 }
+// _temp2 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(prev_0) {
+  // 满足 `prev_0.desktopUpsellDismissed` 时，终端渲染执行该分支。
   if (prev_0.desktopUpsellDismissed) {
+    // 返回 `prev_0`，作为终端渲染这次计算的结果。
     return prev_0;
   }
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     ...prev_0,
     desktopUpsellDismissed: true
   };
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp() {
+  // newCount 数量读取`getGlobalConfig`，供终端渲染后续处理使用。
   const newCount = (getGlobalConfig().desktopUpsellSeenCount ?? 0) + 1;
+  // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
   saveGlobalConfig(prev => {
+    // 满足 `(prev.desktopUpsellSeenCount ?? 0) >= newCount` 时，终端渲染执行该分支。
     if ((prev.desktopUpsellSeenCount ?? 0) >= newCount) {
+      // 返回 `prev`，作为终端渲染这次计算的结果。
       return prev;
     }
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       ...prev,
       desktopUpsellSeenCount: newCount
     };
   });
+  // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
   logEvent("tengu_desktop_upsell_shown", {
     seen_count: newCount
   });

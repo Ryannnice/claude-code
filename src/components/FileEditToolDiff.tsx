@@ -1,130 +1,215 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { StructuredPatchHunk } 来自 diff，用于校准终端渲染的数据契约。
 import type { StructuredPatchHunk } from 'diff';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Suspense、use、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { Suspense, use, useState } from 'react';
+// 引入 useTerminalSize，将 ../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 类型依赖 { FileEdit } 来自 ../tools/FileEditTool/types.js，用于校准终端渲染的数据契约。
 import type { FileEdit } from '../tools/FileEditTool/types.js';
+// 接入 findActualString、preserveQuoteStyle 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { findActualString, preserveQuoteStyle } from '../tools/FileEditTool/utils.js';
+// 复用 adjustHunkLineNumbers、CONTEXT_LINES、getPatchForDisplay 工具函数，把通用处理留在 ../utils/diff.js 中维护。
 import { adjustHunkLineNumbers, CONTEXT_LINES, getPatchForDisplay } from '../utils/diff.js';
+// 复用 logError 工具函数，把通用处理留在 ../utils/log.js 中维护。
 import { logError } from '../utils/log.js';
+// 复用 CHUNK_SIZE、openForScan、readCapped、scanForContext 工具函数，把通用处理留在 ../utils/readEditContext.js 中维护。
 import { CHUNK_SIZE, openForScan, readCapped, scanForContext } from '../utils/readEditContext.js';
+// 复用 firstLineOf 工具函数，把通用处理留在 ../utils/stringUtils.js 中维护。
 import { firstLineOf } from '../utils/stringUtils.js';
+// 引入 StructuredDiffList，将 ./StructuredDiffList.js 中已经封装好的能力接到本文件流程里。
 import { StructuredDiffList } from './StructuredDiffList.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   file_path: string;
   edits: FileEdit[];
 };
+// DiffData 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type DiffData = {
   patch: StructuredPatchHunk[];
   firstLine: string | null;
   fileContent: string | undefined;
 };
+// FileEditToolDiff 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function FileEditToolDiff(props) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(7);
+  // t0 暂存 `() => loadDiffData(props.file_path, props.edits)` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== props.edits || $[1] !== props.file_path) {
+    // t0 暂存 `() => loadDiffData(props.file_path, props.edits)` 生成的渲染片段，后续返回路径直接复用。
     t0 = () => loadDiffData(props.file_path, props.edits);
+    // $[0] 缓存 `props.edits`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = props.edits;
+    // $[1] 缓存 `props.file_path`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = props.file_path;
+    // $[2] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[2];
   }
+  // dataPromise 异步任务 由 React state 持有，setter 会在用户操作或异步结果返回时触发刷新。
   const [dataPromise] = useState(t0);
+  // t1 暂存 `<DiffFrame placeholder={true} />` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `<DiffFrame placeholder={true} />` 生成的渲染片段，后续返回路径直接复用。
     t1 = <DiffFrame placeholder={true} />;
+    // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[3];
   }
+  // t2 暂存 `<Suspense fallback={t1}><DiffBody promise={dataPromise} f...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== dataPromise || $[5] !== props.file_path) {
+    // t2 暂存 `<Suspense fallback={t1}><DiffBody promise={dataPromise} f...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Suspense fallback={t1}><DiffBody promise={dataPromise} file_path={props.file_path} /></Suspense>;
+    // $[4] 缓存 `dataPromise`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = dataPromise;
+    // $[5] 缓存 `props.file_path`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = props.file_path;
+    // $[6] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[6];
   }
+  // 返回 `t2`，作为终端渲染这次计算的结果。
   return t2;
 }
+// DiffBody 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function DiffBody(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(6);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     promise,
     file_path
   } = t0;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     patch,
     firstLine,
     fileContent
   } = use(promise);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns
   } = useTerminalSize();
+  // t1 暂存 `<DiffFrame><StructuredDiffList hunks={patch} dim={false} ...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== columns || $[1] !== fileContent || $[2] !== file_path || $[3] !== firstLine || $[4] !== patch) {
+    // t1 暂存 `<DiffFrame><StructuredDiffList hunks={patch} dim={false} ...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <DiffFrame><StructuredDiffList hunks={patch} dim={false} width={columns} filePath={file_path} firstLine={firstLine} fileContent={fileContent} /></DiffFrame>;
+    // $[0] 缓存 `columns`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = columns;
+    // $[1] 缓存 `fileContent`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = fileContent;
+    // $[2] 缓存 `file_path`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = file_path;
+    // $[3] 缓存 `firstLine`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = firstLine;
+    // $[4] 缓存 `patch`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = patch;
+    // $[5] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[5];
   }
+  // 返回 `t1`，作为终端渲染这次计算的结果。
   return t1;
 }
+// DiffFrame 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function DiffFrame(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(5);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     children,
     placeholder
   } = t0;
+  // t1 暂存 `placeholder ? <Text dimColor={true}>…</Text> : children` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== children || $[1] !== placeholder) {
+    // t1 暂存 `placeholder ? <Text dimColor={true}>…</Text> : children` 生成的渲染片段，后续返回路径直接复用。
     t1 = placeholder ? <Text dimColor={true}>…</Text> : children;
+    // $[0] 缓存 `children`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = children;
+    // $[1] 缓存 `placeholder`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = placeholder;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // t2 暂存 `<Box flexDirection="column"><Box borderColor="subtle" bor...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== t1) {
+    // t2 暂存 `<Box flexDirection="column"><Box borderColor="subtle" bor...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Box flexDirection="column"><Box borderColor="subtle" borderStyle="dashed" flexDirection="column" borderLeft={false} borderRight={false}>{t1}</Box></Box>;
+    // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t1;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[4];
   }
+  // 返回 `t2`，作为终端渲染这次计算的结果。
   return t2;
 }
+// loadDiffData 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function loadDiffData(file_path: string, edits: FileEdit[]): Promise<DiffData> {
+  // valid筛选`edits.filter`，供终端渲染后续处理使用。
   const valid = edits.filter(e => e.old_string != null && e.new_string != null);
+  // single标记终端 UI File Edit Tool Diff是否启用对应路径。
   const single = valid.length === 1 ? valid[0]! : undefined;
 
   // SedEditPermissionRequest passes the entire file as old_string. Scanning for
   // a needle ≥ CHUNK_SIZE allocates O(needle) for the overlap buffer — skip the
   // file read entirely and diff the inputs we already have.
+  // 只有 `single && single.old_string.length >= CHUNK_SIZE` 满足时，终端渲染才执行该分支。
   if (single && single.old_string.length >= CHUNK_SIZE) {
+    // 返回 `diffToolInputsOnly(file_path, [single])`，作为终端渲染这次计算的结果。
     return diffToolInputsOnly(file_path, [single]);
   }
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // handle保存`openForScan`，供终端渲染后续处理使用。
     const handle = await openForScan(file_path);
+    // 满足 `handle === null) return diffToolInputsOnly(file_path, valid` 时，终端渲染执行该分支。
     if (handle === null) return diffToolInputsOnly(file_path, valid);
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // Multi-edit and empty old_string genuinely need full-file for sequential
       // replacements — structuredPatch needs before/after strings. replace_all
       // routes through the chunked path below (shows first-occurrence window;
       // matches within the slice still replace via edit.replace_all).
+      // 只有 `!single || single.old_string === ''` 满足时，终端渲染才执行该分支。
       if (!single || single.old_string === '') {
+        // file 文件数据读取`readCapped`，供终端渲染后续处理使用。
         const file = await readCapped(handle);
+        // 满足 `file === null) return diffToolInputsOnly(file_path, valid` 时，终端渲染执行该分支。
         if (file === null) return diffToolInputsOnly(file_path, valid);
+        // normalized派生`valid.map`，供终端渲染后续处理使用。
         const normalized = valid.map(e => normalizeEdit(file, e));
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           patch: getPatchForDisplay({
             filePath: file_path,
@@ -135,30 +220,41 @@ async function loadDiffData(file_path: string, edits: FileEdit[]): Promise<DiffD
           fileContent: file
         };
       }
+      // ctx保存`scanForContext`，供终端渲染后续处理使用。
       const ctx = await scanForContext(handle, single.old_string, CONTEXT_LINES);
+      // 只有 `ctx.truncated || ctx.content === ''` 满足时，终端渲染才执行该分支。
       if (ctx.truncated || ctx.content === '') {
+        // 返回 `diffToolInputsOnly(file_path, [single])`，作为终端渲染这次计算的结果。
         return diffToolInputsOnly(file_path, [single]);
       }
+      // normalized保存`normalizeEdit`，供终端渲染后续处理使用。
       const normalized = normalizeEdit(ctx.content, single);
+      // hunks 集合读取`getPatchForDisplay`，供终端渲染后续处理使用。
       const hunks = getPatchForDisplay({
         filePath: file_path,
         fileContents: ctx.content,
         edits: [normalized]
       });
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         patch: adjustHunkLineNumbers(hunks, ctx.lineOffset - 1),
         firstLine: ctx.lineOffset === 1 ? firstLineOf(ctx.content) : null,
         fileContent: ctx.content
       };
     } finally {
+      // 等待 `handle.close()` 完成，再继续终端 UI 组件 File Edit Tool Diff的异步流程。
       await handle.close();
     }
   } catch (e) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(e as Error);
+    // 返回 `diffToolInputsOnly(file_path, valid)`，作为终端渲染这次计算的结果。
     return diffToolInputsOnly(file_path, valid);
   }
 }
+// diffToolInputsOnly 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function diffToolInputsOnly(filePath: string, edits: FileEdit[]): DiffData {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     patch: edits.flatMap(e => getPatchForDisplay({
       filePath,
@@ -169,9 +265,13 @@ function diffToolInputsOnly(filePath: string, edits: FileEdit[]): DiffData {
     fileContent: undefined
   };
 }
+// normalizeEdit 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function normalizeEdit(fileContent: string, edit: FileEdit): FileEdit {
+  // actualOld筛选`findActualString`，供终端渲染后续处理使用。
   const actualOld = findActualString(fileContent, edit.old_string) || edit.old_string;
+  // actualNew保存`preserveQuoteStyle`，供终端渲染后续处理使用。
   const actualNew = preserveQuoteStyle(edit.old_string, actualOld, edit.new_string);
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     ...edit,
     old_string: actualOld,

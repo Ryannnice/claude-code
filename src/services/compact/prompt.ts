@@ -1,8 +1,11 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 类型依赖 { PartialCompactDirection } 来自 ../../types/message.js，用于校准服务层 prompt的数据契约。
 import type { PartialCompactDirection } from '../../types/message.js'
 
 // Dead code elimination: conditional import for proactive mode
 /* eslint-disable @typescript-eslint/no-require-imports */
+// proactiveModule 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const proactiveModule =
   feature('PROACTIVE') || feature('KAIROS')
     ? (require('../../proactive/index.js') as typeof import('../../proactive/index.js'))
@@ -16,6 +19,7 @@ const proactiveModule =
 // no text output → falls through to the streaming fallback (2.79% on 4.6 vs
 // 0.01% on 4.5). Putting this FIRST and making it explicit about rejection
 // consequences prevents the wasted turn.
+// NO_TOOLS_PREAMBLE保存``CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.`，作为后续固定文本处理的输入。
 const NO_TOOLS_PREAMBLE = `CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.
 
 - Do NOT use Read, Bash, Grep, Glob, Edit, Write, or ANY other tool.
@@ -28,6 +32,7 @@ const NO_TOOLS_PREAMBLE = `CRITICAL: Respond with TEXT ONLY. Do NOT call any too
 // Two variants: BASE scopes to "the conversation", PARTIAL scopes to "the
 // recent messages". The <analysis> block is a drafting scratchpad that
 // formatCompactSummary() strips before the summary reaches context.
+// DETAILED_ANALYSIS_INSTRUCTION_BASE 命名 ``Before providing your final summary, wrap your analysis ...`，让后续代码直接表达这个值的用途。
 const DETAILED_ANALYSIS_INSTRUCTION_BASE = `Before providing your final summary, wrap your analysis in <analysis> tags to organize your thoughts and ensure you've covered all necessary points. In your analysis process:
 
 1. Chronologically analyze each message and section of the conversation. For each section thoroughly identify:
@@ -43,6 +48,7 @@ const DETAILED_ANALYSIS_INSTRUCTION_BASE = `Before providing your final summary,
    - Pay special attention to specific user feedback that you received, especially if the user told you to do something differently.
 2. Double-check for technical accuracy and completeness, addressing each required element thoroughly.`
 
+// DETAILED_ANALYSIS_INSTRUCTION_PARTIAL保存``Before providing your final summary, wrap your analysis ...`，作为后续固定文本处理的输入。
 const DETAILED_ANALYSIS_INSTRUCTION_PARTIAL = `Before providing your final summary, wrap your analysis in <analysis> tags to organize your thoughts and ensure you've covered all necessary points. In your analysis process:
 
 1. Analyze the recent messages chronologically. For each section thoroughly identify:
@@ -58,6 +64,7 @@ const DETAILED_ANALYSIS_INSTRUCTION_PARTIAL = `Before providing your final summa
    - Pay special attention to specific user feedback that you received, especially if the user told you to do something differently.
 2. Double-check for technical accuracy and completeness, addressing each required element thoroughly.`
 
+// BASE_COMPACT_PROMPT固定为 ``Your task is to create a detailed summary of the convers...`，作为服务层 prompt后续展示或比较的基准。
 const BASE_COMPACT_PROMPT = `Your task is to create a detailed summary of the conversation so far, paying close attention to the user's explicit requests and your previous actions.
 This summary should be thorough in capturing technical details, code patterns, and architectural decisions that would be essential for continuing development work without losing context.
 
@@ -142,6 +149,7 @@ When you are using compact - please focus on test output and code changes. Inclu
 </example>
 `
 
+// PARTIAL_COMPACT_PROMPT固定为 ``Your task is to create a detailed summary of the RECENT ...`，作为服务层 prompt后续展示或比较的基准。
 const PARTIAL_COMPACT_PROMPT = `Your task is to create a detailed summary of the RECENT portion of the conversation — the messages that follow earlier retained context. The earlier messages are being kept intact and do NOT need to be summarized. Focus your summary on what was discussed, learned, and accomplished in the recent messages only.
 
 ${DETAILED_ANALYSIS_INSTRUCTION_PARTIAL}
@@ -205,6 +213,7 @@ Please provide your summary based on the RECENT messages only (after the retaine
 
 // 'up_to': model sees only the summarized prefix (cache hit). Summary will
 // precede kept recent messages, hence "Context for Continuing Work" section.
+// PARTIAL_COMPACT_UP_TO_PROMPT保存`summary`，供服务层 prompt后续处理使用。
 const PARTIAL_COMPACT_UP_TO_PROMPT = `Your task is to create a detailed summary of this conversation. This summary will be placed at the start of a continuing session; newer messages that build on this context will follow after your summary (you do not see them here). Summarize thoroughly so that someone reading only your summary and then the newer messages can fully understand what happened and continue the work.
 
 ${DETAILED_ANALYSIS_INSTRUCTION_BASE}
@@ -266,39 +275,53 @@ Here's an example of how your output should be structured:
 Please provide your summary following this structure, ensuring precision and thoroughness in your response.
 `
 
+// NO_TOOLS_TRAILER 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const NO_TOOLS_TRAILER =
   '\n\nREMINDER: Do NOT call any tools. Respond with plain text only — ' +
   'an <analysis> block followed by a <summary> block. ' +
   'Tool calls will be rejected and you will fail the task.'
 
+// getPartialCompactPrompt 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getPartialCompactPrompt(
   customInstructions?: string,
   direction: PartialCompactDirection = 'from',
 ): string {
+  // template 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const template =
     direction === 'up_to'
       ? PARTIAL_COMPACT_UP_TO_PROMPT
       : PARTIAL_COMPACT_PROMPT
+  // 提示词保存`NO_TOOLS_PREAMBLE + template`，供后续判断或组装使用。
   let prompt = NO_TOOLS_PREAMBLE + template
 
+  // `customInstructions && customInstructions.tr...` 与 `''` 不一致时刷新派生状态，避免使用过期结果。
   if (customInstructions && customInstructions.trim() !== '') {
+    // 服务层 prompt在这里处理 `prompt += `\n\nAdditional Instructions:\n${customInstructions}``，完成这一小步状态转换。
     prompt += `\n\nAdditional Instructions:\n${customInstructions}`
   }
 
+  // 服务层 prompt在这里处理 `prompt += NO_TOOLS_TRAILER`，完成这一小步状态转换。
   prompt += NO_TOOLS_TRAILER
 
+  // 返回 `prompt`，作为服务层 prompt这次计算的结果。
   return prompt
 }
 
+// getCompactPrompt 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getCompactPrompt(customInstructions?: string): string {
+  // 提示词 命名 `NO_TOOLS_PREAMBLE + BASE_COMPACT_PROMPT`，让后续代码直接表达这个值的用途。
   let prompt = NO_TOOLS_PREAMBLE + BASE_COMPACT_PROMPT
 
+  // `customInstructions && customInstructions.tr...` 与 `''` 不一致时刷新派生状态，避免使用过期结果。
   if (customInstructions && customInstructions.trim() !== '') {
+    // 服务层 prompt在这里处理 `prompt += `\n\nAdditional Instructions:\n${customInstructions}``，完成这一小步状态转换。
     prompt += `\n\nAdditional Instructions:\n${customInstructions}`
   }
 
+  // 服务层 prompt在这里处理 `prompt += NO_TOOLS_TRAILER`，完成这一小步状态转换。
   prompt += NO_TOOLS_TRAILER
 
+  // 返回 `prompt`，作为服务层 prompt这次计算的结果。
   return prompt
 }
 
@@ -308,20 +331,27 @@ export function getCompactPrompt(customInstructions?: string): string {
  * @param summary The raw summary string potentially containing <analysis> and <summary> XML tags
  * @returns The formatted summary with analysis stripped and summary tags replaced by headers
  */
+// formatCompactSummary 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function formatCompactSummary(summary: string): string {
+  // formattedSummary保存`summary`，供服务层 prompt后续判断或输出使用。
   let formattedSummary = summary
 
   // Strip analysis section — it's a drafting scratchpad that improves summary
   // quality but has no informational value once the summary is written.
+  // formattedSummary更新为 `formattedSummary.replace(`，确保服务层后续读取最新状态。
   formattedSummary = formattedSummary.replace(
     /<analysis>[\s\S]*?<\/analysis>/,
     '',
   )
 
   // Extract and format summary section
+  // summaryMatch匹配`formattedSummary.match`，供服务层 prompt后续处理使用。
   const summaryMatch = formattedSummary.match(/<summary>([\s\S]*?)<\/summary>/)
+  // 满足 `summaryMatch` 时，服务层 prompt执行该分支。
   if (summaryMatch) {
+    // 文本内容标记服务层 prompt是否启用对应路径。
     const content = summaryMatch[1] || ''
+    // formattedSummary更新为 `formattedSummary.replace(`，确保服务层后续读取最新状态。
     formattedSummary = formattedSummary.replace(
       /<summary>[\s\S]*?<\/summary>/,
       `Summary:\n${content.trim()}`,
@@ -329,46 +359,61 @@ export function formatCompactSummary(summary: string): string {
   }
 
   // Clean up extra whitespace between sections
+  // formattedSummary更新为 `formattedSummary.replace(/\n\n+/g, '\n\n')`，确保服务层后续读取最新状态。
   formattedSummary = formattedSummary.replace(/\n\n+/g, '\n\n')
 
+  // 返回 `formattedSummary.trim()`，作为服务层 prompt这次计算的结果。
   return formattedSummary.trim()
 }
 
+// getCompactUserSummaryMessage 封装服务层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getCompactUserSummaryMessage(
   summary: string,
   suppressFollowUpQuestions?: boolean,
   transcriptPath?: string,
   recentMessagesPreserved?: boolean,
 ): string {
+  // formattedSummary格式化`formatCompactSummary`，供服务层 prompt后续处理使用。
   const formattedSummary = formatCompactSummary(summary)
 
+  // baseSummary固定为 ``This session is being continued from a previous conversa...`，作为服务层 prompt后续展示或比较的基准。
   let baseSummary = `This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
 
 ${formattedSummary}`
 
+  // 满足 `transcriptPath` 时，服务层 prompt执行该分支。
   if (transcriptPath) {
+    // 服务层 prompt在这里处理 `baseSummary += `\n\nIf you need specific details from before compaction...`，完成这一小步状态转换。
     baseSummary += `\n\nIf you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: ${transcriptPath}`
   }
 
+  // 满足 `recentMessagesPreserved` 时，服务层 prompt执行该分支。
   if (recentMessagesPreserved) {
+    // 服务层 prompt在这里处理 `baseSummary += `\n\nRecent messages are preserved verbatim.``，完成这一小步状态转换。
     baseSummary += `\n\nRecent messages are preserved verbatim.`
   }
 
+  // 满足 `suppressFollowUpQuestions` 时，服务层 prompt执行该分支。
   if (suppressFollowUpQuestions) {
+    // continuation保存``${baseSummary}`，作为后续固定文本处理的输入。
     let continuation = `${baseSummary}
 Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.`
 
+    // 服务层 prompt在这里进入条件判断，后续代码按实际状态分流。
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
       proactiveModule?.isProactiveActive()
     ) {
+      // 服务层 prompt在这里处理 `continuation += ``，完成这一小步状态转换。
       continuation += `
 
 You are running in autonomous/proactive mode. This is NOT a first wake-up — you were already working autonomously before compaction. Continue your work loop: pick up where you left off based on the summary above. Do not greet the user or ask what to work on.`
     }
 
+    // 返回 `continuation`，作为服务层 prompt这次计算的结果。
     return continuation
   }
 
+  // 返回 `baseSummary`，作为服务层 prompt这次计算的结果。
   return baseSummary
 }

@@ -1,7 +1,12 @@
+// 引入 execa，将 execa 中已经封装好的能力接到本文件流程里。
 import { execa } from 'execa'
+// 引入 logForDebugging，将 ../debug.js 中已经封装好的能力接到本文件流程里。
 import { logForDebugging } from '../debug.js'
+// 引入 memoizeWithLRU，将 ../memoize.js 中已经封装好的能力接到本文件流程里。
 import { memoizeWithLRU } from '../memoize.js'
+// 引入 getCachedPowerShellPath，将 ../shell/powershellDetection.js 中已经封装好的能力接到本文件流程里。
 import { getCachedPowerShellPath } from '../shell/powershellDetection.js'
+// 引入 jsonParse，将 ../slowOperations.js 中已经封装好的能力接到本文件流程里。
 import { jsonParse } from '../slowOperations.js'
 
 // ---------------------------------------------------------------------------
@@ -14,6 +19,7 @@ import { jsonParse } from '../slowOperations.js'
  * The PowerShell AST element type for pipeline elements.
  * Maps directly to CommandBaseAst derivatives in System.Management.Automation.Language.
  */
+// PipelineElementType 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type PipelineElementType =
   | 'CommandAst'
   | 'CommandExpressionAst'
@@ -24,6 +30,7 @@ type PipelineElementType =
  * Used to classify each element during the AST walk so TypeScript can derive
  * security flags without extra Find-AstNodes calls in PowerShell.
  */
+// CommandElementType 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type CommandElementType =
   | 'ScriptBlock'
   | 'SubExpression'
@@ -40,6 +47,7 @@ type CommandElementType =
  * `-InputObject:$env:SECRET`). Consumers check `child.type` to classify
  * the bound value (Variable, StringConstant, Other) without parsing text.
  */
+// CommandElementChild 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CommandElementChild = {
   type: CommandElementType
   text: string
@@ -49,6 +57,7 @@ export type CommandElementChild = {
  * The PowerShell AST statement type.
  * Maps directly to StatementAst derivatives in System.Management.Automation.Language.
  */
+// StatementType 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type StatementType =
   | 'PipelineAst'
   | 'PipelineChainAst'
@@ -69,6 +78,7 @@ type StatementType =
 /**
  * A command invocation within a pipeline segment.
  */
+// ParsedCommandElement 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ParsedCommandElement = {
   /** The command/cmdlet name (e.g., "Get-ChildItem", "git") */
   name: string
@@ -97,6 +107,7 @@ export type ParsedCommandElement = {
 /**
  * A redirection found in the command.
  */
+// ParsedRedirection 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type ParsedRedirection = {
   /** The redirection operator */
   operator: '>' | '>>' | '2>' | '2>>' | '*>' | '*>>' | '2>&1'
@@ -110,6 +121,7 @@ type ParsedRedirection = {
  * A parsed statement from PowerShell.
  * Can be a pipeline, assignment, control flow statement, etc.
  */
+// ParsedStatement 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type ParsedStatement = {
   /** The AST statement type from PowerShell's parser */
   statementType: StatementType
@@ -143,6 +155,7 @@ type ParsedStatement = {
 /**
  * A variable reference found in the command.
  */
+// ParsedVariable 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type ParsedVariable = {
   /** The variable path (e.g., "HOME", "env:PATH", "global:x") */
   path: string
@@ -153,6 +166,7 @@ type ParsedVariable = {
 /**
  * A parse error from PowerShell's parser.
  */
+// ParseError 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type ParseError = {
   message: string
   errorId: string
@@ -161,6 +175,7 @@ type ParseError = {
 /**
  * The complete parsed result from the PowerShell AST parser.
  */
+// ParsedPowerShellCommand 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ParsedPowerShellCommand = {
   /** Whether the command parsed successfully (no syntax errors) */
   valid: boolean
@@ -204,13 +219,20 @@ export type ParsedPowerShellCommand = {
 // attackVectors F1 hit 2×5s timeout → valid:false → 'ask' instead of 'deny').
 // Override via env for tests. Read inside parsePowerShellCommandImpl, not
 // top-level, per CLAUDE.md (globalSettings.env ordering).
+// DEFAULT_PARSE_TIMEOUT_MS 集合保存`5_000`，供后续判断或组装使用。
 const DEFAULT_PARSE_TIMEOUT_MS = 5_000
+// getParseTimeoutMs 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getParseTimeoutMs(): number {
+  // env 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const env = process.env.CLAUDE_CODE_PWSH_PARSE_TIMEOUT_MS
+  // 满足 `env` 时，共享工具执行该分支。
   if (env) {
+    // 解析结果解析`parseInt`，供共享工具后续处理使用。
     const parsed = parseInt(env, 10)
+    // 只有 `!isNaN(parsed) && parsed > 0` 满足时，共享工具才执行该分支。
     if (!isNaN(parsed) && parsed > 0) return parsed
   }
+  // 返回 `DEFAULT_PARSE_TIMEOUT_MS`，作为共享工具这次计算的结果。
   return DEFAULT_PARSE_TIMEOUT_MS
 }
 // MAX_COMMAND_LENGTH is derived from PARSE_SCRIPT_BODY.length below (after the
@@ -223,6 +245,7 @@ function getParseTimeoutMs(): number {
  * analyze a command and output structured JSON.
  */
 // Raw types describing PS script JSON output (exported for testing)
+// RawCommandElement 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type RawCommandElement = {
   type: string // .GetType().Name e.g. "StringConstantExpressionAst"
   text: string // .Extent.Text
@@ -231,6 +254,7 @@ export type RawCommandElement = {
   children?: { type: string; text: string }[] // CommandParameterAst.Argument, one level
 }
 
+// RawRedirection 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type RawRedirection = {
   type: string // "FileRedirectionAst" or "MergingRedirectionAst"
   append?: boolean // .Append (FileRedirectionAst only)
@@ -238,6 +262,7 @@ export type RawRedirection = {
   locationText?: string // .Location.Extent.Text (FileRedirectionAst only)
 }
 
+// RawPipelineElement 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type RawPipelineElement = {
   type: string // .GetType().Name e.g. "CommandAst", "CommandExpressionAst"
   text: string // .Extent.Text
@@ -246,6 +271,7 @@ export type RawPipelineElement = {
   expressionType?: string // for CommandExpressionAst: .Expression.GetType().Name
 }
 
+// RawStatement 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type RawStatement = {
   type: string // .GetType().Name e.g. "PipelineAst", "IfStatementAst", "TrapStatementAst"
   text: string // .Extent.Text
@@ -261,6 +287,7 @@ export type RawStatement = {
   }
 }
 
+// RawParsedOutput 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type RawParsedOutput = {
   valid: boolean
   errors: { message: string; errorId: string }[]
@@ -312,6 +339,7 @@ type RawParsedOutput = {
  *   elements already in the loop
  */
 // exported for testing
+// PARSE_SCRIPT_BODY固定为 ```，作为共享工具 parser后续展示或比较的基准。
 export const PARSE_SCRIPT_BODY = `
 if (-not $EncodedCommand) {
     Write-Output '{"valid":false,"errors":[{"message":"No command provided","errorId":"NoInput"}],"statements":[],"variables":[],"hasStopParsing":false,"originalCommand":""}'
@@ -608,22 +636,29 @@ $output | ConvertTo-Json -Depth 10 -Compress
 // If the Windows limit becomes too restrictive, switch to -File with a temp
 // file for large inputs.
 // ---------------------------------------------------------------------------
+// WINDOWS_ARGV_CAP保存`32_767`，供共享工具 parser后续判断或输出使用。
 const WINDOWS_ARGV_CAP = 32_767
 // pwsh path + " -NoProfile -NonInteractive -NoLogo -EncodedCommand " +
 // argv quoting. A long Windows pwsh path (C:\Program Files\PowerShell\7\
 // pwsh.exe) + flags is ~95 chars; 200 leaves headroom for unusual installs.
+// FIXED_ARGV_OVERHEAD保存`200`，供后续判断或组装使用。
 const FIXED_ARGV_OVERHEAD = 200
 // "$EncodedCommand = '" + "'\n" wrapper around the user command's base64
+// ENCODED_CMD_WRAPPER 命令数据记录 ``$EncodedCommand = ''\n`.length` 的数量，后续用它判断是否需要继续处理。
 const ENCODED_CMD_WRAPPER = `$EncodedCommand = ''\n`.length
 // Margin for base64 padding rounding (≤4 chars at each of 2 levels) and minor
 // estimation drift. Multibyte expansion is NOT absorbed here — the gate
 // measures actual UTF-8 bytes (Buffer.byteLength), not code units.
+// SAFETY_MARGIN 命名 `100`，让后续代码直接表达这个值的用途。
 const SAFETY_MARGIN = 100
+// SCRIPT_CHARS_BUDGET 命名 `((WINDOWS_ARGV_CAP - FIXED_ARGV_OVERHEAD) * 3) / 8`，让后续代码直接表达这个值的用途。
 const SCRIPT_CHARS_BUDGET = ((WINDOWS_ARGV_CAP - FIXED_ARGV_OVERHEAD) * 3) / 8
+// CMD_B64_BUDGET 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const CMD_B64_BUDGET =
   SCRIPT_CHARS_BUDGET - PARSE_SCRIPT_BODY.length - ENCODED_CMD_WRAPPER
 // Exported for drift-guard tests (the drift-prone value is the Windows one).
 // Unit: UTF-8 BYTES. Compare against Buffer.byteLength, not .length.
+// WINDOWS_MAX_COMMAND_LENGTH 命令数据保存`Math.max`，供共享工具后续处理使用。
 export const WINDOWS_MAX_COMMAND_LENGTH = Math.max(
   0,
   Math.floor((CMD_B64_BUDGET * 3) / 4) - SAFETY_MARGIN,
@@ -633,13 +668,16 @@ export const WINDOWS_MAX_COMMAND_LENGTH = Math.max(
 // commands (the common case) bytes==chars so no regression; for multibyte
 // commands this is slightly tighter but still far below Unix ARG_MAX (~128KB
 // per-arg), so the argv spawn cannot overflow.
+// UNIX_MAX_COMMAND_LENGTH 命令数据 命名 `4_500`，让后续代码直接表达这个值的用途。
 const UNIX_MAX_COMMAND_LENGTH = 4_500
 // Unit: UTF-8 BYTES (see SECURITY note above).
+// MAX_COMMAND_LENGTH 命令数据 先占位，稍后的条件分支会根据实际输入补齐它。
 export const MAX_COMMAND_LENGTH =
   process.platform === 'win32'
     ? WINDOWS_MAX_COMMAND_LENGTH
     : UNIX_MAX_COMMAND_LENGTH
 
+// INVALID_RESULT_BASE 先占位，稍后的条件分支会根据实际输入补齐它。
 const INVALID_RESULT_BASE: Omit<
   ParsedPowerShellCommand,
   'errors' | 'originalCommand'
@@ -650,11 +688,13 @@ const INVALID_RESULT_BASE: Omit<
   hasStopParsing: false,
 }
 
+// makeInvalidResult 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function makeInvalidResult(
   command: string,
   message: string,
   errorId: string,
 ): ParsedPowerShellCommand {
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     ...INVALID_RESULT_BASE,
     errors: [{ message, errorId }],
@@ -666,16 +706,24 @@ function makeInvalidResult(
  * Base64-encode a string as UTF-16LE, which is the encoding required by
  * PowerShell's -EncodedCommand parameter.
  */
+// toUtf16LeBase64 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function toUtf16LeBase64(text: string): string {
+  // `typeof Buffer` 与 `'undefined'` 不一致时刷新派生状态，避免使用过期结果。
   if (typeof Buffer !== 'undefined') {
+    // 返回 `Buffer.from(text, 'utf16le').toString('base64')`，作为共享工具这次计算的结果。
     return Buffer.from(text, 'utf16le').toString('base64')
   }
   // Fallback for non-Node environments
+  // bytes 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const bytes: number[] = []
+  // 按索引扫描 `text.length`，需要消费相邻参数时可以精确移动游标。
   for (let i = 0; i < text.length; i++) {
+    // code保存`text.charCodeAt`，供共享工具后续处理使用。
     const code = text.charCodeAt(i)
+    // bytes 集合追加新条目，保持收集顺序与输入顺序一致。
     bytes.push(code & 0xff, (code >> 8) & 0xff)
   }
+  // 返回 `btoa(bytes.map(b => String.fromCharCode(b)).join(''))`，作为共享工具这次计算的结果。
   return btoa(bytes.map(b => String.fromCharCode(b)).join(''))
 }
 
@@ -684,15 +732,19 @@ function toUtf16LeBase64(text: string): string {
  * The user command is Base64-encoded (UTF-8) and embedded in a variable
  * to prevent injection attacks.
  */
+// buildParseScript 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildParseScript(command: string): string {
+  // encoded 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const encoded =
     typeof Buffer !== 'undefined'
       ? Buffer.from(command, 'utf8').toString('base64')
       : btoa(
           new TextEncoder()
             .encode(command)
+            // 链式调用 reduce，继续加工上一行在共享工具中产生的数据。
             .reduce((s, b) => s + String.fromCharCode(b), ''),
         )
+  // 返回 ``$EncodedCommand = '${encoded}'\n${PARSE_SCRIPT_BODY}``，作为共享工具这次计算的结果。
   return `$EncodedCommand = '${encoded}'\n${PARSE_SCRIPT_BODY}`
 }
 
@@ -700,58 +752,82 @@ function buildParseScript(command: string): string {
  * Ensure a value is an array. PowerShell 5.1's ConvertTo-Json may unwrap
  * single-element arrays into plain objects.
  */
+// ensureArray 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ensureArray<T>(value: T | T[] | undefined | null): T[] {
+  // 只有 `value === undefined || value === null` 满足时，共享工具才执行该分支。
   if (value === undefined || value === null) {
+    // 返回列表结果，保留共享工具已经排好的条目顺序。
     return []
   }
+  // 返回 `Array.isArray(value) ? value : [value]`，作为共享工具这次计算的结果。
   return Array.isArray(value) ? value : [value]
 }
 
 /** Map raw .NET AST type name to our StatementType union */
 // exported for testing
+// mapStatementType 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function mapStatementType(rawType: string): StatementType {
+  // 按照 rawType 的取值选择共享工具的具体处理分支。
   switch (rawType) {
     case 'PipelineAst':
+      // 返回 `'PipelineAst'`，作为共享工具这次计算的结果。
       return 'PipelineAst'
     case 'PipelineChainAst':
+      // 返回 `'PipelineChainAst'`，作为共享工具这次计算的结果。
       return 'PipelineChainAst'
     case 'AssignmentStatementAst':
+      // 返回 `'AssignmentStatementAst'`，作为共享工具这次计算的结果。
       return 'AssignmentStatementAst'
     case 'IfStatementAst':
+      // 返回 `'IfStatementAst'`，作为共享工具这次计算的结果。
       return 'IfStatementAst'
     case 'ForStatementAst':
+      // 返回 `'ForStatementAst'`，作为共享工具这次计算的结果。
       return 'ForStatementAst'
     case 'ForEachStatementAst':
+      // 返回 `'ForEachStatementAst'`，作为共享工具这次计算的结果。
       return 'ForEachStatementAst'
     case 'WhileStatementAst':
+      // 返回 `'WhileStatementAst'`，作为共享工具这次计算的结果。
       return 'WhileStatementAst'
     case 'DoWhileStatementAst':
+      // 返回 `'DoWhileStatementAst'`，作为共享工具这次计算的结果。
       return 'DoWhileStatementAst'
     case 'DoUntilStatementAst':
+      // 返回 `'DoUntilStatementAst'`，作为共享工具这次计算的结果。
       return 'DoUntilStatementAst'
     case 'SwitchStatementAst':
+      // 返回 `'SwitchStatementAst'`，作为共享工具这次计算的结果。
       return 'SwitchStatementAst'
     case 'TryStatementAst':
+      // 返回 `'TryStatementAst'`，作为共享工具这次计算的结果。
       return 'TryStatementAst'
     case 'TrapStatementAst':
+      // 返回 `'TrapStatementAst'`，作为共享工具这次计算的结果。
       return 'TrapStatementAst'
     case 'FunctionDefinitionAst':
+      // 返回 `'FunctionDefinitionAst'`，作为共享工具这次计算的结果。
       return 'FunctionDefinitionAst'
     case 'DataStatementAst':
+      // 返回 `'DataStatementAst'`，作为共享工具这次计算的结果。
       return 'DataStatementAst'
     default:
+      // 返回 `'UnknownStatementAst'`，作为共享工具这次计算的结果。
       return 'UnknownStatementAst'
   }
 }
 
 /** Map raw .NET AST type name to our CommandElementType union */
 // exported for testing
+// mapElementType 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function mapElementType(
   rawType: string,
   expressionType?: string,
 ): CommandElementType {
+  // 按照 rawType 的取值选择共享工具的具体处理分支。
   switch (rawType) {
     case 'ScriptBlockExpressionAst':
+      // 返回 `'ScriptBlock'`，作为共享工具这次计算的结果。
       return 'ScriptBlock'
     case 'SubExpressionAst':
     case 'ArrayExpressionAst':
@@ -760,13 +836,17 @@ export function mapElementType(
       // Get-ChildItem @(Remove-Item ./data) runs Remove-Item inside @().
       // Map both to SubExpression so hasSubExpressions fires and isReadOnlyCommand
       // rejects (it doesn't check nestedCommands, only pipeline.commands[]).
+      // 返回 `'SubExpression'`，作为共享工具这次计算的结果。
       return 'SubExpression'
     case 'ExpandableStringExpressionAst':
+      // 返回 `'ExpandableString'`，作为共享工具这次计算的结果。
       return 'ExpandableString'
     case 'InvokeMemberExpressionAst':
     case 'MemberExpressionAst':
+      // 返回 `'MemberInvocation'`，作为共享工具这次计算的结果。
       return 'MemberInvocation'
     case 'VariableExpressionAst':
+      // 返回 `'Variable'`，作为共享工具这次计算的结果。
       return 'Variable'
     case 'StringConstantExpressionAst':
     case 'ConstantExpressionAst':
@@ -776,65 +856,91 @@ export function mapElementType(
       // `-Seconds:5` produced children[0].type='Other' and consumers
       // checking `children.some(c => c.type !== 'StringConstant')` would
       // false-positive ask on harmless numeric args.
+      // 返回 `'StringConstant'`，作为共享工具这次计算的结果。
       return 'StringConstant'
     case 'CommandParameterAst':
+      // 返回 `'Parameter'`，作为共享工具这次计算的结果。
       return 'Parameter'
     case 'ParenExpressionAst':
+      // 返回 `'SubExpression'`，作为共享工具这次计算的结果。
       return 'SubExpression'
     case 'CommandExpressionAst':
       // Delegate to the wrapped expression type so we catch SubExpressionAst,
       // ExpandableStringExpressionAst, ScriptBlockExpressionAst, etc.
       // without maintaining a manual list. Falls through to 'Other' if the
       // inner type is unrecognised.
+      // 满足 `expressionType` 时，共享工具执行该分支。
       if (expressionType) {
+        // 返回 `mapElementType(expressionType)`，作为共享工具这次计算的结果。
         return mapElementType(expressionType)
       }
+      // 返回 `'Other'`，作为共享工具这次计算的结果。
       return 'Other'
     default:
+      // 返回 `'Other'`，作为共享工具这次计算的结果。
       return 'Other'
   }
 }
 
 /** Classify command name as cmdlet, application, or unknown */
 // exported for testing
+// classifyCommandName 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function classifyCommandName(
   name: string,
 ): 'cmdlet' | 'application' | 'unknown' {
+  // 满足 `/^[A-Za-z]+-[A-Za-z][A-Za-z0-9_]*$/.test(name)` 时，共享工具执行该分支。
   if (/^[A-Za-z]+-[A-Za-z][A-Za-z0-9_]*$/.test(name)) {
+    // 返回 `'cmdlet'`，作为共享工具这次计算的结果。
     return 'cmdlet'
   }
+  // 满足 `/[.\\/]/.test(name)` 时，共享工具执行该分支。
   if (/[.\\/]/.test(name)) {
+    // 返回 `'application'`，作为共享工具这次计算的结果。
     return 'application'
   }
+  // 返回 `'unknown'`，作为共享工具这次计算的结果。
   return 'unknown'
 }
 
 /** Strip module prefix from command name (e.g. "Microsoft.PowerShell.Utility\\Invoke-Expression" -> "Invoke-Expression") */
 // exported for testing
+// stripModulePrefix 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function stripModulePrefix(name: string): string {
+  // idx保存`name.lastIndexOf`，供共享工具后续处理使用。
   const idx = name.lastIndexOf('\\')
+  // 满足 `idx < 0` 时，共享工具执行该分支。
   if (idx < 0) return name
   // Don't strip file paths: drive letters (C:\...), UNC paths (\\server\...), or relative paths (.\, ..\)
+  // 共享工具在这里按实际状态进入对应分支。
   if (
     /^[A-Za-z]:/.test(name) ||
     name.startsWith('\\\\') ||
     name.startsWith('.\\') ||
     name.startsWith('..\\')
   )
+    // 返回 `name`，作为共享工具这次计算的结果。
     return name
+  // 返回 `name.substring(idx + 1)`，作为共享工具这次计算的结果。
   return name.substring(idx + 1)
 }
 
 /** Transform a raw CommandAst pipeline element into ParsedCommandElement */
 // exported for testing
+// transformCommandAst 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function transformCommandAst(
   raw: RawPipelineElement,
 ): ParsedCommandElement {
+  // cmdElements 命令数据保存`ensureArray`，供共享工具后续处理使用。
   const cmdElements = ensureArray(raw.commandElements)
+  // 名称保存`''`，作为后续固定文本处理的输入。
   let name = ''
+  // 参数列表 从空数组开始收集，后续循环会按处理顺序追加条目。
   const args: string[] = []
+  // elementTypes 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const elementTypes: CommandElementType[] = []
+  // 子节点 从空数组开始收集，后续循环会按处理顺序追加条目。
   const children: (CommandElementChild[] | undefined)[] = []
+  // hasChildren标记共享工具 parser是否启用对应路径。
   let hasChildren = false
 
   // SECURITY: nameType MUST be computed from the raw name (before
@@ -846,16 +952,21 @@ export function transformCommandAst(
   // name (stripped) is still used for deny-rule matching symmetry, which is
   // fail-safe: deny rules over-match (Module\\Remove-Item still hits a
   // Remove-Item deny), allow rules are separately gated by nameType.
+  // nameType 命名 `'unknown'`，让后续代码直接表达这个值的用途。
   let nameType: 'cmdlet' | 'application' | 'unknown' = 'unknown'
+  // 满足 `cmdElements.length > 0` 时，共享工具执行该分支。
   if (cmdElements.length > 0) {
+    // first 命名 `cmdElements[0]!`，让后续代码直接表达这个值的用途。
     const first = cmdElements[0]!
     // SECURITY: only trust .value for string-literal element types with a
     // string-typed value. Numeric ConstantExpressionAst (e.g. `& 1`) emits an
     // integer .value that crashes stripModulePrefix() → parser falls through
     // to passthrough. For non-string-literal or non-string .value, use .text.
+    // isFirstStringLiteral 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
     const isFirstStringLiteral =
       first.type === 'StringConstantExpressionAst' ||
       first.type === 'ExpandableStringExpressionAst'
+    // rawNameUnstripped 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
     const rawNameUnstripped =
       isFirstStringLiteral && typeof first.value === 'string'
         ? first.value
@@ -866,6 +977,7 @@ export function transformCommandAst(
     // at the source means every downstream reader of element.name (deny-rule
     // matching, GIT_SAFETY_WRITE_CMDLETS lookup, resolveToCanonical, etc.)
     // sees the bare cmdlet name. No-op when .value already stripped.
+    // rawName格式化`rawNameUnstripped.replace`，供共享工具后续处理使用。
     const rawName = rawNameUnstripped.replace(/^['"]|['"]$/g, '')
     // SECURITY: PowerShell built-in cmdlet names are ASCII-only. Non-ASCII
     // characters in cmdlet position are inherently suspicious — .NET
@@ -879,42 +991,59 @@ export function transformCommandAst(
     // Verified on Windows (pwsh 7.x, 2026-03): ſtart-proceſſ does NOT resolve.
     // Retained as defense-in-depth against future .NET/PS behavior changes
     // or module-provided command resolution hooks.
+    // 判断 /[\u0080-\uFFFF]/.test(rawName)，将共享工具分流到只适用于该条件的处理路径。
     if (/[\u0080-\uFFFF]/.test(rawName)) {
+      // nameType更新为 `'application'`，确保共享工具后续读取最新状态。
       nameType = 'application'
     } else {
+      // nameType更新为 `classifyCommandName(rawName)`，确保共享工具后续读取最新状态。
       nameType = classifyCommandName(rawName)
     }
+    // name更新为 `stripModulePrefix(rawName)`，确保共享工具后续读取最新状态。
     name = stripModulePrefix(rawName)
+    // elementTypes 集合追加新条目，保持收集顺序与输入顺序一致。
     elementTypes.push(mapElementType(first.type, first.expressionType))
 
+    // 遍历 let i = 1; i < cmdElements.length; i++，让共享工具逐项完成同一类处理。
     for (let i = 1; i < cmdElements.length; i++) {
+      // ce保存`cmdElements[i]!`，供共享工具 parser后续步骤使用。
       const ce = cmdElements[i]!
       // Use resolved .value for string constants (strips quotes, resolves
       // backtick escapes like `n -> newline) but keep raw .text for parameters
       // (where .value loses the dash prefix, e.g. '-Path' -> 'Path'),
       // variables, and other non-string types.
+      // isStringLiteral 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
       const isStringLiteral =
         ce.type === 'StringConstantExpressionAst' ||
         ce.type === 'ExpandableStringExpressionAst'
+      // args 集合追加新条目，保持收集顺序与输入顺序一致。
       args.push(isStringLiteral && ce.value != null ? ce.value : ce.text)
+      // elementTypes 集合追加新条目，保持收集顺序与输入顺序一致。
       elementTypes.push(mapElementType(ce.type, ce.expressionType))
       // Map raw children (CommandParameterAst.Argument) through
       // mapElementType so consumers see 'Variable', 'StringConstant', etc.
+      // rawChildren保存`ensureArray`，供共享工具后续处理使用。
       const rawChildren = ensureArray(ce.children)
+      // 满足 `rawChildren.length > 0` 时，共享工具执行该分支。
       if (rawChildren.length > 0) {
+        // hasChildren更新为 `true`，确保共享工具后续读取最新状态。
         hasChildren = true
+        // children追加新条目，保持收集顺序与输入顺序一致。
         children.push(
+          // rawChildren.map执行共享工具在此处需要的副作用或外部交互。
           rawChildren.map(c => ({
             type: mapElementType(c.type),
             text: c.text,
           })),
         )
       } else {
+        // children追加新条目，保持收集顺序与输入顺序一致。
         children.push(undefined)
       }
     }
   }
 
+  // 结果集中保存共享工具 parser要一起传递的字段。
   const result: ParsedCommandElement = {
     name,
     nameType,
@@ -926,27 +1055,35 @@ export function transformCommandAst(
   }
 
   // Preserve redirections from nested commands (e.g., in && / || chains)
+  // rawRedirs 集合保存`ensureArray`，供共享工具后续处理使用。
   const rawRedirs = ensureArray(raw.redirections)
+  // 满足 `rawRedirs.length > 0` 时，共享工具执行该分支。
   if (rawRedirs.length > 0) {
+    // redirections 集合更新为 `rawRedirs.map(transformRedirection)`，确保共享工具后续读取最新状态。
     result.redirections = rawRedirs.map(transformRedirection)
   }
 
+  // 返回 result，把共享工具这个分支的结果交还调用方。
   return result
 }
 
 /** Transform a non-CommandAst pipeline element into ParsedCommandElement */
 // exported for testing
+// transformExpressionElement 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function transformExpressionElement(
   raw: RawPipelineElement,
 ): ParsedCommandElement {
+  // elementType先声明占位，稍后的分支会根据实际输入补齐。
   const elementType: PipelineElementType =
     raw.type === 'ParenExpressionAst'
       ? 'ParenExpressionAst'
       : 'CommandExpressionAst'
+  // elementTypes 集合聚合成有序列表，保持后续遍历顺序稳定。
   const elementTypes: CommandElementType[] = [
     mapElementType(raw.type, raw.expressionType),
   ]
 
+  // 返回 {，把共享工具这个分支的结果交还调用方。
   return {
     name: raw.text,
     nameType: 'unknown',
@@ -959,67 +1096,102 @@ export function transformExpressionElement(
 
 /** Map raw redirection to ParsedRedirection */
 // exported for testing
+// transformRedirection 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function transformRedirection(raw: RawRedirection): ParsedRedirection {
+  // `raw.type` 命中特定值 `'MergingRedirectionAst'` 时，进入共享工具对应处理。
   if (raw.type === 'MergingRedirectionAst') {
+    // 返回 { operator: '2>&1', target: '', isMerging: true }，把共享工具这个分支的结果交还调用方。
     return { operator: '2>&1', target: '', isMerging: true }
   }
 
+  // append保存`raw.append ?? false`，供共享工具 parser后续步骤使用。
   const append = raw.append ?? false
+  // fromStream保存`raw.fromStream ?? 'Output'`，供共享工具 parser后续步骤使用。
   const fromStream = raw.fromStream ?? 'Output'
 
+  // operator先声明占位，稍后的分支会根据实际输入补齐。
   let operator: ParsedRedirection['operator']
+  // 满足 `append` 时，共享工具执行该分支。
   if (append) {
+    // 按照 fromStream 的取值选择共享工具的具体处理分支。
     switch (fromStream) {
       case 'Error':
+        // operator更新为 `'2>>'`，确保共享工具后续读取最新状态。
         operator = '2>>'
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       case 'All':
+        // operator更新为 `'*>>'`，确保共享工具后续读取最新状态。
         operator = '*>>'
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       default:
+        // operator更新为 `'>>'`，确保共享工具后续读取最新状态。
         operator = '>>'
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
     }
   } else {
+    // 按照 fromStream 的取值选择共享工具的具体处理分支。
     switch (fromStream) {
       case 'Error':
+        // operator更新为 `'2>'`，确保共享工具后续读取最新状态。
         operator = '2>'
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       case 'All':
+        // operator更新为 `'*>'`，确保共享工具后续读取最新状态。
         operator = '*>'
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
       default:
+        // operator更新为 `'>'`，确保共享工具后续读取最新状态。
         operator = '>'
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break
     }
   }
 
+  // 返回 { operator, target: raw.locationText ?? '', isMerging: false }，把共享工具这个分支的结果交还调用方。
   return { operator, target: raw.locationText ?? '', isMerging: false }
 }
 
 /** Transform a raw statement into ParsedStatement */
 // exported for testing
+// transformStatement 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function transformStatement(raw: RawStatement): ParsedStatement {
+  // statementType 状态派生`mapStatementType`，供共享工具后续处理使用。
   const statementType = mapStatementType(raw.type)
+  // commands 命令数据从空数组开始收集，后续按处理顺序追加条目。
   const commands: ParsedCommandElement[] = []
+  // redirections 集合从空数组开始收集，后续按处理顺序追加条目。
   const redirections: ParsedRedirection[] = []
 
+  // 满足 `raw.elements` 时，共享工具执行该分支。
   if (raw.elements) {
     // PipelineAst: walk pipeline elements
+    // 遍历 const elem of ensureArray(raw.elements)，按顺序处理共享工具中的批量条目。
     for (const elem of ensureArray(raw.elements)) {
+      // `elem.type` 命中特定值 `'CommandAst'` 时，进入共享工具对应处理。
       if (elem.type === 'CommandAst') {
+        // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
         commands.push(transformCommandAst(elem))
+        // 遍历 const redir of ensureArray(elem.redirections)，按顺序处理共享工具中的批量条目。
         for (const redir of ensureArray(elem.redirections)) {
+          // redirections 集合追加新条目，保持收集顺序与输入顺序一致。
           redirections.push(transformRedirection(redir))
         }
       } else {
+        // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
         commands.push(transformExpressionElement(elem))
         // SECURITY: CommandExpressionAst also carries .Redirections (inherited
         // from CommandBaseAst). `1 > /tmp/evil.txt` is a CommandExpressionAst
         // with a FileRedirectionAst. Must extract here or getFileRedirections()
         // misses it and compound commands like `Get-ChildItem; 1 > /tmp/x`
         // auto-allow at step 5 (only Get-ChildItem is checked).
+        // 遍历 const redir of ensureArray(elem.redirections)，按顺序处理共享工具中的批量条目。
         for (const redir of ensureArray(elem.redirections)) {
+          // redirections 集合追加新条目，保持收集顺序与输入顺序一致。
           redirections.push(transformRedirection(redir))
         }
       }
@@ -1035,17 +1207,25 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
     // The FindAll ALSO re-discovers direct-element redirections already
     // captured in the per-element loop above. Dedupe by (operator, target)
     // so tests and consumers see the real count.
+    // 已见集合保存`Set`，供共享工具后续处理使用。
     const seen = new Set(redirections.map(r => `${r.operator}\0${r.target}`))
+    // 遍历 const redir of ensureArray(raw.redirections)，按顺序处理共享工具中的批量条目。
     for (const redir of ensureArray(raw.redirections)) {
+      // r保存`transformRedirection`，供共享工具后续处理使用。
       const r = transformRedirection(redir)
+      // 按键读取``${r.operator}\0${r.target}``，供共享工具 parser后续步骤使用。
       const key = `${r.operator}\0${r.target}`
+      // 判断 !seen.has(key)，将共享工具分流到只适用于该条件的处理路径。
       if (!seen.has(key)) {
+        // seen.add执行共享工具在此处需要的副作用或外部交互。
         seen.add(key)
+        // redirections 集合追加新条目，保持收集顺序与输入顺序一致。
         redirections.push(r)
       }
     }
   } else {
     // Non-pipeline statement: add synthetic command entry with full text
+    // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
     commands.push({
       name: raw.text,
       nameType: 'unknown',
@@ -1076,17 +1256,24 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
     // PS1 SIZE NOTE: The full rationale lives here (TS), not in the PS1 script,
     // because PS1 comments bloat the -EncodedCommand payload and push the
     // Windows CreateProcess 32K limit. Keep PS1 comments terse; point them here.
+    // 遍历 const redir of ensureArray(raw.redirections)，按顺序处理共享工具中的批量条目。
     for (const redir of ensureArray(raw.redirections)) {
+      // redirections 集合追加新条目，保持收集顺序与输入顺序一致。
       redirections.push(transformRedirection(redir))
     }
   }
 
+  // nestedCommands 命令数据先声明占位，稍后的分支会根据实际输入补齐。
   let nestedCommands: ParsedCommandElement[] | undefined
+  // rawNested保存`ensureArray`，供共享工具后续处理使用。
   const rawNested = ensureArray(raw.nestedCommands)
+  // 满足 `rawNested.length > 0` 时，共享工具执行该分支。
   if (rawNested.length > 0) {
+    // nestedCommands 命令数据更新为 `rawNested.map(transformCommandAst)`，确保共享工具后续读取最新状态。
     nestedCommands = rawNested.map(transformCommandAst)
   }
 
+  // 结果集中保存共享工具 parser要一起传递的字段。
   const result: ParsedStatement = {
     statementType,
     commands,
@@ -1095,15 +1282,20 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
     nestedCommands,
   }
 
+  // 满足 `raw.securityPatterns` 时，共享工具执行该分支。
   if (raw.securityPatterns) {
+    // securityPatterns 集合更新为 `raw.securityPatterns`，确保共享工具后续读取最新状态。
     result.securityPatterns = raw.securityPatterns
   }
 
+  // 返回 result，把共享工具这个分支的结果交还调用方。
   return result
 }
 
 /** Transform the complete raw PS output into ParsedPowerShellCommand */
+// transformRawOutput 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 function transformRawOutput(raw: RawParsedOutput): ParsedPowerShellCommand {
+  // 结果集中保存共享工具 parser要一起传递的字段。
   const result: ParsedPowerShellCommand = {
     valid: raw.valid,
     errors: ensureArray(raw.errors),
@@ -1112,16 +1304,24 @@ function transformRawOutput(raw: RawParsedOutput): ParsedPowerShellCommand {
     hasStopParsing: raw.hasStopParsing,
     originalCommand: raw.originalCommand,
   }
+  // tl保存`ensureArray`，供共享工具后续处理使用。
   const tl = ensureArray(raw.typeLiterals)
+  // 满足 `tl.length > 0` 时，共享工具执行该分支。
   if (tl.length > 0) {
+    // typeLiterals 集合更新为 `tl`，确保共享工具后续读取最新状态。
     result.typeLiterals = tl
   }
+  // 满足 `raw.hasUsingStatements` 时，共享工具执行该分支。
   if (raw.hasUsingStatements) {
+    // hasUsingStatements 状态更新为 `true`，确保共享工具后续读取最新状态。
     result.hasUsingStatements = true
   }
+  // 满足 `raw.hasScriptRequirements` 时，共享工具执行该分支。
   if (raw.hasScriptRequirements) {
+    // hasScriptRequirements 集合更新为 `true`，确保共享工具后续读取最新状态。
     result.hasScriptRequirements = true
   }
+  // 返回 result，把共享工具这个分支的结果交还调用方。
   return result
 }
 
@@ -1133,6 +1333,7 @@ function transformRawOutput(raw: RawParsedOutput): ParsedPowerShellCommand {
  * @param command - The PowerShell command to parse
  * @returns Parsed command structure, or a result with valid=false on failure
  */
+// parsePowerShellCommandImpl 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 async function parsePowerShellCommandImpl(
   command: string,
 ): Promise<ParsedPowerShellCommand> {
@@ -1141,11 +1342,15 @@ async function parsePowerShellCommandImpl(
   // character is 1 code unit but 3 UTF-8 bytes, so .length under-reports by
   // up to 3× and allows argv overflow on Windows → CreateProcess fails →
   // valid:false → deny rules degrade to ask. Finding #36.
+  // commandBytes 命令数据保存`Buffer.byteLength`，供共享工具后续处理使用。
   const commandBytes = Buffer.byteLength(command, 'utf8')
+  // 满足 `commandBytes > MAX_COMMAND_LENGTH` 时，共享工具执行该分支。
   if (commandBytes > MAX_COMMAND_LENGTH) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(
       `PowerShell parser: command too long (${commandBytes} bytes, max ${MAX_COMMAND_LENGTH})`,
     )
+    // 返回 makeInvalidResult(，把共享工具这个分支的结果交还调用方。
     return makeInvalidResult(
       command,
       `Command too long for parsing (${commandBytes} bytes). Maximum supported length is ${MAX_COMMAND_LENGTH} bytes.`,
@@ -1153,8 +1358,11 @@ async function parsePowerShellCommandImpl(
     )
   }
 
+  // pwshPath 文件数据读取`getCachedPowerShellPath`，供共享工具后续处理使用。
   const pwshPath = await getCachedPowerShellPath()
+  // pwshPath 文件数据缺失时提前走兜底路径，避免共享工具继续依赖无效输入。
   if (!pwshPath) {
+    // 返回 makeInvalidResult(，把共享工具这个分支的结果交还调用方。
     return makeInvalidResult(
       command,
       'PowerShell is not available',
@@ -1162,6 +1370,7 @@ async function parsePowerShellCommandImpl(
     )
   }
 
+  // script构建`buildParseScript`，供共享工具后续处理使用。
   const script = buildParseScript(command)
 
   // Pass the script to PowerShell via -EncodedCommand.
@@ -1170,7 +1379,9 @@ async function parsePowerShellCommandImpl(
   // PS prompts and ANSI escapes in stdout, (2) command-line escaping issues,
   // (3) temp files. The script itself is large but well within OS arg limits
   // (Windows: 32K chars, Unix: typically 2MB+).
+  // encodedScript保存`toUtf16LeBase64`，供共享工具后续处理使用。
   const encodedScript = toUtf16LeBase64(script)
+  // args 集合聚合成有序列表，保持后续遍历顺序稳定。
   const args = [
     '-NoProfile',
     '-NonInteractive',
@@ -1185,38 +1396,56 @@ async function parsePowerShellCommandImpl(
   // but exitCode is undefined, which the old code reported as the misleading
   // "pwsh exited with code 1:" with empty stderr. A single retry absorbs
   // transient load spikes; a double timeout is reported as PwshTimeout.
+  // parseTimeoutMs 集合读取`getParseTimeoutMs`，供共享工具后续处理使用。
   const parseTimeoutMs = getParseTimeoutMs()
+  // stdout保存`''`，供共享工具 parser后续步骤使用。
   let stdout = ''
+  // stderr保存`''`，供共享工具 parser后续步骤使用。
   let stderr = ''
+  // code保存`null`，供共享工具 parser后续步骤使用。
   let code: number | null = null
+  // timedOut记录当前扫描状态，共享工具 parser随后按该状态分支。
   let timedOut = false
+  // 遍历 let attempt = 0; attempt < 2; attempt++，让共享工具逐项完成同一类处理。
   for (let attempt = 0; attempt < 2; attempt++) {
+    // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
     try {
+      // 结果保存`execa`，供共享工具后续处理使用。
       const result = await execa(pwshPath, args, {
         timeout: parseTimeoutMs,
         reject: false,
       })
+      // stdout更新为 `result.stdout`，确保共享工具后续读取最新状态。
       stdout = result.stdout
+      // stderr更新为 `result.stderr`，确保共享工具后续读取最新状态。
       stderr = result.stderr
+      // timedOut更新为 `result.timedOut`，确保共享工具后续读取最新状态。
       timedOut = result.timedOut
+      // code更新为 `result.failed ? (result.exitCode ?? 1) : 0`，确保共享工具后续读取最新状态。
       code = result.failed ? (result.exitCode ?? 1) : 0
     } catch (e: unknown) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(
         `PowerShell parser: failed to spawn pwsh: ${e instanceof Error ? e.message : e}`,
       )
+      // 返回 makeInvalidResult(，把共享工具这个分支的结果交还调用方。
       return makeInvalidResult(
         command,
         `Failed to spawn PowerShell: ${e instanceof Error ? e.message : e}`,
         'PwshSpawnError',
       )
     }
+    // 判断 !timedOut，将共享工具分流到只适用于该条件的处理路径。
     if (!timedOut) break
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(
       `PowerShell parser: pwsh timed out after ${parseTimeoutMs}ms (attempt ${attempt + 1})`,
     )
   }
 
+  // 满足 `timedOut` 时，共享工具执行该分支。
   if (timedOut) {
+    // 返回 makeInvalidResult(，把共享工具这个分支的结果交还调用方。
     return makeInvalidResult(
       command,
       `pwsh timed out after ${parseTimeoutMs}ms (2 attempts)`,
@@ -1224,10 +1453,13 @@ async function parsePowerShellCommandImpl(
     )
   }
 
+  // `code` 与 `0` 不一致时刷新派生状态。
   if (code !== 0) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(
       `PowerShell parser: pwsh exited with code ${code}, stderr: ${stderr}`,
     )
+    // 返回 makeInvalidResult(，把共享工具这个分支的结果交还调用方。
     return makeInvalidResult(
       command,
       `pwsh exited with code ${code}: ${stderr}`,
@@ -1235,9 +1467,13 @@ async function parsePowerShellCommandImpl(
     )
   }
 
+  // trimmed格式化`stdout.trim`，供共享工具后续处理使用。
   const trimmed = stdout.trim()
+  // trimmed缺失时提前走兜底路径，避免共享工具继续依赖无效输入。
   if (!trimmed) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging('PowerShell parser: empty stdout from pwsh')
+    // 返回 makeInvalidResult(，把共享工具这个分支的结果交还调用方。
     return makeInvalidResult(
       command,
       'No output from PowerShell parser',
@@ -1245,13 +1481,18 @@ async function parsePowerShellCommandImpl(
     )
   }
 
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // raw解析`jsonParse`，供共享工具后续处理使用。
     const raw = jsonParse(trimmed) as RawParsedOutput
+    // 返回 transformRawOutput(raw)，把共享工具这个分支的结果交还调用方。
     return transformRawOutput(raw)
   } catch {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(
       `PowerShell parser: invalid JSON output: ${trimmed.slice(0, 200)}`,
     )
+    // 返回 makeInvalidResult(，把共享工具这个分支的结果交还调用方。
     return makeInvalidResult(
       command,
       'Invalid JSON from PowerShell parser',
@@ -1264,6 +1505,7 @@ async function parsePowerShellCommandImpl(
 // These should be evicted from the cache so subsequent calls can retry.
 // Deterministic failures (CommandTooLong, syntax errors from successful parses)
 // should stay cached since retrying would produce the same result.
+// TRANSIENT_ERROR_IDS 错误信息保存`Set`，供共享工具后续处理使用。
 const TRANSIENT_ERROR_IDS = new Set([
   'PwshSpawnError',
   'PwshError',
@@ -1272,25 +1514,34 @@ const TRANSIENT_ERROR_IDS = new Set([
   'InvalidJson',
 ])
 
+// parsePowerShellCommandCached 命令数据保存`memoizeWithLRU`，供共享工具后续处理使用。
 const parsePowerShellCommandCached = memoizeWithLRU(
+  // 这个回调绑定到 (command: string) => {，负责共享工具在该局部场景下的响应。
   (command: string) => {
+    // promise解析`parsePowerShellCommandImpl`，供共享工具后续处理使用。
     const promise = parsePowerShellCommandImpl(command)
     // Evict transient failures after resolution so they can be retried.
     // The current caller still receives the cached promise for this call,
     // ensuring concurrent callers share the same result.
+    // 这个回调绑定到 void promise.then(result => {，负责共享工具在该局部场景下的响应。
     void promise.then(result => {
+      // 共享工具在这里进入条件判断，后续代码按实际状态分流。
       if (
         !result.valid &&
         TRANSIENT_ERROR_IDS.has(result.errors[0]?.errorId ?? '')
       ) {
+        // parsePowerShellCommandCached.cache.delete执行共享工具在此处需要的副作用或外部交互。
         parsePowerShellCommandCached.cache.delete(command)
       }
     })
+    // 返回 promise，把共享工具这个分支的结果交还调用方。
     return promise
   },
+  // 这个回调绑定到 (command: string) => command,，负责共享工具在该局部场景下的响应。
   (command: string) => command,
   256,
 )
+// 重新导出这一组成员，让共享工具的公共 API 保持集中入口。
 export { parsePowerShellCommandCached as parsePowerShellCommand }
 
 // ---------------------------------------------------------------------------
@@ -1300,6 +1551,7 @@ export { parsePowerShellCommandCached as parsePowerShellCommand }
 /**
  * Security-relevant flags derived from the parsed AST.
  */
+// SecurityFlags 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type SecurityFlags = {
   /** Contains $(...) subexpression */
   hasSubExpressions: boolean
@@ -1323,6 +1575,7 @@ type SecurityFlags = {
  * command names like 'constructor' or '__proto__' must return undefined, not inherited
  * Object.prototype properties.
  */
+// COMMON_ALIASES 集合保存`Object.assign(`，供共享工具 parser后续步骤使用。
 export const COMMON_ALIASES: Record<string, string> = Object.assign(
   Object.create(null) as Record<string, string>,
   {
@@ -1451,12 +1704,14 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
   },
 )
 
+// DIRECTORY_CHANGE_CMDLETS 命令数据保存`Set`，供共享工具后续处理使用。
 const DIRECTORY_CHANGE_CMDLETS = new Set([
   'set-location',
   'push-location',
   'pop-location',
 ])
 
+// DIRECTORY_CHANGE_ALIASES 集合保存`Set`，供共享工具后续处理使用。
 const DIRECTORY_CHANGE_ALIASES = new Set(['cd', 'sl', 'chdir', 'pushd', 'popd'])
 
 /**
@@ -1464,18 +1719,27 @@ const DIRECTORY_CHANGE_ALIASES = new Set(['cd', 'sl', 'chdir', 'pushd', 'popd'])
  * Returns lowercased names for case-insensitive comparison.
  */
 // exported for testing
+// getAllCommandNames 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function getAllCommandNames(parsed: ParsedPowerShellCommand): string[] {
+  // names 集合从空数组开始收集，后续按处理顺序追加条目。
   const names: string[] = []
+  // 遍历 const statement of parsed.statements，让共享工具逐项完成同一类处理。
   for (const statement of parsed.statements) {
+    // 遍历 const cmd of statement.commands，让共享工具逐项完成同一类处理。
     for (const cmd of statement.commands) {
+      // names 集合追加新条目，保持收集顺序与输入顺序一致。
       names.push(cmd.name.toLowerCase())
     }
+    // 满足 `statement.nestedCommands` 时，共享工具执行该分支。
     if (statement.nestedCommands) {
+      // 遍历 const cmd of statement.nestedCommands，让共享工具逐项完成同一类处理。
       for (const cmd of statement.nestedCommands) {
+        // names 集合追加新条目，保持收集顺序与输入顺序一致。
         names.push(cmd.name.toLowerCase())
       }
     }
   }
+  // 返回 names，把共享工具这个分支的结果交还调用方。
   return names
 }
 
@@ -1483,20 +1747,29 @@ export function getAllCommandNames(parsed: ParsedPowerShellCommand): string[] {
  * Get all pipeline segments as flat list of commands.
  * Useful for checking each command independently.
  */
+// getAllCommands 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function getAllCommands(
   parsed: ParsedPowerShellCommand,
 ): ParsedCommandElement[] {
+  // commands 命令数据从空数组开始收集，后续按处理顺序追加条目。
   const commands: ParsedCommandElement[] = []
+  // 遍历 const statement of parsed.statements，让共享工具逐项完成同一类处理。
   for (const statement of parsed.statements) {
+    // 遍历 const cmd of statement.commands，让共享工具逐项完成同一类处理。
     for (const cmd of statement.commands) {
+      // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
       commands.push(cmd)
     }
+    // 满足 `statement.nestedCommands` 时，共享工具执行该分支。
     if (statement.nestedCommands) {
+      // 遍历 const cmd of statement.nestedCommands，让共享工具逐项完成同一类处理。
       for (const cmd of statement.nestedCommands) {
+        // commands 命令数据追加新条目，保持收集顺序与输入顺序一致。
         commands.push(cmd)
       }
     }
   }
+  // 返回 commands，把共享工具这个分支的结果交还调用方。
   return commands
 }
 
@@ -1504,25 +1777,36 @@ export function getAllCommands(
  * Get all redirections across all statements.
  */
 // exported for testing
+// getAllRedirections 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function getAllRedirections(
   parsed: ParsedPowerShellCommand,
 ): ParsedRedirection[] {
+  // redirections 集合从空数组开始收集，后续按处理顺序追加条目。
   const redirections: ParsedRedirection[] = []
+  // 遍历 const statement of parsed.statements，让共享工具逐项完成同一类处理。
   for (const statement of parsed.statements) {
+    // 遍历 const redir of statement.redirections，让共享工具逐项完成同一类处理。
     for (const redir of statement.redirections) {
+      // redirections 集合追加新条目，保持收集顺序与输入顺序一致。
       redirections.push(redir)
     }
     // Include redirections from nested commands (e.g., from && / || chains)
+    // 满足 `statement.nestedCommands` 时，共享工具执行该分支。
     if (statement.nestedCommands) {
+      // 遍历 const cmd of statement.nestedCommands，让共享工具逐项完成同一类处理。
       for (const cmd of statement.nestedCommands) {
+        // 满足 `cmd.redirections` 时，共享工具执行该分支。
         if (cmd.redirections) {
+          // 遍历 const redir of cmd.redirections，让共享工具逐项完成同一类处理。
           for (const redir of cmd.redirections) {
+            // redirections 集合追加新条目，保持收集顺序与输入顺序一致。
             redirections.push(redir)
           }
         }
       }
     }
   }
+  // 返回 redirections，把共享工具这个分支的结果交还调用方。
   return redirections
 }
 
@@ -1530,11 +1814,14 @@ export function getAllRedirections(
  * Get all variables, optionally filtered by scope (e.g., 'env').
  * Variable paths in PowerShell can have scopes like "env:PATH", "global:x".
  */
+// getVariablesByScope 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function getVariablesByScope(
   parsed: ParsedPowerShellCommand,
   scope: string,
 ): ParsedVariable[] {
+  // prefix保存`scope.toLowerCase`，供共享工具后续处理使用。
   const prefix = scope.toLowerCase() + ':'
+  // 返回 parsed.variables.filter(v => v.path.toLowerCase().startsWith(prefix))，把共享工具这个分支的结果交还调用方。
   return parsed.variables.filter(v => v.path.toLowerCase().startsWith(prefix))
 }
 
@@ -1542,31 +1829,45 @@ export function getVariablesByScope(
  * Check if any command in the parsed result matches a given name (case-insensitive).
  * Handles common aliases too.
  */
+// hasCommandNamed 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function hasCommandNamed(
   parsed: ParsedPowerShellCommand,
   name: string,
 ): boolean {
+  // lowerName保存`name.toLowerCase`，供共享工具后续处理使用。
   const lowerName = name.toLowerCase()
+  // canonicalFromAlias 集合保存`toLowerCase`，供共享工具后续处理使用。
   const canonicalFromAlias = COMMON_ALIASES[lowerName]?.toLowerCase()
 
+  // 遍历 const cmdName of getAllCommandNames(parsed)，按顺序处理共享工具中的批量条目。
   for (const cmdName of getAllCommandNames(parsed)) {
+    // 满足 `cmdName === lowerName` 时，共享工具执行该分支。
     if (cmdName === lowerName) {
+      // 返回 true，把共享工具这个分支的结果交还调用方。
       return true
     }
     // Check if the command is an alias that resolves to the requested name
+    // canonical保存`toLowerCase`，供共享工具后续处理使用。
     const canonical = COMMON_ALIASES[cmdName]?.toLowerCase()
+    // 满足 `canonical === lowerName` 时，共享工具执行该分支。
     if (canonical === lowerName) {
+      // 返回 true，把共享工具这个分支的结果交还调用方。
       return true
     }
     // Check if the requested name is an alias and the command is its canonical form
+    // 组合条件 `canonicalFromAlias && cmdName === canonicalFromAl` 成立时，共享工具才启用这条专门路径。
     if (canonicalFromAlias && cmdName === canonicalFromAlias) {
+      // 返回 true，把共享工具这个分支的结果交还调用方。
       return true
     }
     // Check if both resolve to the same canonical cmdlet (alias-to-alias match)
+    // 组合条件 `canonical && canonicalFromAlias && canonical ===` 成立时，共享工具才启用这条专门路径。
     if (canonical && canonicalFromAlias && canonical === canonicalFromAlias) {
+      // 返回 true，把共享工具这个分支的结果交还调用方。
       return true
     }
   }
+  // 返回 false，把共享工具这个分支的结果交还调用方。
   return false
 }
 
@@ -1575,15 +1876,20 @@ export function hasCommandNamed(
  * (Set-Location, cd, sl, chdir, Push-Location, pushd, Pop-Location, popd)
  */
 // exported for testing
+// hasDirectoryChange 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function hasDirectoryChange(parsed: ParsedPowerShellCommand): boolean {
+  // 遍历 const cmdName of getAllCommandNames(parsed)，按顺序处理共享工具中的批量条目。
   for (const cmdName of getAllCommandNames(parsed)) {
+    // 共享工具在这里进入条件判断，后续代码按实际状态分流。
     if (
       DIRECTORY_CHANGE_CMDLETS.has(cmdName) ||
       DIRECTORY_CHANGE_ALIASES.has(cmdName)
     ) {
+      // 返回 true，把共享工具这个分支的结果交还调用方。
       return true
     }
   }
+  // 返回 false，把共享工具这个分支的结果交还调用方。
   return false
 }
 
@@ -1591,8 +1897,11 @@ export function hasDirectoryChange(parsed: ParsedPowerShellCommand): boolean {
  * Check if the command is a single simple command (no pipes, no semicolons, no operators).
  */
 // exported for testing
+// isSingleCommand 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function isSingleCommand(parsed: ParsedPowerShellCommand): boolean {
+  // stmt解析`parsed.statements[0]`，供共享工具 parser后续步骤使用。
   const stmt = parsed.statements[0]
+  // 返回 (，把共享工具这个分支的结果交还调用方。
   return (
     parsed.statements.length === 1 &&
     stmt !== undefined &&
@@ -1605,11 +1914,14 @@ export function isSingleCommand(parsed: ParsedPowerShellCommand): boolean {
  * Check if a specific command has a given argument/flag (case-insensitive).
  * Useful for checking "-EncodedCommand", "-Recurse", etc.
  */
+// commandHasArg 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function commandHasArg(
   command: ParsedCommandElement,
   arg: string,
 ): boolean {
+  // lowerArg保存`arg.toLowerCase`，供共享工具后续处理使用。
   const lowerArg = arg.toLowerCase()
+  // 返回 command.args.some(a => a.toLowerCase() === lowerArg)，把共享工具这个分支的结果交还调用方。
   return command.args.some(a => a.toLowerCase() === lowerArg)
 }
 
@@ -1624,6 +1936,7 @@ export function commandHasArg(
  * Extent.Text preserves the raw character; transformCommandAst uses ce.text
  * for CommandParameterAst elements, so these reach callers unchanged.
  */
+// PS_TOKENIZER_DASH_CHARS 集合保存`Set`，供共享工具后续处理使用。
 export const PS_TOKENIZER_DASH_CHARS = new Set([
   '-', // U+002D hyphen-minus (ASCII)
   '\u2013', // en-dash
@@ -1644,13 +1957,17 @@ export const PS_TOKENIZER_DASH_CHARS = new Set([
  * When elementType is unavailable (backward compat / no AST detail), fall back
  * to a char check against PS_TOKENIZER_DASH_CHARS.
  */
+// isPowerShellParameter 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function isPowerShellParameter(
   arg: string,
   elementType?: CommandElementType,
 ): boolean {
+  // `elementType` 与 `undefined` 不一致时刷新派生状态。
   if (elementType !== undefined) {
+    // 返回 elementType === 'Parameter'，把共享工具这个分支的结果交还调用方。
     return elementType === 'Parameter'
   }
+  // 返回 arg.length > 0 && PS_TOKENIZER_DASH_CHARS.has(arg[0]!)，把共享工具这个分支的结果交还调用方。
   return arg.length > 0 && PS_TOKENIZER_DASH_CHARS.has(arg[0]!)
 }
 
@@ -1660,20 +1977,27 @@ export function isPowerShellParameter(
  * The minPrefix is the shortest unambiguous prefix for the parameter.
  * For example, minPrefix '-en' for fullParam '-encodedcommand' matches '-en', '-enc', '-enco', etc.
  */
+// commandHasArgAbbreviation 承担共享工具中的独立步骤，串起共享工具 parser需要的输入整理、状态更新和结果输出。
 export function commandHasArgAbbreviation(
   command: ParsedCommandElement,
   fullParam: string,
   minPrefix: string,
 ): boolean {
+  // lowerFull保存`fullParam.toLowerCase`，供共享工具后续处理使用。
   const lowerFull = fullParam.toLowerCase()
+  // lowerMin保存`minPrefix.toLowerCase`，供共享工具后续处理使用。
   const lowerMin = minPrefix.toLowerCase()
+  // 返回 command.args.some(a => {，把共享工具这个分支的结果交还调用方。
   return command.args.some(a => {
     // Strip colon-bound value (e.g., -en:base64value -> -en)
+    // colonIndex 索引保存`a.indexOf`，供共享工具后续处理使用。
     const colonIndex = a.indexOf(':', 1)
+    // paramPart格式化`a.slice`，供共享工具后续处理使用。
     const paramPart = colonIndex > 0 ? a.slice(0, colonIndex) : a
     // Strip backtick escapes — PowerShell resolves `-Member`Name` to
     // `-MemberName` but Extent.Text preserves the backtick, causing
     // prefix-comparison misses on the raw text.
+    // lower格式化`paramPart.replace`，供共享工具后续处理使用。
     const lower = paramPart.replace(/`/g, '').toLowerCase()
     return (
       lower.startsWith(lowerMin) &&

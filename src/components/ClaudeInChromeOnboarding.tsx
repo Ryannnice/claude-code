@@ -1,118 +1,205 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- enter to continue
+// 引入 Box、Link、Newline、Text、useInput，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Link, Newline, Text, useInput } from '../ink.js';
+// 复用 isChromeExtensionInstalled 工具函数，把通用处理留在 ../utils/claudeInChrome/setup.js 中维护。
 import { isChromeExtensionInstalled } from '../utils/claudeInChrome/setup.js';
+// 复用 saveGlobalConfig 工具函数，把通用处理留在 ../utils/config.js 中维护。
 import { saveGlobalConfig } from '../utils/config.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// CHROME_EXTENSION_URL 命名 `'https://claude.ai/chrome'`，让后续代码直接表达这个值的用途。
 const CHROME_EXTENSION_URL = 'https://claude.ai/chrome';
+// CHROME_PERMISSIONS_URL 权限数据保存`'https://clau.de/chrome/permissions'`，作为后续固定文本处理的输入。
 const CHROME_PERMISSIONS_URL = 'https://clau.de/chrome/permissions';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   onDone(): void;
 };
+// ClaudeInChromeOnboarding 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function ClaudeInChromeOnboarding(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(20);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onDone
   } = t0;
+  // 从 `React.useState(false)` 按位置拆出 isExtensionInstalled、setIsExtensionInstalled，让终端 UI 组件 Claude In Chrome Onboarding分别处理这些返回值。
   const [isExtensionInstalled, setIsExtensionInstalled] = React.useState(false);
+  // t1 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // t2 暂存 `[]` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t1 = () => {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent("tengu_claude_in_chrome_onboarding_shown", {});
+      // 调用 isChromeExtensionInstalled，触发终端渲染此处需要的副作用。
       isChromeExtensionInstalled().then(setIsExtensionInstalled);
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(_temp);
     };
+    // t2 暂存 `[]` 生成的渲染片段，后续返回路径直接复用。
     t2 = [];
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
+    // $[1] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t2;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
+    // t2 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[1];
   }
+  // 调用 React.useEffect，触发终端渲染此处需要的副作用。
   React.useEffect(t1, t2);
+  // t3 暂存 `(_input, key) => {` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== onDone) {
+    // t3 暂存 `(_input, key) => {` 生成的渲染片段，后续返回路径直接复用。
     t3 = (_input, key) => {
+      // 满足 `key.return` 时，终端渲染执行该分支。
       if (key.return) {
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone();
       }
     };
+    // $[2] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = onDone;
+    // $[3] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[3];
   }
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput(t3);
+  // t4 暂存 `!isExtensionInstalled && <><Newline /><Newline />Requires...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== isExtensionInstalled) {
+    // t4 暂存 `!isExtensionInstalled && <><Newline /><Newline />Requires...` 生成的渲染片段，后续返回路径直接复用。
     t4 = !isExtensionInstalled && <><Newline /><Newline />Requires the Chrome extension. Get started at{" "}<Link url={CHROME_EXTENSION_URL} /></>;
+    // $[4] 缓存 `isExtensionInstalled`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = isExtensionInstalled;
+    // $[5] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[5];
   }
+  // t5 暂存 `<Text>Claude in Chrome works with the Chrome extension to...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[6] !== t4) {
+    // t5 暂存 `<Text>Claude in Chrome works with the Chrome extension to...` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Text>Claude in Chrome works with the Chrome extension to let you control your browser directly from Claude Code. You can navigate websites, fill forms, capture screenshots, record GIFs, and debug with console logs and network requests.{t4}</Text>;
+    // $[6] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t4;
+    // $[7] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[7];
   }
+  // t6 暂存 `isExtensionInstalled && <>{" "}(<Link url={CHROME_PERMISS...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[8] !== isExtensionInstalled) {
+    // t6 暂存 `isExtensionInstalled && <>{" "}(<Link url={CHROME_PERMISS...` 生成的渲染片段，后续返回路径直接复用。
     t6 = isExtensionInstalled && <>{" "}(<Link url={CHROME_PERMISSIONS_URL} />)</>;
+    // $[8] 缓存 `isExtensionInstalled`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = isExtensionInstalled;
+    // $[9] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[9];
   }
+  // t7 暂存 `<Text dimColor={true}>Site-level permissions are inherite...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[10] !== t6) {
+    // t7 暂存 `<Text dimColor={true}>Site-level permissions are inherite...` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Text dimColor={true}>Site-level permissions are inherited from the Chrome extension. Manage permissions in the Chrome extension settings to control which sites Claude can browse, click, and type on{t6}.</Text>;
+    // $[10] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t6;
+    // $[11] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[11];
   }
+  // t8 暂存 `<Text bold={true} color="chromeYellow">/chrome</Text>` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+    // t8 暂存 `<Text bold={true} color="chromeYellow">/chrome</Text>` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Text bold={true} color="chromeYellow">/chrome</Text>;
+    // $[12] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[12];
   }
+  // t9 暂存 `<Text dimColor={true}>For more info, use{" "}{t8}{" "}or ...` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
+    // t9 暂存 `<Text dimColor={true}>For more info, use{" "}{t8}{" "}or ...` 生成的渲染片段，后续返回路径直接复用。
     t9 = <Text dimColor={true}>For more info, use{" "}{t8}{" "}or visit <Link url="https://code.claude.com/docs/en/chrome" /></Text>;
+    // $[13] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[13];
   }
+  // t10 暂存 `<Box flexDirection="column" gap={1}>{t5}{t7}{t9}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[14] !== t5 || $[15] !== t7) {
+    // t10 暂存 `<Box flexDirection="column" gap={1}>{t5}{t7}{t9}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t10 = <Box flexDirection="column" gap={1}>{t5}{t7}{t9}</Box>;
+    // $[14] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t5;
+    // $[15] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t7;
+    // $[16] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[16];
   }
+  // t11 暂存 `<Dialog title="Claude in Chrome (Beta)" onCancel={onDone}...` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[17] !== onDone || $[18] !== t10) {
+    // t11 暂存 `<Dialog title="Claude in Chrome (Beta)" onCancel={onDone}...` 生成的渲染片段，后续返回路径直接复用。
     t11 = <Dialog title="Claude in Chrome (Beta)" onCancel={onDone} color="chromeYellow">{t10}</Dialog>;
+    // $[17] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = onDone;
+    // $[18] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t10;
+    // $[19] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[19];
   }
+  // 返回 `t11`，作为终端渲染这次计算的结果。
   return t11;
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(current) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     ...current,
     hasCompletedClaudeInChromeOnboarding: true

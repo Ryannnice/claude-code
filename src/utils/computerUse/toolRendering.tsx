@@ -1,8 +1,14 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 引入 Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../../ink.js';
+// 引入 truncateToWidth，将 ../format.js 中已经封装好的能力接到本文件流程里。
 import { truncateToWidth } from '../format.js';
+// 类型依赖 { MCPToolResult } 来自 ../mcpValidation.js，用于校准共享工具的数据契约。
 import type { MCPToolResult } from '../mcpValidation.js';
+// CuToolInput 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type CuToolInput = Record<string, unknown> & {
   coordinate?: [number, number];
   start_coordinate?: [number, number];
@@ -15,9 +21,12 @@ type CuToolInput = Record<string, unknown> & {
   amount?: number;
   duration?: number;
 };
+// fmtCoord 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function fmtCoord(c: [number, number] | undefined): string {
+  // 返回 `c ? `(${c[0]}, ${c[1]})` : ''`，作为共享工具这次计算的结果。
   return c ? `(${c[0]}, ${c[1]})` : '';
 }
+// RESULT_SUMMARY 集中保存共享工具 tool Rendering要一起传递的字段。
 const RESULT_SUMMARY: Readonly<Partial<Record<string, string>>> = {
   screenshot: 'Captured',
   zoom: 'Captured',
@@ -40,7 +49,9 @@ const RESULT_SUMMARY: Readonly<Partial<Record<string, string>>> = {
  * tool object in `client.ts` after the default `userFacingName`, so these win.
  * Mirror of `getClaudeInChromeMCPToolOverrides`.
  */
+// getComputerUseMCPRenderingOverrides 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getComputerUseMCPRenderingOverrides(toolName: string): {
+  // 这个回调绑定到 userFacingName: () => string;，负责共享工具在该局部场景下的响应。
   userFacingName: () => string;
   renderToolUseMessage: (input: Record<string, unknown>, options: {
     verbose: boolean;
@@ -49,14 +60,19 @@ export function getComputerUseMCPRenderingOverrides(toolName: string): {
     verbose: boolean;
   }) => React.ReactNode;
 } {
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
+    // userFacingName 使用 无 完成共享工具里的对应操作。
     userFacingName() {
+      // 返回 ``Computer Use[${toolName}]``，作为共享工具这次计算的结果。
       return `Computer Use[${toolName}]`;
     },
     // AssistantToolUseMessage.tsx contract: null hides the ENTIRE row, '' shows
     // the tool name without "(args)". Every path below returns '' when there's
     // nothing to show — never null.
+    // renderToolUseMessage 使用 input: CuToolInput 完成共享工具里的对应操作。
     renderToolUseMessage(input: CuToolInput) {
+      // 按照 toolName 的取值选择共享工具的具体处理分支。
       switch (toolName) {
         case 'screenshot':
         case 'left_mouse_down':
@@ -64,6 +80,7 @@ export function getComputerUseMCPRenderingOverrides(toolName: string): {
         case 'cursor_position':
         case 'list_granted_applications':
         case 'read_clipboard':
+          // 返回空字符串表示没有可用文本，调用方会按空输入处理。
           return '';
         case 'left_click':
         case 'right_click':
@@ -71,51 +88,73 @@ export function getComputerUseMCPRenderingOverrides(toolName: string): {
         case 'double_click':
         case 'triple_click':
         case 'mouse_move':
+          // 返回 `fmtCoord(input.coordinate)`，作为共享工具这次计算的结果。
           return fmtCoord(input.coordinate);
         case 'left_click_drag':
+          // 返回 `input.start_coordinate ? `${fmtCoord(input.start_coordinate)} → ${fmtCo...`，作为共享工具这次计算的结果。
           return input.start_coordinate ? `${fmtCoord(input.start_coordinate)} → ${fmtCoord(input.coordinate)}` : `to ${fmtCoord(input.coordinate)}`;
         case 'type':
+          // 返回 `typeof input.text === 'string' ? `"${truncateToWidth(input.text, 40)}"`...`，作为共享工具这次计算的结果。
           return typeof input.text === 'string' ? `"${truncateToWidth(input.text, 40)}"` : '';
         case 'key':
         case 'hold_key':
+          // 返回 `typeof input.text === 'string' ? input.text : ''`，作为共享工具这次计算的结果。
           return typeof input.text === 'string' ? input.text : '';
         case 'scroll':
+          // 返回列表结果，保留共享工具已经排好的条目顺序。
           return [input.direction, input.amount && `×${input.amount}`, input.coordinate && `at ${fmtCoord(input.coordinate)}`].filter(Boolean).join(' ');
         case 'zoom':
           {
+            // r 命名 `input.region`，让后续代码直接表达这个值的用途。
             const r = input.region;
+            // 返回 `Array.isArray(r) && r.length === 4 ? `[${r[0]}, ${r[1]}, ${r[2]}, ${r[3...`，作为共享工具这次计算的结果。
             return Array.isArray(r) && r.length === 4 ? `[${r[0]}, ${r[1]}, ${r[2]}, ${r[3]}]` : '';
           }
         case 'wait':
+          // 返回 `typeof input.duration === 'number' ? `${input.duration}s` : ''`，作为共享工具这次计算的结果。
           return typeof input.duration === 'number' ? `${input.duration}s` : '';
         case 'write_clipboard':
+          // 返回 `typeof input.text === 'string' ? `"${truncateToWidth(input.text, 40)}"`...`，作为共享工具这次计算的结果。
           return typeof input.text === 'string' ? `"${truncateToWidth(input.text, 40)}"` : '';
         case 'open_application':
+          // 返回 `typeof input.bundle_id === 'string' ? String(input.bundle_id) : ''`，作为共享工具这次计算的结果。
           return typeof input.bundle_id === 'string' ? String(input.bundle_id) : '';
         case 'request_access':
           {
+            // apps 集合 命名 `input.apps`，让后续代码直接表达这个值的用途。
             const apps = input.apps;
+            // 满足 `!Array.isArray(apps)` 时，共享工具执行该分支。
             if (!Array.isArray(apps)) return '';
+            // names 集合派生`apps.map`，供共享工具后续处理使用。
             const names = apps.map(a => typeof a?.displayName === 'string' ? a.displayName : '').filter(Boolean);
+            // 返回 `names.join(', ')`，作为共享工具这次计算的结果。
             return names.join(', ');
           }
         case 'computer_batch':
           {
+            // actions 集合保存`input.actions`，供后续判断或组装使用。
             const actions = input.actions;
+            // 返回 `Array.isArray(actions) ? `${actions.length} actions` : ''`，作为共享工具这次计算的结果。
             return Array.isArray(actions) ? `${actions.length} actions` : '';
           }
         default:
+          // 返回空字符串表示没有可用文本，调用方会按空输入处理。
           return '';
       }
     },
+    // 调用 renderToolResultMessage，触发共享工具此处需要的副作用。
     renderToolResultMessage(output, _progress, {
       verbose
     }) {
+      // `verbose || typeof output` 与 `'object' || output === null` 不一致时刷新派生状态，避免使用过期结果。
       if (verbose || typeof output !== 'object' || output === null) return null;
 
       // Non-verbose: one-line dim summary, like Chrome's pattern.
+      // summary保存`RESULT_SUMMARY[toolName]`，供共享工具 tool Rendering后续判断或输出使用。
       const summary = RESULT_SUMMARY[toolName];
+      // summary缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!summary) return null;
+      // 返回 `<MessageResponse height={1}>`，作为共享工具这次计算的结果。
       return <MessageResponse height={1}>
           <Text dimColor>{summary}</Text>
         </MessageResponse>;

@@ -11,6 +11,7 @@
  * trivial without reasoning through a helper's conditional rendering.
  */
 
+// MEMORY_TYPES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const MEMORY_TYPES = [
   'user',
   'feedback',
@@ -18,6 +19,7 @@ export const MEMORY_TYPES = [
   'reference',
 ] as const
 
+// MemoryType 固化memory Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type MemoryType = (typeof MEMORY_TYPES)[number]
 
 /**
@@ -25,8 +27,11 @@ export type MemoryType = (typeof MEMORY_TYPES)[number]
  * Invalid or missing values return undefined — legacy files without a
  * `type:` field keep working, files with unknown types degrade gracefully.
  */
+// parseMemoryType 封装memoryTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function parseMemoryType(raw: unknown): MemoryType | undefined {
+  // `typeof raw` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
   if (typeof raw !== 'string') return undefined
+  // 返回 `MEMORY_TYPES.find(t => t === raw)`，作为memory Types这次计算的结果。
   return MEMORY_TYPES.find(t => t === raw)
 }
 
@@ -34,6 +39,7 @@ export function parseMemoryType(raw: unknown): MemoryType | undefined {
  * `## Types of memory` section for COMBINED mode (private + team directories).
  * Includes <scope> tags and team/private qualifiers in examples.
  */
+// TYPES_SECTION_COMBINED 聚合成有序列表，保持后续遍历顺序稳定。
 export const TYPES_SECTION_COMBINED: readonly string[] = [
   '## Types of memory',
   '',
@@ -110,6 +116,7 @@ export const TYPES_SECTION_COMBINED: readonly string[] = [
  * No <scope> tags. Examples use plain `[saves X memory: …]`. Prose that
  * only makes sense with a private/team split is reworded.
  */
+// TYPES_SECTION_INDIVIDUAL 聚合成有序列表，保持后续遍历顺序稳定。
 export const TYPES_SECTION_INDIVIDUAL: readonly string[] = [
   '## Types of memory',
   '',
@@ -180,6 +187,7 @@ export const TYPES_SECTION_INDIVIDUAL: readonly string[] = [
 /**
  * `## What NOT to save in memory` section. Identical across both modes.
  */
+// WHAT_NOT_TO_SAVE_SECTION 聚合成有序列表，保持后续遍历顺序稳定。
 export const WHAT_NOT_TO_SAVE_SECTION: readonly string[] = [
   '## What NOT to save in memory',
   '',
@@ -198,6 +206,7 @@ export const WHAT_NOT_TO_SAVE_SECTION: readonly string[] = [
  * Recall-side drift caveat. Single bullet under `## When to access memories`.
  * Proactive: verify memory against current state before answering.
  */
+// MEMORY_DRIFT_CAVEAT 先占位，稍后的条件分支会根据实际输入补齐它。
 export const MEMORY_DRIFT_CAVEAT =
   '- Memory records can become stale over time. Use memory as context for what was true at a given point in time. Before answering the user or building assumptions based solely on information in memory records, verify that the memory is still correct and up-to-date by reading the current state of the files or resources. If a recalled memory conflicts with current information, trust what you observe now — and update or remove the stale memory rather than acting on it.'
 
@@ -213,6 +222,7 @@ export const MEMORY_DRIFT_CAVEAT =
  * Token budget (H6a): merged old bullets 1+2, tightened both. Old 4 lines
  * were ~70 tokens; new 4 lines are ~73 tokens. Net ~+3.
  */
+// WHEN_TO_ACCESS_SECTION 聚合成有序列表，保持后续遍历顺序稳定。
 export const WHEN_TO_ACCESS_SECTION: readonly string[] = [
   '## When to access memories',
   '- When memories seem relevant, or the user references prior-conversation work.',
@@ -237,6 +247,7 @@ export const WHEN_TO_ACCESS_SECTION: readonly string[] = [
  * Known gap: H1 doesn't cover slash-command claims (0/3 on the /fork case —
  * slash commands aren't files or functions in the model's ontology).
  */
+// TRUSTING_RECALL_SECTION 聚合成有序列表，保持后续遍历顺序稳定。
 export const TRUSTING_RECALL_SECTION: readonly string[] = [
   // Header wording matters: "Before recommending" (action cue at the decision
   // point) tested better than "Trusting what you recall" (abstract). The
@@ -258,6 +269,7 @@ export const TRUSTING_RECALL_SECTION: readonly string[] = [
 /**
  * Frontmatter format example with the `type` field.
  */
+// MEMORY_FRONTMATTER_EXAMPLE 聚合成有序列表，保持后续遍历顺序稳定。
 export const MEMORY_FRONTMATTER_EXAMPLE: readonly string[] = [
   '```markdown',
   '---',

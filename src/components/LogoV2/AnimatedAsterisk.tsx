@@ -1,17 +1,28 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useRef, useState } from 'react';
+// 引入 TEARDROP_ASTERISK，将 ../../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { TEARDROP_ASTERISK } from '../../constants/figures.js';
+// 引入 Box、Text、useAnimationFrame，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useAnimationFrame } from '../../ink.js';
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../../utils/settings/settings.js';
+// 引入 hueToRgb、toRGBColor，将 ../Spinner/utils.js 中已经封装好的能力接到本文件流程里。
 import { hueToRgb, toRGBColor } from '../Spinner/utils.js';
+// SWEEP_DURATION_MS 集合保存`1500`，供终端 UI Animated Asterisk后续判断或输出使用。
 const SWEEP_DURATION_MS = 1500;
+// SWEEP_COUNT 数量 命名 `2`，让后续代码直接表达这个值的用途。
 const SWEEP_COUNT = 2;
+// TOTAL_ANIMATION_MS 集合保存`SWEEP_DURATION_MS * SWEEP_COUNT`，供后续判断或组装使用。
 const TOTAL_ANIMATION_MS = SWEEP_DURATION_MS * SWEEP_COUNT;
+// SETTLED_GREY保存`toRGBColor`，供终端渲染后续处理使用。
 const SETTLED_GREY = toRGBColor({
   r: 153,
   g: 153,
   b: 153
 });
+// AnimatedAsterisk 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AnimatedAsterisk({
   char = TEARDROP_ASTERISK
 }: {
@@ -19,30 +30,45 @@ export function AnimatedAsterisk({
 }): React.ReactNode {
   // Read prefersReducedMotion once at mount — no useSettings() subscription,
   // since that would re-render whenever settings change.
+  // 这个回调绑定到 const [reducedMotion] = useState(() => getInitialSettings().prefersReducedMotion ?? …，负责终端渲染在该局部场景下的响应。
   const [reducedMotion] = useState(() => getInitialSettings().prefersReducedMotion ?? false);
+  // done 由 React state 持有，setDone 会在用户操作或异步结果返回时触发刷新。
   const [done, setDone] = useState(reducedMotion);
   // useAnimationFrame's clock is shared — capture our start offset so the
   // sweep always begins at hue 0 regardless of when we mount.
+  // startTimeRef 引用保存 hook 状态，让终端 UI Animated Asterisk跨渲染复用同一个容器。
   const startTimeRef = useRef<number | null>(null);
   // Wire the ref so useAnimationFrame's viewport-pause kicks in: if the
   // user submits a message before the sweep finishes, the clock stops
   // automatically once this row enters scrollback (prevents flicker).
+  // 从 `useAnimationFrame(done ? null : 50)` 按位置拆出 ref、time，让终端 UI 组件 Animated Asterisk分别处理这些返回值。
   const [ref, time] = useAnimationFrame(done ? null : 50);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 满足 `done` 时，终端渲染执行该分支。
     if (done) return;
+    // t保存`setTimeout`，供终端渲染后续处理使用。
     const t = setTimeout(setDone, TOTAL_ANIMATION_MS, true);
+    // 返回 `() => clearTimeout(t)`，作为终端渲染这次计算的结果。
     return () => clearTimeout(t);
   }, [done]);
+  // 满足 `done` 时，终端渲染执行该分支。
   if (done) {
+    // 返回 `<Box ref={ref}>`，作为终端渲染这次计算的结果。
     return <Box ref={ref}>
         <Text color={SETTLED_GREY}>{char}</Text>
       </Box>;
   }
+  // 满足 `startTimeRef.current === null` 时，终端渲染执行该分支。
   if (startTimeRef.current === null) {
+    // current更新为 `time`，确保终端 UI后续读取最新状态。
     startTimeRef.current = time;
   }
+  // elapsed 命名 `time - startTimeRef.current`，让后续代码直接表达这个值的用途。
   const elapsed = time - startTimeRef.current;
+  // hue保存`elapsed / SWEEP_DURATION_MS * 360 % 360`，供终端 UI Animated Asterisk后续判断或输出使用。
   const hue = elapsed / SWEEP_DURATION_MS * 360 % 360;
+  // 返回 `<Box ref={ref}>`，作为终端渲染这次计算的结果。
   return <Box ref={ref}>
       <Text color={toRGBColor(hueToRgb(hue))}>{char}</Text>
     </Box>;

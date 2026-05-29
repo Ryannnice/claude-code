@@ -1,16 +1,25 @@
+// 使用 Node/Bun 的 crypto 能力处理本地运行时资源。
 import { randomUUID } from 'crypto';
+// 引入 useCallback、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useRef, useState } from 'react';
+// 类型依赖 { TranscriptShareResponse } 来自 ./TranscriptSharePrompt.js，用于校准终端渲染的数据契约。
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js';
+// 类型依赖 { FeedbackSurveyResponse } 来自 ./utils.js，用于校准终端渲染的数据契约。
 import type { FeedbackSurveyResponse } from './utils.js';
+// SurveyState 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type SurveyState = 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted';
+// UseSurveyStateOptions 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type UseSurveyStateOptions = {
   hideThanksAfterMs: number;
+  // 这个回调绑定到 onOpen: (appearanceId: string) => void | Promise<void>;，负责终端渲染在该局部场景下的响应。
   onOpen: (appearanceId: string) => void | Promise<void>;
+  // 这个回调绑定到 onSelect: (appearanceId: string, selected: FeedbackSurveyResponse) => void | Promise…，负责终端渲染在该局部场景下的响应。
   onSelect: (appearanceId: string, selected: FeedbackSurveyResponse) => void | Promise<void>;
   shouldShowTranscriptPrompt?: (selected: FeedbackSurveyResponse) => boolean;
   onTranscriptPromptShown?: (appearanceId: string, surveyResponse: FeedbackSurveyResponse) => void;
   onTranscriptSelect?: (appearanceId: string, selected: TranscriptShareResponse, surveyResponse: FeedbackSurveyResponse | null) => boolean | Promise<boolean>;
 };
+// useSurveyState 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useSurveyState({
   hideThanksAfterMs,
   onOpen,
@@ -21,74 +30,123 @@ export function useSurveyState({
 }: UseSurveyStateOptions): {
   state: SurveyState;
   lastResponse: FeedbackSurveyResponse | null;
+  // 这个回调绑定到 open: () => void;，负责终端渲染在该局部场景下的响应。
   open: () => void;
+  // 这个回调绑定到 handleSelect: (selected: FeedbackSurveyResponse) => boolean;，负责终端渲染在该局部场景下的响应。
   handleSelect: (selected: FeedbackSurveyResponse) => boolean;
+  // 这个回调绑定到 handleTranscriptSelect: (selected: TranscriptShareResponse) => void;，负责终端渲染在该局部场景下的响应。
   handleTranscriptSelect: (selected: TranscriptShareResponse) => void;
 } {
+  // 状态 由 React state 持有，setState 会在用户操作或异步结果返回时触发刷新。
   const [state, setState] = useState<SurveyState>('closed');
+  // lastResponse 响应数据 由 React state 持有，setLastResponse 会在用户操作或异步结果返回时触发刷新。
   const [lastResponse, setLastResponse] = useState<FeedbackSurveyResponse | null>(null);
+  // appearanceId保存`useRef`，供终端渲染后续处理使用。
   const appearanceId = useRef(randomUUID());
+  // lastResponseRef 引用保存 hook 状态，让终端 UI use Survey State跨渲染复用同一个容器。
   const lastResponseRef = useRef<FeedbackSurveyResponse | null>(null);
+  // showThanksThenClose保存`useCallback`，供终端渲染后续处理使用。
   const showThanksThenClose = useCallback(() => {
+    // setState 写入新的状态值，使终端渲染后续读取保持一致。
     setState('thanks');
+    // setTimeout 写入新的状态值，使终端渲染后续读取保持一致。
     setTimeout((setState_0, setLastResponse_0) => {
+      // setState_0 写入新的状态值，使终端渲染后续读取保持一致。
       setState_0('closed');
+      // setLastResponse_0 写入新的状态值，使终端渲染后续读取保持一致。
       setLastResponse_0(null);
     }, hideThanksAfterMs, setState, setLastResponse);
   }, [hideThanksAfterMs]);
+  // showSubmittedThenClose保存`useCallback`，供终端渲染后续处理使用。
   const showSubmittedThenClose = useCallback(() => {
+    // setState 写入新的状态值，使终端渲染后续读取保持一致。
     setState('submitted');
+    // setTimeout 写入新的状态值，使终端渲染后续读取保持一致。
     setTimeout(setState, hideThanksAfterMs, 'closed');
   }, [hideThanksAfterMs]);
+  // open保存`useCallback`，供终端渲染后续处理使用。
   const open = useCallback(() => {
+    // `state` 与 `'closed'` 不一致时刷新派生状态，避免使用过期结果。
     if (state !== 'closed') {
+      // 终端 UI 组件 use Survey State在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setState 写入新的状态值，使终端渲染后续读取保持一致。
     setState('open');
+    // current更新为 `randomUUID()`，确保终端 UI后续读取最新状态。
     appearanceId.current = randomUUID();
+    // 显式忽略 `onOpen(appearanceId.current)` 的返回值，只保留它触发的副作用。
     void onOpen(appearanceId.current);
   }, [state, onOpen]);
+  // handleSelect保存`useCallback`，供终端渲染后续处理使用。
   const handleSelect = useCallback((selected: FeedbackSurveyResponse): boolean => {
+    // setLastResponse 写入新的状态值，使终端渲染后续读取保持一致。
     setLastResponse(selected);
+    // current更新为 `selected`，确保终端 UI后续读取最新状态。
     lastResponseRef.current = selected;
     // Always fire the survey response event first
+    // 显式忽略 `onSelect(appearanceId.current, selected)` 的返回值，只保留它触发的副作用。
     void onSelect(appearanceId.current, selected);
+    // 当 `selected` 匹配 `'dismissed'` 时，终端渲染执行对应分支。
     if (selected === 'dismissed') {
+      // setState 写入新的状态值，使终端渲染后续读取保持一致。
       setState('closed');
+      // setLastResponse 写入新的状态值，使终端渲染后续读取保持一致。
       setLastResponse(null);
+    // 终端 UI 组件 use Survey State在这里处理 `} else if (shouldShowTranscriptPrompt?.(selected)) {`，完成这一小步状态转换。
     } else if (shouldShowTranscriptPrompt?.(selected)) {
+      // setState 写入新的状态值，使终端渲染后续读取保持一致。
       setState('transcript_prompt');
+      // 调用 onTranscriptPromptShown?.(appearanceId.current, selected);，完成这一处局部操作。
       onTranscriptPromptShown?.(appearanceId.current, selected);
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     } else {
+      // 调用 showThanksThenClose，触发终端渲染此处需要的副作用。
       showThanksThenClose();
     }
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }, [showThanksThenClose, onSelect, shouldShowTranscriptPrompt, onTranscriptPromptShown]);
+  // handleTranscriptSelect保存`useCallback`，供终端渲染后续处理使用。
   const handleTranscriptSelect = useCallback((selected_0: TranscriptShareResponse) => {
+    // 按照 selected_0 的取值选择终端渲染的具体处理分支。
     switch (selected_0) {
       case 'yes':
+        // setState 写入新的状态值，使终端渲染后续读取保持一致。
         setState('submitting');
+        // 调用 void，触发终端渲染此处需要的副作用。
         void (async () => {
+          // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
           try {
+            // success 集合 等待 `onTranscriptSelect?.(appearanceId.current, selected_0, la...`，确保继续执行前已有结果。
             const success = await onTranscriptSelect?.(appearanceId.current, selected_0, lastResponseRef.current);
+            // 满足 `success` 时，终端渲染执行该分支。
             if (success) {
+              // 调用 showSubmittedThenClose，触发终端渲染此处需要的副作用。
               showSubmittedThenClose();
             } else {
+              // 调用 showThanksThenClose，触发终端渲染此处需要的副作用。
               showThanksThenClose();
             }
           } catch {
+            // 调用 showThanksThenClose，触发终端渲染此处需要的副作用。
             showThanksThenClose();
           }
         })();
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
       case 'no':
       case 'dont_ask_again':
+        // 显式忽略 `onTranscriptSelect?.(appearanceId.current, selected_0, lastResp...` 的返回值，只保留它触发的副作用。
         void onTranscriptSelect?.(appearanceId.current, selected_0, lastResponseRef.current);
+        // 调用 showThanksThenClose，触发终端渲染此处需要的副作用。
         showThanksThenClose();
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break;
     }
   }, [showThanksThenClose, showSubmittedThenClose, onTranscriptSelect]);
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     state,
     lastResponse,

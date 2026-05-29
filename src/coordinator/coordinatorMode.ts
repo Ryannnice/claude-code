@@ -1,19 +1,33 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 引入 ASYNC_AGENT_ALLOWED_TOOLS，将 ../constants/tools.js 中已经封装好的能力接到本文件流程里。
 import { ASYNC_AGENT_ALLOWED_TOOLS } from '../constants/tools.js'
+// 接入 checkStatsigFeatureGate_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../services/analytics/growthbook.js 处理。
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+// 整理这一组导入，让coordinator Mode后续逻辑可以直接复用这些外部能力。
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../services/analytics/index.js'
+// 接入 AGENT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
+// 接入 BASH_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
+// 接入 FILE_EDIT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
+// 接入 FILE_READ_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_READ_TOOL_NAME } from '../tools/FileReadTool/prompt.js'
+// 接入 SEND_MESSAGE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { SEND_MESSAGE_TOOL_NAME } from '../tools/SendMessageTool/constants.js'
+// 接入 SYNTHETIC_OUTPUT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from '../tools/SyntheticOutputTool/SyntheticOutputTool.js'
+// 接入 TASK_STOP_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { TASK_STOP_TOOL_NAME } from '../tools/TaskStopTool/prompt.js'
+// 接入 TEAM_CREATE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { TEAM_CREATE_TOOL_NAME } from '../tools/TeamCreateTool/constants.js'
+// 接入 TEAM_DELETE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { TEAM_DELETE_TOOL_NAME } from '../tools/TeamDeleteTool/constants.js'
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../utils/envUtils.js'
 
 // Checks the same gate as isScratchpadEnabled() in
@@ -22,10 +36,13 @@ import { isEnvTruthy } from '../utils/envUtils.js'
 // -> ... -> coordinatorMode). The actual scratchpad path is passed in via
 // getCoordinatorUserContext's scratchpadDir parameter (dependency injection
 // from QueryEngine.ts, which lives higher in the dep graph).
+// isScratchpadGateEnabled 封装coordinatorMode的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isScratchpadGateEnabled(): boolean {
+  // 返回 `checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_scratch')`，作为coordinator Mode这次计算的结果。
   return checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_scratch')
 }
 
+// INTERNAL_WORKER_TOOLS 集合保存`Set`，供coordinator Mode后续处理使用。
 const INTERNAL_WORKER_TOOLS = new Set([
   TEAM_CREATE_TOOL_NAME,
   TEAM_DELETE_TOOL_NAME,
@@ -33,10 +50,14 @@ const INTERNAL_WORKER_TOOLS = new Set([
   SYNTHETIC_OUTPUT_TOOL_NAME,
 ])
 
+// isCoordinatorMode 封装coordinatorMode的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isCoordinatorMode(): boolean {
+  // 满足 `feature('COORDINATOR_MODE')` 时，coordinator Mode执行该分支。
   if (feature('COORDINATOR_MODE')) {
+    // 返回 `isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE)`，作为coordinator Mode这次计算的结果。
     return isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE)
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -46,73 +67,100 @@ export function isCoordinatorMode(): boolean {
  * the correct value for the resumed session. Returns a warning message if
  * the mode was switched, or undefined if no switch was needed.
  */
+// matchSessionMode 封装coordinatorMode的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function matchSessionMode(
   sessionMode: 'coordinator' | 'normal' | undefined,
 ): string | undefined {
   // No stored mode (old session before mode tracking) — do nothing
+  // sessionMode 会话数据缺失时提前走兜底路径，避免coordinator Mode继续依赖无效输入。
   if (!sessionMode) {
+    // 返回 `undefined`，作为coordinator Mode这次计算的结果。
     return undefined
   }
 
+  // currentIsCoordinator保存`isCoordinatorMode`，供coordinator Mode后续处理使用。
   const currentIsCoordinator = isCoordinatorMode()
+  // sessionIsCoordinator 会话数据标记coordinator Mode是否启用对应路径。
   const sessionIsCoordinator = sessionMode === 'coordinator'
 
+  // 满足 `currentIsCoordinator === sessionIsCoordinator` 时，coordinator Mode执行该分支。
   if (currentIsCoordinator === sessionIsCoordinator) {
+    // 返回 `undefined`，作为coordinator Mode这次计算的结果。
     return undefined
   }
 
   // Flip the env var — isCoordinatorMode() reads it live, no caching
+  // 满足 `sessionIsCoordinator` 时，coordinator Mode执行该分支。
   if (sessionIsCoordinator) {
+    // CLAUDE_CODE_COORDINATOR_MODE更新为 `'1'`，确保coordinatorMode后续读取最新状态。
     process.env.CLAUDE_CODE_COORDINATOR_MODE = '1'
   } else {
+    // coordinator Mode在这里处理 `delete process.env.CLAUDE_CODE_COORDINATOR_MODE`，完成这一小步状态转换。
     delete process.env.CLAUDE_CODE_COORDINATOR_MODE
   }
 
+  // 记录coordinator Mode运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_coordinator_mode_switched', {
     to: sessionMode as unknown as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 
+  // 返回 `sessionIsCoordinator`，作为coordinator Mode这次计算的结果。
   return sessionIsCoordinator
     ? 'Entered coordinator mode to match resumed session.'
     : 'Exited coordinator mode to match resumed session.'
 }
 
+// getCoordinatorUserContext 封装coordinatorMode的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getCoordinatorUserContext(
   mcpClients: ReadonlyArray<{ name: string }>,
   scratchpadDir?: string,
 ): { [k: string]: string } {
+  // 满足 `!isCoordinatorMode()` 时，coordinator Mode执行该分支。
   if (!isCoordinatorMode()) {
+    // 返回结构化结果，集中表达coordinator Mode已经整理出的状态。
     return {}
   }
 
+  // workerTools 集合保存`isEnvTruthy`，供coordinator Mode后续处理使用。
   const workerTools = isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)
     ? [BASH_TOOL_NAME, FILE_READ_TOOL_NAME, FILE_EDIT_TOOL_NAME]
         .sort()
         .join(', ')
     : Array.from(ASYNC_AGENT_ALLOWED_TOOLS)
+        // 链式调用 filter，继续加工上一行在coordinator Mode中产生的数据。
         .filter(name => !INTERNAL_WORKER_TOOLS.has(name))
         .sort()
         .join(', ')
 
+  // 文本内容固定为 ``Workers spawned via the ${AGENT_TOOL_NAME} tool have acc...`，作为coordinator Mode后续展示或比较的基准。
   let content = `Workers spawned via the ${AGENT_TOOL_NAME} tool have access to these tools: ${workerTools}`
 
+  // 满足 `mcpClients.length > 0` 时，coordinator Mode执行该分支。
   if (mcpClients.length > 0) {
+    // serverNames 集合派生`mcpClients.map`，供coordinator Mode后续处理使用。
     const serverNames = mcpClients.map(c => c.name).join(', ')
+    // coordinator Mode在这里处理 `content += `\n\nWorkers also have access to MCP tools from connected MC...`，完成这一小步状态转换。
     content += `\n\nWorkers also have access to MCP tools from connected MCP servers: ${serverNames}`
   }
 
+  // 组合条件 `scratchpadDir && isScratchpadGateEnabled()` 成立时，coordinator Mode才启用这条专门路径。
   if (scratchpadDir && isScratchpadGateEnabled()) {
+    // coordinator Mode在这里处理 `content += `\n\nScratchpad directory: ${scratchpadDir}\nWorkers can rea...`，完成这一小步状态转换。
     content += `\n\nScratchpad directory: ${scratchpadDir}\nWorkers can read and write here without permission prompts. Use this for durable cross-worker knowledge — structure files however fits the work.`
   }
 
+  // 返回结构化结果，集中表达coordinator Mode已经整理出的状态。
   return { workerToolsContext: content }
 }
 
+// getCoordinatorSystemPrompt 封装coordinatorMode的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getCoordinatorSystemPrompt(): string {
+  // workerCapabilities 集合保存`isEnvTruthy`，供coordinator Mode后续处理使用。
   const workerCapabilities = isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)
     ? 'Workers have access to Bash, Read, and Edit tools, plus MCP tools from configured MCP servers.'
     : 'Workers have access to standard tools, MCP tools from configured MCP servers, and project skills via the Skill tool. Delegate skill invocations (e.g. /commit, /verify) to workers.'
 
+  // 返回 ``You are Claude Code, an AI assistant that orchestrates software engine...`，作为coordinator Mode这次计算的结果。
   return `You are Claude Code, an AI assistant that orchestrates software engineering tasks across multiple workers.
 
 ## 1. Your Role

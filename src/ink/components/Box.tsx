@@ -1,12 +1,22 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React、PropsWithChildren、Ref，将 react 中已经封装好的能力接到本文件流程里。
 import React, { type PropsWithChildren, type Ref } from 'react';
+// 类型依赖 { Except } 来自 type-fest，用于校准终端渲染的数据契约。
 import type { Except } from 'type-fest';
+// 类型依赖 { DOMElement } 来自 ../dom.js，用于校准终端渲染的数据契约。
 import type { DOMElement } from '../dom.js';
+// 类型依赖 { ClickEvent } 来自 ../events/click-event.js，用于校准终端渲染的数据契约。
 import type { ClickEvent } from '../events/click-event.js';
+// 类型依赖 { FocusEvent } 来自 ../events/focus-event.js，用于校准终端渲染的数据契约。
 import type { FocusEvent } from '../events/focus-event.js';
+// 类型依赖 { KeyboardEvent } 来自 ../events/keyboard-event.js，用于校准终端渲染的数据契约。
 import type { KeyboardEvent } from '../events/keyboard-event.js';
+// 类型依赖 { Styles } 来自 ../styles.js，用于校准终端渲染的数据契约。
 import type { Styles } from '../styles.js';
+// 引入 * as warn，将 ../warn.js 中已经封装好的能力接到本文件流程里。
 import * as warn from '../warn.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Props = Except<Styles, 'textWrap'> & {
   ref?: Ref<DOMElement>;
   /**
@@ -26,12 +36,19 @@ export type Props = Except<Styles, 'textWrap'> & {
    * otherwise. The event bubbles from the deepest hit Box up through
    * ancestors; call `event.stopImmediatePropagation()` to stop bubbling.
    */
+  // 这个回调绑定到 onClick?: (event: ClickEvent) => void;，负责终端渲染在该局部场景下的响应。
   onClick?: (event: ClickEvent) => void;
+  // 这个回调绑定到 onFocus?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onFocus?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onFocusCapture?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onFocusCapture?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onBlur?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onBlur?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onBlurCapture?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onBlurCapture?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onKeyDown?: (event: KeyboardEvent) => void;，负责终端渲染在该局部场景下的响应。
   onKeyDown?: (event: KeyboardEvent) => void;
+  // 这个回调绑定到 onKeyDownCapture?: (event: KeyboardEvent) => void;，负责终端渲染在该局部场景下的响应。
   onKeyDownCapture?: (event: KeyboardEvent) => void;
   /**
    * Fired when the mouse moves into this Box's rendered rect. Like DOM
@@ -39,35 +56,59 @@ export type Props = Except<Styles, 'textWrap'> & {
    * re-fire on the parent. Only works inside `<AlternateScreen>` where
    * mode-1003 mouse tracking is enabled.
    */
+  // 这个回调绑定到 onMouseEnter?: () => void;，负责终端渲染在该局部场景下的响应。
   onMouseEnter?: () => void;
   /** Fired when the mouse moves out of this Box's rendered rect. */
+  // 这个回调绑定到 onMouseLeave?: () => void;，负责终端渲染在该局部场景下的响应。
   onMouseLeave?: () => void;
 };
 
 /**
  * `<Box>` is an essential Ink component to build your layout. It's like `<div style="display: flex">` in the browser.
  */
+// Box 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function Box(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(42);
+  // autoFocus 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   let autoFocus;
+  // 子节点 先占位，稍后的条件分支会根据实际输入补齐它。
   let children;
+  // flexDirection 先占位，稍后的条件分支会根据实际输入补齐它。
   let flexDirection;
+  // flexGrow 先占位，稍后的条件分支会根据实际输入补齐它。
   let flexGrow;
+  // flexShrink 先占位，稍后的条件分支会根据实际输入补齐它。
   let flexShrink;
+  // flexWrap 先占位，稍后的条件分支会根据实际输入补齐它。
   let flexWrap;
+  // onBlur 先占位，稍后的条件分支会根据实际输入补齐它。
   let onBlur;
+  // onBlurCapture 先占位，稍后的条件分支会根据实际输入补齐它。
   let onBlurCapture;
+  // onClick 先占位，稍后的条件分支会根据实际输入补齐它。
   let onClick;
+  // onFocus 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   let onFocus;
+  // onFocusCapture 先占位，稍后的条件分支会根据实际输入补齐它。
   let onFocusCapture;
+  // onKeyDown 先占位，稍后的条件分支会根据实际输入补齐它。
   let onKeyDown;
+  // onKeyDownCapture 先占位，稍后的条件分支会根据实际输入补齐它。
   let onKeyDownCapture;
+  // onMouseEnter 先占位，稍后的条件分支会根据实际输入补齐它。
   let onMouseEnter;
+  // onMouseLeave 先占位，稍后的条件分支会根据实际输入补齐它。
   let onMouseLeave;
+  // ref 引用 先占位，稍后的条件分支会根据实际输入补齐它。
   let ref;
+  // style 先占位，稍后的条件分支会根据实际输入补齐它。
   let style;
+  // tabIndex 索引 先占位，稍后的条件分支会根据实际输入补齐它。
   let tabIndex;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== t0) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       children: t1,
       flexWrap: t2,
@@ -88,84 +129,161 @@ function Box(t0) {
       onKeyDownCapture: t17,
       ...t18
     } = t0;
+    // 子节点更新为 `t1`，确保终端 UI后续读取最新状态。
     children = t1;
+    // ref 引用更新为 `t6`，确保终端 UI后续读取最新状态。
     ref = t6;
+    // tabIndex 索引更新为 `t7`，确保终端 UI后续读取最新状态。
     tabIndex = t7;
+    // autoFocus 集合更新为 `t8`，确保终端 UI后续读取最新状态。
     autoFocus = t8;
+    // onClick更新为 `t9`，确保终端 UI后续读取最新状态。
     onClick = t9;
+    // onFocus 集合更新为 `t10`，确保终端 UI后续读取最新状态。
     onFocus = t10;
+    // onFocusCapture更新为 `t11`，确保终端 UI后续读取最新状态。
     onFocusCapture = t11;
+    // onBlur更新为 `t12`，确保终端 UI后续读取最新状态。
     onBlur = t12;
+    // onBlurCapture更新为 `t13`，确保终端 UI后续读取最新状态。
     onBlurCapture = t13;
+    // onMouseEnter更新为 `t14`，确保终端 UI后续读取最新状态。
     onMouseEnter = t14;
+    // onMouseLeave更新为 `t15`，确保终端 UI后续读取最新状态。
     onMouseLeave = t15;
+    // onKeyDown更新为 `t16`，确保终端 UI后续读取最新状态。
     onKeyDown = t16;
+    // onKeyDownCapture更新为 `t17`，确保终端 UI后续读取最新状态。
     onKeyDownCapture = t17;
+    // style更新为 `t18`，确保终端 UI后续读取最新状态。
     style = t18;
+    // flexWrap更新为 `t2 === undefined ? "nowrap" : t2`，确保终端 UI后续读取最新状态。
     flexWrap = t2 === undefined ? "nowrap" : t2;
+    // flexDirection更新为 `t3 === undefined ? "row" : t3`，确保终端 UI后续读取最新状态。
     flexDirection = t3 === undefined ? "row" : t3;
+    // flexGrow更新为 `t4 === undefined ? 0 : t4`，确保终端 UI后续读取最新状态。
     flexGrow = t4 === undefined ? 0 : t4;
+    // flexShrink更新为 `t5 === undefined ? 1 : t5`，确保终端 UI后续读取最新状态。
     flexShrink = t5 === undefined ? 1 : t5;
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.margin, "margin");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.marginX, "marginX");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.marginY, "marginY");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.marginTop, "marginTop");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.marginBottom, "marginBottom");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.marginLeft, "marginLeft");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.marginRight, "marginRight");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.padding, "padding");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.paddingX, "paddingX");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.paddingY, "paddingY");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.paddingTop, "paddingTop");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.paddingBottom, "paddingBottom");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.paddingLeft, "paddingLeft");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.paddingRight, "paddingRight");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.gap, "gap");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.columnGap, "columnGap");
+    // 调用 warn.ifNotInteger，触发终端渲染此处需要的副作用。
     warn.ifNotInteger(style.rowGap, "rowGap");
+    // $[0] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t0;
+    // $[1] 缓存 `autoFocus`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = autoFocus;
+    // $[2] 缓存 `children`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = children;
+    // $[3] 缓存 `flexDirection`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = flexDirection;
+    // $[4] 缓存 `flexGrow`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = flexGrow;
+    // $[5] 缓存 `flexShrink`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = flexShrink;
+    // $[6] 缓存 `flexWrap`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = flexWrap;
+    // $[7] 缓存 `onBlur`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = onBlur;
+    // $[8] 缓存 `onBlurCapture`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = onBlurCapture;
+    // $[9] 缓存 `onClick`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = onClick;
+    // $[10] 缓存 `onFocus`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = onFocus;
+    // $[11] 缓存 `onFocusCapture`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = onFocusCapture;
+    // $[12] 缓存 `onKeyDown`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = onKeyDown;
+    // $[13] 缓存 `onKeyDownCapture`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = onKeyDownCapture;
+    // $[14] 缓存 `onMouseEnter`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = onMouseEnter;
+    // $[15] 缓存 `onMouseLeave`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = onMouseLeave;
+    // $[16] 缓存 `ref`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = ref;
+    // $[17] 缓存 `style`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = style;
+    // $[18] 缓存 `tabIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = tabIndex;
   } else {
+    // autoFocus 集合更新为 `$[1]`，确保终端 UI后续读取最新状态。
     autoFocus = $[1];
+    // 子节点更新为 `$[2]`，确保终端 UI后续读取最新状态。
     children = $[2];
+    // flexDirection更新为 `$[3]`，确保终端 UI后续读取最新状态。
     flexDirection = $[3];
+    // flexGrow更新为 `$[4]`，确保终端 UI后续读取最新状态。
     flexGrow = $[4];
+    // flexShrink更新为 `$[5]`，确保终端 UI后续读取最新状态。
     flexShrink = $[5];
+    // flexWrap更新为 `$[6]`，确保终端 UI后续读取最新状态。
     flexWrap = $[6];
+    // onBlur更新为 `$[7]`，确保终端 UI后续读取最新状态。
     onBlur = $[7];
+    // onBlurCapture更新为 `$[8]`，确保终端 UI后续读取最新状态。
     onBlurCapture = $[8];
+    // onClick更新为 `$[9]`，确保终端 UI后续读取最新状态。
     onClick = $[9];
+    // onFocus 集合更新为 `$[10]`，确保终端 UI后续读取最新状态。
     onFocus = $[10];
+    // onFocusCapture更新为 `$[11]`，确保终端 UI后续读取最新状态。
     onFocusCapture = $[11];
+    // onKeyDown更新为 `$[12]`，确保终端 UI后续读取最新状态。
     onKeyDown = $[12];
+    // onKeyDownCapture更新为 `$[13]`，确保终端 UI后续读取最新状态。
     onKeyDownCapture = $[13];
+    // onMouseEnter更新为 `$[14]`，确保终端 UI后续读取最新状态。
     onMouseEnter = $[14];
+    // onMouseLeave更新为 `$[15]`，确保终端 UI后续读取最新状态。
     onMouseLeave = $[15];
+    // ref 引用更新为 `$[16]`，确保终端 UI后续读取最新状态。
     ref = $[16];
+    // style更新为 `$[17]`，确保终端 UI后续读取最新状态。
     style = $[17];
+    // tabIndex 索引更新为 `$[18]`，确保终端 UI后续读取最新状态。
     tabIndex = $[18];
   }
+  // t1保存`style.overflowX ?? style.overflow ?? "visible"`，供终端 UI Box后续判断或输出使用。
   const t1 = style.overflowX ?? style.overflow ?? "visible";
+  // t2保存`style.overflowY ?? style.overflow ?? "visible"`，供终端 UI Box后续判断或输出使用。
   const t2 = style.overflowY ?? style.overflow ?? "visible";
+  // t3 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[19] !== flexDirection || $[20] !== flexGrow || $[21] !== flexShrink || $[22] !== flexWrap || $[23] !== style || $[24] !== t1 || $[25] !== t2) {
+    // t3 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t3 = {
       flexWrap,
       flexDirection,
@@ -175,38 +293,67 @@ function Box(t0) {
       overflowX: t1,
       overflowY: t2
     };
+    // $[19] 缓存 `flexDirection`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = flexDirection;
+    // $[20] 缓存 `flexGrow`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = flexGrow;
+    // $[21] 缓存 `flexShrink`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = flexShrink;
+    // $[22] 缓存 `flexWrap`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = flexWrap;
+    // $[23] 缓存 `style`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = style;
+    // $[24] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = t1;
+    // $[25] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = t2;
+    // $[26] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[26] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[26];
   }
+  // t4 暂存 `<ink-box ref={ref} tabIndex={tabIndex} autoFocus={autoFoc...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[27] !== autoFocus || $[28] !== children || $[29] !== onBlur || $[30] !== onBlurCapture || $[31] !== onClick || $[32] !== onFocus || $[33] !== onFocusCapture || $[34] !== onKeyDown || $[35] !== onKeyDownCapture || $[36] !== onMouseEnter || $[37] !== onMouseLeave || $[38] !== ref || $[39] !== t3 || $[40] !== tabIndex) {
+    // t4 暂存 `<ink-box ref={ref} tabIndex={tabIndex} autoFocus={autoFoc...` 生成的渲染片段，后续返回路径直接复用。
     t4 = <ink-box ref={ref} tabIndex={tabIndex} autoFocus={autoFocus} onClick={onClick} onFocus={onFocus} onFocusCapture={onFocusCapture} onBlur={onBlur} onBlurCapture={onBlurCapture} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onKeyDown={onKeyDown} onKeyDownCapture={onKeyDownCapture} style={t3}>{children}</ink-box>;
+    // $[27] 缓存 `autoFocus`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = autoFocus;
+    // $[28] 缓存 `children`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = children;
+    // $[29] 缓存 `onBlur`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = onBlur;
+    // $[30] 缓存 `onBlurCapture`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = onBlurCapture;
+    // $[31] 缓存 `onClick`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = onClick;
+    // $[32] 缓存 `onFocus`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = onFocus;
+    // $[33] 缓存 `onFocusCapture`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = onFocusCapture;
+    // $[34] 缓存 `onKeyDown`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = onKeyDown;
+    // $[35] 缓存 `onKeyDownCapture`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = onKeyDownCapture;
+    // $[36] 缓存 `onMouseEnter`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = onMouseEnter;
+    // $[37] 缓存 `onMouseLeave`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = onMouseLeave;
+    // $[38] 缓存 `ref`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = ref;
+    // $[39] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = t3;
+    // $[40] 缓存 `tabIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = tabIndex;
+    // $[41] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[41];
   }
+  // 返回 `t4`，作为终端渲染这次计算的结果。
   return t4;
 }
 export default Box;

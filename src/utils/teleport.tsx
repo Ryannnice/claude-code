@@ -1,61 +1,111 @@
+// 引入 axios，将 axios 中已经封装好的能力接到本文件流程里。
 import axios from 'axios';
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 使用 Node/Bun 的 crypto 能力处理本地运行时资源。
 import { randomUUID } from 'crypto';
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 引入 getOriginalCwd、getSessionId，将 src/bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/state.js';
+// 接入 checkGate_CACHED_OR_BLOCKING 服务层能力，把外部通信或共享状态交给 src/services/analytics/growthbook.js 处理。
 import { checkGate_CACHED_OR_BLOCKING } from 'src/services/analytics/growthbook.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 接入 isPolicyAllowed 服务层能力，把外部通信或共享状态交给 src/services/policyLimits/index.js 处理。
 import { isPolicyAllowed } from 'src/services/policyLimits/index.js';
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4';
+// 复用 getTeleportErrors、TeleportError、TeleportLocalErrorType 终端界面组件，避免在这里重复拼装显示逻辑。
 import { getTeleportErrors, TeleportError, type TeleportLocalErrorType } from '../components/TeleportError.js';
+// 引入 getOauthConfig，将 ../constants/oauth.js 中已经封装好的能力接到本文件流程里。
 import { getOauthConfig } from '../constants/oauth.js';
+// 类型依赖 { SDKMessage } 来自 ../entrypoints/agentSdkTypes.js，用于校准共享工具的数据契约。
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js';
+// 类型依赖 { Root } 来自 ../ink.js，用于校准共享工具的数据契约。
 import type { Root } from '../ink.js';
+// 引入 KeybindingSetup，将 ../keybindings/KeybindingProviderSetup.js 中已经封装好的能力接到本文件流程里。
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js';
+// 接入 queryHaiku 服务层能力，把外部通信或共享状态交给 ../services/api/claude.js 处理。
 import { queryHaiku } from '../services/api/claude.js';
+// 接入 getSessionLogsViaOAuth、getTeleportEvents 服务层能力，把外部通信或共享状态交给 ../services/api/sessionIngress.js 处理。
 import { getSessionLogsViaOAuth, getTeleportEvents } from '../services/api/sessionIngress.js';
+// 接入 getOrganizationUUID 服务层能力，把外部通信或共享状态交给 ../services/oauth/client.js 处理。
 import { getOrganizationUUID } from '../services/oauth/client.js';
+// 引入 AppStateProvider，将 ../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { AppStateProvider } from '../state/AppState.js';
+// 类型依赖 { Message, SystemMessage } 来自 ../types/message.js，用于校准共享工具的数据契约。
 import type { Message, SystemMessage } from '../types/message.js';
+// 类型依赖 { PermissionMode } 来自 ../types/permissions.js，用于校准共享工具的数据契约。
 import type { PermissionMode } from '../types/permissions.js';
+// 引入 checkAndRefreshOAuthTokenIfNeeded、getClaudeAIOAuthTokens，将 ./auth.js 中已经封装好的能力接到本文件流程里。
 import { checkAndRefreshOAuthTokenIfNeeded, getClaudeAIOAuthTokens } from './auth.js';
+// 引入 checkGithubAppInstalled，将 ./background/remote/preconditions.js 中已经封装好的能力接到本文件流程里。
 import { checkGithubAppInstalled } from './background/remote/preconditions.js';
+// 引入 deserializeMessages、TeleportRemoteResponse，将 ./conversationRecovery.js 中已经封装好的能力接到本文件流程里。
 import { deserializeMessages, type TeleportRemoteResponse } from './conversationRecovery.js';
+// 引入 getCwd，将 ./cwd.js 中已经封装好的能力接到本文件流程里。
 import { getCwd } from './cwd.js';
+// 引入 logForDebugging，将 ./debug.js 中已经封装好的能力接到本文件流程里。
 import { logForDebugging } from './debug.js';
+// 引入 detectCurrentRepositoryWithHost、parseGitHubRepository、parseGitRemote，将 ./detectRepository.js 中已经封装好的能力接到本文件流程里。
 import { detectCurrentRepositoryWithHost, parseGitHubRepository, parseGitRemote } from './detectRepository.js';
+// 引入 isEnvTruthy，将 ./envUtils.js 中已经封装好的能力接到本文件流程里。
 import { isEnvTruthy } from './envUtils.js';
+// 引入 TeleportOperationError、toError，将 ./errors.js 中已经封装好的能力接到本文件流程里。
 import { TeleportOperationError, toError } from './errors.js';
+// 引入 execFileNoThrow，将 ./execFileNoThrow.js 中已经封装好的能力接到本文件流程里。
 import { execFileNoThrow } from './execFileNoThrow.js';
+// 引入 truncateToWidth，将 ./format.js 中已经封装好的能力接到本文件流程里。
 import { truncateToWidth } from './format.js';
+// 引入 findGitRoot、getDefaultBranch、getIsClean、gitExe，将 ./git.js 中已经封装好的能力接到本文件流程里。
 import { findGitRoot, getDefaultBranch, getIsClean, gitExe } from './git.js';
+// 引入 safeParseJSON，将 ./json.js 中已经封装好的能力接到本文件流程里。
 import { safeParseJSON } from './json.js';
+// 引入 logError，将 ./log.js 中已经封装好的能力接到本文件流程里。
 import { logError } from './log.js';
+// 引入 createSystemMessage、createUserMessage，将 ./messages.js 中已经封装好的能力接到本文件流程里。
 import { createSystemMessage, createUserMessage } from './messages.js';
+// 引入 getMainLoopModel，将 ./model/model.js 中已经封装好的能力接到本文件流程里。
 import { getMainLoopModel } from './model/model.js';
+// 引入 isTranscriptMessage，将 ./sessionStorage.js 中已经封装好的能力接到本文件流程里。
 import { isTranscriptMessage } from './sessionStorage.js';
+// 引入 getSettings_DEPRECATED，将 ./settings/settings.js 中已经封装好的能力接到本文件流程里。
 import { getSettings_DEPRECATED } from './settings/settings.js';
+// 引入 jsonStringify，将 ./slowOperations.js 中已经封装好的能力接到本文件流程里。
 import { jsonStringify } from './slowOperations.js';
+// 引入 asSystemPrompt，将 ./systemPromptType.js 中已经封装好的能力接到本文件流程里。
 import { asSystemPrompt } from './systemPromptType.js';
+// 引入 fetchSession、GitRepositoryOutcome、GitSource、getBranchFromSession、getOAuthHeaders、SessionResource，将 ./teleport/api.js 中已经封装好的能力接到本文件流程里。
 import { fetchSession, type GitRepositoryOutcome, type GitSource, getBranchFromSession, getOAuthHeaders, type SessionResource } from './teleport/api.js';
+// 引入 fetchEnvironments，将 ./teleport/environments.js 中已经封装好的能力接到本文件流程里。
 import { fetchEnvironments } from './teleport/environments.js';
+// 引入 createAndUploadGitBundle，将 ./teleport/gitBundle.js 中已经封装好的能力接到本文件流程里。
 import { createAndUploadGitBundle } from './teleport/gitBundle.js';
+// TeleportResult 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeleportResult = {
   messages: Message[];
   branchName: string;
 };
+// TeleportProgressStep 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeleportProgressStep = 'validating' | 'fetching_logs' | 'fetching_branch' | 'checking_out' | 'done';
+// TeleportProgressCallback 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeleportProgressCallback = (step: TeleportProgressStep) => void;
 
 /**
  * Creates a system message to inform about teleport session resume
  * @returns SystemMessage indicating session was resumed from another machine
  */
+// createTeleportResumeSystemMessage 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createTeleportResumeSystemMessage(branchError: Error | null): SystemMessage {
+  // 满足 `branchError === null` 时，共享工具执行该分支。
   if (branchError === null) {
+    // 返回 `createSystemMessage('Session resumed', 'suggestion')`，作为共享工具这次计算的结果。
     return createSystemMessage('Session resumed', 'suggestion');
   }
+  // formattedError 错误信息保存`branchError instanceof TeleportOperationError ? branchErr...`，供共享工具 teleport后续判断或输出使用。
   const formattedError = branchError instanceof TeleportOperationError ? branchError.formattedMessage : branchError.message;
+  // 返回 `createSystemMessage(`Session resumed without branch: ${formattedError}`...`，作为共享工具这次计算的结果。
   return createSystemMessage(`Session resumed without branch: ${formattedError}`, 'warning');
 }
 
@@ -63,16 +113,20 @@ function createTeleportResumeSystemMessage(branchError: Error | null): SystemMes
  * Creates a user message to inform the model about teleport session resume
  * @returns User message indicating session was resumed from another machine
  */
+// createTeleportResumeUserMessage 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createTeleportResumeUserMessage() {
+  // 返回 `createUserMessage({`，作为共享工具这次计算的结果。
   return createUserMessage({
     content: `This session is being continued from another machine. Application state may have changed. The updated working directory is ${getOriginalCwd()}`,
     isMeta: true
   });
 }
+// TeleportToRemoteResponse 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type TeleportToRemoteResponse = {
   id: string;
   title: string;
 };
+// SESSION_TITLE_AND_BRANCH_PROMPT 会话数据 命名 ``You are coming up with a succinct title and git branch n...`，让后续代码直接表达这个值的用途。
 const SESSION_TITLE_AND_BRANCH_PROMPT = `You are coming up with a succinct title and git branch name for a coding session based on the provided description. The title should be clear, concise, and accurately reflect the content of the coding task.
 You should keep it short and simple, ideally no more than 6 words. Avoid using jargon or overly technical terms unless absolutely necessary. The title should be easy to understand for anyone reading it.
 Use sentence case for the title (capitalize only the first word and proper nouns), not Title Case.
@@ -89,6 +143,7 @@ Example 3: {"title": "Improve performance of data processing script", "branch": 
 Here is the session description:
 <description>{description}</description>
 Please generate a title and branch name for this session.`;
+// TitleAndBranch 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type TitleAndBranch = {
   title: string;
   branchName: string;
@@ -99,11 +154,17 @@ type TitleAndBranch = {
  * @param description The description/prompt for the session
  * @returns Promise<TitleAndBranch> The generated title and branch name
  */
+// generateTitleAndBranch 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function generateTitleAndBranch(description: string, signal: AbortSignal): Promise<TitleAndBranch> {
+  // fallbackTitle 标题保存`truncateToWidth`，供共享工具后续处理使用。
   const fallbackTitle = truncateToWidth(description, 75);
+  // fallbackBranch固定为 `'claude/task'`，作为共享工具 teleport后续展示或比较的基准。
   const fallbackBranch = 'claude/task';
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // userPrompt格式化`SESSION_TITLE_AND_BRANCH_PROMPT.replace`，供共享工具后续处理使用。
     const userPrompt = SESSION_TITLE_AND_BRANCH_PROMPT.replace('{description}', description);
+    // 接口响应保存`queryHaiku`，供共享工具后续处理使用。
     const response = await queryHaiku({
       systemPrompt: asSystemPrompt([]),
       userPrompt,
@@ -134,30 +195,40 @@ async function generateTitleAndBranch(description: string, signal: AbortSignal):
     });
 
     // Extract text from the response
+    // firstBlock 命名 `response.message.content[0]`，让后续代码直接表达这个值的用途。
     const firstBlock = response.message.content[0];
+    // `firstBlock?.type` 与 `'text'` 不一致时刷新派生状态，避免使用过期结果。
     if (firstBlock?.type !== 'text') {
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         title: fallbackTitle,
         branchName: fallbackBranch
       };
     }
+    // 解析结果保存`safeParseJSON`，供共享工具后续处理使用。
     const parsed = safeParseJSON(firstBlock.text.trim());
+    // parseResult保存`z.object`，供共享工具后续处理使用。
     const parseResult = z.object({
       title: z.string(),
       branch: z.string()
     }).safeParse(parsed);
+    // 满足 `parseResult.success` 时，共享工具执行该分支。
     if (parseResult.success) {
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         title: parseResult.data.title || fallbackTitle,
         branchName: parseResult.data.branch || fallbackBranch
       };
     }
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       title: fallbackTitle,
       branchName: fallbackBranch
     };
   } catch (error) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logError(new Error(`Error generating title and branch: ${error}`));
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       title: fallbackTitle,
       branchName: fallbackBranch
@@ -169,13 +240,19 @@ async function generateTitleAndBranch(description: string, signal: AbortSignal):
  * Validates that the git working directory is clean (ignoring untracked files)
  * Untracked files are ignored because they won't be lost during branch switching
  */
+// validateGitState 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function validateGitState(): Promise<void> {
+  // isClean记录 `getIsClean` 是否成立，共享工具随后按该结果分支。
   const isClean = await getIsClean({
     ignoreUntracked: true
   });
+  // isClean缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!isClean) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_teleport_error_git_not_clean', {});
+    // 错误保存`TeleportOperationError`，供共享工具后续处理使用。
     const error = new TeleportOperationError('Git working directory is not clean. Please commit or stash your changes before using --teleport.', chalk.red('Error: Git working directory is not clean. Please commit or stash your changes before using --teleport.\n'));
+    // 抛出 error;，阻止共享工具在无效状态下继续运行。
     throw error;
   }
 }
@@ -184,25 +261,35 @@ export async function validateGitState(): Promise<void> {
  * Fetches a specific branch from remote origin
  * @param branch The branch to fetch. If not specified, fetches all branches.
  */
+// fetchFromOrigin 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function fetchFromOrigin(branch?: string): Promise<void> {
+  // fetchArgs 集合读取 `branch ? ['fetch', 'origin', `${branch}:${branch}`] : ['f...` 对应条目，后续围绕该成员继续处理。
   const fetchArgs = branch ? ['fetch', 'origin', `${branch}:${branch}`] : ['fetch', 'origin'];
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     code: fetchCode,
     stderr: fetchStderr
   } = await execFileNoThrow(gitExe(), fetchArgs);
+  // `fetchCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
   if (fetchCode !== 0) {
     // If fetching a specific branch fails, it might not exist locally yet
     // Try fetching just the ref without mapping to local branch
+    // 只有 `branch && fetchStderr.includes('refspec')` 满足时，共享工具才执行该分支。
     if (branch && fetchStderr.includes('refspec')) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Specific branch fetch failed, trying to fetch ref: ${branch}`);
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         code: refFetchCode,
         stderr: refFetchStderr
       } = await execFileNoThrow(gitExe(), ['fetch', 'origin', branch]);
+      // `refFetchCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
       if (refFetchCode !== 0) {
+        // 记录共享工具运行诊断，方便排查异常路径或性能问题。
         logError(new Error(`Failed to fetch from remote origin: ${refFetchStderr}`));
       }
     } else {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(new Error(`Failed to fetch from remote origin: ${fetchStderr}`));
     }
   }
@@ -212,35 +299,48 @@ async function fetchFromOrigin(branch?: string): Promise<void> {
  * Ensures that the current branch has an upstream set
  * If not, sets it to origin/<branchName> if that remote branch exists
  */
+// ensureUpstreamIsSet 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function ensureUpstreamIsSet(branchName: string): Promise<void> {
   // Check if upstream is already set
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     code: upstreamCheckCode
   } = await execFileNoThrow(gitExe(), ['rev-parse', '--abbrev-ref', `${branchName}@{upstream}`]);
+  // 满足 `upstreamCheckCode === 0` 时，共享工具执行该分支。
   if (upstreamCheckCode === 0) {
     // Upstream is already set
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Branch '${branchName}' already has upstream set`);
+    // 共享工具 teleport在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
 
   // Check if origin/<branchName> exists
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     code: remoteCheckCode
   } = await execFileNoThrow(gitExe(), ['rev-parse', '--verify', `origin/${branchName}`]);
+  // 满足 `remoteCheckCode === 0` 时，共享工具执行该分支。
   if (remoteCheckCode === 0) {
     // Remote branch exists, set upstream
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Setting upstream for '${branchName}' to 'origin/${branchName}'`);
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       code: setUpstreamCode,
       stderr: setUpstreamStderr
     } = await execFileNoThrow(gitExe(), ['branch', '--set-upstream-to', `origin/${branchName}`, branchName]);
+    // `setUpstreamCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
     if (setUpstreamCode !== 0) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Failed to set upstream for '${branchName}': ${setUpstreamStderr}`);
       // Don't throw, just log - this is not critical
     } else {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Successfully set upstream for '${branchName}'`);
     }
   } else {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Remote branch 'origin/${branchName}' does not exist, skipping upstream setup`);
   }
 }
@@ -248,46 +348,65 @@ async function ensureUpstreamIsSet(branchName: string): Promise<void> {
 /**
  * Checks out a specific branch
  */
+// checkoutBranch 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function checkoutBranch(branchName: string): Promise<void> {
   // First try to checkout the branch as-is (might be local)
+  // 共享工具 teleport先整理这一处局部数据，后续分支可以直接读取。
   let {
     code: checkoutCode,
     stderr: checkoutStderr
   } = await execFileNoThrow(gitExe(), ['checkout', branchName]);
 
   // If that fails, try to checkout from origin
+  // `checkoutCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
   if (checkoutCode !== 0) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Local checkout failed, trying to checkout from origin: ${checkoutStderr}`);
 
     // Try to checkout the remote branch and create a local tracking branch
+    // 结果保存`execFileNoThrow`，供共享工具后续处理使用。
     const result = await execFileNoThrow(gitExe(), ['checkout', '-b', branchName, '--track', `origin/${branchName}`]);
+    // checkoutCode更新为 `result.code`，确保共享工具后续读取最新状态。
     checkoutCode = result.code;
+    // checkoutStderr更新为 `result.stderr`，确保共享工具后续读取最新状态。
     checkoutStderr = result.stderr;
 
     // If that also fails, try without -b in case the branch exists but isn't checked out
+    // `checkoutCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
     if (checkoutCode !== 0) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Remote checkout with -b failed, trying without -b: ${checkoutStderr}`);
+      // finalResult保存`execFileNoThrow`，供共享工具后续处理使用。
       const finalResult = await execFileNoThrow(gitExe(), ['checkout', '--track', `origin/${branchName}`]);
+      // checkoutCode更新为 `finalResult.code`，确保共享工具后续读取最新状态。
       checkoutCode = finalResult.code;
+      // checkoutStderr更新为 `finalResult.stderr`，确保共享工具后续读取最新状态。
       checkoutStderr = finalResult.stderr;
     }
   }
+  // `checkoutCode` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
   if (checkoutCode !== 0) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_teleport_error_branch_checkout_failed', {});
+    // 抛出 new TeleportOperationError(`Failed to checkout branch '${branchName}': ${checkoutStderr}`…，阻止共享工具在无效状态下继续运行。
     throw new TeleportOperationError(`Failed to checkout branch '${branchName}': ${checkoutStderr}`, chalk.red(`Failed to checkout branch '${branchName}'\n`));
   }
 
   // After successful checkout, ensure upstream is set
+  // 等待 `ensureUpstreamIsSet(branchName)` 完成，再继续共享工具 teleport的异步流程。
   await ensureUpstreamIsSet(branchName);
 }
 
 /**
  * Gets the current branch name
  */
+// getCurrentBranch 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getCurrentBranch(): Promise<string> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     stdout: currentBranch
   } = await execFileNoThrow(gitExe(), ['branch', '--show-current']);
+  // 返回 `currentBranch.trim()`，作为共享工具这次计算的结果。
   return currentBranch.trim();
 }
 
@@ -298,12 +417,16 @@ async function getCurrentBranch(): Promise<string> {
  * @param error Optional error from branch checkout
  * @returns Processed messages ready for resume
  */
+// processMessagesForTeleportResume 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function processMessagesForTeleportResume(messages: Message[], error: Error | null): Message[] {
   // Shared logic with resume for handling interruped session transcripts
+  // deserializedMessages 消息数据保存`deserializeMessages`，供共享工具后续处理使用。
   const deserializedMessages = deserializeMessages(messages);
 
   // Add user message about teleport resume (visible to model)
+  // messagesWithTeleportNotice 消息数据构建`createTeleportResumeUserMessage`，供共享工具后续处理使用。
   const messagesWithTeleportNotice = [...deserializedMessages, createTeleportResumeUserMessage(), createTeleportResumeSystemMessage(error)];
+  // 返回 `messagesWithTeleportNotice`，作为共享工具这次计算的结果。
   return messagesWithTeleportNotice;
 }
 
@@ -312,30 +435,46 @@ export function processMessagesForTeleportResume(messages: Message[], error: Err
  * @param branch Optional branch to checkout
  * @returns The current branch name and any error that occurred
  */
+// checkOutTeleportedSessionBranch 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function checkOutTeleportedSessionBranch(branch?: string): Promise<{
   branchName: string;
   branchError: Error | null;
 }> {
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // currentBranch读取`getCurrentBranch`，供共享工具后续处理使用。
     const currentBranch = await getCurrentBranch();
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Current branch before teleport: '${currentBranch}'`);
+    // 满足 `branch` 时，共享工具执行该分支。
     if (branch) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Switching to branch '${branch}'...`);
+      // 等待 `fetchFromOrigin(branch)` 完成，再继续共享工具 teleport的异步流程。
       await fetchFromOrigin(branch);
+      // 等待 `checkoutBranch(branch)` 完成，再继续共享工具 teleport的异步流程。
       await checkoutBranch(branch);
+      // newBranch读取`getCurrentBranch`，供共享工具后续处理使用。
       const newBranch = await getCurrentBranch();
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Branch after checkout: '${newBranch}'`);
     } else {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging('No branch specified, staying on current branch');
     }
+    // branchName读取`getCurrentBranch`，供共享工具后续处理使用。
     const branchName = await getCurrentBranch();
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       branchName,
       branchError: null
     };
   } catch (error) {
+    // branchName读取`getCurrentBranch`，供共享工具后续处理使用。
     const branchName = await getCurrentBranch();
+    // branchError 错误信息保存`toError`，供共享工具后续处理使用。
     const branchError = toError(error);
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       branchName,
       branchError
@@ -346,6 +485,7 @@ export async function checkOutTeleportedSessionBranch(branch?: string): Promise<
 /**
  * Result of repository validation for teleport
  */
+// RepoValidationResult 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type RepoValidationResult = {
   status: 'match' | 'mismatch' | 'not_in_repo' | 'no_repo_required' | 'error';
   sessionRepo?: string;
@@ -364,27 +504,41 @@ export type RepoValidationResult = {
  * @param sessionData The session resource to validate against
  * @returns Validation result with status and repo information
  */
+// validateSessionRepository 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function validateSessionRepository(sessionData: SessionResource): Promise<RepoValidationResult> {
+  // currentParsed读取`detectCurrentRepositoryWithHost`，供共享工具后续处理使用。
   const currentParsed = await detectCurrentRepositoryWithHost();
+  // currentRepo 命名 `currentParsed ? `${currentParsed.owner}/${currentParsed.n...`，让后续代码直接表达这个值的用途。
   const currentRepo = currentParsed ? `${currentParsed.owner}/${currentParsed.name}` : null;
+  // gitSource筛选`sources.find`，供共享工具后续处理使用。
   const gitSource = sessionData.session_context.sources.find((source): source is GitSource => source.type === 'git_repository');
+  // 满足 `!gitSource?.url` 时，共享工具执行该分支。
   if (!gitSource?.url) {
     // Session has no repo requirement
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(currentRepo ? 'Session has no associated repository, proceeding without validation' : 'Session has no repo requirement and not in git directory, proceeding');
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       status: 'no_repo_required'
     };
   }
+  // sessionParsed 会话数据解析`parseGitRemote`，供共享工具后续处理使用。
   const sessionParsed = parseGitRemote(gitSource.url);
+  // sessionRepo 会话数据解析`parseGitHubRepository`，供共享工具后续处理使用。
   const sessionRepo = sessionParsed ? `${sessionParsed.owner}/${sessionParsed.name}` : parseGitHubRepository(gitSource.url);
+  // sessionRepo 会话数据缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!sessionRepo) {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       status: 'no_repo_required'
     };
   }
+  // 记录共享工具运行诊断，方便排查异常路径或性能问题。
   logForDebugging(`Session is for repository: ${sessionRepo}, current repo: ${currentRepo ?? 'none'}`);
+  // currentRepo缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!currentRepo) {
     // Not in a git repo, but session requires one
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       status: 'not_in_repo',
       sessionRepo,
@@ -397,10 +551,15 @@ export async function validateSessionRepository(sessionData: SessionResource): P
   // Strip ports before comparing hosts — SSH remotes omit the port while
   // HTTPS remotes may include a non-standard port (e.g. ghe.corp.com:8443),
   // which would cause a false mismatch.
+  // stripPort格式化`host.replace`，供共享工具后续处理使用。
   const stripPort = (host: string): string => host.replace(/:\d+$/, '');
+  // repoMatch保存`currentRepo.toLowerCase`，供共享工具后续处理使用。
   const repoMatch = currentRepo.toLowerCase() === sessionRepo.toLowerCase();
+  // hostMatch保存`stripPort`，供共享工具后续处理使用。
   const hostMatch = !currentParsed || !sessionParsed || stripPort(currentParsed.host.toLowerCase()) === stripPort(sessionParsed.host.toLowerCase());
+  // 只有 `repoMatch && hostMatch` 满足时，共享工具才执行该分支。
   if (repoMatch && hostMatch) {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       status: 'match',
       sessionRepo,
@@ -411,6 +570,7 @@ export async function validateSessionRepository(sessionData: SessionResource): P
   // Repo mismatch — keep sessionRepo/currentRepo as plain "owner/repo" so
   // downstream consumers (e.g. getKnownPathsForRepo) can use them as lookup keys.
   // Include host information in separate fields for display purposes.
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     status: 'mismatch',
     sessionRepo,
@@ -427,77 +587,113 @@ export async function validateSessionRepository(sessionData: SessionResource): P
  * @param onProgress Optional callback for progress updates
  * @returns The raw session log and branch name
  */
+// teleportResumeCodeSession 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function teleportResumeCodeSession(sessionId: string, onProgress?: TeleportProgressCallback): Promise<TeleportRemoteResponse> {
+  // 满足 `!isPolicyAllowed('allow_remote_sessions')` 时，共享工具执行该分支。
   if (!isPolicyAllowed('allow_remote_sessions')) {
+    // 抛出 new Error("Remote sessions are disabled by your organization's policy.");，阻止共享工具在无效状态下继续运行。
     throw new Error("Remote sessions are disabled by your organization's policy.");
   }
+  // 记录共享工具运行诊断，方便排查异常路径或性能问题。
   logForDebugging(`Resuming code session ID: ${sessionId}`);
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // accessToken读取`getClaudeAIOAuthTokens`，供共享工具后续处理使用。
     const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+    // accessToken缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!accessToken) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_teleport_resume_error', {
         error_type: 'no_access_token' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 抛出 new Error('Claude Code web sessions require authentication with a Claude.ai account. API …，阻止共享工具在无效状态下继续运行。
       throw new Error('Claude Code web sessions require authentication with a Claude.ai account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.');
     }
 
     // Get organization UUID
+    // orgUUID读取`getOrganizationUUID`，供共享工具后续处理使用。
     const orgUUID = await getOrganizationUUID();
+    // orgUUID缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!orgUUID) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_teleport_resume_error', {
         error_type: 'no_org_uuid' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 抛出 new Error('Unable to get organization UUID for constructing session URL');，阻止共享工具在无效状态下继续运行。
       throw new Error('Unable to get organization UUID for constructing session URL');
     }
 
     // Fetch and validate repository matches before resuming
+    // 调用 onProgress?.('validating');，完成这一处局部操作。
     onProgress?.('validating');
+    // sessionData 会话数据读取`fetchSession`，供共享工具后续处理使用。
     const sessionData = await fetchSession(sessionId);
+    // repoValidation读取`validateSessionRepository`，供共享工具后续处理使用。
     const repoValidation = await validateSessionRepository(sessionData);
+    // 按照 repoValidation.status 的取值选择共享工具的具体处理分支。
     switch (repoValidation.status) {
       case 'match':
       case 'no_repo_required':
         // Proceed with teleport
+        // 结束这个分支或循环，避免共享工具继续落入后续路径。
         break;
       case 'not_in_repo':
         {
+          // 记录共享工具运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_teleport_error_repo_not_in_git_dir_sessions_api', {
             sessionId: sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
           // Include host for GHE users so they know which instance the repo is on
+          // notInRepoDisplay保存`sessionHost.toLowerCase`，供共享工具后续处理使用。
           const notInRepoDisplay = repoValidation.sessionHost && repoValidation.sessionHost.toLowerCase() !== 'github.com' ? `${repoValidation.sessionHost}/${repoValidation.sessionRepo}` : repoValidation.sessionRepo;
+          // 抛出 new TeleportOperationError(`You must run claude --teleport ${sessionId} from a checkout o…，阻止共享工具在无效状态下继续运行。
           throw new TeleportOperationError(`You must run claude --teleport ${sessionId} from a checkout of ${notInRepoDisplay}.`, chalk.red(`You must run claude --teleport ${sessionId} from a checkout of ${chalk.bold(notInRepoDisplay)}.\n`));
         }
       case 'mismatch':
         {
+          // 记录共享工具运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_teleport_error_repo_mismatch_sessions_api', {
             sessionId: sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
           });
           // Only include host prefix when hosts actually differ to disambiguate
           // cross-instance mismatches; for same-host mismatches the host is noise.
+          // hostsDiffer格式化`sessionHost.replace`，供共享工具后续处理使用。
           const hostsDiffer = repoValidation.sessionHost && repoValidation.currentHost && repoValidation.sessionHost.replace(/:\d+$/, '').toLowerCase() !== repoValidation.currentHost.replace(/:\d+$/, '').toLowerCase();
+          // sessionDisplay 会话数据 命名 `hostsDiffer ? `${repoValidation.sessionHost}/${repoValida...`，让后续代码直接表达这个值的用途。
           const sessionDisplay = hostsDiffer ? `${repoValidation.sessionHost}/${repoValidation.sessionRepo}` : repoValidation.sessionRepo;
+          // currentDisplay 命名 `hostsDiffer ? `${repoValidation.currentHost}/${repoValida...`，让后续代码直接表达这个值的用途。
           const currentDisplay = hostsDiffer ? `${repoValidation.currentHost}/${repoValidation.currentRepo}` : repoValidation.currentRepo;
+          // 抛出 new TeleportOperationError(`You must run claude --teleport ${sessionId} from a checkout o…，阻止共享工具在无效状态下继续运行。
           throw new TeleportOperationError(`You must run claude --teleport ${sessionId} from a checkout of ${sessionDisplay}.\nThis repo is ${currentDisplay}.`, chalk.red(`You must run claude --teleport ${sessionId} from a checkout of ${chalk.bold(sessionDisplay)}.\nThis repo is ${chalk.bold(currentDisplay)}.\n`));
         }
       case 'error':
+        // 抛出 new TeleportOperationError(repoValidation.errorMessage || 'Failed to validate session rep…，阻止共享工具在无效状态下继续运行。
         throw new TeleportOperationError(repoValidation.errorMessage || 'Failed to validate session repository', chalk.red(`Error: ${repoValidation.errorMessage || 'Failed to validate session repository'}\n`));
       default:
         {
+          // _exhaustive保存`repoValidation.status`，供后续判断或组装使用。
           const _exhaustive: never = repoValidation.status;
+          // 抛出 new Error(`Unhandled repo validation status: ${_exhaustive}`);，阻止共享工具在无效状态下继续运行。
           throw new Error(`Unhandled repo validation status: ${_exhaustive}`);
         }
     }
+    // 等待并返回 `teleportFromSessionsAPI(sessionId, orgUUID, accessToken, onPr...`，调用方直接接收异步结果。
     return await teleportFromSessionsAPI(sessionId, orgUUID, accessToken, onProgress, sessionData);
   } catch (error) {
+    // 满足 `error instanceof TeleportOperationError` 时，共享工具执行该分支。
     if (error instanceof TeleportOperationError) {
+      // 抛出 error;，阻止共享工具在无效状态下继续运行。
       throw error;
     }
+    // err保存`toError`，供共享工具后续处理使用。
     const err = toError(error);
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logError(err);
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_teleport_resume_error', {
       error_type: 'resume_session_id_catch' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 抛出 new TeleportOperationError(err.message, chalk.red(`Error: ${err.message}\n`));，阻止共享工具在无效状态下继续运行。
     throw new TeleportOperationError(err.message, chalk.red(`Error: ${err.message}\n`));
   }
 }
@@ -506,24 +702,32 @@ export async function teleportResumeCodeSession(sessionId: string, onProgress?: 
  * Helper function to handle teleport prerequisites (authentication and git state)
  * Shows TeleportError dialog rendered into the existing root if needed
  */
+// handleTeleportPrerequisites 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function handleTeleportPrerequisites(root: Root, errorsToIgnore?: Set<TeleportLocalErrorType>): Promise<void> {
+  // 错误列表读取`getTeleportErrors`，供共享工具后续处理使用。
   const errors = await getTeleportErrors();
+  // 满足 `errors.size > 0` 时，共享工具执行该分支。
   if (errors.size > 0) {
     // Log teleport errors detected
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_teleport_errors_detected', {
       error_types: Array.from(errors).join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       errors_ignored: Array.from(errorsToIgnore || []).join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
 
     // Show TeleportError dialog for user interaction
+    // 这个回调绑定到 await new Promise<void>(resolve => {，负责共享工具在该局部场景下的响应。
     await new Promise<void>(resolve => {
+      // 调用 root.render，触发共享工具此处需要的副作用。
       root.render(<AppStateProvider>
           <KeybindingSetup>
             <TeleportError errorsToIgnore={errorsToIgnore} onComplete={() => {
             // Log when errors are resolved
+            // 记录共享工具运行诊断，方便排查异常路径或性能问题。
             logEvent('tengu_teleport_errors_resolved', {
               error_types: Array.from(errors).join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
             });
+            // 显式忽略 `resolve()` 的返回值，只保留它触发的副作用。
             void resolve();
           }} />
           </KeybindingSetup>
@@ -541,13 +745,18 @@ async function handleTeleportPrerequisites(root: Root, errorsToIgnore?: Set<Tele
  * @param branchName Optional branch name for the remote session to use
  * @returns Promise<TeleportToRemoteResponse | null> The created session or null if creation fails
  */
+// teleportToRemoteWithErrorHandling 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function teleportToRemoteWithErrorHandling(root: Root, description: string | null, signal: AbortSignal, branchName?: string): Promise<TeleportToRemoteResponse | null> {
+  // errorsToIgnore 错误信息读取 `new Set<TeleportLocalErrorType>(['needsGitStash'])` 对应条目，后续围绕该成员继续处理。
   const errorsToIgnore = new Set<TeleportLocalErrorType>(['needsGitStash']);
+  // 等待 `handleTeleportPrerequisites(root, errorsToIgnore)` 完成，再继续共享工具 teleport的异步流程。
   await handleTeleportPrerequisites(root, errorsToIgnore);
+  // 返回 `teleportToRemote({`，作为共享工具这次计算的结果。
   return teleportToRemote({
     initialMessage: description,
     signal,
     branchName,
+    // 这个回调绑定到 onBundleFail: msg => process.stderr.write(`\n${msg}\n`)，负责共享工具在该局部场景下的响应。
     onBundleFail: msg => process.stderr.write(`\n${msg}\n`)
   });
 }
@@ -562,55 +771,83 @@ export async function teleportToRemoteWithErrorHandling(root: Root, description:
  * @param sessionData Optional session data (used to extract branch info)
  * @returns TeleportRemoteResponse with session logs as Message[]
  */
+// teleportFromSessionsAPI 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function teleportFromSessionsAPI(sessionId: string, orgUUID: string, accessToken: string, onProgress?: TeleportProgressCallback, sessionData?: SessionResource): Promise<TeleportRemoteResponse> {
+  // startTime记录时间`Date.now`，供共享工具后续处理使用。
   const startTime = Date.now();
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
     // Fetch session logs via session ingress
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[teleport] Starting fetch for session: ${sessionId}`);
+    // 调用 onProgress?.('fetching_logs');，完成这一处局部操作。
     onProgress?.('fetching_logs');
+    // logsStartTime记录时间`Date.now`，供共享工具后续处理使用。
     const logsStartTime = Date.now();
     // Try CCR v2 first (GetTeleportEvents — server dispatches Spanner/
     // threadstore). Fall back to session-ingress if it returns null
     // (endpoint not yet deployed, or transient error). Once session-ingress
     // is gone, the fallback becomes a no-op — getSessionLogsViaOAuth will
     // return null too and we fail with "Failed to fetch session logs".
+    // logs 集合读取`getTeleportEvents`，供共享工具后续处理使用。
     let logs = await getTeleportEvents(sessionId, accessToken, orgUUID);
+    // 满足 `logs === null` 时，共享工具执行该分支。
     if (logs === null) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging('[teleport] v2 endpoint returned null, trying session-ingress');
+      // logs 集合更新为 `await getSessionLogsViaOAuth(sessionId, accessToken, orgU...`，确保共享工具后续读取最新状态。
       logs = await getSessionLogsViaOAuth(sessionId, accessToken, orgUUID);
     }
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[teleport] Session logs fetched in ${Date.now() - logsStartTime}ms`);
+    // 满足 `logs === null` 时，共享工具执行该分支。
     if (logs === null) {
+      // 抛出 new Error('Failed to fetch session logs');，阻止共享工具在无效状态下继续运行。
       throw new Error('Failed to fetch session logs');
     }
 
     // Filter to get only transcript messages, excluding sidechain messages
+    // filterStartTime记录时间`Date.now`，供共享工具后续处理使用。
     const filterStartTime = Date.now();
+    // 对话消息筛选`logs.filter`，供共享工具后续处理使用。
     const messages = logs.filter(entry => isTranscriptMessage(entry) && !entry.isSidechain) as Message[];
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[teleport] Filtered ${logs.length} entries to ${messages.length} messages in ${Date.now() - filterStartTime}ms`);
 
     // Extract branch info from session data
+    // 调用 onProgress?.('fetching_branch');，完成这一处局部操作。
     onProgress?.('fetching_branch');
+    // branch读取`getBranchFromSession`，供共享工具后续处理使用。
     const branch = sessionData ? getBranchFromSession(sessionData) : undefined;
+    // 满足 `branch` 时，共享工具执行该分支。
     if (branch) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[teleport] Found branch: ${branch}`);
     }
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[teleport] Total teleportFromSessionsAPI time: ${Date.now() - startTime}ms`);
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       log: messages,
       branch
     };
   } catch (error) {
+    // err保存`toError`，供共享工具后续处理使用。
     const err = toError(error);
 
     // Handle 404 specifically
+    // 只有 `axios.isAxiosError(error) && error.response?.status === 404` 满足时，共享工具才执行该分支。
     if (axios.isAxiosError(error) && error.response?.status === 404) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_teleport_error_session_not_found_404', {
         sessionId: sessionId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 抛出 new TeleportOperationError(`${sessionId} not found.`, `${sessionId} not found.\n${chalk.d…，阻止共享工具在无效状态下继续运行。
       throw new TeleportOperationError(`${sessionId} not found.`, `${sessionId} not found.\n${chalk.dim('Run /status in Claude Code to check your account.')}`);
     }
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logError(err);
+    // 抛出 new Error(`Failed to fetch session from Sessions API: ${err.message}`);，阻止共享工具在无效状态下继续运行。
     throw new Error(`Failed to fetch session from Sessions API: ${err.message}`);
   }
 }
@@ -618,6 +855,7 @@ export async function teleportFromSessionsAPI(sessionId: string, orgUUID: string
 /**
  * Response type for polling remote session events (uses SDK events format)
  */
+// PollRemoteSessionResponse 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PollRemoteSessionResponse = {
   newEvents: SDKMessage[];
   lastEventId: string | null;
@@ -630,23 +868,33 @@ export type PollRemoteSessionResponse = {
  * as `afterId` to fetch only the delta. Set `skipMetadata` to avoid the
  * per-call GET /v1/sessions/{id} when branch/status aren't needed.
  */
+// pollRemoteSessionEvents 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function pollRemoteSessionEvents(sessionId: string, afterId: string | null = null, opts?: {
   skipMetadata?: boolean;
 }): Promise<PollRemoteSessionResponse> {
+  // accessToken读取`getClaudeAIOAuthTokens`，供共享工具后续处理使用。
   const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+  // accessToken缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!accessToken) {
+    // 抛出 new Error('No access token for polling');，阻止共享工具在无效状态下继续运行。
     throw new Error('No access token for polling');
   }
+  // orgUUID读取`getOrganizationUUID`，供共享工具后续处理使用。
   const orgUUID = await getOrganizationUUID();
+  // orgUUID缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!orgUUID) {
+    // 抛出 new Error('No org UUID for polling');，阻止共享工具在无效状态下继续运行。
     throw new Error('No org UUID for polling');
   }
+  // 请求头集中保存共享工具 teleport要一起传递的字段。
   const headers = {
     ...getOAuthHeaders(accessToken),
     'anthropic-beta': 'ccr-byoc-2025-07-29',
     'x-organization-uuid': orgUUID
   };
+  // eventsUrl读取`getOauthConfig`，供共享工具后续处理使用。
   const eventsUrl = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`;
+  // EventsResponse 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
   type EventsResponse = {
     data: unknown[];
     has_more: boolean;
@@ -655,10 +903,15 @@ export async function pollRemoteSessionEvents(sessionId: string, afterId: string
   };
 
   // Cap is a safety valve against stuck cursors; steady-state is 0–1 pages.
+  // MAX_EVENT_PAGES 集合保存`50`，供共享工具 teleport后续判断或输出使用。
   const MAX_EVENT_PAGES = 50;
+  // sdkMessages 消息数据 从空数组开始收集，后续循环会按处理顺序追加条目。
   const sdkMessages: SDKMessage[] = [];
+  // cursor保存`afterId`，供共享工具 teleport后续判断或输出使用。
   let cursor = afterId;
+  // 按索引扫描 `MAX_EVENT_PAGES`，需要消费相邻参数时可以精确移动游标。
   for (let page = 0; page < MAX_EVENT_PAGES; page++) {
+    // eventsResponse 响应数据读取`axios.get`，供共享工具后续处理使用。
     const eventsResponse = await axios.get(eventsUrl, {
       headers,
       params: cursor ? {
@@ -666,28 +919,44 @@ export async function pollRemoteSessionEvents(sessionId: string, afterId: string
       } : undefined,
       timeout: 30000
     });
+    // `eventsResponse.status` 与 `200` 不一致时刷新派生状态，避免使用过期结果。
     if (eventsResponse.status !== 200) {
+      // 抛出 new Error(`Failed to fetch session events: ${eventsResponse.statusText}`);，阻止共享工具在无效状态下继续运行。
       throw new Error(`Failed to fetch session events: ${eventsResponse.statusText}`);
     }
+    // eventsData保存`eventsResponse.data`，供后续判断或组装使用。
     const eventsData: EventsResponse = eventsResponse.data;
+    // 只有 `!eventsData?.data || !Array.isArray(eventsData.data)` 满足时，共享工具才执行该分支。
     if (!eventsData?.data || !Array.isArray(eventsData.data)) {
+      // 抛出 new Error('Invalid events response');，阻止共享工具在无效状态下继续运行。
       throw new Error('Invalid events response');
     }
+    // 按顺序遍历 `eventsData.data` 中的event，逐个交给共享工具处理。
     for (const event of eventsData.data) {
+      // 只有 `event && typeof event === 'object' && 'type' in e` 满足时，共享工具才执行该分支。
       if (event && typeof event === 'object' && 'type' in event) {
+        // 只有 `event.type === 'env_manager_log' || event.type ==` 满足时，共享工具才执行该分支。
         if (event.type === 'env_manager_log' || event.type === 'control_response') {
+          // 跳过当前项，继续处理共享工具中的下一轮循环。
           continue;
         }
+        // 满足 `'session_id' in event` 时，共享工具执行该分支。
         if ('session_id' in event) {
+          // sdkMessages 消息数据追加新条目，保持收集顺序与输入顺序一致。
           sdkMessages.push(event as SDKMessage);
         }
       }
     }
+    // eventsData.last_id缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!eventsData.last_id) break;
+    // cursor更新为 `eventsData.last_id`，确保共享工具后续读取最新状态。
     cursor = eventsData.last_id;
+    // eventsData.has_more缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!eventsData.has_more) break;
   }
+  // 满足 `opts?.skipMetadata` 时，共享工具执行该分支。
   if (opts?.skipMetadata) {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       newEvents: sdkMessages,
       lastEventId: cursor
@@ -695,17 +964,25 @@ export async function pollRemoteSessionEvents(sessionId: string, afterId: string
   }
 
   // Fetch session metadata (branch, status)
+  // branch 先占位，稍后的条件分支会根据实际输入补齐它。
   let branch: string | undefined;
+  // sessionStatus 会话数据 先占位，稍后的条件分支会根据实际输入补齐它。
   let sessionStatus: PollRemoteSessionResponse['sessionStatus'];
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // sessionData 会话数据读取`fetchSession`，供共享工具后续处理使用。
     const sessionData = await fetchSession(sessionId);
+    // branch更新为 `getBranchFromSession(sessionData)`，确保共享工具后续读取最新状态。
     branch = getBranchFromSession(sessionData);
+    // sessionStatus 会话数据更新为 `sessionData.session_status as PollRemoteSessionResponse['...`，确保共享工具后续读取最新状态。
     sessionStatus = sessionData.session_status as PollRemoteSessionResponse['sessionStatus'];
   } catch (e) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`teleport: failed to fetch session ${sessionId} metadata: ${e}`, {
       level: 'debug'
     });
   }
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     newEvents: sdkMessages,
     lastEventId: cursor,
@@ -727,6 +1004,7 @@ export async function pollRemoteSessionEvents(sessionId: string, afterId: string
  *   local-only repos. Reach: 54% of CLI sessions (anything with .git/).
  *   Backend: anthropic#303856.
  */
+// teleportToRemote 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function teleportToRemote(options: {
   initialMessage: string | null;
   branchName?: string;
@@ -770,6 +1048,7 @@ export async function teleportToRemote(options: {
    * fails. The wrapper stderr.writes it (pre-REPL). Remote-agent callers
    * capture it to include in their throw (in-REPL, Ink-rendered).
    */
+  // 这个回调绑定到 onBundleFail?: (message: string) => void;，负责共享工具在该局部场景下的响应。
   onBundleFail?: (message: string) => void;
   /**
    * When true, disables the git-bundle fallback entirely. Use for flows like
@@ -793,23 +1072,34 @@ export async function teleportToRemote(options: {
     number: number;
   };
 }): Promise<TeleportToRemoteResponse | null> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     initialMessage,
     signal
   } = options;
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
     // Check authentication
+    // 等待 `checkAndRefreshOAuthTokenIfNeeded()` 完成，再继续共享工具 teleport的异步流程。
     await checkAndRefreshOAuthTokenIfNeeded();
+    // accessToken读取`getClaudeAIOAuthTokens`，供共享工具后续处理使用。
     const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+    // accessToken缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!accessToken) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(new Error('No access token found for remote session creation'));
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null;
     }
 
     // Get organization UUID
+    // orgUUID读取`getOrganizationUUID`，供共享工具后续处理使用。
     const orgUUID = await getOrganizationUUID();
+    // orgUUID缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!orgUUID) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(new Error('Unable to get organization UUID for remote session creation'));
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null;
     }
 
@@ -818,13 +1108,17 @@ export async function teleportToRemote(options: {
     // the code_review orchestrator reads --repo-dir $(pwd), it doesn't clone
     // (bughunter.go:520 sets a git source too; env-manager does the checkout
     // before the SessionStart hook fires).
+    // 满足 `options.environmentId` 时，共享工具执行该分支。
     if (options.environmentId) {
+      // URL读取`getOauthConfig`，供共享工具后续处理使用。
       const url = `${getOauthConfig().BASE_API_URL}/v1/sessions`;
+      // 请求头集中保存共享工具 teleport要一起传递的字段。
       const headers = {
         ...getOAuthHeaders(accessToken),
         'anthropic-beta': 'ccr-byoc-2025-07-29',
         'x-organization-uuid': orgUUID
       };
+      // envVars 集合集中保存共享工具 teleport要一起传递的字段。
       const envVars = {
         CLAUDE_CODE_OAUTH_TOKEN: accessToken,
         ...(options.environmentVariables ?? {})
@@ -833,9 +1127,13 @@ export async function teleportToRemote(options: {
       // Bundle mode: upload local working tree (uncommitted changes via
       // refs/seed/stash), container clones from the bundle. No GitHub.
       // Otherwise: github.com source — caller checked eligibility.
+      // gitSource初始化为空值，后续分支会在有数据时补齐。
       let gitSource: GitSource | null = null;
+      // seedBundleFileId 文件数据初始化为空值，后续分支会在有数据时补齐。
       let seedBundleFileId: string | null = null;
+      // 满足 `options.useBundle` 时，共享工具执行该分支。
       if (options.useBundle) {
+        // bundle读取`createAndUploadGitBundle`，供共享工具后续处理使用。
         const bundle = await createAndUploadGitBundle({
           oauthToken: accessToken,
           sessionId: getSessionId(),
@@ -843,11 +1141,16 @@ export async function teleportToRemote(options: {
         }, {
           signal
         });
+        // bundle.success 集合缺失时直接走兜底路径，避免共享工具使用无效输入。
         if (!bundle.success) {
+          // 记录共享工具运行诊断，方便排查异常路径或性能问题。
           logError(new Error(`Bundle upload failed: ${bundle.error}`));
+          // 返回 `null`，作为共享工具这次计算的结果。
           return null;
         }
+        // seedBundleFileId 文件数据更新为 `bundle.fileId`，确保共享工具后续读取最新状态。
         seedBundleFileId = bundle.fileId;
+        // 记录共享工具运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_teleport_bundle_mode', {
           size_bytes: bundle.bundleSizeBytes,
           scope: bundle.scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -855,8 +1158,11 @@ export async function teleportToRemote(options: {
           reason: 'explicit_env_bundle' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       } else {
+        // repoInfo读取`detectCurrentRepositoryWithHost`，供共享工具后续处理使用。
         const repoInfo = await detectCurrentRepositoryWithHost();
+        // 满足 `repoInfo` 时，共享工具执行该分支。
         if (repoInfo) {
+          // gitSource更新为 `{`，确保共享工具后续读取最新状态。
           gitSource = {
             type: 'git_repository',
             url: `https://${repoInfo.host}/${repoInfo.owner}/${repoInfo.name}`,
@@ -864,6 +1170,7 @@ export async function teleportToRemote(options: {
           };
         }
       }
+      // requestBody 请求数据集中保存共享工具 teleport要一起传递的字段。
       const requestBody = {
         title: options.title || options.description || 'Remote task',
         events: [],
@@ -877,27 +1184,40 @@ export async function teleportToRemote(options: {
         },
         environment_id: options.environmentId
       };
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[teleportToRemote] explicit env ${options.environmentId}, ${Object.keys(envVars).length} env vars, ${seedBundleFileId ? `bundle=${seedBundleFileId}` : `source=${gitSource?.url ?? 'none'}@${options.branchName ?? 'default'}`}`);
+      // 接口响应保存`axios.post`，供共享工具后续处理使用。
       const response = await axios.post(url, requestBody, {
         headers,
         signal
       });
+      // `response.status` 与 `200 && response.status !== 201` 不一致时刷新派生状态，避免使用过期结果。
       if (response.status !== 200 && response.status !== 201) {
+        // 记录共享工具运行诊断，方便排查异常路径或性能问题。
         logError(new Error(`CreateSession ${response.status}: ${jsonStringify(response.data)}`));
+        // 返回 `null`，作为共享工具这次计算的结果。
         return null;
       }
+      // sessionData 会话数据保存`response.data as SessionResource`，供后续判断或组装使用。
       const sessionData = response.data as SessionResource;
+      // `!sessionData || typeof sessionData.id` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
       if (!sessionData || typeof sessionData.id !== 'string') {
+        // 记录共享工具运行诊断，方便排查异常路径或性能问题。
         logError(new Error(`No session id in response: ${jsonStringify(response.data)}`));
+        // 返回 `null`，作为共享工具这次计算的结果。
         return null;
       }
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         id: sessionData.id,
         title: sessionData.title || requestBody.title
       };
     }
+    // gitSource初始化为空值，后续分支会在有数据时补齐。
     let gitSource: GitSource | null = null;
+    // gitOutcome 命名 `null`，让后续代码直接表达这个值的用途。
     let gitOutcome: GitRepositoryOutcome | null = null;
+    // seedBundleFileId 文件数据初始化为空值，后续分支会在有数据时补齐。
     let seedBundleFileId: string | null = null;
 
     // Source selection ladder: GitHub clone (if CCR can actually pull it) →
@@ -913,18 +1233,27 @@ export async function teleportToRemote(options: {
     // or when you know your GitHub auth is busted. Read here (not in the
     // caller) so it works for remote-agent too, not just --remote.
 
+    // repoInfo读取`detectCurrentRepositoryWithHost`，供共享工具后续处理使用。
     const repoInfo = await detectCurrentRepositoryWithHost();
 
     // Generate title and branch name for the session. Skip the Haiku call
     // when both title and outcome branch are explicitly provided.
+    // sessionTitle 会话数据 先占位，稍后的条件分支会根据实际输入补齐它。
     let sessionTitle: string;
+    // sessionBranch 会话数据 先占位，稍后的条件分支会根据实际输入补齐它。
     let sessionBranch: string;
+    // 只有 `options.title && options.reuseOutcomeBranch` 满足时，共享工具才执行该分支。
     if (options.title && options.reuseOutcomeBranch) {
+      // sessionTitle 会话数据更新为 `options.title`，确保共享工具后续读取最新状态。
       sessionTitle = options.title;
+      // sessionBranch 会话数据更新为 `options.reuseOutcomeBranch`，确保共享工具后续读取最新状态。
       sessionBranch = options.reuseOutcomeBranch;
     } else {
+      // generated保存`generateTitleAndBranch`，供共享工具后续处理使用。
       const generated = await generateTitleAndBranch(options.description || initialMessage || 'Background task', signal);
+      // sessionTitle 会话数据更新为 `options.title || generated.title`，确保共享工具后续读取最新状态。
       sessionTitle = options.title || generated.title;
+      // sessionBranch 会话数据更新为 `options.reuseOutcomeBranch || generated.branchName`，确保共享工具后续读取最新状态。
       sessionBranch = options.reuseOutcomeBranch || generated.branchName;
     }
 
@@ -934,42 +1263,64 @@ export async function teleportToRemote(options: {
     // setup. For them (and for non-GitHub hosts that parseGitRemote
     // somehow accepted), fall through optimistically; if the backend
     // rejects the host, bundle next time.
+    // ghViable标记共享工具 teleport是否启用对应路径。
     let ghViable = false;
+    // sourceReason固定为 `'no_git_at_all'`，作为共享工具 teleport后续展示或比较的基准。
     let sourceReason: 'github_preflight_ok' | 'ghes_optimistic' | 'github_preflight_failed' | 'no_github_remote' | 'forced_bundle' | 'no_git_at_all' = 'no_git_at_all';
 
     // gitRoot gates both bundle creation and the gate check itself — no
     // point awaiting GrowthBook when there's nothing to bundle.
+    // gitRoot筛选`findGitRoot`，供共享工具后续处理使用。
     const gitRoot = findGitRoot(getCwd());
+    // forceBundle保存`isEnvTruthy`，供共享工具后续处理使用。
     const forceBundle = !options.skipBundle && isEnvTruthy(process.env.CCR_FORCE_BUNDLE);
+    // bundleSeedGateOn保存`isEnvTruthy`，供共享工具后续处理使用。
     const bundleSeedGateOn = !options.skipBundle && gitRoot !== null && (isEnvTruthy(process.env.CCR_ENABLE_BUNDLE) || (await checkGate_CACHED_OR_BLOCKING('tengu_ccr_bundle_seed_enabled')));
+    // 只有 `repoInfo && !forceBundle` 满足时，共享工具才执行该分支。
     if (repoInfo && !forceBundle) {
+      // 当 `repoInfo.host` 匹配 `'github.com'` 时，共享工具执行对应分支。
       if (repoInfo.host === 'github.com') {
+        // ghViable更新为 `await checkGithubAppInstalled(repoInfo.owner, repoInfo.na...`，确保共享工具后续读取最新状态。
         ghViable = await checkGithubAppInstalled(repoInfo.owner, repoInfo.name, signal);
+        // sourceReason更新为 `ghViable ? 'github_preflight_ok' : 'github_preflight_fail...`，确保共享工具后续读取最新状态。
         sourceReason = ghViable ? 'github_preflight_ok' : 'github_preflight_failed';
       } else {
+        // ghViable更新为 `true`，确保共享工具后续读取最新状态。
         ghViable = true;
+        // sourceReason更新为 `'ghes_optimistic'`，确保共享工具后续读取最新状态。
         sourceReason = 'ghes_optimistic';
       }
+    // 共享工具 teleport在这里处理 `} else if (forceBundle) {`，完成这一小步状态转换。
     } else if (forceBundle) {
+      // sourceReason更新为 `'forced_bundle'`，确保共享工具后续读取最新状态。
       sourceReason = 'forced_bundle';
+    // 共享工具 teleport在这里处理 `} else if (gitRoot) {`，完成这一小步状态转换。
     } else if (gitRoot) {
+      // sourceReason更新为 `'no_github_remote'`，确保共享工具后续读取最新状态。
       sourceReason = 'no_github_remote';
     }
 
     // Preflight failed but bundle is off — fall through optimistically like
     // pre-preflight behavior. Backend reports the real auth error.
+    // 只有 `!ghViable && !bundleSeedGateOn && repoInfo` 满足时，共享工具才执行该分支。
     if (!ghViable && !bundleSeedGateOn && repoInfo) {
+      // ghViable更新为 `true`，确保共享工具后续读取最新状态。
       ghViable = true;
     }
+    // 只有 `ghViable && repoInfo` 满足时，共享工具才执行该分支。
     if (ghViable && repoInfo) {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         host,
         owner,
         name
       } = repoInfo;
       // Resolve the base branch: prefer explicit branchName, fall back to default branch
+      // revision读取`getDefaultBranch`，供共享工具后续处理使用。
       const revision = options.branchName ?? (await getDefaultBranch()) ?? undefined;
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[teleportToRemote] Git source: ${host}/${owner}/${name}, revision: ${revision ?? 'none'}`);
+      // gitSource更新为 `{`，确保共享工具后续读取最新状态。
       gitSource = {
         type: 'git_repository',
         url: `https://${host}/${owner}/${name}`,
@@ -983,6 +1334,7 @@ export async function teleportToRemote(options: {
       // The CLI can't distinguish GHE from non-GitHub hosts (GitLab, Bitbucket)
       // client-side — the backend validates the URL against configured GHE instances
       // and ignores git_info for unrecognized hosts.
+      // gitOutcome更新为 `{`，确保共享工具后续读取最新状态。
       gitOutcome = {
         type: 'git_repository',
         git_info: {
@@ -998,8 +1350,11 @@ export async function teleportToRemote(options: {
     // ghViable=false and repoInfo non-null means the preflight failed —
     // .git definitely exists (detectCurrentRepositoryWithHost read the
     // remote from it).
+    // 只有 `!gitSource && bundleSeedGateOn` 满足时，共享工具才执行该分支。
     if (!gitSource && bundleSeedGateOn) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[teleportToRemote] Bundling (reason: ${sourceReason})`);
+      // bundle读取`createAndUploadGitBundle`，供共享工具后续处理使用。
       const bundle = await createAndUploadGitBundle({
         oauthToken: accessToken,
         sessionId: getSessionId(),
@@ -1007,35 +1362,55 @@ export async function teleportToRemote(options: {
       }, {
         signal
       });
+      // bundle.success 集合缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!bundle.success) {
+        // 记录共享工具运行诊断，方便排查异常路径或性能问题。
         logError(new Error(`Bundle upload failed: ${bundle.error}`));
         // Only steer users to GitHub setup when there's a remote to clone from.
+        // setup 命名 `repoInfo ? '. Please setup GitHub on https://claude.ai/co...`，让后续代码直接表达这个值的用途。
         const setup = repoInfo ? '. Please setup GitHub on https://claude.ai/code' : '';
+        // 消息 先占位，稍后的条件分支会根据实际输入补齐它。
         let msg: string;
+        // 按照 bundle.failReason 的取值选择共享工具的具体处理分支。
         switch (bundle.failReason) {
           case 'empty_repo':
+            // 消息更新为 `'Repository has no commits — run `git add . && git commit...`，确保共享工具后续读取最新状态。
             msg = 'Repository has no commits — run `git add . && git commit -m "initial"` then retry';
+            // 结束这个分支或循环，避免共享工具继续落入后续路径。
             break;
           case 'too_large':
+            // 消息更新为 ``Repo is too large to teleport${setup}``，确保共享工具后续读取最新状态。
             msg = `Repo is too large to teleport${setup}`;
+            // 结束这个分支或循环，避免共享工具继续落入后续路径。
             break;
           case 'git_error':
+            // 消息更新为 ``Failed to create git bundle (${bundle.error})${setup}``，确保共享工具后续读取最新状态。
             msg = `Failed to create git bundle (${bundle.error})${setup}`;
+            // 结束这个分支或循环，避免共享工具继续落入后续路径。
             break;
           case undefined:
+            // 消息更新为 ``Bundle upload failed: ${bundle.error}${setup}``，确保共享工具后续读取最新状态。
             msg = `Bundle upload failed: ${bundle.error}${setup}`;
+            // 结束这个分支或循环，避免共享工具继续落入后续路径。
             break;
           default:
             {
+              // _exhaustive 命名 `bundle.failReason`，让后续代码直接表达这个值的用途。
               const _exhaustive: never = bundle.failReason;
+              // 显式忽略 `_exhaustive` 的返回值，只保留它触发的副作用。
               void _exhaustive;
+              // 消息更新为 ``Bundle upload failed: ${bundle.error}``，确保共享工具后续读取最新状态。
               msg = `Bundle upload failed: ${bundle.error}`;
             }
         }
+        // 调用 options.onBundleFail?.(msg);，完成这一处局部操作。
         options.onBundleFail?.(msg);
+        // 返回 `null`，作为共享工具这次计算的结果。
         return null;
       }
+      // seedBundleFileId 文件数据更新为 `bundle.fileId`，确保共享工具后续读取最新状态。
       seedBundleFileId = bundle.fileId;
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_teleport_bundle_mode', {
         size_bytes: bundle.bundleSizeBytes,
         scope: bundle.scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1043,62 +1418,93 @@ export async function teleportToRemote(options: {
         reason: sourceReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
     }
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_teleport_source_decision', {
       reason: sourceReason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       path: (gitSource ? 'github' : seedBundleFileId ? 'bundle' : 'empty') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 只有 `!gitSource && !seedBundleFileId` 满足时，共享工具才执行该分支。
     if (!gitSource && !seedBundleFileId) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging('[teleportToRemote] No repository detected — session will have an empty sandbox');
     }
 
     // Fetch available environments
+    // environments 集合读取`fetchEnvironments`，供共享工具后续处理使用。
     let environments = await fetchEnvironments();
+    // !environments || environments 集合为空时立即返回或跳过，避免共享工具把空集合当成可处理内容。
     if (!environments || environments.length === 0) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(new Error('No environments available for session creation'));
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null;
     }
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Available environments: ${environments.map(e => `${e.environment_id} (${e.name}, ${e.kind})`).join(', ')}`);
 
     // Select environment based on settings, then anthropic_cloud preference, then first available.
     // Prefer anthropic_cloud environments over byoc: anthropic_cloud environments (e.g. "Default")
     // are the standard compute environments with full repo access, whereas byoc environments
     // (e.g. "monorepo") are user-owned compute that may not support the current repository.
+    // settings 集合读取`getSettings_DEPRECATED`，供共享工具后续处理使用。
     const settings = getSettings_DEPRECATED();
+    // defaultEnvironmentId保存`options.useDefaultEnvironment ? undefined : settings?.rem...`，供共享工具 teleport后续判断或输出使用。
     const defaultEnvironmentId = options.useDefaultEnvironment ? undefined : settings?.remote?.defaultEnvironmentId;
+    // cloudEnv筛选`environments.find`，供共享工具后续处理使用。
     let cloudEnv = environments.find(env => env.kind === 'anthropic_cloud');
     // When the caller opts out of their configured default, do not fall
     // through to a BYOC env that may not support the current repo or the
     // requested permission mode. Retry once for eventual consistency,
     // then fail loudly.
+    // 只有 `options.useDefaultEnvironment && !cloudEnv` 满足时，共享工具才执行该分支。
     if (options.useDefaultEnvironment && !cloudEnv) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`No anthropic_cloud in env list (${environments.length} envs); retrying fetchEnvironments`);
+      // retried读取`fetchEnvironments`，供共享工具后续处理使用。
       const retried = await fetchEnvironments();
+      // cloudEnv更新为 `retried?.find(env => env.kind === 'anthropic_cloud')`，确保共享工具后续读取最新状态。
       cloudEnv = retried?.find(env => env.kind === 'anthropic_cloud');
+      // cloudEnv缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!cloudEnv) {
+        // 记录共享工具运行诊断，方便排查异常路径或性能问题。
         logError(new Error(`No anthropic_cloud environment available after retry (got: ${(retried ?? environments).map(e => `${e.name} (${e.kind})`).join(', ')}). Silent byoc fallthrough would launch into a dead env — fail fast instead.`));
+        // 返回 `null`，作为共享工具这次计算的结果。
         return null;
       }
+      // 满足 `retried` 时，共享工具执行该分支。
       if (retried) environments = retried;
     }
+    // selectedEnvironment筛选`environments.find`，供共享工具后续处理使用。
     const selectedEnvironment = defaultEnvironmentId && environments.find(env => env.environment_id === defaultEnvironmentId) || cloudEnv || environments.find(env => env.kind !== 'bridge') || environments[0];
+    // selectedEnvironment缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!selectedEnvironment) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(new Error('No environments available for session creation'));
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null;
     }
+    // 满足 `defaultEnvironmentId` 时，共享工具执行该分支。
     if (defaultEnvironmentId) {
+      // matchedDefault标记共享工具 teleport是否启用对应路径。
       const matchedDefault = selectedEnvironment.environment_id === defaultEnvironmentId;
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(matchedDefault ? `Using configured default environment: ${defaultEnvironmentId}` : `Configured default environment ${defaultEnvironmentId} not found, using first available`);
     }
+    // environmentId 命名 `selectedEnvironment.environment_id`，让后续代码直接表达这个值的用途。
     const environmentId = selectedEnvironment.environment_id;
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Selected environment: ${environmentId} (${selectedEnvironment.name}, ${selectedEnvironment.kind})`);
 
     // Prepare API request for Sessions API
+    // URL读取`getOauthConfig`，供共享工具后续处理使用。
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions`;
+    // 请求头集中保存共享工具 teleport要一起传递的字段。
     const headers = {
       ...getOAuthHeaders(accessToken),
       'anthropic-beta': 'ccr-byoc-2025-07-29',
       'x-organization-uuid': orgUUID
     };
+    // sessionContext 会话数据集中保存共享工具 teleport要一起传递的字段。
     const sessionContext = {
       sources: gitSource ? [gitSource] : [],
       ...(seedBundleFileId && {
@@ -1119,11 +1525,14 @@ export async function teleportToRemote(options: {
     // Instead prepend a set_permission_mode control_request event. Initial
     // events are written to threadstore before the container connects, so
     // the CLI applies the mode before the first user turn — no readiness race.
+    // events 集合 先占位，稍后的条件分支会根据实际输入补齐它。
     const events: Array<{
       type: 'event';
       data: Record<string, unknown>;
     }> = [];
+    // 满足 `options.permissionMode` 时，共享工具执行该分支。
     if (options.permissionMode) {
+      // events 集合追加新条目，保持收集顺序与输入顺序一致。
       events.push({
         type: 'event',
         data: {
@@ -1137,7 +1546,9 @@ export async function teleportToRemote(options: {
         }
       });
     }
+    // 满足 `initialMessage` 时，共享工具执行该分支。
     if (initialMessage) {
+      // events 集合追加新条目，保持收集顺序与输入顺序一致。
       events.push({
         type: 'event',
         data: {
@@ -1152,39 +1563,55 @@ export async function teleportToRemote(options: {
         }
       });
     }
+    // requestBody 请求数据集中保存共享工具 teleport要一起传递的字段。
     const requestBody = {
       title: options.ultraplan ? `ultraplan: ${sessionTitle}` : sessionTitle,
       events,
       session_context: sessionContext,
       environment_id: environmentId
     };
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Creating session with payload: ${jsonStringify(requestBody, null, 2)}`);
 
     // Make API call
+    // 接口响应保存`axios.post`，供共享工具后续处理使用。
     const response = await axios.post(url, requestBody, {
       headers,
       signal
     });
+    // isSuccess 集合标记共享工具 teleport是否启用对应路径。
     const isSuccess = response.status === 200 || response.status === 201;
+    // isSuccess 集合缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!isSuccess) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(new Error(`API request failed with status ${response.status}: ${response.statusText}\n\nResponse data: ${jsonStringify(response.data, null, 2)}`));
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null;
     }
 
     // Parse response as SessionResource
+    // sessionData 会话数据保存`response.data as SessionResource`，供后续判断或组装使用。
     const sessionData = response.data as SessionResource;
+    // `!sessionData || typeof sessionData.id` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
     if (!sessionData || typeof sessionData.id !== 'string') {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(new Error(`Cannot determine session ID from API response: ${jsonStringify(response.data)}`));
+      // 返回 `null`，作为共享工具这次计算的结果。
       return null;
     }
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Successfully created remote session: ${sessionData.id}`);
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       id: sessionData.id,
       title: sessionData.title || requestBody.title
     };
   } catch (error) {
+    // err保存`toError`，供共享工具后续处理使用。
     const err = toError(error);
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logError(err);
+    // 返回 `null`，作为共享工具这次计算的结果。
     return null;
   }
 }
@@ -1197,29 +1624,43 @@ export async function teleportToRemote(options: {
  * success. Fire-and-forget; failure leaks a visible session until the
  * reaper collects it.
  */
+// archiveRemoteSession 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function archiveRemoteSession(sessionId: string): Promise<void> {
+  // accessToken读取`getClaudeAIOAuthTokens`，供共享工具后续处理使用。
   const accessToken = getClaudeAIOAuthTokens()?.accessToken;
+  // accessToken缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!accessToken) return;
+  // orgUUID读取`getOrganizationUUID`，供共享工具后续处理使用。
   const orgUUID = await getOrganizationUUID();
+  // orgUUID缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!orgUUID) return;
+  // 请求头集中保存共享工具 teleport要一起传递的字段。
   const headers = {
     ...getOAuthHeaders(accessToken),
     'anthropic-beta': 'ccr-byoc-2025-07-29',
     'x-organization-uuid': orgUUID
   };
+  // URL读取`getOauthConfig`，供共享工具后续处理使用。
   const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/archive`;
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // resp保存`axios.post`，供共享工具后续处理使用。
     const resp = await axios.post(url, {}, {
       headers,
       timeout: 10000,
+      // 这个回调绑定到 validateStatus: s => s < 500，负责共享工具在该局部场景下的响应。
       validateStatus: s => s < 500
     });
+    // 只有 `resp.status === 200 || resp.status === 409` 满足时，共享工具才执行该分支。
     if (resp.status === 200 || resp.status === 409) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[archiveRemoteSession] archived ${sessionId}`);
     } else {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`[archiveRemoteSession] ${sessionId} failed ${resp.status}: ${jsonStringify(resp.data)}`);
     }
   } catch (err) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logError(err);
   }
 }

@@ -1,14 +1,21 @@
+// 引入 tmpdir，将 os 中已经封装好的能力接到本文件流程里。
 import { tmpdir } from 'os'
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { join } from 'path'
+// 引入 join as posixJoin，将 path/posix 中已经封装好的能力接到本文件流程里。
 import { join as posixJoin } from 'path/posix'
+// 引入 getSessionEnvVars，将 ../sessionEnvVars.js 中已经封装好的能力接到本文件流程里。
 import { getSessionEnvVars } from '../sessionEnvVars.js'
+// 类型依赖 { ShellProvider } 来自 ./shellProvider.js，用于校准共享工具的数据契约。
 import type { ShellProvider } from './shellProvider.js'
 
 /**
  * PowerShell invocation flags + command. Shared by the provider's getSpawnArgs
  * and the hook spawn path in hooks.ts so the flag set stays in one place.
  */
+// buildPowerShellArgs 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildPowerShellArgs(cmd: string): string[] {
+  // 返回列表结果，保留共享工具已经排好的条目顺序。
   return ['-NoProfile', '-NonInteractive', '-Command', cmd]
 }
 
@@ -20,18 +27,24 @@ export function buildPowerShellArgs(cmd: string): string[] {
  * corrupt !$? to \!$? when re-wrapping a single-quoted string in double
  * quotes. Review 2964609818.
  */
+// encodePowerShellCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function encodePowerShellCommand(psCommand: string): string {
+  // 返回 `Buffer.from(psCommand, 'utf16le').toString('base64')`，作为共享工具这次计算的结果。
   return Buffer.from(psCommand, 'utf16le').toString('base64')
 }
 
+// createPowerShellProvider 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createPowerShellProvider(shellPath: string): ShellProvider {
+  // currentSandboxTmpDir 先占位，稍后的条件分支会根据实际输入补齐它。
   let currentSandboxTmpDir: string | undefined
 
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     type: 'powershell' as ShellProvider['type'],
     shellPath,
     detached: false,
 
+    // 共享工具 powershell Provider在这里处理 `async buildExecCommand(`，完成这一小步状态转换。
     async buildExecCommand(
       command: string,
       opts: {
@@ -41,16 +54,19 @@ export function createPowerShellProvider(shellPath: string): ShellProvider {
       },
     ): Promise<{ commandString: string; cwdFilePath: string }> {
       // Stash sandboxTmpDir for getEnvironmentOverrides (mirrors bashProvider)
+      // currentSandboxTmpDir更新为 `opts.useSandbox ? opts.sandboxTmpDir : undefined`，确保共享工具后续读取最新状态。
       currentSandboxTmpDir = opts.useSandbox ? opts.sandboxTmpDir : undefined
 
       // When sandboxed, tmpdir() is not writable — the sandbox only allows
       // writes to sandboxTmpDir. Put the cwd tracking file there so the
       // inner pwsh can actually write it. Only applies on Linux/macOS/WSL2;
       // on Windows native, sandbox is never enabled so this branch is dead.
+      // cwdFilePath 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
       const cwdFilePath =
         opts.useSandbox && opts.sandboxTmpDir
           ? posixJoin(opts.sandboxTmpDir, `claude-pwd-ps-${opts.id}`)
           : join(tmpdir(), `claude-pwd-ps-${opts.id}`)
+      // escapedCwdFilePath 路径数据格式化`cwdFilePath.replace`，供共享工具后续处理使用。
       const escapedCwdFilePath = cwdFilePath.replace(/'/g, "''")
       // Exit-code capture: prefer $LASTEXITCODE when a native exe ran.
       // On PS 5.1, a native command that writes to stderr while the stream
@@ -62,7 +78,9 @@ export function createPowerShellProvider(shellPath: string): ShellProvider {
       // is also true: `native-fail; cmdlet-ok` now returns the native
       // exit code (was 0 — old logic only looked at $? which the trailing
       // cmdlet set true). Both rarer than the git/npm/curl stderr case.
+      // cwdTracking保存`if`，供共享工具后续处理使用。
       const cwdTracking = `\n; $_ec = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } elseif ($?) { 0 } else { 1 }\n; (Get-Location).Path | Out-File -FilePath '${escapedCwdFilePath}' -Encoding utf8 -NoNewline\n; exit $_ec`
+      // psCommand 命令数据保存`command + cwdTracking`，供共享工具 powershell Provider后续步骤使用。
       const psCommand = command + cwdTracking
 
       // Sandbox wraps the returned commandString as `<binShell> -c '<cmd>'` —
@@ -83,6 +101,7 @@ export function createPowerShellProvider(shellPath: string): ShellProvider {
       // shellPath is POSIX-single-quoted so a space-containing install path
       // (e.g. /opt/my tools/pwsh) survives the inner `/bin/sh -c` word-split.
       // Flags and base64 are [A-Za-z0-9+/=-] only — no quoting needed.
+      // commandString 命令数据 命名 `opts.useSandbox`，让后续代码直接表达这个值的用途。
       const commandString = opts.useSandbox
         ? [
             `'${shellPath.replace(/'/g, `'\\''`)}'`,

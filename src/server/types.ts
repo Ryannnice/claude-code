@@ -1,7 +1,11 @@
+// 类型依赖 { ChildProcess } 来自 child_process，用于校准types的数据契约。
 import type { ChildProcess } from 'child_process'
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 复用 lazySchema 工具函数，把通用处理留在 ../utils/lazySchema.js 中维护。
 import { lazySchema } from '../utils/lazySchema.js'
 
+// connectResponseSchema 响应数据保存`lazySchema`，供types后续处理使用。
 export const connectResponseSchema = lazySchema(() =>
   z.object({
     session_id: z.string(),
@@ -10,6 +14,7 @@ export const connectResponseSchema = lazySchema(() =>
   }),
 )
 
+// ServerConfig 固化types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ServerConfig = {
   port: number
   host: string
@@ -23,6 +28,7 @@ export type ServerConfig = {
   workspace?: string
 }
 
+// SessionState 固化types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SessionState =
   | 'starting'
   | 'running'
@@ -30,6 +36,7 @@ export type SessionState =
   | 'stopping'
   | 'stopped'
 
+// SessionInfo 固化types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SessionInfo = {
   id: string
   status: SessionState
@@ -43,6 +50,7 @@ export type SessionInfo = {
  * Stable session key → session metadata. Persisted to ~/.claude/server-sessions.json
  * so sessions can be resumed across server restarts.
  */
+// SessionIndexEntry 固化types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SessionIndexEntry = {
   /** Server-assigned session ID (matches the subprocess's claude session). */
   sessionId: string
@@ -54,4 +62,5 @@ export type SessionIndexEntry = {
   lastActiveAt: number
 }
 
+// SessionIndex 固化types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SessionIndex = Record<string, SessionIndexEntry>

@@ -1,15 +1,26 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React、PropsWithChildren、Ref，将 react 中已经封装好的能力接到本文件流程里。
 import React, { type PropsWithChildren, type Ref } from 'react';
+// 复用 Box 终端界面组件，避免在这里重复拼装显示逻辑。
 import Box from '../../ink/components/Box.js';
+// 类型依赖 { DOMElement } 来自 ../../ink/dom.js，用于校准终端渲染的数据契约。
 import type { DOMElement } from '../../ink/dom.js';
+// 类型依赖 { ClickEvent } 来自 ../../ink/events/click-event.js，用于校准终端渲染的数据契约。
 import type { ClickEvent } from '../../ink/events/click-event.js';
+// 类型依赖 { FocusEvent } 来自 ../../ink/events/focus-event.js，用于校准终端渲染的数据契约。
 import type { FocusEvent } from '../../ink/events/focus-event.js';
+// 类型依赖 { KeyboardEvent } 来自 ../../ink/events/keyboard-event.js，用于校准终端渲染的数据契约。
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
+// 类型依赖 { Color, Styles } 来自 ../../ink/styles.js，用于校准终端渲染的数据契约。
 import type { Color, Styles } from '../../ink/styles.js';
+// 复用 getTheme、Theme 工具函数，把通用处理留在 ../../utils/theme.js 中维护。
 import { getTheme, type Theme } from '../../utils/theme.js';
+// 引入 useTheme，将 ./ThemeProvider.js 中已经封装好的能力接到本文件流程里。
 import { useTheme } from './ThemeProvider.js';
 
 // Color props that accept theme keys
+// ThemedColorProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type ThemedColorProps = {
   readonly borderColor?: keyof Theme | Color;
   readonly borderTopColor?: keyof Theme | Color;
@@ -20,32 +31,47 @@ type ThemedColorProps = {
 };
 
 // Base Styles without color props (they'll be overridden)
+// BaseStylesWithoutColors 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type BaseStylesWithoutColors = Omit<Styles, 'textWrap' | 'borderColor' | 'borderTopColor' | 'borderBottomColor' | 'borderLeftColor' | 'borderRightColor' | 'backgroundColor'>;
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Props = BaseStylesWithoutColors & ThemedColorProps & {
   ref?: Ref<DOMElement>;
   tabIndex?: number;
   autoFocus?: boolean;
   onClick?: (event: ClickEvent) => void;
+  // 这个回调绑定到 onFocus?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onFocus?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onFocusCapture?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onFocusCapture?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onBlur?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onBlur?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onBlurCapture?: (event: FocusEvent) => void;，负责终端渲染在该局部场景下的响应。
   onBlurCapture?: (event: FocusEvent) => void;
+  // 这个回调绑定到 onKeyDown?: (event: KeyboardEvent) => void;，负责终端渲染在该局部场景下的响应。
   onKeyDown?: (event: KeyboardEvent) => void;
+  // 这个回调绑定到 onKeyDownCapture?: (event: KeyboardEvent) => void;，负责终端渲染在该局部场景下的响应。
   onKeyDownCapture?: (event: KeyboardEvent) => void;
+  // 这个回调绑定到 onMouseEnter?: () => void;，负责终端渲染在该局部场景下的响应。
   onMouseEnter?: () => void;
+  // 这个回调绑定到 onMouseLeave?: () => void;，负责终端渲染在该局部场景下的响应。
   onMouseLeave?: () => void;
 };
 
 /**
  * Resolves a color value that may be a theme key to a raw Color.
  */
+// resolveColor 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function resolveColor(color: keyof Theme | Color | undefined, theme: Theme): Color | undefined {
+  // color缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!color) return undefined;
   // Check if it's a raw color (starts with rgb(, #, ansi256(, or ansi:)
+  // 只有 `color.startsWith('rgb(') || color.startsWith('#') || color.startsWith('ansi...` 满足时，终端渲染才执行该分支。
   if (color.startsWith('rgb(') || color.startsWith('#') || color.startsWith('ansi256(') || color.startsWith('ansi:')) {
+    // 返回 `color as Color`，作为终端渲染这次计算的结果。
     return color as Color;
   }
   // It's a theme key - resolve it
+  // 返回 `theme[color as keyof Theme] as Color`，作为终端渲染这次计算的结果。
   return theme[color as keyof Theme] as Color;
 }
 
@@ -53,18 +79,31 @@ function resolveColor(color: keyof Theme | Color | undefined, theme: Theme): Col
  * Theme-aware Box component that resolves theme color keys to raw colors.
  * This wraps the base Box component with theme resolution for border colors.
  */
+// ThemedBox 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ThemedBox(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(33);
+  // backgroundColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let backgroundColor;
+  // borderBottomColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let borderBottomColor;
+  // borderColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let borderColor;
+  // borderLeftColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let borderLeftColor;
+  // borderRightColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let borderRightColor;
+  // borderTopColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let borderTopColor;
+  // 子节点 先占位，稍后的条件分支会根据实际输入补齐它。
   let children;
+  // ref 引用 先占位，稍后的条件分支会根据实际输入补齐它。
   let ref;
+  // rest 先占位，稍后的条件分支会根据实际输入补齐它。
   let rest;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== t0) {
+    // 重新解构输入对象，把终端 UI 组件 Themed Box需要的字段同步到本地变量。
     ({
       borderColor,
       borderTopColor,
@@ -76,80 +115,149 @@ function ThemedBox(t0) {
       ref,
       ...rest
     } = t0);
+    // $[0] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t0;
+    // $[1] 缓存 `backgroundColor`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = backgroundColor;
+    // $[2] 缓存 `borderBottomColor`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = borderBottomColor;
+    // $[3] 缓存 `borderColor`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = borderColor;
+    // $[4] 缓存 `borderLeftColor`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = borderLeftColor;
+    // $[5] 缓存 `borderRightColor`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = borderRightColor;
+    // $[6] 缓存 `borderTopColor`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = borderTopColor;
+    // $[7] 缓存 `children`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = children;
+    // $[8] 缓存 `ref`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = ref;
+    // $[9] 缓存 `rest`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = rest;
   } else {
+    // backgroundColor更新为 `$[1]`，确保终端 UI后续读取最新状态。
     backgroundColor = $[1];
+    // borderBottomColor更新为 `$[2]`，确保终端 UI后续读取最新状态。
     borderBottomColor = $[2];
+    // borderColor更新为 `$[3]`，确保终端 UI后续读取最新状态。
     borderColor = $[3];
+    // borderLeftColor更新为 `$[4]`，确保终端 UI后续读取最新状态。
     borderLeftColor = $[4];
+    // borderRightColor更新为 `$[5]`，确保终端 UI后续读取最新状态。
     borderRightColor = $[5];
+    // borderTopColor更新为 `$[6]`，确保终端 UI后续读取最新状态。
     borderTopColor = $[6];
+    // 子节点更新为 `$[7]`，确保终端 UI后续读取最新状态。
     children = $[7];
+    // ref 引用更新为 `$[8]`，确保终端 UI后续读取最新状态。
     ref = $[8];
+    // rest更新为 `$[9]`，确保终端 UI后续读取最新状态。
     rest = $[9];
   }
+  // 从 `useTheme()` 按位置拆出 themeName，让终端 UI 组件 Themed Box分别处理这些返回值。
   const [themeName] = useTheme();
+  // resolvedBorderBottomColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let resolvedBorderBottomColor;
+  // resolvedBorderColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let resolvedBorderColor;
+  // resolvedBorderLeftColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let resolvedBorderLeftColor;
+  // resolvedBorderRightColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let resolvedBorderRightColor;
+  // resolvedBorderTopColor 先占位，稍后的条件分支会根据实际输入补齐它。
   let resolvedBorderTopColor;
+  // t1 暂存 `resolveColor(backgroundColor, theme)` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[10] !== backgroundColor || $[11] !== borderBottomColor || $[12] !== borderColor || $[13] !== borderLeftColor || $[14] !== borderRightColor || $[15] !== borderTopColor || $[16] !== themeName) {
+    // 主题读取`getTheme`，供终端渲染后续处理使用。
     const theme = getTheme(themeName);
+    // resolvedBorderColor更新为 `resolveColor(borderColor, theme)`，确保终端 UI后续读取最新状态。
     resolvedBorderColor = resolveColor(borderColor, theme);
+    // resolvedBorderTopColor更新为 `resolveColor(borderTopColor, theme)`，确保终端 UI后续读取最新状态。
     resolvedBorderTopColor = resolveColor(borderTopColor, theme);
+    // resolvedBorderBottomColor更新为 `resolveColor(borderBottomColor, theme)`，确保终端 UI后续读取最新状态。
     resolvedBorderBottomColor = resolveColor(borderBottomColor, theme);
+    // resolvedBorderLeftColor更新为 `resolveColor(borderLeftColor, theme)`，确保终端 UI后续读取最新状态。
     resolvedBorderLeftColor = resolveColor(borderLeftColor, theme);
+    // resolvedBorderRightColor更新为 `resolveColor(borderRightColor, theme)`，确保终端 UI后续读取最新状态。
     resolvedBorderRightColor = resolveColor(borderRightColor, theme);
+    // t1 暂存 `resolveColor(backgroundColor, theme)` 生成的渲染片段，后续返回路径直接复用。
     t1 = resolveColor(backgroundColor, theme);
+    // $[10] 缓存 `backgroundColor`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = backgroundColor;
+    // $[11] 缓存 `borderBottomColor`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = borderBottomColor;
+    // $[12] 缓存 `borderColor`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = borderColor;
+    // $[13] 缓存 `borderLeftColor`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = borderLeftColor;
+    // $[14] 缓存 `borderRightColor`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = borderRightColor;
+    // $[15] 缓存 `borderTopColor`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = borderTopColor;
+    // $[16] 缓存 `themeName`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = themeName;
+    // $[17] 缓存 `resolvedBorderBottomColor`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = resolvedBorderBottomColor;
+    // $[18] 缓存 `resolvedBorderColor`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = resolvedBorderColor;
+    // $[19] 缓存 `resolvedBorderLeftColor`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = resolvedBorderLeftColor;
+    // $[20] 缓存 `resolvedBorderRightColor`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = resolvedBorderRightColor;
+    // $[21] 缓存 `resolvedBorderTopColor`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = resolvedBorderTopColor;
+    // $[22] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t1;
   } else {
+    // resolvedBorderBottomColor更新为 `$[17]`，确保终端 UI后续读取最新状态。
     resolvedBorderBottomColor = $[17];
+    // resolvedBorderColor更新为 `$[18]`，确保终端 UI后续读取最新状态。
     resolvedBorderColor = $[18];
+    // resolvedBorderLeftColor更新为 `$[19]`，确保终端 UI后续读取最新状态。
     resolvedBorderLeftColor = $[19];
+    // resolvedBorderRightColor更新为 `$[20]`，确保终端 UI后续读取最新状态。
     resolvedBorderRightColor = $[20];
+    // resolvedBorderTopColor更新为 `$[21]`，确保终端 UI后续读取最新状态。
     resolvedBorderTopColor = $[21];
+    // t1 从 React 编译缓存槽 $[22] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[22];
   }
+  // resolvedBackgroundColor沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const resolvedBackgroundColor = t1;
+  // t2 暂存 `<Box ref={ref} borderColor={resolvedBorderColor} borderTo...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[23] !== children || $[24] !== ref || $[25] !== resolvedBackgroundColor || $[26] !== resolvedBorderBottomColor || $[27] !== resolvedBorderColor || $[28] !== resolvedBorderLeftColor || $[29] !== resolvedBorderRightColor || $[30] !== resolvedBorderTopColor || $[31] !== rest) {
+    // t2 暂存 `<Box ref={ref} borderColor={resolvedBorderColor} borderTo...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Box ref={ref} borderColor={resolvedBorderColor} borderTopColor={resolvedBorderTopColor} borderBottomColor={resolvedBorderBottomColor} borderLeftColor={resolvedBorderLeftColor} borderRightColor={resolvedBorderRightColor} backgroundColor={resolvedBackgroundColor} {...rest}>{children}</Box>;
+    // $[23] 缓存 `children`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = children;
+    // $[24] 缓存 `ref`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = ref;
+    // $[25] 缓存 `resolvedBackgroundColor`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = resolvedBackgroundColor;
+    // $[26] 缓存 `resolvedBorderBottomColor`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = resolvedBorderBottomColor;
+    // $[27] 缓存 `resolvedBorderColor`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = resolvedBorderColor;
+    // $[28] 缓存 `resolvedBorderLeftColor`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = resolvedBorderLeftColor;
+    // $[29] 缓存 `resolvedBorderRightColor`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = resolvedBorderRightColor;
+    // $[30] 缓存 `resolvedBorderTopColor`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = resolvedBorderTopColor;
+    // $[31] 缓存 `rest`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = rest;
+    // $[32] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[32] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[32];
   }
+  // 返回 `t2`，作为终端渲染这次计算的结果。
   return t2;
 }
 export default ThemedBox;

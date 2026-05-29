@@ -1,19 +1,30 @@
+// 引入 codeExcerpt、CodeExcerpt，将 code-excerpt 中已经封装好的能力接到本文件流程里。
 import codeExcerpt, { type CodeExcerpt } from 'code-excerpt';
+// 使用 Node/Bun 的 fs 能力处理本地运行时资源。
 import { readFileSync } from 'fs';
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 引入 StackUtils，将 stack-utils 中已经封装好的能力接到本文件流程里。
 import StackUtils from 'stack-utils';
+// 引入 Box，将 ./Box.js 中已经封装好的能力接到本文件流程里。
 import Box from './Box.js';
+// 引入 Text，将 ./Text.js 中已经封装好的能力接到本文件流程里。
 import Text from './Text.js';
 
 /* eslint-disable custom-rules/no-process-cwd -- stack trace file:// paths are relative to the real OS cwd, not the virtual cwd */
 
 // Error's source file is reported as file:///home/user/file.js
 // This function removes the file://[cwd] part
+// cleanupPath 路径数据封装成回调，供终端 UI Error Overview在事件触发或异步步骤中调用。
 const cleanupPath = (path: string | undefined): string | undefined => {
+  // 返回 `path?.replace(`file://${process.cwd()}/`, '')`，作为终端渲染这次计算的结果。
   return path?.replace(`file://${process.cwd()}/`, '');
 };
+// stackUtils 集合 先占位，稍后的条件分支会根据实际输入补齐它。
 let stackUtils: StackUtils | undefined;
+// getStackUtils 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getStackUtils(): StackUtils {
+  // 返回 `stackUtils ??= new StackUtils({`，作为终端渲染这次计算的结果。
   return stackUtils ??= new StackUtils({
     cwd: process.cwd(),
     internals: StackUtils.nodeInternals()
@@ -22,26 +33,40 @@ function getStackUtils(): StackUtils {
 
 /* eslint-enable custom-rules/no-process-cwd */
 
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   readonly error: Error;
 };
+// 终端 UI 组件 Error Overview在这里处理 `export default function ErrorOverview({`，完成这一小步状态转换。
 export default function ErrorOverview({
   error
 }: Props) {
+  // stack格式化`stack.split`，供终端渲染后续处理使用。
   const stack = error.stack ? error.stack.split('\n').slice(1) : undefined;
+  // origin读取`getStackUtils`，供终端渲染后续处理使用。
   const origin = stack ? getStackUtils().parseLine(stack[0]!) : undefined;
+  // 文件路径保存`cleanupPath`，供终端渲染后续处理使用。
   const filePath = cleanupPath(origin?.file);
+  // excerpt 先占位，稍后的条件分支会根据实际输入补齐它。
   let excerpt: CodeExcerpt[] | undefined;
+  // lineWidth 命名 `0`，让后续代码直接表达这个值的用途。
   let lineWidth = 0;
+  // 只有 `filePath && origin?.line` 满足时，终端渲染才执行该分支。
   if (filePath && origin?.line) {
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // eslint-disable-next-line custom-rules/no-sync-fs -- sync render path; error overlay can't go async without suspense restructuring
+      // sourceCode读取`readFileSync`，供终端渲染后续处理使用。
       const sourceCode = readFileSync(filePath, 'utf8');
+      // excerpt更新为 `codeExcerpt(sourceCode, origin.line)`，确保终端 UI后续读取最新状态。
       excerpt = codeExcerpt(sourceCode, origin.line);
+      // 满足 `excerpt` 时，终端渲染执行该分支。
       if (excerpt) {
+        // 调用 for，触发终端渲染此处需要的副作用。
         for (const {
           line
         } of excerpt) {
+          // lineWidth更新为 `Math.max(lineWidth, String(line).length)`，确保终端 UI后续读取最新状态。
           lineWidth = Math.max(lineWidth, String(line).length);
         }
       }
@@ -49,6 +74,7 @@ export default function ErrorOverview({
       // file not readable — skip source context
     }
   }
+  // 返回 `<Box flexDirection="column" padding={1}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" padding={1}>
       <Box>
         <Text backgroundColor="ansi:red" color="ansi:white">
@@ -65,6 +91,7 @@ export default function ErrorOverview({
           </Text>
         </Box>}
 
+      {/* 终端 UI 组件 Error Overview处理 `{origin && excerpt && <Box marginTop={1} flexDirection="column">`，完成这一小步状态转换。 */}
       {origin && excerpt && <Box marginTop={1} flexDirection="column">
           {excerpt.map(({
         line: line_0,
@@ -82,17 +109,22 @@ export default function ErrorOverview({
             </Box>)}
         </Box>}
 
+      {/* 终端 UI 组件 Error Overview处理 `{error.stack && <Box marginTop={1} flexDirection="column">`，完成这一小步状态转换。 */}
       {error.stack && <Box marginTop={1} flexDirection="column">
           {error.stack.split('\n').slice(1).map(line_1 => {
+        // parsedLine读取`getStackUtils`，供终端渲染后续处理使用。
         const parsedLine = getStackUtils().parseLine(line_1);
 
         // If the line from the stack cannot be parsed, we print out the unparsed line.
+        // parsedLine缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!parsedLine) {
+          // 返回 `<Box key={line_1}>`，作为终端渲染这次计算的结果。
           return <Box key={line_1}>
                     <Text dim>- </Text>
                     <Text bold>{line_1}</Text>
                   </Box>;
         }
+        // 返回 `<Box key={line_1}>`，作为终端渲染这次计算的结果。
         return <Box key={line_1}>
                   <Text dim>- </Text>
                   <Text bold>{parsedLine.function}</Text>

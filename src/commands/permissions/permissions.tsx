@@ -1,9 +1,16 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 PermissionRuleList 终端界面组件，避免在这里重复拼装显示逻辑。
 import { PermissionRuleList } from '../../components/permissions/rules/PermissionRuleList.js';
+// 类型依赖 { LocalJSXCommandCall } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandCall } from '../../types/command.js';
+// 复用 createPermissionRetryMessage 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { createPermissionRetryMessage } from '../../utils/messages.js';
+// 这个回调绑定到 export const call: LocalJSXCommandCall = async (onDone, context) => {，负责命令处理在该局部场景下的响应。
 export const call: LocalJSXCommandCall = async (onDone, context) => {
+  // 返回 `<PermissionRuleList onExit={onDone} onRetryDenials={commands => {`，作为命令处理这次计算的结果。
   return <PermissionRuleList onExit={onDone} onRetryDenials={commands => {
+    // context.setMessages 写入新的状态值，使命令处理后续读取保持一致。
     context.setMessages(prev => [...prev, createPermissionRetryMessage(commands)]);
   }} />;
 };

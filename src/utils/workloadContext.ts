@@ -16,20 +16,26 @@
  * pattern as agentContext.ts.
  */
 
+// 引入 AsyncLocalStorage，将 async_hooks 中已经封装好的能力接到本文件流程里。
 import { AsyncLocalStorage } from 'async_hooks'
 
 /**
  * Server-side sanitizer (_sanitize_entrypoint in claude_code.py) accepts
  * only lowercase [a-z0-9_-]{0,32}. Uppercase stops parsing at char 0.
  */
+// Workload 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Workload = 'cron'
+// WORKLOAD_CRON 命名 `'cron'`，让后续代码直接表达这个值的用途。
 export const WORKLOAD_CRON: Workload = 'cron'
 
+// workloadStorage 命名 `new AsyncLocalStorage<{`，让后续代码直接表达这个值的用途。
 const workloadStorage = new AsyncLocalStorage<{
   workload: string | undefined
 }>()
 
+// getWorkload 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getWorkload(): string | undefined {
+  // 返回 `workloadStorage.getStore()?.workload`，作为共享工具这次计算的结果。
   return workloadStorage.getStore()?.workload
 }
 
@@ -49,9 +55,12 @@ export function getWorkload(): string | undefined {
  * Always calling `.run()` guarantees `getWorkload()` inside `fn` returns
  * exactly what the caller passed — including `undefined`.
  */
+// runWithWorkload 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function runWithWorkload<T>(
   workload: string | undefined,
+  // 这个回调绑定到 fn: () => T,，负责共享工具在该局部场景下的响应。
   fn: () => T,
 ): T {
+  // 返回 `workloadStorage.run({ workload }, fn)`，作为共享工具这次计算的结果。
   return workloadStorage.run({ workload }, fn)
 }

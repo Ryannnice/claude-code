@@ -1,5 +1,7 @@
+// WEB_FETCH_TOOL_NAME固定为 `'WebFetch'`，作为工具实现 prompt后续展示或比较的基准。
 export const WEB_FETCH_TOOL_NAME = 'WebFetch'
 
+// DESCRIPTION 命名 ```，让后续代码直接表达这个值的用途。
 export const DESCRIPTION = `
 - Fetches content from a specified URL and processes it using an AI model
 - Takes a URL and a prompt as input
@@ -20,11 +22,13 @@ Usage notes:
   - For GitHub URLs, prefer using the gh CLI via Bash instead (e.g., gh pr view, gh issue view, gh api).
 `
 
+// makeSecondaryModelPrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function makeSecondaryModelPrompt(
   markdownContent: string,
   prompt: string,
   isPreapprovedDomain: boolean,
 ): string {
+  // guidelines 集合 命名 `isPreapprovedDomain`，让后续代码直接表达这个值的用途。
   const guidelines = isPreapprovedDomain
     ? `Provide a concise response based on the content above. Include relevant details, code examples, and documentation excerpts as needed.`
     : `Provide a concise response based only on the content above. In your response:
@@ -33,6 +37,7 @@ export function makeSecondaryModelPrompt(
  - You are not a lawyer and never comment on the legality of your own prompts and responses.
  - Never produce or reproduce exact song lyrics.`
 
+  // 返回 ```，作为工具调用这次计算的结果。
   return `
 Web page content:
 ---

@@ -6,16 +6,24 @@
  * Follows the same patterns as BashTool/pathValidation.ts.
  */
 
+// 引入 homedir，将 os 中已经封装好的能力接到本文件流程里。
 import { homedir } from 'os'
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { isAbsolute, resolve } from 'path'
+// 类型依赖 { ToolPermissionContext } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolPermissionContext } from '../../Tool.js'
+// 类型依赖 { PermissionRule } 来自 ../../types/permissions.js，用于校准工具调用的数据契约。
 import type { PermissionRule } from '../../types/permissions.js'
+// 复用 getCwd 工具函数，把通用处理留在 ../../utils/cwd.js 中维护。
 import { getCwd } from '../../utils/cwd.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   getFsImplementation,
   safeResolvePath,
 } from '../../utils/fsOperations.js'
+// 复用 containsPathTraversal、getDirectoryForPath 工具函数，把通用处理留在 ../../utils/path.js 中维护。
 import { containsPathTraversal, getDirectoryForPath } from '../../utils/path.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   allWorkingDirectories,
   checkEditableInternalPath,
@@ -24,38 +32,52 @@ import {
   matchingRuleForInput,
   pathInAllowedWorkingPath,
 } from '../../utils/permissions/filesystem.js'
+// 类型依赖 { PermissionResult } 来自 ../../utils/permissions/PermissionResult.js，用于校准工具调用的数据契约。
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+// 复用 createReadRuleSuggestion 工具函数，把通用处理留在 ../../utils/permissions/PermissionUpdate.js 中维护。
 import { createReadRuleSuggestion } from '../../utils/permissions/PermissionUpdate.js'
+// 类型依赖 { PermissionUpdate } 来自 ../../utils/permissions/PermissionUpdateSchema.js，用于校准工具调用的数据契约。
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   isDangerousRemovalPath,
   isPathInSandboxWriteAllowlist,
 } from '../../utils/permissions/pathValidation.js'
+// 复用 getPlatform 工具函数，把通用处理留在 ../../utils/platform.js 中维护。
 import { getPlatform } from '../../utils/platform.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import type {
   ParsedCommandElement,
   ParsedPowerShellCommand,
 } from '../../utils/powershell/parser.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   isNullRedirectionTarget,
   isPowerShellParameter,
 } from '../../utils/powershell/parser.js'
+// 引入 COMMON_SWITCHES、COMMON_VALUE_PARAMS，将 ./commonParameters.js 中已经封装好的能力接到本文件流程里。
 import { COMMON_SWITCHES, COMMON_VALUE_PARAMS } from './commonParameters.js'
+// 引入 resolveToCanonical，将 ./readOnlyValidation.js 中已经封装好的能力接到本文件流程里。
 import { resolveToCanonical } from './readOnlyValidation.js'
 
+// MAX_DIRS_TO_LIST 集合 命名 `5`，让后续代码直接表达这个值的用途。
 const MAX_DIRS_TO_LIST = 5
 // PowerShell wildcards are only * ? [ ] — braces are LITERAL characters
 // (no brace expansion). Including {} mis-routed paths like `./{x}/passwd`
 // through glob-base truncation instead of full-path symlink resolution.
+// GLOB_PATTERN_REGEX保存`/[*?[\]]/`，供工具实现 path Validation后续判断或输出使用。
 const GLOB_PATTERN_REGEX = /[*?[\]]/
 
+// FileOperationType 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type FileOperationType = 'read' | 'write' | 'create'
 
+// PathCheckResult 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type PathCheckResult = {
   allowed: boolean
   decisionReason?: import('../../utils/permissions/PermissionResult.js').PermissionDecisionReason
 }
 
+// ResolvedPathCheckResult 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type ResolvedPathCheckResult = PathCheckResult & {
   resolvedPath: string
 }
@@ -85,6 +107,7 @@ type ResolvedPathCheckResult = PathCheckResult & {
  *
  * Parameter names are lowercase with leading dash to match runtime comparison.
  */
+// CmdletPathConfig 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type CmdletPathConfig = {
   operationType: FileOperationType
   /** Parameter names that accept file paths (validated against allowed directories) */
@@ -121,6 +144,7 @@ type CmdletPathConfig = {
   optionalWrite?: boolean
 }
 
+// CMDLET_PATH_CONFIG 命令数据 集中保存工具实现 path Validation要一起传递的字段。
 const CMDLET_PATH_CONFIG: Record<string, CmdletPathConfig> = {
   // ─── Write/create operations ──────────────────────────────────────────────
   'set-content': {
@@ -769,15 +793,20 @@ const CMDLET_PATH_CONFIG: Record<string, CmdletPathConfig> = {
  * in the given param list, accounting for PowerShell's prefix-matching behavior
  * (e.g., -Lit matches -LiteralPath).
  */
+// matchesParam 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function matchesParam(paramLower: string, paramList: string[]): boolean {
+  // 按顺序遍历 `paramList` 中的p，逐个交给工具调用处理。
   for (const p of paramList) {
+    // 工具调用在这里按实际状态进入对应分支。
     if (
       p === paramLower ||
       (paramLower.length > 1 && p.startsWith(paramLower))
     ) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
     }
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -790,7 +819,9 @@ function matchesParam(paramLower: string, paramList: string[]): boolean {
  * Used in three branches of extractPathsFromCommand: pathParams,
  * leafOnlyPathParams, and the unknown-param defense-in-depth branch.
  */
+// hasComplexColonValue 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function hasComplexColonValue(rawValue: string): boolean {
+  // 返回 `(`，作为工具调用这次计算的结果。
   return (
     rawValue.includes(',') ||
     rawValue.startsWith('(') ||
@@ -802,29 +833,40 @@ function hasComplexColonValue(rawValue: string): boolean {
   )
 }
 
+// formatDirectoryList 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatDirectoryList(directories: string[]): string {
+  // dirCount 数量 命名 `directories.length`，让后续代码直接表达这个值的用途。
   const dirCount = directories.length
+  // 满足 `dirCount <= MAX_DIRS_TO_LIST` 时，工具调用执行该分支。
   if (dirCount <= MAX_DIRS_TO_LIST) {
+    // 返回 `directories.map(dir => `'${dir}'`).join(', ')`，作为工具调用这次计算的结果。
     return directories.map(dir => `'${dir}'`).join(', ')
   }
+  // firstDirs 集合保存`directories`，供工具实现 path Validation后续判断或输出使用。
   const firstDirs = directories
     .slice(0, MAX_DIRS_TO_LIST)
+    // 链式调用 map，继续加工上一行在工具调用中产生的数据。
     .map(dir => `'${dir}'`)
     .join(', ')
+  // 返回 ``${firstDirs}, and ${dirCount - MAX_DIRS_TO_LIST} more``，作为工具调用这次计算的结果。
   return `${firstDirs}, and ${dirCount - MAX_DIRS_TO_LIST} more`
 }
 
 /**
  * Expands tilde (~) at the start of a path to the user's home directory.
  */
+// expandTilde 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function expandTilde(filePath: string): string {
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     filePath === '~' ||
     filePath.startsWith('~/') ||
     filePath.startsWith('~\\')
   ) {
+    // 返回 `homedir() + filePath.slice(1)`，作为工具调用这次计算的结果。
     return homedir() + filePath.slice(1)
   }
+  // 返回 `filePath`，作为工具调用这次计算的结果。
   return filePath
 }
 
@@ -837,15 +879,20 @@ function expandTilde(filePath: string): string {
  * backslash-normalized form catches the dangerous shapes (/, ~, /etc, /usr)
  * as the user typed them.
  */
+// isDangerousRemovalRawPath 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isDangerousRemovalRawPath(filePath: string): boolean {
+  // expanded保存`expandTilde`，供工具调用后续处理使用。
   const expanded = expandTilde(filePath.replace(/^['"]|['"]$/g, '')).replace(
     /\\/g,
     '/',
   )
+  // 返回 isDangerousRemovalPath(expanded)，把工具调用这个分支的结果交还调用方。
   return isDangerousRemovalPath(expanded)
 }
 
+// dangerousRemovalDeny 承担工具调用中的独立步骤，串起工具实现 path Validation需要的输入整理、状态更新和结果输出。
 export function dangerousRemovalDeny(path: string): PermissionResult {
+  // 返回 {，把工具调用这个分支的结果交还调用方。
   return {
     behavior: 'deny',
     message: `Remove-Item on system path '${path}' is blocked. This path is protected from removal.`,
@@ -860,22 +907,27 @@ export function dangerousRemovalDeny(path: string): PermissionResult {
  * Checks if a resolved path is allowed for the given operation type.
  * Mirrors the logic in BashTool/pathValidation.ts isPathAllowed.
  */
+// isPathAllowed 承担工具调用中的独立步骤，串起工具实现 path Validation需要的输入整理、状态更新和结果输出。
 function isPathAllowed(
   resolvedPath: string,
   context: ToolPermissionContext,
   operationType: FileOperationType,
   precomputedPathsToCheck?: readonly string[],
 ): PathCheckResult {
+  // permissionType 权限数据记录当前扫描状态，工具实现 path Validation随后按该状态分支。
   const permissionType = operationType === 'read' ? 'read' : 'edit'
 
   // 1. Check deny rules first
+  // denyRule保存`matchingRuleForInput`，供工具调用后续处理使用。
   const denyRule = matchingRuleForInput(
     resolvedPath,
     context,
     permissionType,
     'deny',
   )
+  // `denyRule` 与 `null` 不一致时刷新派生状态。
   if (denyRule !== null) {
+    // 返回 {，把工具调用这个分支的结果交还调用方。
     return {
       allowed: false,
       decisionReason: { type: 'rule', rule: denyRule },
@@ -886,9 +938,13 @@ function isPathAllowed(
   // This MUST come before checkPathSafetyForAutoEdit since .claude is a dangerous directory
   // and internal editable paths live under ~/.claude/ — matching the ordering in
   // checkWritePermissionForTool (filesystem.ts step 1.5)
+  // `operationType` 与 `'read'` 不一致时刷新派生状态。
   if (operationType !== 'read') {
+    // internalEditResult读取`checkEditableInternalPath`，供工具调用后续处理使用。
     const internalEditResult = checkEditableInternalPath(resolvedPath, {})
+    // `internalEditResult.behavior` 命中特定值 `'allow'` 时，进入工具调用对应处理。
     if (internalEditResult.behavior === 'allow') {
+      // 返回 {，把工具调用这个分支的结果交还调用方。
       return {
         allowed: true,
         decisionReason: internalEditResult.decisionReason,
@@ -897,12 +953,16 @@ function isPathAllowed(
   }
 
   // 2.5. For write/create operations, check safety validations
+  // `operationType` 与 `'read'` 不一致时刷新派生状态。
   if (operationType !== 'read') {
+    // safetyCheck读取`checkPathSafetyForAutoEdit`，供工具调用后续处理使用。
     const safetyCheck = checkPathSafetyForAutoEdit(
       resolvedPath,
       precomputedPathsToCheck,
     )
+    // safetyCheck.safe缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!safetyCheck.safe) {
+      // 返回 {，把工具调用这个分支的结果交还调用方。
       return {
         allowed: false,
         decisionReason: {
@@ -915,21 +975,29 @@ function isPathAllowed(
   }
 
   // 3. Check if path is in allowed working directory
+  // isInWorkingDir保存`pathInAllowedWorkingPath`，供工具调用后续处理使用。
   const isInWorkingDir = pathInAllowedWorkingPath(
     resolvedPath,
     context,
     precomputedPathsToCheck,
   )
+  // 满足 `isInWorkingDir` 时，工具调用执行该分支。
   if (isInWorkingDir) {
+    // 只有 `operationType === 'read' || context.mode === 'acc` 满足时，工具调用才执行该分支。
     if (operationType === 'read' || context.mode === 'acceptEdits') {
+      // 返回 { allowed: true }，把工具调用这个分支的结果交还调用方。
       return { allowed: true }
     }
   }
 
   // 3.5. For read operations, check internal readable paths
+  // `operationType` 命中特定值 `'read'` 时，进入工具调用对应处理。
   if (operationType === 'read') {
+    // internalReadResult读取`checkReadableInternalPath`，供工具调用后续处理使用。
     const internalReadResult = checkReadableInternalPath(resolvedPath, {})
+    // `internalReadResult.behavior` 命中特定值 `'allow'` 时，进入工具调用对应处理。
     if (internalReadResult.behavior === 'allow') {
+      // 返回 {，把工具调用这个分支的结果交还调用方。
       return {
         allowed: true,
         decisionReason: internalReadResult.decisionReason,
@@ -944,11 +1012,13 @@ function isPathAllowed(
   // New-Item don't prompt unnecessarily. Paths IN the working directory are
   // excluded: the sandbox allowlist always seeds '.' (cwd), which would
   // bypass the acceptEdits gate at step 3.
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     operationType !== 'read' &&
     !isInWorkingDir &&
     isPathInSandboxWriteAllowlist(resolvedPath)
   ) {
+    // 返回 {，把工具调用这个分支的结果交还调用方。
     return {
       allowed: true,
       decisionReason: {
@@ -959,13 +1029,16 @@ function isPathAllowed(
   }
 
   // 4. Check allow rules
+  // allowRule保存`matchingRuleForInput`，供工具调用后续处理使用。
   const allowRule = matchingRuleForInput(
     resolvedPath,
     context,
     permissionType,
     'allow',
   )
+  // `allowRule` 与 `null` 不一致时刷新派生状态。
   if (allowRule !== null) {
+    // 返回 {，把工具调用这个分支的结果交还调用方。
     return {
       allowed: true,
       decisionReason: { type: 'rule', rule: allowRule },
@@ -973,6 +1046,7 @@ function isPathAllowed(
   }
 
   // 5. Path is not allowed
+  // 返回 { allowed: false }，把工具调用这个分支的结果交还调用方。
   return { allowed: false }
 }
 
@@ -981,6 +1055,7 @@ function isPathAllowed(
  * ONLY checks deny rules — never auto-allows. If the stripped guess
  * doesn't match a deny rule, we fall through to ask as before.
  */
+// checkDenyRuleForGuessedPath 承担工具调用中的独立步骤，串起工具实现 path Validation需要的输入整理、状态更新和结果输出。
 function checkDenyRuleForGuessedPath(
   strippedPath: string,
   cwd: string,
@@ -989,27 +1064,35 @@ function checkDenyRuleForGuessedPath(
 ): { resolvedPath: string; rule: PermissionRule } | null {
   // Red-team P7: null bytes make expandPath throw. Pre-existing but
   // defend here since we're introducing a new call path.
+  // 判断 !strippedPath || strippedPath.includes('\0')，将工具调用分流到只适用于该条件的处理路径。
   if (!strippedPath || strippedPath.includes('\0')) return null
   // Red-team P3: `~/.ssh/x strips to ~/.ssh/x but expandTilde only fires
   // on leading ~ — the backtick was in front of it. Re-run here.
+  // tildeExpanded保存`expandTilde`，供工具调用后续处理使用。
   const tildeExpanded = expandTilde(strippedPath)
+  // abs 集合保存`isAbsolute`，供工具调用后续处理使用。
   const abs = isAbsolute(tildeExpanded)
     ? tildeExpanded
     : resolve(cwd, tildeExpanded)
+  // 从 `safeResolvePath(getFsImplementation(), abs)` 解构 resolvedPath，减少工具实现 path Validation对同一对象的重复访问。
   const { resolvedPath } = safeResolvePath(getFsImplementation(), abs)
+  // permissionType 权限数据记录当前扫描状态，工具实现 path Validation随后按该状态分支。
   const permissionType = operationType === 'read' ? 'read' : 'edit'
+  // denyRule保存`matchingRuleForInput`，供工具调用后续处理使用。
   const denyRule = matchingRuleForInput(
     resolvedPath,
     toolPermissionContext,
     permissionType,
     'deny',
   )
+  // 返回 denyRule ? { resolvedPath, rule: denyRule } : null，把工具调用这个分支的结果交还调用方。
   return denyRule ? { resolvedPath, rule: denyRule } : null
 }
 
 /**
  * Validates a file system path, handling tilde expansion.
  */
+// validatePath 承担工具调用中的独立步骤，串起工具实现 path Validation需要的输入整理、状态更新和结果输出。
 function validatePath(
   filePath: string,
   cwd: string,
@@ -1017,24 +1100,28 @@ function validatePath(
   operationType: FileOperationType,
 ): ResolvedPathCheckResult {
   // Remove surrounding quotes if present
+  // cleanPath 文件数据保存`expandTilde`，供工具调用后续处理使用。
   const cleanPath = expandTilde(filePath.replace(/^['"]|['"]$/g, ''))
 
   // SECURITY: PowerShell Core normalizes backslashes to forward slashes on all
   // platforms, but path.resolve on Linux/Mac treats them as literal characters.
   // Normalize before resolution so traversal patterns like dir\..\..\etc\shadow
   // are correctly detected.
+  // normalizedPath 文件数据格式化`cleanPath.replace`，供工具调用后续处理使用。
   const normalizedPath = cleanPath.replace(/\\/g, '/')
 
   // SECURITY: Backtick (`) is PowerShell's escape character. It is a no-op in
   // many positions (e.g., `/ === /) but defeats Node.js path checks like
   // isAbsolute(). Redirection targets use raw .Extent.Text which preserves
   // backtick escapes. Treat any path containing a backtick as unvalidatable.
+  // 满足 `normalizedPath.includes('`')` 时，工具调用执行该分支。
   if (normalizedPath.includes('`')) {
     // Red-team P3: backtick is already resolved for StringConstant args
     // (parser uses .value); this guard primarily fires for redirection
     // targets which use raw .Extent.Text. Strip is a no-op for most special
     // escapes (`n → n) but that's fine — wrong guess → no deny match →
     // falls to ask.
+    // backtickStripped格式化`normalizedPath.replace`，供工具调用后续处理使用。
     const backtickStripped = normalizedPath.replace(/`/g, '')
     const denyHit = checkDenyRuleForGuessedPath(
       backtickStripped,
@@ -1656,15 +1743,20 @@ function checkPathConstraintsForStatement(
       // Remove-Item` should DENY (not ask) when Edit(.git/**) is configured.
       // Strip surrounding quotes (string literals are quoted in .text) and
       // feed through the same deny-guess helper used for ::/backtick paths.
+      // `pipelineSourceText` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (pipelineSourceText !== undefined) {
+        // stripped格式化`pipelineSourceText.replace`，供工具调用后续处理使用。
         const stripped = pipelineSourceText.replace(/^['"]|['"]$/g, '')
+        // denyHit读取`checkDenyRuleForGuessedPath`，供工具调用后续处理使用。
         const denyHit = checkDenyRuleForGuessedPath(
           stripped,
           cwd,
           toolPermissionContext,
           operationType,
         )
+        // 满足 `denyHit` 时，工具调用执行该分支。
         if (denyHit) {
+          // 返回 {，把工具调用这个分支的结果交还调用方。
           return {
             behavior: 'deny',
             message: `${canonical} targeting '${denyHit.resolvedPath}' was blocked by a deny rule`,
@@ -1672,6 +1764,7 @@ function checkPathConstraintsForStatement(
           }
         }
       }
+      // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
       firstAsk ??= {
         behavior: 'ask',
         message: `${canonical} receives its path from a pipeline expression source that cannot be statically validated and requires manual approval`,
@@ -1685,8 +1778,11 @@ function checkPathConstraintsForStatement(
     // like `-Path ./safe.txt, /etc/passwd` produces a single 'Other'
     // element whose combined text may resolve within CWD while
     // PowerShell actually writes to ALL paths in the array.
+    // 满足 `hasUnvalidatablePathArg` 时，工具调用执行该分支。
     if (hasUnvalidatablePathArg) {
+      // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
       const canonical = resolveToCanonical(cmd.name)
+      // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
       firstAsk ??= {
         behavior: 'ask',
         message: `${canonical} uses a parameter or complex path expression (array literal, subexpression, unknown parameter, etc.) that cannot be statically validated and requires manual approval`,
@@ -1706,17 +1802,21 @@ function checkPathConstraintsForStatement(
     // -OutFile) are ALSO exempt — they only write to disk when a pathParam is
     // present; without one, output goes to the pipeline. The
     // hasUnvalidatablePathArg check above already covers unknown-param cases.
+    // 工具调用在这里按实际状态进入对应分支。
     if (
       operationType !== 'read' &&
       !optionalWrite &&
       paths.length === 0 &&
       CMDLET_PATH_CONFIG[resolveToCanonical(cmd.name)]
     ) {
+      // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
       const canonical = resolveToCanonical(cmd.name)
+      // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
       firstAsk ??= {
         behavior: 'ask',
         message: `${canonical} is a write operation but no target path could be determined; requires manual approval`,
       }
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue
     }
 
@@ -1725,17 +1825,22 @@ function checkPathConstraintsForStatement(
     // hard-DENIES `rm /`, `rm ~`, `rm /etc`, etc. regardless of user config.
     // Port: remove-item (and aliases rm/del/ri/rd/rmdir/erase → resolveToCanonical)
     // on a dangerous path → deny (not ask). User cannot approve system32 deletion.
+    // isRemoval读取`resolveToCanonical`，供工具调用后续处理使用。
     const isRemoval = resolveToCanonical(cmd.name) === 'remove-item'
 
+    // 遍历 const filePath of paths，让工具调用逐项完成同一类处理。
     for (const filePath of paths) {
       // Hard-deny removal of dangerous system paths (/, ~, /etc, etc.).
       // Check the RAW path (pre-realpath) first: safeResolvePath can
       // canonicalize '/' → 'C:\' (Windows) or '/var/...' → '/private/var/...'
       // (macOS) which defeats isDangerousRemovalPath's string comparisons.
+      // 判断 isRemoval && isDangerousRemovalRawPath(filePath)，将工具调用分流到只适用于该条件的处理路径。
       if (isRemoval && isDangerousRemovalRawPath(filePath)) {
+        // 返回 dangerousRemovalDeny(filePath)，把工具调用这个分支的结果交还调用方。
         return dangerousRemovalDeny(filePath)
       }
 
+      // 从 `validatePath(` 解构 allowed、resolvedPath、decisionReason，减少工具实现 path Validation对同一对象的重复访问。
       const { allowed, resolvedPath, decisionReason } = validatePath(
         filePath,
         cwd,
@@ -1745,24 +1850,33 @@ function checkPathConstraintsForStatement(
 
       // Also check the resolved path — catches symlinks that resolve to a
       // protected location.
+      // 判断 isRemoval && isDangerousRemovalPath(resolvedPath)，将工具调用分流到只适用于该条件的处理路径。
       if (isRemoval && isDangerousRemovalPath(resolvedPath)) {
+        // 返回 dangerousRemovalDeny(resolvedPath)，把工具调用这个分支的结果交还调用方。
         return dangerousRemovalDeny(resolvedPath)
       }
 
+      // allowed缺失时直接走兜底路径，避免工具调用使用无效输入。
       if (!allowed) {
+        // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
         const canonical = resolveToCanonical(cmd.name)
+        // workingDirs 集合保存`Array.from`，供工具调用后续处理使用。
         const workingDirs = Array.from(
           allWorkingDirectories(toolPermissionContext),
         )
+        // dirListStr格式化`formatDirectoryList`，供工具调用后续处理使用。
         const dirListStr = formatDirectoryList(workingDirs)
 
+        // message 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
         const message =
           decisionReason?.type === 'other' ||
           decisionReason?.type === 'safetyCheck'
             ? decisionReason.reason
             : `${canonical} targeting '${resolvedPath}' was blocked. For security, Claude Code may only access files in the allowed working directories for this session: ${dirListStr}.`
 
+        // `decisionReason?.type` 命中特定值 `'rule'` 时，进入工具调用对应处理。
         if (decisionReason?.type === 'rule') {
+          // 返回 {，把工具调用这个分支的结果交还调用方。
           return {
             behavior: 'deny',
             message,
@@ -1770,17 +1884,24 @@ function checkPathConstraintsForStatement(
           }
         }
 
+        // suggestions 集合从空数组开始收集，后续按处理顺序追加条目。
         const suggestions: PermissionUpdate[] = []
+        // 满足 `resolvedPath` 时，工具调用执行该分支。
         if (resolvedPath) {
+          // `operationType` 命中特定值 `'read'` 时，进入工具调用对应处理。
           if (operationType === 'read') {
+            // suggestion构建`createReadRuleSuggestion`，供工具调用后续处理使用。
             const suggestion = createReadRuleSuggestion(
               getDirectoryForPath(resolvedPath),
               'session',
             )
+            // 满足 `suggestion` 时，工具调用执行该分支。
             if (suggestion) {
+              // suggestions 集合追加新条目，保持收集顺序与输入顺序一致。
               suggestions.push(suggestion)
             }
           } else {
+            // suggestions 集合追加新条目，保持收集顺序与输入顺序一致。
             suggestions.push({
               type: 'addDirectories',
               directories: [getDirectoryForPath(resolvedPath)],
@@ -1789,7 +1910,9 @@ function checkPathConstraintsForStatement(
           }
         }
 
+        // 只有 `operationType === 'write' || operationType === 'c` 满足时，工具调用才执行该分支。
         if (operationType === 'write' || operationType === 'create') {
+          // suggestions 集合追加新条目，保持收集顺序与输入顺序一致。
           suggestions.push({
             type: 'setMode',
             mode: 'acceptEdits',
@@ -1797,6 +1920,7 @@ function checkPathConstraintsForStatement(
           })
         }
 
+        // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
         firstAsk ??= {
           behavior: 'ask',
           message,
@@ -1809,13 +1933,19 @@ function checkPathConstraintsForStatement(
   }
 
   // Also check nested commands from control flow
+  // 满足 `statement.nestedCommands` 时，工具调用执行该分支。
   if (statement.nestedCommands) {
+    // 遍历 const cmd of statement.nestedCommands，让工具调用逐项完成同一类处理。
     for (const cmd of statement.nestedCommands) {
+      // 工具实现 path Validation先整理这一处局部数据，后续分支可以直接读取。
       const { paths, operationType, hasUnvalidatablePathArg, optionalWrite } =
         extractPathsFromCommand(cmd)
 
+      // 满足 `hasUnvalidatablePathArg` 时，工具调用执行该分支。
       if (hasUnvalidatablePathArg) {
+        // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
         const canonical = resolveToCanonical(cmd.name)
+        // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
         firstAsk ??= {
           behavior: 'ask',
           message: `${canonical} uses a parameter or complex path expression (array literal, subexpression, unknown parameter, etc.) that cannot be statically validated and requires manual approval`,
@@ -1825,17 +1955,21 @@ function checkPathConstraintsForStatement(
 
       // SECURITY: Write cmdlet with zero extracted paths (mirrors main loop).
       // optionalWrite cmdlets exempt — see main-loop comment.
+      // 工具调用在这里按实际状态进入对应分支。
       if (
         operationType !== 'read' &&
         !optionalWrite &&
         paths.length === 0 &&
         CMDLET_PATH_CONFIG[resolveToCanonical(cmd.name)]
       ) {
+        // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
         const canonical = resolveToCanonical(cmd.name)
+        // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
         firstAsk ??= {
           behavior: 'ask',
           message: `${canonical} is a write operation but no target path could be determined; requires manual approval`,
         }
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue
       }
 
@@ -1843,14 +1977,19 @@ function checkPathConstraintsForStatement(
       // paths — mirror the main-loop check above. Without this,
       // `if ($true) { Remove-Item / }` routes through nestedCommands and
       // downgrades deny→ask, letting the user approve root deletion.
+      // isRemoval读取`resolveToCanonical`，供工具调用后续处理使用。
       const isRemoval = resolveToCanonical(cmd.name) === 'remove-item'
 
+      // 遍历 const filePath of paths，让工具调用逐项完成同一类处理。
       for (const filePath of paths) {
         // Check the RAW path first (pre-realpath); see main-loop comment.
+        // 判断 isRemoval && isDangerousRemovalRawPath(filePath)，将工具调用分流到只适用于该条件的处理路径。
         if (isRemoval && isDangerousRemovalRawPath(filePath)) {
+          // 返回 dangerousRemovalDeny(filePath)，把工具调用这个分支的结果交还调用方。
           return dangerousRemovalDeny(filePath)
         }
 
+        // 从 `validatePath(` 解构 allowed、resolvedPath、decisionReason，减少工具实现 path Validation对同一对象的重复访问。
         const { allowed, resolvedPath, decisionReason } = validatePath(
           filePath,
           cwd,
@@ -1858,24 +1997,33 @@ function checkPathConstraintsForStatement(
           operationType,
         )
 
+        // 判断 isRemoval && isDangerousRemovalPath(resolvedPath)，将工具调用分流到只适用于该条件的处理路径。
         if (isRemoval && isDangerousRemovalPath(resolvedPath)) {
+          // 返回 dangerousRemovalDeny(resolvedPath)，把工具调用这个分支的结果交还调用方。
           return dangerousRemovalDeny(resolvedPath)
         }
 
+        // allowed缺失时直接走兜底路径，避免工具调用使用无效输入。
         if (!allowed) {
+          // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
           const canonical = resolveToCanonical(cmd.name)
+          // workingDirs 集合保存`Array.from`，供工具调用后续处理使用。
           const workingDirs = Array.from(
             allWorkingDirectories(toolPermissionContext),
           )
+          // dirListStr格式化`formatDirectoryList`，供工具调用后续处理使用。
           const dirListStr = formatDirectoryList(workingDirs)
 
+          // message 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
           const message =
             decisionReason?.type === 'other' ||
             decisionReason?.type === 'safetyCheck'
               ? decisionReason.reason
               : `${canonical} targeting '${resolvedPath}' was blocked. For security, Claude Code may only access files in the allowed working directories for this session: ${dirListStr}.`
 
+          // `decisionReason?.type` 命中特定值 `'rule'` 时，进入工具调用对应处理。
           if (decisionReason?.type === 'rule') {
+            // 返回 {，把工具调用这个分支的结果交还调用方。
             return {
               behavior: 'deny',
               message,
@@ -1883,17 +2031,24 @@ function checkPathConstraintsForStatement(
             }
           }
 
+          // suggestions 集合从空数组开始收集，后续按处理顺序追加条目。
           const suggestions: PermissionUpdate[] = []
+          // 满足 `resolvedPath` 时，工具调用执行该分支。
           if (resolvedPath) {
+            // `operationType` 命中特定值 `'read'` 时，进入工具调用对应处理。
             if (operationType === 'read') {
+              // suggestion构建`createReadRuleSuggestion`，供工具调用后续处理使用。
               const suggestion = createReadRuleSuggestion(
                 getDirectoryForPath(resolvedPath),
                 'session',
               )
+              // 满足 `suggestion` 时，工具调用执行该分支。
               if (suggestion) {
+                // suggestions 集合追加新条目，保持收集顺序与输入顺序一致。
                 suggestions.push(suggestion)
               }
             } else {
+              // suggestions 集合追加新条目，保持收集顺序与输入顺序一致。
               suggestions.push({
                 type: 'addDirectories',
                 directories: [getDirectoryForPath(resolvedPath)],
@@ -1902,7 +2057,9 @@ function checkPathConstraintsForStatement(
             }
           }
 
+          // 只有 `operationType === 'write' || operationType === 'c` 满足时，工具调用才执行该分支。
           if (operationType === 'write' || operationType === 'create') {
+            // suggestions 集合追加新条目，保持收集顺序与输入顺序一致。
             suggestions.push({
               type: 'setMode',
               mode: 'acceptEdits',
@@ -1910,6 +2067,7 @@ function checkPathConstraintsForStatement(
             })
           }
 
+          // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
           firstAsk ??= {
             behavior: 'ask',
             message,
@@ -1925,7 +2083,9 @@ function checkPathConstraintsForStatement(
       // this is belt-and-suspenders so the nested loop doesn't rely on that
       // accident. Placed AFTER the path loop so specific asks (blockedPath,
       // suggestions) win via ??=.
+      // 满足 `hasExpressionPipelineSource` 时，工具调用执行该分支。
       if (hasExpressionPipelineSource) {
+        // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
         firstAsk ??= {
           behavior: 'ask',
           message: `${resolveToCanonical(cmd.name)} appears inside a control-flow or chain statement where piped expression sources cannot be statically validated and requires manual approval`,
@@ -1935,14 +2095,22 @@ function checkPathConstraintsForStatement(
   }
 
   // Check redirections on nested commands (e.g., from && / || chains)
+  // 满足 `statement.nestedCommands` 时，工具调用执行该分支。
   if (statement.nestedCommands) {
+    // 遍历 const cmd of statement.nestedCommands，让工具调用逐项完成同一类处理。
     for (const cmd of statement.nestedCommands) {
+      // 满足 `cmd.redirections` 时，工具调用执行该分支。
       if (cmd.redirections) {
+        // 遍历 const redir of cmd.redirections，让工具调用逐项完成同一类处理。
         for (const redir of cmd.redirections) {
+          // 判断 redir.isMerging，将工具调用分流到只适用于该条件的处理路径。
           if (redir.isMerging) continue
+          // 判断 !redir.target，将工具调用分流到只适用于该条件的处理路径。
           if (!redir.target) continue
+          // 判断 isNullRedirectionTarget(redir.target)，将工具调用分流到只适用于该条件的处理路径。
           if (isNullRedirectionTarget(redir.target)) continue
 
+          // 从 `validatePath(` 解构 allowed、resolvedPath、decisionReason，减少工具实现 path Validation对同一对象的重复访问。
           const { allowed, resolvedPath, decisionReason } = validatePath(
             redir.target,
             cwd,
@@ -1950,19 +2118,25 @@ function checkPathConstraintsForStatement(
             'create',
           )
 
+          // allowed缺失时直接走兜底路径，避免工具调用使用无效输入。
           if (!allowed) {
+            // workingDirs 集合保存`Array.from`，供工具调用后续处理使用。
             const workingDirs = Array.from(
               allWorkingDirectories(toolPermissionContext),
             )
+            // dirListStr格式化`formatDirectoryList`，供工具调用后续处理使用。
             const dirListStr = formatDirectoryList(workingDirs)
 
+            // message 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
             const message =
               decisionReason?.type === 'other' ||
               decisionReason?.type === 'safetyCheck'
                 ? decisionReason.reason
                 : `Output redirection to '${resolvedPath}' was blocked. For security, Claude Code may only write to files in the allowed working directories for this session: ${dirListStr}.`
 
+            // `decisionReason?.type` 命中特定值 `'rule'` 时，进入工具调用对应处理。
             if (decisionReason?.type === 'rule') {
+              // 返回 {，把工具调用这个分支的结果交还调用方。
               return {
                 behavior: 'deny',
                 message,
@@ -1970,6 +2144,7 @@ function checkPathConstraintsForStatement(
               }
             }
 
+            // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
             firstAsk ??= {
               behavior: 'ask',
               message,
@@ -1990,12 +2165,18 @@ function checkPathConstraintsForStatement(
   }
 
   // Check file redirections
+  // 满足 `statement.redirections` 时，工具调用执行该分支。
   if (statement.redirections) {
+    // 遍历 const redir of statement.redirections，让工具调用逐项完成同一类处理。
     for (const redir of statement.redirections) {
+      // 判断 redir.isMerging，将工具调用分流到只适用于该条件的处理路径。
       if (redir.isMerging) continue
+      // 判断 !redir.target，将工具调用分流到只适用于该条件的处理路径。
       if (!redir.target) continue
+      // 判断 isNullRedirectionTarget(redir.target)，将工具调用分流到只适用于该条件的处理路径。
       if (isNullRedirectionTarget(redir.target)) continue
 
+      // 从 `validatePath(` 解构 allowed、resolvedPath、decisionReason，减少工具实现 path Validation对同一对象的重复访问。
       const { allowed, resolvedPath, decisionReason } = validatePath(
         redir.target,
         cwd,
@@ -2003,19 +2184,25 @@ function checkPathConstraintsForStatement(
         'create',
       )
 
+      // allowed缺失时直接走兜底路径，避免工具调用使用无效输入。
       if (!allowed) {
+        // workingDirs 集合保存`Array.from`，供工具调用后续处理使用。
         const workingDirs = Array.from(
           allWorkingDirectories(toolPermissionContext),
         )
+        // dirListStr格式化`formatDirectoryList`，供工具调用后续处理使用。
         const dirListStr = formatDirectoryList(workingDirs)
 
+        // message 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
         const message =
           decisionReason?.type === 'other' ||
           decisionReason?.type === 'safetyCheck'
             ? decisionReason.reason
             : `Output redirection to '${resolvedPath}' was blocked. For security, Claude Code may only write to files in the allowed working directories for this session: ${dirListStr}.`
 
+        // `decisionReason?.type` 命中特定值 `'rule'` 时，进入工具调用对应处理。
         if (decisionReason?.type === 'rule') {
+          // 返回 {，把工具调用这个分支的结果交还调用方。
           return {
             behavior: 'deny',
             message,
@@ -2023,6 +2210,7 @@ function checkPathConstraintsForStatement(
           }
         }
 
+        // 工具实现 path Validation处理 `firstAsk ??= {`，完成这一小步状态转换。
         firstAsk ??= {
           behavior: 'ask',
           message,
@@ -2040,6 +2228,7 @@ function checkPathConstraintsForStatement(
     }
   }
 
+  // 返回 (，把工具调用这个分支的结果交还调用方。
   return (
     firstAsk ?? {
       behavior: 'passthrough',

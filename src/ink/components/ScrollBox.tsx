@@ -1,13 +1,24 @@
+// 引入 React、PropsWithChildren、Ref、useImperativeHandle、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { type PropsWithChildren, type Ref, useImperativeHandle, useRef, useState } from 'react';
+// 类型依赖 { Except } 来自 type-fest，用于校准终端渲染的数据契约。
 import type { Except } from 'type-fest';
+// 引入 markScrollActivity，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { markScrollActivity } from '../../bootstrap/state.js';
+// 类型依赖 { DOMElement } 来自 ../dom.js，用于校准终端渲染的数据契约。
 import type { DOMElement } from '../dom.js';
+// 引入 markDirty、scheduleRenderFrom，将 ../dom.js 中已经封装好的能力接到本文件流程里。
 import { markDirty, scheduleRenderFrom } from '../dom.js';
+// 引入 markCommitStart，将 ../reconciler.js 中已经封装好的能力接到本文件流程里。
 import { markCommitStart } from '../reconciler.js';
+// 类型依赖 { Styles } 来自 ../styles.js，用于校准终端渲染的数据契约。
 import type { Styles } from '../styles.js';
+// 引入 Box，将 ./Box.js 中已经封装好的能力接到本文件流程里。
 import Box from './Box.js';
+// ScrollBoxHandle 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ScrollBoxHandle = {
+  // 这个回调绑定到 scrollTo: (y: number) => void;，负责终端渲染在该局部场景下的响应。
   scrollTo: (y: number) => void;
+  // 这个回调绑定到 scrollBy: (dy: number) => void;，负责终端渲染在该局部场景下的响应。
   scrollBy: (dy: number) => void;
   /**
    * Scroll so `el`'s top is at the viewport top (plus `offset`). Unlike
@@ -16,10 +27,15 @@ export type ScrollBoxHandle = {
    * render-node-to-output reads `el.yogaNode.getComputedTop()` in the
    * SAME Yoga pass that computes scrollHeight. Deterministic. One-shot.
    */
+  // 这个回调绑定到 scrollToElement: (el: DOMElement, offset?: number) => void;，负责终端渲染在该局部场景下的响应。
   scrollToElement: (el: DOMElement, offset?: number) => void;
+  // 这个回调绑定到 scrollToBottom: () => void;，负责终端渲染在该局部场景下的响应。
   scrollToBottom: () => void;
+  // 这个回调绑定到 getScrollTop: () => number;，负责终端渲染在该局部场景下的响应。
   getScrollTop: () => number;
+  // 这个回调绑定到 getPendingDelta: () => number;，负责终端渲染在该局部场景下的响应。
   getPendingDelta: () => number;
+  // 这个回调绑定到 getScrollHeight: () => number;，负责终端渲染在该局部场景下的响应。
   getScrollHeight: () => number;
   /**
    * Like getScrollHeight, but reads Yoga directly instead of the cached
@@ -27,12 +43,15 @@ export type ScrollBoxHandle = {
    * Use when you need a fresh value in useLayoutEffect after a React commit
    * that grew content. Slightly more expensive (native Yoga call).
    */
+  // 这个回调绑定到 getFreshScrollHeight: () => number;，负责终端渲染在该局部场景下的响应。
   getFreshScrollHeight: () => number;
+  // 这个回调绑定到 getViewportHeight: () => number;，负责终端渲染在该局部场景下的响应。
   getViewportHeight: () => number;
   /**
    * Absolute screen-buffer row of the first visible content line (inside
    * padding). Used for drag-to-scroll edge detection.
    */
+  // 这个回调绑定到 getViewportTop: () => number;，负责终端渲染在该局部场景下的响应。
   getViewportTop: () => number;
   /**
    * True when scroll is pinned to the bottom. Set by scrollToBottom, the
@@ -41,6 +60,7 @@ export type ScrollBoxHandle = {
    * scrollTo/scrollBy. Stable signal for "at bottom" that doesn't depend on
    * layout values (unlike scrollTop+viewportH >= scrollHeight).
    */
+  // 这个回调绑定到 isSticky: () => boolean;，负责终端渲染在该局部场景下的响应。
   isSticky: () => boolean;
   /**
    * Subscribe to imperative scroll changes (scrollTo/scrollBy/scrollToBottom).
@@ -48,6 +68,7 @@ export type ScrollBoxHandle = {
    * happen during Ink's render phase after React has committed. Callers that
    * care about the sticky case should treat "at bottom" as a fallback.
    */
+  // 这个回调绑定到 subscribe: (listener: () => void) => () => void;，负责终端渲染在该局部场景下的响应。
   subscribe: (listener: () => void) => () => void;
   /**
    * Set the render-time scrollTop clamp to the currently-mounted children's
@@ -57,8 +78,10 @@ export type ScrollBoxHandle = {
    * content instead of blank spacer. Pass undefined to disable (sticky,
    * cold start).
    */
+  // 这个回调绑定到 setClampBounds: (min: number | undefined, max: number | undefined) => void;，负责终端渲染在该局部场景下的响应。
   setClampBounds: (min: number | undefined, max: number | undefined) => void;
 };
+// ScrollBoxProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ScrollBoxProps = Except<Styles, 'textWrap' | 'overflow' | 'overflowX' | 'overflowY'> & {
   ref?: Ref<ScrollBoxHandle>;
   /**
@@ -78,12 +101,14 @@ export type ScrollBoxProps = Except<Styles, 'textWrap' | 'overflow' | 'overflowX
  *
  * Works best inside a fullscreen (constrained-height root) Ink tree.
  */
+// ScrollBox 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ScrollBox({
   children,
   ref,
   stickyScroll,
   ...style
 }: PropsWithChildren<ScrollBoxProps>): React.ReactNode {
+  // domRef 引用保存 hook 状态，让终端 UI Scroll Box跨渲染复用同一个容器。
   const domRef = useRef<DOMElement>(null);
   // scrollTo/scrollBy bypass React: they mutate scrollTop on the DOM node,
   // mark it dirty, and call the root's throttled scheduleRender directly.
@@ -93,106 +118,177 @@ function ScrollBox({
   // render — otherwise scheduleRender's leading edge fires on the FIRST
   // event before subsequent events mutate scrollTop. scrollToBottom still
   // forces a React render: sticky is attribute-observed, no DOM-only path.
+  // 状态 由 React state 持有，forceRender 会在用户操作或异步结果返回时触发刷新。
   const [, forceRender] = useState(0);
+  // listenersRef 引用保存`useRef`，供终端渲染后续处理使用。
   const listenersRef = useRef(new Set<() => void>());
+  // renderQueuedRef 引用保存`useRef`，供终端渲染后续处理使用。
   const renderQueuedRef = useRef(false);
+  // notify封装成回调，供终端 UI Scroll Box在事件触发或异步步骤中调用。
   const notify = () => {
+    // 逐项读取 `listenersRef.current) l(` 中的l，按输入顺序推进终端渲染。
     for (const l of listenersRef.current) l();
   };
+  // scrollMutated 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function scrollMutated(el: DOMElement): void {
     // Signal background intervals (IDE poll, LSP poll, GCS fetch, orphan
     // check) to skip their next tick — they compete for the event loop and
     // contributed to 1402ms max frame gaps during scroll drain.
+    // 调用 markScrollActivity，触发终端渲染此处需要的副作用。
     markScrollActivity();
+    // 调用 markDirty，触发终端渲染此处需要的副作用。
     markDirty(el);
+    // 调用 markCommitStart，触发终端渲染此处需要的副作用。
     markCommitStart();
+    // 调用 notify，触发终端渲染此处需要的副作用。
     notify();
+    // 满足 `renderQueuedRef.current` 时，终端渲染执行该分支。
     if (renderQueuedRef.current) return;
+    // current更新为 `true`，确保终端 UI后续读取最新状态。
     renderQueuedRef.current = true;
+    // 调用 queueMicrotask，触发终端渲染此处需要的副作用。
     queueMicrotask(() => {
+      // current更新为 `false`，确保终端 UI后续读取最新状态。
       renderQueuedRef.current = false;
+      // 调用 scheduleRenderFrom，触发终端渲染此处需要的副作用。
       scheduleRenderFrom(el);
     });
   }
+  // useImperativeHandle 使用 ref, ( 完成终端渲染里的对应操作。
   useImperativeHandle(ref, (): ScrollBoxHandle => ({
+    // scrollTo 使用 y: number 完成终端渲染里的对应操作。
     scrollTo(y: number) {
+      // el保存`domRef.current`，供后续判断或组装使用。
       const el = domRef.current;
+      // el缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!el) return;
       // Explicit false overrides the DOM attribute so manual scroll
       // breaks stickiness. Render code checks ?? precedence.
+      // stickyScroll更新为 `false`，确保终端 UI后续读取最新状态。
       el.stickyScroll = false;
+      // pendingScrollDelta更新为 `undefined`，确保终端 UI后续读取最新状态。
       el.pendingScrollDelta = undefined;
+      // scrollAnchor更新为 `undefined`，确保终端 UI后续读取最新状态。
       el.scrollAnchor = undefined;
+      // scrollTop更新为 `Math.max(0, Math.floor(y))`，确保终端 UI后续读取最新状态。
       el.scrollTop = Math.max(0, Math.floor(y));
+      // 调用 scrollMutated，触发终端渲染此处需要的副作用。
       scrollMutated(el);
     },
+    // scrollToElement 使用 el: DOMElement, offset = 0 完成终端渲染里的对应操作。
     scrollToElement(el: DOMElement, offset = 0) {
+      // box 命名 `domRef.current`，让后续代码直接表达这个值的用途。
       const box = domRef.current;
+      // box缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!box) return;
+      // stickyScroll更新为 `false`，确保终端 UI后续读取最新状态。
       box.stickyScroll = false;
+      // pendingScrollDelta更新为 `undefined`，确保终端 UI后续读取最新状态。
       box.pendingScrollDelta = undefined;
+      // scrollAnchor更新为 `{`，确保终端 UI后续读取最新状态。
       box.scrollAnchor = {
         el,
         offset
       };
+      // 调用 scrollMutated，触发终端渲染此处需要的副作用。
       scrollMutated(box);
     },
+    // scrollBy 使用 dy: number 完成终端渲染里的对应操作。
     scrollBy(dy: number) {
+      // el保存`domRef.current`，供后续判断或组装使用。
       const el = domRef.current;
+      // el缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!el) return;
+      // stickyScroll更新为 `false`，确保终端 UI后续读取最新状态。
       el.stickyScroll = false;
       // Wheel input cancels any in-flight anchor seek — user override.
+      // scrollAnchor更新为 `undefined`，确保终端 UI后续读取最新状态。
       el.scrollAnchor = undefined;
       // Accumulate in pendingScrollDelta; renderer drains it at a capped
       // rate so fast flicks show intermediate frames. Pure accumulator:
       // scroll-up followed by scroll-down naturally cancels.
+      // pendingScrollDelta更新为 `(el.pendingScrollDelta ?? 0) + Math.floor(dy)`，确保终端 UI后续读取最新状态。
       el.pendingScrollDelta = (el.pendingScrollDelta ?? 0) + Math.floor(dy);
+      // 调用 scrollMutated，触发终端渲染此处需要的副作用。
       scrollMutated(el);
     },
+    // scrollToBottom 使用 无 完成终端渲染里的对应操作。
     scrollToBottom() {
+      // el保存`domRef.current`，供后续判断或组装使用。
       const el = domRef.current;
+      // el缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!el) return;
+      // pendingScrollDelta更新为 `undefined`，确保终端 UI后续读取最新状态。
       el.pendingScrollDelta = undefined;
+      // stickyScroll更新为 `true`，确保终端 UI后续读取最新状态。
       el.stickyScroll = true;
+      // 调用 markDirty，触发终端渲染此处需要的副作用。
       markDirty(el);
+      // 调用 notify，触发终端渲染此处需要的副作用。
       notify();
+      // 调用 forceRender，触发终端渲染此处需要的副作用。
       forceRender(n => n + 1);
     },
+    // getScrollTop不依赖额外参数，直接计算终端渲染需要的结果。
     getScrollTop() {
+      // 返回 `domRef.current?.scrollTop ?? 0`，作为终端渲染这次计算的结果。
       return domRef.current?.scrollTop ?? 0;
     },
+    // getPendingDelta不依赖额外参数，直接计算终端渲染需要的结果。
     getPendingDelta() {
       // Accumulated-but-not-yet-drained delta. useVirtualScroll needs
       // this to mount the union [committed, committed+pending] range —
       // otherwise intermediate drain frames find no children (blank).
+      // 返回 `domRef.current?.pendingScrollDelta ?? 0`，作为终端渲染这次计算的结果。
       return domRef.current?.pendingScrollDelta ?? 0;
     },
+    // getScrollHeight不依赖额外参数，直接计算终端渲染需要的结果。
     getScrollHeight() {
+      // 返回 `domRef.current?.scrollHeight ?? 0`，作为终端渲染这次计算的结果。
       return domRef.current?.scrollHeight ?? 0;
     },
+    // getFreshScrollHeight不依赖额外参数，直接计算终端渲染需要的结果。
     getFreshScrollHeight() {
+      // 文本内容读取 `domRef.current?.childNodes[0] as DOMElement | undefined` 对应条目，后续围绕该成员继续处理。
       const content = domRef.current?.childNodes[0] as DOMElement | undefined;
+      // 返回 `content?.yogaNode?.getComputedHeight() ?? domRef.current?.scrollHeight ...`，作为终端渲染这次计算的结果。
       return content?.yogaNode?.getComputedHeight() ?? domRef.current?.scrollHeight ?? 0;
     },
+    // getViewportHeight不依赖额外参数，直接计算终端渲染需要的结果。
     getViewportHeight() {
+      // 返回 `domRef.current?.scrollViewportHeight ?? 0`，作为终端渲染这次计算的结果。
       return domRef.current?.scrollViewportHeight ?? 0;
     },
+    // getViewportTop不依赖额外参数，直接计算终端渲染需要的结果。
     getViewportTop() {
+      // 返回 `domRef.current?.scrollViewportTop ?? 0`，作为终端渲染这次计算的结果。
       return domRef.current?.scrollViewportTop ?? 0;
     },
+    // isSticky 用 无 判断终端渲染是否满足条件。
     isSticky() {
+      // el保存`domRef.current`，供后续判断或组装使用。
       const el = domRef.current;
+      // el缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!el) return false;
+      // 返回 `el.stickyScroll ?? Boolean(el.attributes['stickyScroll'])`，作为终端渲染这次计算的结果。
       return el.stickyScroll ?? Boolean(el.attributes['stickyScroll']);
     },
+    // 调用 subscribe，触发终端渲染此处需要的副作用。
     subscribe(listener: () => void) {
+      // 调用 listenersRef.current.add，触发终端渲染此处需要的副作用。
       listenersRef.current.add(listener);
+      // 返回 `() => listenersRef.current.delete(listener)`，作为终端渲染这次计算的结果。
       return () => listenersRef.current.delete(listener);
     },
+    // setClampBounds 根据 min, max 更新终端渲染的状态。
     setClampBounds(min, max) {
+      // el保存`domRef.current`，供后续判断或组装使用。
       const el = domRef.current;
+      // el缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!el) return;
+      // scrollClampMin更新为 `min`，确保终端 UI后续读取最新状态。
       el.scrollClampMin = min;
+      // scrollClampMax更新为 `max`，确保终端 UI后续读取最新状态。
       el.scrollClampMax = max;
     }
   }),
@@ -213,8 +309,11 @@ function ScrollBox({
   // stickyScroll is passed as a DOM attribute (via ink-box directly) so it's
   // available on the first render — ref callbacks fire after the initial
   // commit, which is too late for the first frame.
+  // 返回 `<ink-box ref={el => {`，作为终端渲染这次计算的结果。
   return <ink-box ref={el => {
+    // current更新为 `el`，确保终端 UI后续读取最新状态。
     domRef.current = el;
+    // 满足 `el` 时，终端渲染执行该分支。
     if (el) el.scrollTop ??= 0;
   }} style={{
     flexWrap: 'nowrap',

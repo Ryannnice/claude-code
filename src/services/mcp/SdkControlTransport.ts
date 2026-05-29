@@ -36,12 +36,15 @@
  * - Message IDs are preserved through the entire flow for proper correlation
  */
 
+// 类型依赖 { Transport } 来自 @modelcontextprotocol/sdk/shared/transport.js，用于校准MCP 服务的数据契约。
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
+// 类型依赖 { JSONRPCMessage } 来自 @modelcontextprotocol/sdk/types.js，用于校准MCP 服务的数据契约。
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 
 /**
  * Callback function to send an MCP message and get the response
  */
+// SendMcpMessageCallback 固化MCP 服务里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SendMcpMessageCallback = (
   serverName: string,
   message: JSONRPCMessage,
@@ -57,39 +60,54 @@ export type SendMcpMessageCallback = (
  * It converts MCP protocol messages into control requests that can be sent
  * through stdout/stdin to the SDK process.
  */
+// SdkControlClientTransport 聚合MCP 服务相关状态与操作，把同一职责的行为收束到类实例中。
 export class SdkControlClientTransport implements Transport {
   private isClosed = false
 
   onclose?: () => void
   onerror?: (error: Error) => void
+  // 这个回调绑定到 onmessage?: (message: JSONRPCMessage) => void，负责MCP 服务在该局部场景下的响应。
   onmessage?: (message: JSONRPCMessage) => void
 
+  // 构造函数初始化实例状态，确保MCP 服务后续方法读取到完整配置。
   constructor(
     private serverName: string,
     private sendMcpMessage: SendMcpMessageCallback,
   ) {}
 
+  // start 使用 无 完成MCP 服务里的对应操作。
   async start(): Promise<void> {}
 
+  // send 使用 message: JSONRPCMessage 完成MCP 服务里的对应操作。
   async send(message: JSONRPCMessage): Promise<void> {
+    // 满足 `this.isClosed` 时，MCP 服务执行该分支。
     if (this.isClosed) {
+      // 抛出 new Error('Transport is closed')，阻止MCP 服务在无效状态下继续运行。
       throw new Error('Transport is closed')
     }
 
     // Send the message and wait for the response
+    // 接口响应保存`this.sendMcpMessage`，供MCP 服务后续处理使用。
     const response = await this.sendMcpMessage(this.serverName, message)
 
     // Pass the response back to the MCP client
+    // 满足 `this.onmessage` 时，MCP 服务执行该分支。
     if (this.onmessage) {
+      // 调用 this.onmessage，触发MCP 服务此处需要的副作用。
       this.onmessage(response)
     }
   }
 
+  // close 使用 无 完成MCP 服务里的对应操作。
   async close(): Promise<void> {
+    // 满足 `this.isClosed` 时，MCP 服务执行该分支。
     if (this.isClosed) {
+      // MCP 服务 Sdk Control Transport在这里结束当前路径，避免继续执行不适用的后续分支。
       return
     }
+    // 更新实例字段 isClosed 为 true，同步MCP 服务的内部状态。
     this.isClosed = true
+    // 调用 this.onclose?.()，完成这一处局部操作。
     this.onclose?.()
   }
 }
@@ -106,31 +124,43 @@ export class SdkControlClientTransport implements Transport {
  *
  * Note: Query handles all request/response correlation and async flow.
  */
+// SdkControlServerTransport 聚合MCP 服务相关状态与操作，把同一职责的行为收束到类实例中。
 export class SdkControlServerTransport implements Transport {
   private isClosed = false
 
+  // 构造函数接收 private sendMcpMessage: (message: JSONRPCMessage，把外部输入转成实例内部状态。
   constructor(private sendMcpMessage: (message: JSONRPCMessage) => void) {}
 
   onclose?: () => void
   onerror?: (error: Error) => void
   onmessage?: (message: JSONRPCMessage) => void
 
+  // start 使用 无 完成MCP 服务里的对应操作。
   async start(): Promise<void> {}
 
+  // send 使用 message: JSONRPCMessage 完成MCP 服务里的对应操作。
   async send(message: JSONRPCMessage): Promise<void> {
+    // 满足 `this.isClosed` 时，MCP 服务执行该分支。
     if (this.isClosed) {
+      // 抛出 new Error('Transport is closed')，阻止MCP 服务在无效状态下继续运行。
       throw new Error('Transport is closed')
     }
 
     // Simply pass the response back through the callback
+    // 调用 this.sendMcpMessage，触发MCP 服务此处需要的副作用。
     this.sendMcpMessage(message)
   }
 
+  // close 使用 无 完成MCP 服务里的对应操作。
   async close(): Promise<void> {
+    // 满足 `this.isClosed` 时，MCP 服务执行该分支。
     if (this.isClosed) {
+      // MCP 服务 Sdk Control Transport在这里结束当前路径，避免继续执行不适用的后续分支。
       return
     }
+    // 更新实例字段 isClosed 为 true，同步MCP 服务的内部状态。
     this.isClosed = true
+    // 调用 this.onclose?.()，完成这一处局部操作。
     this.onclose?.()
   }
 }

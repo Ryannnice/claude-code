@@ -1,8 +1,14 @@
+// 类型依赖 { ToolResultBlockParam, ToolUseBlockParam } 来自 @anthropic-ai/sdk/resources/messages/messages.mjs，用于校准终端渲染的数据契约。
 import type { ToolResultBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources/messages/messages.mjs';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 filterToolProgressMessages、findToolByName、Tools，将 ../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { filterToolProgressMessages, findToolByName, type Tools } from '../../Tool.js';
+// 类型依赖 { GroupedToolUseMessage } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { GroupedToolUseMessage } from '../../types/message.js';
+// 类型依赖 { buildMessageLookups } 来自 ../../utils/messages.js，用于校准终端渲染的数据契约。
 import type { buildMessageLookups } from '../../utils/messages.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   message: GroupedToolUseMessage;
   tools: Tools;
@@ -10,6 +16,7 @@ type Props = {
   inProgressToolUseIDs: Set<string>;
   shouldAnimate: boolean;
 };
+// GroupedToolUseContent 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function GroupedToolUseContent({
   message,
   tools,
@@ -17,19 +24,27 @@ export function GroupedToolUseContent({
   inProgressToolUseIDs,
   shouldAnimate
 }: Props): React.ReactNode {
+  // 工具筛选`findToolByName`，供终端渲染后续处理使用。
   const tool = findToolByName(tools, message.toolName);
+  // 满足 `!tool?.renderGroupedToolUse` 时，终端渲染执行该分支。
   if (!tool?.renderGroupedToolUse) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 
   // Build a map from tool_use_id to result data
+  // resultsByToolUseId 命名 `new Map<string, {`，让后续代码直接表达这个值的用途。
   const resultsByToolUseId = new Map<string, {
     param: ToolResultBlockParam;
     output: unknown;
   }>();
+  // 按顺序遍历 `message.results` 中的resultMsg，逐个交给终端渲染处理。
   for (const resultMsg of message.results) {
+    // 按顺序遍历 `resultMsg.message.content` 中的文本内容，逐个交给终端渲染处理。
     for (const content of resultMsg.message.content) {
+      // 当 `content.type` 匹配 `'tool_result'` 时，终端渲染执行对应分支。
       if (content.type === 'tool_result') {
+        // resultsByToolUseId.set 写入新的状态值，使终端渲染后续读取保持一致。
         resultsByToolUseId.set(content.tool_use_id, {
           param: content,
           output: resultMsg.toolUseResult
@@ -37,9 +52,13 @@ export function GroupedToolUseContent({
       }
     }
   }
+  // toolUsesData派生`messages.map`，供终端渲染后续处理使用。
   const toolUsesData = message.messages.map(msg => {
+    // 文本内容 命名 `msg.message.content[0]`，让后续代码直接表达这个值的用途。
     const content = msg.message.content[0];
+    // 结果读取`resultsByToolUseId.get`，供终端渲染后续处理使用。
     const result = resultsByToolUseId.get(content.id);
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       param: content as ToolUseBlockParam,
       isResolved: lookups.resolvedToolUseIDs.has(content.id),
@@ -49,7 +68,9 @@ export function GroupedToolUseContent({
       result
     };
   });
+  // anyInProgress 集合筛选`toolUsesData.some`，供终端渲染后续处理使用。
   const anyInProgress = toolUsesData.some(d => d.isInProgress);
+  // 返回 `tool.renderGroupedToolUse(toolUsesData, {`，作为终端渲染这次计算的结果。
   return tool.renderGroupedToolUse(toolUsesData, {
     shouldAnimate: shouldAnimate && anyInProgress,
     tools

@@ -1,53 +1,87 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useRef, useState } from 'react';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 src/utils/debug.js 中维护。
 import { logForDebugging } from 'src/utils/debug.js';
+// 复用 logError 工具函数，把通用处理留在 src/utils/log.js 中维护。
 import { logError } from 'src/utils/log.js';
+// 引入 useInterval，将 usehooks-ts 中已经封装好的能力接到本文件流程里。
 import { useInterval } from 'usehooks-ts';
+// 引入 useUpdateNotification，将 ../hooks/useUpdateNotification.js 中已经封装好的能力接到本文件流程里。
 import { useUpdateNotification } from '../hooks/useUpdateNotification.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 类型依赖 { AutoUpdaterResult } 来自 ../utils/autoUpdater.js，用于校准终端渲染的数据契约。
 import type { AutoUpdaterResult } from '../utils/autoUpdater.js';
+// 复用 getMaxVersion、getMaxVersionMessage 工具函数，把通用处理留在 ../utils/autoUpdater.js 中维护。
 import { getMaxVersion, getMaxVersionMessage } from '../utils/autoUpdater.js';
+// 复用 isAutoUpdaterDisabled 工具函数，把通用处理留在 ../utils/config.js 中维护。
 import { isAutoUpdaterDisabled } from '../utils/config.js';
+// 复用 installLatest 工具函数，把通用处理留在 ../utils/nativeInstaller/index.js 中维护。
 import { installLatest } from '../utils/nativeInstaller/index.js';
+// 复用 gt 工具函数，把通用处理留在 ../utils/semver.js 中维护。
 import { gt } from '../utils/semver.js';
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../utils/settings/settings.js';
 
 /**
  * Categorize error messages for analytics
  */
+// getErrorType 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getErrorType(errorMessage: string): string {
+  // 满足 `errorMessage.includes('timeout')` 时，终端渲染执行该分支。
   if (errorMessage.includes('timeout')) {
+    // 返回 `'timeout'`，作为终端渲染这次计算的结果。
     return 'timeout';
   }
+  // 满足 `errorMessage.includes('Checksum mismatch')` 时，终端渲染执行该分支。
   if (errorMessage.includes('Checksum mismatch')) {
+    // 返回 `'checksum_mismatch'`，作为终端渲染这次计算的结果。
     return 'checksum_mismatch';
   }
+  // 只有 `errorMessage.includes('ENOENT') || errorMessage.includes('not found')` 满足时，终端渲染才执行该分支。
   if (errorMessage.includes('ENOENT') || errorMessage.includes('not found')) {
+    // 返回 `'not_found'`，作为终端渲染这次计算的结果。
     return 'not_found';
   }
+  // 只有 `errorMessage.includes('EACCES') || errorMessage.includes('permission')` 满足时，终端渲染才执行该分支。
   if (errorMessage.includes('EACCES') || errorMessage.includes('permission')) {
+    // 返回 `'permission_denied'`，作为终端渲染这次计算的结果。
     return 'permission_denied';
   }
+  // 满足 `errorMessage.includes('ENOSPC')` 时，终端渲染执行该分支。
   if (errorMessage.includes('ENOSPC')) {
+    // 返回 `'disk_full'`，作为终端渲染这次计算的结果。
     return 'disk_full';
   }
+  // 满足 `errorMessage.includes('npm')` 时，终端渲染执行该分支。
   if (errorMessage.includes('npm')) {
+    // 返回 `'npm_error'`，作为终端渲染这次计算的结果。
     return 'npm_error';
   }
+  // 只有 `errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') |...` 满足时，终端渲染才执行该分支。
   if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
+    // 返回 `'network_error'`，作为终端渲染这次计算的结果。
     return 'network_error';
   }
+  // 返回 `'unknown'`，作为终端渲染这次计算的结果。
   return 'unknown';
 }
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   isUpdating: boolean;
+  // 这个回调绑定到 onChangeIsUpdating: (isUpdating: boolean) => void;，负责终端渲染在该局部场景下的响应。
   onChangeIsUpdating: (isUpdating: boolean) => void;
+  // 这个回调绑定到 onAutoUpdaterResult: (autoUpdaterResult: AutoUpdaterResult) => void;，负责终端渲染在该局部场景下的响应。
   onAutoUpdaterResult: (autoUpdaterResult: AutoUpdaterResult) => void;
   autoUpdaterResult: AutoUpdaterResult | null;
   showSuccessMessage: boolean;
   verbose: boolean;
 };
+// NativeAutoUpdater 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function NativeAutoUpdater({
   isUpdating,
   onChangeIsUpdating,
@@ -56,79 +90,117 @@ export function NativeAutoUpdater({
   showSuccessMessage,
   verbose
 }: Props): React.ReactNode {
+  // 从 `useState<{` 按位置拆出 versions、setVersions，让终端 UI 组件 Native Auto Updater分别处理这些返回值。
   const [versions, setVersions] = useState<{
     current?: string | null;
     latest?: string | null;
   }>({});
+  // maxVersionIssue 由 React state 持有，setMaxVersionIssue 会在用户操作或异步结果返回时触发刷新。
   const [maxVersionIssue, setMaxVersionIssue] = useState<string | null>(null);
+  // updateSemver保存`useUpdateNotification`，供终端渲染后续处理使用。
   const updateSemver = useUpdateNotification(autoUpdaterResult?.version);
+  // channel读取`getInitialSettings`，供终端渲染后续处理使用。
   const channel = getInitialSettings()?.autoUpdatesChannel ?? 'latest';
 
   // Track latest isUpdating value in a ref so the memoized checkForUpdates
   // callback always sees the current value without changing callback identity
   // (which would re-trigger the initial-check useEffect below and cause
   // repeated downloads on remount — the upstream trigger for #22413).
+  // isUpdatingRef 引用记录 `useRef` 是否成立，终端渲染随后按该结果分支。
   const isUpdatingRef = useRef(isUpdating);
+  // current更新为 `isUpdating`，确保终端 UI后续读取最新状态。
   isUpdatingRef.current = isUpdating;
+  // checkForUpdates 集合保存`React.useCallback`，供终端渲染后续处理使用。
   const checkForUpdates = React.useCallback(async () => {
+    // 满足 `isUpdatingRef.current` 时，终端渲染执行该分支。
     if (isUpdatingRef.current) {
+      // 终端 UI 组件 Native Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 只有 `"production" === 'test' || "production" === 'deve` 满足时，终端渲染才执行该分支。
     if ("production" === 'test' || "production" === 'development') {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging('NativeAutoUpdater: Skipping update check in test/dev environment');
+      // 终端 UI 组件 Native Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `isAutoUpdaterDisabled()` 时，终端渲染执行该分支。
     if (isAutoUpdaterDisabled()) {
+      // 终端 UI 组件 Native Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 调用 onChangeIsUpdating，触发终端渲染此处需要的副作用。
     onChangeIsUpdating(true);
+    // startTime记录时间`Date.now`，供终端渲染后续处理使用。
     const startTime = Date.now();
 
     // Log the start of an auto-update check for funnel analysis
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_native_auto_updater_start', {});
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // Check if current version is above the max allowed version
+      // maxVersion读取`getMaxVersion`，供终端渲染后续处理使用。
       const maxVersion = await getMaxVersion();
+      // 只有 `maxVersion && gt(MACRO.VERSION, maxVersion)` 满足时，终端渲染才执行该分支。
       if (maxVersion && gt(MACRO.VERSION, maxVersion)) {
+        // 消息读取`getMaxVersionMessage`，供终端渲染后续处理使用。
         const msg = await getMaxVersionMessage();
+        // setMaxVersionIssue 写入新的状态值，使终端渲染后续读取保持一致。
         setMaxVersionIssue(msg ?? 'affects your version');
       }
+      // 结果保存`installLatest`，供终端渲染后续处理使用。
       const result = await installLatest(channel);
+      // currentVersion保存`MACRO.VERSION`，供终端 UI Native Auto Updater后续判断或输出使用。
       const currentVersion = MACRO.VERSION;
+      // latencyMs 集合记录时间`Date.now`，供终端渲染后续处理使用。
       const latencyMs = Date.now() - startTime;
 
       // Handle lock contention gracefully - just return without treating as error
+      // 满足 `result.lockFailed` 时，终端渲染执行该分支。
       if (result.lockFailed) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_native_auto_updater_lock_contention', {
           latency_ms: latencyMs
         });
+        // 返回 `; // Silently skip this update check, will try again later`，作为终端 UI 组件 Native Auto Updater这次计算的结果。
         return; // Silently skip this update check, will try again later
       }
 
       // Update versions for display
+      // setVersions 写入新的状态值，使终端渲染后续读取保持一致。
       setVersions({
         current: currentVersion,
         latest: result.latestVersion
       });
+      // 满足 `result.wasUpdated` 时，终端渲染执行该分支。
       if (result.wasUpdated) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_native_auto_updater_success', {
           latency_ms: latencyMs
         });
+        // 调用 onAutoUpdaterResult，触发终端渲染此处需要的副作用。
         onAutoUpdaterResult({
           version: result.latestVersion,
           status: 'success'
         });
       } else {
         // Already up to date
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_native_auto_updater_up_to_date', {
           latency_ms: latencyMs
         });
       }
     } catch (error) {
+      // latencyMs 集合记录时间`Date.now`，供终端渲染后续处理使用。
       const latencyMs = Date.now() - startTime;
+      // errorMessage 消息数据保存`String`，供终端渲染后续处理使用。
       const errorMessage = error instanceof Error ? error.message : String(error);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logError(error);
+      // errorType 错误信息读取`getErrorType`，供终端渲染后续处理使用。
       const errorType = getErrorType(errorMessage);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_native_auto_updater_fail', {
         latency_ms: latencyMs,
         error_timeout: errorType === 'timeout',
@@ -139,11 +211,13 @@ export function NativeAutoUpdater({
         error_npm: errorType === 'npm_error',
         error_network: errorType === 'network_error'
       });
+      // 调用 onAutoUpdaterResult，触发终端渲染此处需要的副作用。
       onAutoUpdaterResult({
         version: null,
         status: 'install_failed'
       });
     } finally {
+      // 调用 onChangeIsUpdating，触发终端渲染此处需要的副作用。
       onChangeIsUpdating(false);
     }
     // isUpdating intentionally omitted from deps; we read isUpdatingRef
@@ -154,22 +228,31 @@ export function NativeAutoUpdater({
   }, [onAutoUpdaterResult, channel]);
 
   // Initial check
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 显式忽略 `checkForUpdates()` 的返回值，只保留它触发的副作用。
     void checkForUpdates();
   }, [checkForUpdates]);
 
   // Check every 30 minutes
+  // 调用 useInterval，触发终端渲染此处需要的副作用。
   useInterval(checkForUpdates, 30 * 60 * 1000);
+  // hasUpdateResult标记终端 UI Native Auto Updater是否启用对应路径。
   const hasUpdateResult = !!autoUpdaterResult?.version;
+  // hasVersionInfo标记终端 UI Native Auto Updater是否启用对应路径。
   const hasVersionInfo = !!versions.current && !!versions.latest;
   // Show the component when:
   // - warning banner needed (above max version), or
   // - there's an update result to display (success/error), or
   // - actively checking and we have version info to show
+  // shouldRender标记终端 UI Native Auto Updater是否启用对应路径。
   const shouldRender = !!maxVersionIssue || hasUpdateResult || isUpdating && hasVersionInfo;
+  // shouldRender缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!shouldRender) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 返回 `<Box flexDirection="row" gap={1}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="row" gap={1}>
       {verbose && <Text dimColor wrap="truncate">
           current: {versions.current} &middot; {channel}: {versions.latest}

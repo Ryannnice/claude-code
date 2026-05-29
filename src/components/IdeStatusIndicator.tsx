@@ -1,57 +1,96 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { basename } from 'path';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useIdeConnectionStatus，将 ../hooks/useIdeConnectionStatus.js 中已经封装好的能力接到本文件流程里。
 import { useIdeConnectionStatus } from '../hooks/useIdeConnectionStatus.js';
+// 类型依赖 { IDESelection } 来自 ../hooks/useIdeSelection.js，用于校准终端渲染的数据契约。
 import type { IDESelection } from '../hooks/useIdeSelection.js';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 类型依赖 { MCPServerConnection } 来自 ../services/mcp/types.js，用于校准终端渲染的数据契约。
 import type { MCPServerConnection } from '../services/mcp/types.js';
+// IdeStatusIndicatorProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type IdeStatusIndicatorProps = {
   ideSelection: IDESelection | undefined;
   mcpClients?: MCPServerConnection[];
 };
+// IdeStatusIndicator 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function IdeStatusIndicator(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(7);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     ideSelection,
     mcpClients
   } = t0;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     status: ideStatus
   } = useIdeConnectionStatus(mcpClients);
+  // shouldShowIdeSelection标记终端 UI Ide Status Indicator是否启用对应路径。
   const shouldShowIdeSelection = ideStatus === "connected" && (ideSelection?.filePath || ideSelection?.text && ideSelection.lineCount > 0);
+  // 只有 `ideStatus === null || !shouldShowIdeSelection ||` 满足时，终端渲染才执行该分支。
   if (ideStatus === null || !shouldShowIdeSelection || !ideSelection) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 只有 `ideSelection.text && ideSelection.lineCount > 0` 满足时，终端渲染才执行该分支。
   if (ideSelection.text && ideSelection.lineCount > 0) {
+    // t1标记终端 UI Ide Status Indicator是否启用对应路径。
     const t1 = ideSelection.lineCount === 1 ? "line" : "lines";
+    // t2 暂存 `<Text color="ide" key="selection-indicator" wrap="truncat...` 的派生结果，便于缓存命中时直接复用。
     let t2;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[0] !== ideSelection.lineCount || $[1] !== t1) {
+      // t2 暂存 `<Text color="ide" key="selection-indicator" wrap="truncat...` 生成的渲染片段，后续返回路径直接复用。
       t2 = <Text color="ide" key="selection-indicator" wrap="truncate">⧉ {ideSelection.lineCount}{" "}{t1} selected</Text>;
+      // $[0] 缓存 `ideSelection.lineCount`，下次依赖未变时 React 编译产物可直接复用。
       $[0] = ideSelection.lineCount;
+      // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[1] = t1;
+      // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
       $[2] = t2;
     } else {
+      // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
       t2 = $[2];
     }
+    // 返回 `t2`，作为终端渲染这次计算的结果。
     return t2;
   }
+  // 满足 `ideSelection.filePath` 时，终端渲染执行该分支。
   if (ideSelection.filePath) {
+    // t1 暂存 `basename(ideSelection.filePath)` 的派生结果，便于缓存命中时直接复用。
     let t1;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[3] !== ideSelection.filePath) {
+      // t1 暂存 `basename(ideSelection.filePath)` 生成的渲染片段，后续返回路径直接复用。
       t1 = basename(ideSelection.filePath);
+      // $[3] 缓存 `ideSelection.filePath`，下次依赖未变时 React 编译产物可直接复用。
       $[3] = ideSelection.filePath;
+      // $[4] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[4] = t1;
     } else {
+      // t1 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
       t1 = $[4];
     }
+    // t2 暂存 `<Text color="ide" key="selection-indicator" wrap="truncat...` 的派生结果，便于缓存命中时直接复用。
     let t2;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[5] !== t1) {
+      // t2 暂存 `<Text color="ide" key="selection-indicator" wrap="truncat...` 生成的渲染片段，后续返回路径直接复用。
       t2 = <Text color="ide" key="selection-indicator" wrap="truncate">⧉ In {t1}</Text>;
+      // $[5] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[5] = t1;
+      // $[6] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
       $[6] = t2;
     } else {
+      // t2 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
       t2 = $[6];
     }
+    // 返回 `t2`，作为终端渲染这次计算的结果。
     return t2;
   }
 }

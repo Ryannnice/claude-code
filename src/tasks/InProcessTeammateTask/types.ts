@@ -1,8 +1,14 @@
+// 类型依赖 { TaskStateBase } 来自 ../../Task.js，用于校准types的数据契约。
 import type { TaskStateBase } from '../../Task.js'
+// 类型依赖 { AgentToolResult } 来自 ../../tools/AgentTool/agentToolUtils.js，用于校准types的数据契约。
 import type { AgentToolResult } from '../../tools/AgentTool/agentToolUtils.js'
+// 类型依赖 { AgentDefinition } 来自 ../../tools/AgentTool/loadAgentsDir.js，用于校准types的数据契约。
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准types的数据契约。
 import type { Message } from '../../types/message.js'
+// 类型依赖 { PermissionMode } 来自 ../../utils/permissions/PermissionMode.js，用于校准types的数据契约。
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js'
+// 类型依赖 { AgentProgress } 来自 ../LocalAgentTask/LocalAgentTask.js，用于校准types的数据契约。
 import type { AgentProgress } from '../LocalAgentTask/LocalAgentTask.js'
 
 /**
@@ -10,6 +16,7 @@ import type { AgentProgress } from '../LocalAgentTask/LocalAgentTask.js'
  * Same shape as TeammateContext (runtime) but stored as plain data.
  * TeammateContext is for AsyncLocalStorage; this is for AppState persistence.
  */
+// TeammateIdentity 固化types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeammateIdentity = {
   agentId: string // e.g., "researcher@my-team"
   agentName: string // e.g., "researcher"
@@ -19,6 +26,7 @@ export type TeammateIdentity = {
   parentSessionId: string // Leader's session ID
 }
 
+// InProcessTeammateTaskState 固化types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InProcessTeammateTaskState = TaskStateBase & {
   type: 'in_process_teammate'
 
@@ -35,6 +43,7 @@ export type InProcessTeammateTaskState = TaskStateBase & {
   selectedAgent?: AgentDefinition
   abortController?: AbortController // Runtime only, not serialized to disk - kills WHOLE teammate
   currentWorkAbortController?: AbortController // Runtime only - aborts current turn without killing teammate
+  // 这个回调绑定到 unregisterCleanup?: () => void // Runtime only，负责types在该局部场景下的响应。
   unregisterCleanup?: () => void // Runtime only
 
   // Plan mode approval tracking (planModeRequired is in identity)
@@ -68,6 +77,7 @@ export type InProcessTeammateTaskState = TaskStateBase & {
 
   // Callbacks to notify when teammate becomes idle (runtime only)
   // Used by leader to efficiently wait without polling
+  // 这个回调绑定到 onIdleCallbacks?: Array<() => void>，负责types在该局部场景下的响应。
   onIdleCallbacks?: Array<() => void>
 
   // Progress tracking (for computing deltas in notifications)
@@ -75,9 +85,11 @@ export type InProcessTeammateTaskState = TaskStateBase & {
   lastReportedTokenCount: number
 }
 
+// isInProcessTeammateTask 封装types的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isInProcessTeammateTask(
   task: unknown,
 ): task is InProcessTeammateTaskState {
+  // 返回 `(`，作为types这次计算的结果。
   return (
     typeof task === 'object' &&
     task !== null &&
@@ -98,6 +110,7 @@ export function isInProcessTeammateTask(
  * 9a990de8 launched 292 agents in 2 minutes and reached 36.8GB. The dominant
  * cost is this array holding a second full copy of every message.
  */
+// TEAMMATE_MESSAGES_UI_CAP 消息数据保存`50`，供types后续判断或输出使用。
 export const TEAMMATE_MESSAGES_UI_CAP = 50
 
 /**
@@ -105,17 +118,25 @@ export const TEAMMATE_MESSAGES_UI_CAP = 50
  * TEAMMATE_MESSAGES_UI_CAP entries by dropping the oldest. Always returns
  * a new array (AppState immutability).
  */
+// appendCappedMessage 封装types的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function appendCappedMessage<T>(
   prev: readonly T[] | undefined,
   item: T,
 ): T[] {
+  // prev === undefined || prev为空时立即返回或跳过，避免types把空集合当成可处理内容。
   if (prev === undefined || prev.length === 0) {
+    // 返回列表结果，保留types已经排好的条目顺序。
     return [item]
   }
+  // 满足 `prev.length >= TEAMMATE_MESSAGES_UI_CAP` 时，types执行该分支。
   if (prev.length >= TEAMMATE_MESSAGES_UI_CAP) {
+    // next格式化`prev.slice`，供types后续处理使用。
     const next = prev.slice(-(TEAMMATE_MESSAGES_UI_CAP - 1))
+    // next追加新条目，保持收集顺序与输入顺序一致。
     next.push(item)
+    // 返回 `next`，作为types这次计算的结果。
     return next
   }
+  // 返回列表结果，保留types已经排好的条目顺序。
   return [...prev, item]
 }

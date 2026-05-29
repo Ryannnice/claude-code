@@ -1,17 +1,27 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 引入 SandboxSettingsSchema，将 ../../entrypoints/sandboxTypes.js 中已经封装好的能力接到本文件流程里。
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
+// 引入 isEnvTruthy，将 ../envUtils.js 中已经封装好的能力接到本文件流程里。
 import { isEnvTruthy } from '../envUtils.js'
+// 引入 lazySchema，将 ../lazySchema.js 中已经封装好的能力接到本文件流程里。
 import { lazySchema } from '../lazySchema.js'
+// 整理这一组导入，让共享工具后续逻辑可以直接复用这些外部能力。
 import {
   EXTERNAL_PERMISSION_MODES,
   PERMISSION_MODES,
 } from '../permissions/PermissionMode.js'
+// 引入 MarketplaceSourceSchema，将 ../plugins/schemas.js 中已经封装好的能力接到本文件流程里。
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
+// 引入 CLAUDE_CODE_SETTINGS_SCHEMA_URL，将 ./constants.js 中已经封装好的能力接到本文件流程里。
 import { CLAUDE_CODE_SETTINGS_SCHEMA_URL } from './constants.js'
+// 引入 PermissionRuleSchema，将 ./permissionValidation.js 中已经封装好的能力接到本文件流程里。
 import { PermissionRuleSchema } from './permissionValidation.js'
 
 // Re-export hook schemas and types from centralized location for backward compatibility
+// 重新导出这一组成员，让共享工具的公共 API 保持集中入口。
 export {
   type AgentHook,
   type BashCommandHook,
@@ -26,12 +36,15 @@ export {
 } from '../../schemas/hooks.js'
 
 // Also import for use within this file
+// 引入 HookCommand、HooksSchema，将 ../../schemas/hooks.js 中已经封装好的能力接到本文件流程里。
 import { type HookCommand, HooksSchema } from '../../schemas/hooks.js'
+// 引入 count，将 ../array.js 中已经封装好的能力接到本文件流程里。
 import { count } from '../array.js'
 
 /**
  * Schema for environment variables
  */
+// EnvironmentVariablesSchema保存`lazySchema`，供共享工具后续处理使用。
 export const EnvironmentVariablesSchema = lazySchema(() =>
   z.record(z.string(), z.coerce.string()),
 )
@@ -39,6 +52,7 @@ export const EnvironmentVariablesSchema = lazySchema(() =>
 /**
  * Schema for permissions section
  */
+// PermissionsSchema 权限数据保存`lazySchema`，供共享工具后续处理使用。
 export const PermissionsSchema = lazySchema(() =>
   z
     .object({
@@ -88,6 +102,7 @@ export const PermissionsSchema = lazySchema(() =>
  * Schema for extra marketplaces defined in repository settings
  * Same as KnownMarketplace but without lastUpdated (which is managed automatically)
  */
+// ExtraKnownMarketplaceSchema 市场数据保存`lazySchema`，供共享工具后续处理使用。
 export const ExtraKnownMarketplaceSchema = lazySchema(() =>
   z.object({
     source: MarketplaceSourceSchema().describe(
@@ -112,6 +127,7 @@ export const ExtraKnownMarketplaceSchema = lazySchema(() =>
  * Schema for allowed MCP server entry in enterprise allowlist.
  * Supports matching by serverName, serverCommand, or serverUrl (mutually exclusive).
  */
+// AllowedMcpServerEntrySchema保存`lazySchema`，供共享工具后续处理使用。
 export const AllowedMcpServerEntrySchema = lazySchema(() =>
   z
     .object({
@@ -139,7 +155,9 @@ export const AllowedMcpServerEntrySchema = lazySchema(() =>
       // Future extensibility: allowedTransports, requiredArgs, maxInstances, etc.
     })
     .refine(
+      // data更新为 `> {`，确保共享工具后续读取最新状态。
       data => {
+        // defined统计`count`，供共享工具后续处理使用。
         const defined = count(
           [
             data.serverName !== undefined,
@@ -148,6 +166,7 @@ export const AllowedMcpServerEntrySchema = lazySchema(() =>
           ],
           Boolean,
         )
+        // 返回 `defined === 1`，作为共享工具这次计算的结果。
         return defined === 1
       },
       {
@@ -161,6 +180,7 @@ export const AllowedMcpServerEntrySchema = lazySchema(() =>
  * Schema for denied MCP server entry in enterprise denylist.
  * Supports matching by serverName, serverCommand, or serverUrl (mutually exclusive).
  */
+// DeniedMcpServerEntrySchema保存`lazySchema`，供共享工具后续处理使用。
 export const DeniedMcpServerEntrySchema = lazySchema(() =>
   z
     .object({
@@ -188,7 +208,9 @@ export const DeniedMcpServerEntrySchema = lazySchema(() =>
       // Future extensibility: reason, blockedSince, etc.
     })
     .refine(
+      // data更新为 `> {`，确保共享工具后续读取最新状态。
       data => {
+        // defined统计`count`，供共享工具后续处理使用。
         const defined = count(
           [
             data.serverName !== undefined,
@@ -197,6 +219,7 @@ export const DeniedMcpServerEntrySchema = lazySchema(() =>
           ],
           Boolean,
         )
+        // 返回 `defined === 1`，作为共享工具这次计算的结果。
         return defined === 1
       },
       {
@@ -245,6 +268,7 @@ export const DeniedMcpServerEntrySchema = lazySchema(() =>
  * schema preprocess (below) and the runtime helper (pluginOnlyPolicy.ts)
  * share one source of truth.
  */
+// CUSTOMIZATION_SURFACES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const CUSTOMIZATION_SURFACES = [
   'skills',
   'agents',
@@ -252,6 +276,7 @@ export const CUSTOMIZATION_SURFACES = [
   'mcp',
 ] as const
 
+// SettingsSchema保存`lazySchema`，供共享工具后续处理使用。
 export const SettingsSchema = lazySchema(() =>
   z
     .object({
@@ -523,8 +548,10 @@ export const SettingsSchema = lazySchema(() =>
           // "commands"] on an old client → ["skills"] → locks what it knows,
           // ignores what it doesn't. Degrades to less-locked, never to
           // everything-unlocked.
+          // v更新为 `>`，确保共享工具后续读取最新状态。
           v =>
             Array.isArray(v)
+              // 这个回调绑定到 ? v.filter(x =>，负责共享工具在该局部场景下的响应。
               ? v.filter(x =>
                   (CUSTOMIZATION_SURFACES as readonly string[]).includes(x),
                 )
@@ -568,6 +595,7 @@ export const SettingsSchema = lazySchema(() =>
       // Extra marketplaces for this repository (usually for project settings)
       extraKnownMarketplaces: z
         .record(z.string(), ExtraKnownMarketplaceSchema())
+        // 链式调用 check，继续加工上一行在共享工具中产生的数据。
         .check(ctx => {
           // For settings sources, key must equal source.name. diffMarketplaces
           // looks up materialized state by dict key; addMarketplaceSource stores
@@ -578,11 +606,14 @@ export const SettingsSchema = lazySchema(() =>
           // name comes from a fetched marketplace.json (mismatch is expected and
           // benign); for settings, both key and name are user-authored in the
           // same JSON object.
+          // 循环处理 `const [key, entry] of Object.entries(ctx.value)`，让共享工具把同类条目按顺序走完。
           for (const [key, entry] of Object.entries(ctx.value)) {
+            // 共享工具在这里按实际状态进入对应分支。
             if (
               entry.source.source === 'settings' &&
               entry.source.name !== key
             ) {
+              // issues 集合追加新条目，保持收集顺序与输入顺序一致。
               ctx.issues.push({
                 code: 'custom',
                 input: entry.source.name,
@@ -1076,6 +1107,7 @@ export const SettingsSchema = lazySchema(() =>
  * Internal type for plugin hooks - includes plugin context for execution.
  * Not a Zod schema since it's not user-facing (plugins provide native hooks).
  */
+// PluginHookMatcher 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginHookMatcher = {
   matcher?: string
   hooks: HookCommand[]
@@ -1088,6 +1120,7 @@ export type PluginHookMatcher = {
  * Internal type for skill hooks - includes skill context for execution.
  * Not a Zod schema since it's not user-facing (skills provide native hooks).
  */
+// SkillHookMatcher 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SkillHookMatcher = {
   matcher?: string
   hooks: HookCommand[]
@@ -1095,44 +1128,54 @@ export type SkillHookMatcher = {
   skillName: string
 }
 
+// AllowedMcpServerEntry 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AllowedMcpServerEntry = z.infer<
   ReturnType<typeof AllowedMcpServerEntrySchema>
 >
+// DeniedMcpServerEntry 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type DeniedMcpServerEntry = z.infer<
   ReturnType<typeof DeniedMcpServerEntrySchema>
 >
+// SettingsJson 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SettingsJson = z.infer<ReturnType<typeof SettingsSchema>>
 
 /**
  * Type guard for MCP server entry with serverName
  */
+// isMcpServerNameEntry 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isMcpServerNameEntry(
   entry: AllowedMcpServerEntry | DeniedMcpServerEntry,
 ): entry is { serverName: string } {
+  // 返回 `'serverName' in entry && entry.serverName !== undefined`，作为共享工具这次计算的结果。
   return 'serverName' in entry && entry.serverName !== undefined
 }
 
 /**
  * Type guard for MCP server entry with serverCommand
  */
+// isMcpServerCommandEntry 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isMcpServerCommandEntry(
   entry: AllowedMcpServerEntry | DeniedMcpServerEntry,
 ): entry is { serverCommand: string[] } {
+  // 返回 `'serverCommand' in entry && entry.serverCommand !== undefined`，作为共享工具这次计算的结果。
   return 'serverCommand' in entry && entry.serverCommand !== undefined
 }
 
 /**
  * Type guard for MCP server entry with serverUrl
  */
+// isMcpServerUrlEntry 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isMcpServerUrlEntry(
   entry: AllowedMcpServerEntry | DeniedMcpServerEntry,
 ): entry is { serverUrl: string } {
+  // 返回 `'serverUrl' in entry && entry.serverUrl !== undefined`，作为共享工具这次计算的结果。
   return 'serverUrl' in entry && entry.serverUrl !== undefined
 }
 
 /**
  * User configuration values for MCPB MCP servers
  */
+// UserConfigValues 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type UserConfigValues = Record<
   string,
   string | number | boolean | string[]
@@ -1141,6 +1184,7 @@ export type UserConfigValues = Record<
 /**
  * Plugin configuration stored in settings.json
  */
+// PluginConfig 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginConfig = {
   mcpServers?: {
     [serverName: string]: UserConfigValues

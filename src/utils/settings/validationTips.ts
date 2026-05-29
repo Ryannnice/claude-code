@@ -1,13 +1,17 @@
+// 类型依赖 { ZodIssueCode } 来自 zod/v4，用于校准共享工具的数据契约。
 import type { ZodIssueCode } from 'zod/v4'
 
 // v4 ZodIssueCode is a value, not a type - use typeof to get the type
+// ZodIssueCodeType 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type ZodIssueCodeType = (typeof ZodIssueCode)[keyof typeof ZodIssueCode]
 
+// ValidationTip 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ValidationTip = {
   suggestion?: string
   docLink?: string
 }
 
+// TipContext 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TipContext = {
   path: string
   code: ZodIssueCodeType | string
@@ -18,15 +22,20 @@ export type TipContext = {
   value?: unknown
 }
 
+// TipMatcher 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type TipMatcher = {
+  // 这个回调绑定到 matches: (context: TipContext) => boolean，负责共享工具在该局部场景下的响应。
   matches: (context: TipContext) => boolean
   tip: ValidationTip
 }
 
+// DOCUMENTATION_BASE 命名 `'https://code.claude.com/docs/en'`，让后续代码直接表达这个值的用途。
 const DOCUMENTATION_BASE = 'https://code.claude.com/docs/en'
 
+// TIP_MATCHERS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const TIP_MATCHERS: TipMatcher[] = [
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.path === 'permissions.defaultMode' && ctx.code === 'invalid_value',
     tip: {
@@ -36,6 +45,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.path === 'apiKeyHelper' && ctx.code === 'invalid_type',
     tip: {
@@ -44,6 +54,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.path === 'cleanupPeriodDays' &&
       ctx.code === 'too_small' &&
@@ -54,6 +65,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.path.startsWith('env.') && ctx.code === 'invalid_type',
     tip: {
@@ -63,6 +75,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       (ctx.path === 'permissions.allow' || ctx.path === 'permissions.deny') &&
       ctx.code === 'invalid_type' &&
@@ -73,6 +86,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.path.includes('hooks') && ctx.code === 'invalid_type',
     tip: {
@@ -86,6 +100,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.code === 'invalid_type' && ctx.expected === 'boolean',
     tip: {
@@ -94,6 +109,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean => ctx.code === 'unrecognized_keys',，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean => ctx.code === 'unrecognized_keys',
     tip: {
       suggestion:
@@ -102,6 +118,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.code === 'invalid_value' && ctx.enumValues !== undefined,
     tip: {
@@ -109,6 +126,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.code === 'invalid_type' &&
       ctx.expected === 'object' &&
@@ -120,6 +138,7 @@ const TIP_MATCHERS: TipMatcher[] = [
     },
   },
   {
+    // 这个回调绑定到 matches: (ctx): boolean =>，负责共享工具在该局部场景下的响应。
     matches: (ctx): boolean =>
       ctx.path === 'permissions.additionalDirectories' &&
       ctx.code === 'invalid_type',
@@ -131,34 +150,46 @@ const TIP_MATCHERS: TipMatcher[] = [
   },
 ]
 
+// PATH_DOC_LINKS 路径数据 集中保存共享工具 validation Tips要一起传递的字段。
 const PATH_DOC_LINKS: Record<string, string> = {
   permissions: `${DOCUMENTATION_BASE}/iam#configuring-permissions`,
   env: `${DOCUMENTATION_BASE}/settings#environment-variables`,
   hooks: `${DOCUMENTATION_BASE}/hooks`,
 }
 
+// getValidationTip 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getValidationTip(context: TipContext): ValidationTip | null {
+  // matcher筛选`TIP_MATCHERS.find`，供共享工具后续处理使用。
   const matcher = TIP_MATCHERS.find(m => m.matches(context))
 
+  // matcher缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!matcher) return null
 
+  // tip 集中保存共享工具 validation Tips要一起传递的字段。
   const tip: ValidationTip = { ...matcher.tip }
 
+  // 共享工具在这里按实际状态进入对应分支。
   if (
     context.code === 'invalid_value' &&
     context.enumValues &&
     !tip.suggestion
   ) {
+    // suggestion更新为 ``Valid values: ${context.enumValues.map(v => `"${v}"`).jo...`，确保共享工具后续读取最新状态。
     tip.suggestion = `Valid values: ${context.enumValues.map(v => `"${v}"`).join(', ')}`
   }
 
   // Add documentation link based on path prefix
+  // 只有 `!tip.docLink && context.path` 满足时，共享工具才执行该分支。
   if (!tip.docLink && context.path) {
+    // pathPrefix 路径数据格式化`path.split`，供共享工具后续处理使用。
     const pathPrefix = context.path.split('.')[0]
+    // 满足 `pathPrefix` 时，共享工具执行该分支。
     if (pathPrefix) {
+      // docLink更新为 `PATH_DOC_LINKS[pathPrefix]`，确保共享工具后续读取最新状态。
       tip.docLink = PATH_DOC_LINKS[pathPrefix]
     }
   }
 
+  // 返回 `tip`，作为共享工具这次计算的结果。
   return tip
 }

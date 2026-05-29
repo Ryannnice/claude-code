@@ -1,19 +1,33 @@
+// 复用 isInBundledMode 工具函数，把通用处理留在 src/utils/bundledMode.js 中维护。
 import { isInBundledMode } from 'src/utils/bundledMode.js';
+// 复用 getCurrentInstallationType 工具函数，把通用处理留在 src/utils/doctorDiagnostic.js 中维护。
 import { getCurrentInstallationType } from 'src/utils/doctorDiagnostic.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 src/utils/envUtils.js 中维护。
 import { isEnvTruthy } from 'src/utils/envUtils.js';
+// 引入 useStartupNotification，将 ./useStartupNotification.js 中已经封装好的能力接到本文件流程里。
 import { useStartupNotification } from './useStartupNotification.js';
+// NPM_DEPRECATION_MESSAGE 消息数据 命名 `'Claude Code has switched from npm to native installer. R...`，让后续代码直接表达这个值的用途。
 const NPM_DEPRECATION_MESSAGE = 'Claude Code has switched from npm to native installer. Run `claude install` or see https://docs.anthropic.com/en/docs/claude-code/getting-started for more options.';
+// useNpmDeprecationNotification 封装useNpmDeprecationNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useNpmDeprecationNotification() {
+  // 调用 useStartupNotification，触发React hook此处需要的副作用。
   useStartupNotification(_temp);
 }
+// _temp 封装useNpmDeprecationNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function _temp() {
+  // 组合条件 `isInBundledMode() || isEnvTruthy(process.env.DISABLE_INSTALLATION_CHECKS)` 成立时，React hook 状态流才启用这条专门路径。
   if (isInBundledMode() || isEnvTruthy(process.env.DISABLE_INSTALLATION_CHECKS)) {
+    // 返回 `null`，作为React hook 状态流这次计算的结果。
     return null;
   }
+  // installationType读取`getCurrentInstallationType`，供React hook后续处理使用。
   const installationType = await getCurrentInstallationType();
+  // 当 `installationType` 匹配 `"development"` 时，React hook执行对应分支。
   if (installationType === "development") {
+    // 返回 `null`，作为React hook 状态流这次计算的结果。
     return null;
   }
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     timeoutMs: 15000,
     key: "npm-deprecation-warning",

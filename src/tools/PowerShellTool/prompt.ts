@@ -1,39 +1,61 @@
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js'
+// 复用 getMaxOutputLength 工具函数，把通用处理留在 ../../utils/shell/outputLimits.js 中维护。
 import { getMaxOutputLength } from '../../utils/shell/outputLimits.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   getPowerShellEdition,
   type PowerShellEdition,
 } from '../../utils/shell/powershellDetection.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   getDefaultBashTimeoutMs,
   getMaxBashTimeoutMs,
 } from '../../utils/timeouts.js'
+// 引入 FILE_EDIT_TOOL_NAME，将 ../FileEditTool/constants.js 中已经封装好的能力接到本文件流程里。
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
+// 引入 FILE_READ_TOOL_NAME，将 ../FileReadTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
+// 引入 FILE_WRITE_TOOL_NAME，将 ../FileWriteTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
+// 引入 GLOB_TOOL_NAME，将 ../GlobTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { GLOB_TOOL_NAME } from '../GlobTool/prompt.js'
+// 引入 GREP_TOOL_NAME，将 ../GrepTool/prompt.js 中已经封装好的能力接到本文件流程里。
 import { GREP_TOOL_NAME } from '../GrepTool/prompt.js'
+// 引入 POWERSHELL_TOOL_NAME，将 ./toolName.js 中已经封装好的能力接到本文件流程里。
 import { POWERSHELL_TOOL_NAME } from './toolName.js'
 
+// getDefaultTimeoutMs 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getDefaultTimeoutMs(): number {
+  // 返回 `getDefaultBashTimeoutMs()`，作为工具调用这次计算的结果。
   return getDefaultBashTimeoutMs()
 }
 
+// getMaxTimeoutMs 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getMaxTimeoutMs(): number {
+  // 返回 `getMaxBashTimeoutMs()`，作为工具调用这次计算的结果。
   return getMaxBashTimeoutMs()
 }
 
+// getBackgroundUsageNote 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getBackgroundUsageNote(): string | null {
+  // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)` 时，工具调用执行该分支。
   if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null
   }
+  // 返回 `` - You can use the \`run_in_background\` parameter to run the command ...`，作为工具调用这次计算的结果。
   return `  - You can use the \`run_in_background\` parameter to run the command in the background. Only use this if you don't need the result immediately and are OK being notified when the command completes later. You do not need to check the output right away - you'll be notified when it finishes.`
 }
 
+// getSleepGuidance 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSleepGuidance(): string | null {
+  // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)` 时，工具调用执行该分支。
   if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null
   }
+  // 返回 `` - Avoid unnecessary \`Start-Sleep\` commands:`，作为工具调用这次计算的结果。
   return `  - Avoid unnecessary \`Start-Sleep\` commands:
     - Do not sleep between commands that can run immediately — just run them.
     - If your command is long running and you would like to be notified when it finishes — simply run your command using \`run_in_background\`. There is no need to sleep in this case.
@@ -48,8 +70,11 @@ function getSleepGuidance(): string | null {
  * editions but it can't tell which one it's targeting, so it either emits
  * pwsh-7 syntax on 5.1 (parser error → exit 1) or needlessly avoids && on 7.
  */
+// getEditionSection 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getEditionSection(edition: PowerShellEdition | null): string {
+  // 当 `edition` 匹配 `'desktop'` 时，工具调用执行对应分支。
   if (edition === 'desktop') {
+    // 返回 ``PowerShell edition: Windows PowerShell 5.1 (powershell.exe)`，作为工具调用这次计算的结果。
     return `PowerShell edition: Windows PowerShell 5.1 (powershell.exe)
    - Pipeline chain operators \`&&\` and \`||\` are NOT available — they cause a parser error. To run B only if A succeeds: \`A; if ($?) { B }\`. To chain unconditionally: \`A; B\`.
    - Ternary (\`?:\`), null-coalescing (\`??\`), and null-conditional (\`?.\`) operators are NOT available. Use \`if/else\` and explicit \`$null -eq\` checks instead.
@@ -57,7 +82,9 @@ function getEditionSection(edition: PowerShellEdition | null): string {
    - Default file encoding is UTF-16 LE (with BOM). When writing files other tools will read, pass \`-Encoding utf8\` to \`Out-File\`/\`Set-Content\`.
    - \`ConvertFrom-Json\` returns a PSCustomObject, not a hashtable. \`-AsHashtable\` is not available.`
   }
+  // 当 `edition` 匹配 `'core'` 时，工具调用执行对应分支。
   if (edition === 'core') {
+    // 返回 ``PowerShell edition: PowerShell 7+ (pwsh)`，作为工具调用这次计算的结果。
     return `PowerShell edition: PowerShell 7+ (pwsh)
    - Pipeline chain operators \`&&\` and \`||\` ARE available and work like bash. Prefer \`cmd1 && cmd2\` over \`cmd1; cmd2\` when cmd2 should only run if cmd1 succeeds.
    - Ternary (\`$cond ? $a : $b\`), null-coalescing (\`??\`), and null-conditional (\`?.\`) operators are available.
@@ -65,16 +92,22 @@ function getEditionSection(edition: PowerShellEdition | null): string {
   }
   // Detection not yet resolved (first prompt build before any tool call) or
   // PS not installed. Give the conservative 5.1-safe guidance.
+  // 返回 ``PowerShell edition: unknown — assume Windows PowerShell 5.1 for compat...`，作为工具调用这次计算的结果。
   return `PowerShell edition: unknown — assume Windows PowerShell 5.1 for compatibility
    - Do NOT use \`&&\`, \`||\`, ternary \`?:\`, null-coalescing \`??\`, or null-conditional \`?.\`. These are PowerShell 7+ only and parser-error on 5.1.
    - To chain commands conditionally: \`A; if ($?) { B }\`. Unconditionally: \`A; B\`.`
 }
 
+// getPrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function getPrompt(): Promise<string> {
+  // backgroundNote读取`getBackgroundUsageNote`，供工具调用后续处理使用。
   const backgroundNote = getBackgroundUsageNote()
+  // sleepGuidance读取`getSleepGuidance`，供工具调用后续处理使用。
   const sleepGuidance = getSleepGuidance()
+  // edition读取`getPowerShellEdition`，供工具调用后续处理使用。
   const edition = await getPowerShellEdition()
 
+  // 返回 ``Executes a given PowerShell command with optional timeout. Working dir...`，作为工具调用这次计算的结果。
   return `Executes a given PowerShell command with optional timeout. Working directory persists between commands; shell state (variables, functions) does not.
 
 IMPORTANT: This tool is for terminal operations via PowerShell: git, npm, docker, and PS cmdlets. DO NOT use it for file operations (reading, writing, editing, searching, finding files) - use the specialized tools for this instead.

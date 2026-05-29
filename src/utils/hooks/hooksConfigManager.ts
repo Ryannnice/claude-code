@@ -1,18 +1,25 @@
+// 引入 memoize，将 lodash-es/memoize.js 中已经封装好的能力接到本文件流程里。
 import memoize from 'lodash-es/memoize.js'
+// 类型依赖 { HookEvent } 来自 src/entrypoints/agentSdkTypes.js，用于校准共享工具的数据契约。
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
+// 引入 getRegisteredHooks，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getRegisteredHooks } from '../../bootstrap/state.js'
+// 类型依赖 { AppState } 来自 ../../state/AppState.js，用于校准共享工具的数据契约。
 import type { AppState } from '../../state/AppState.js'
+// 整理这一组导入，让共享工具后续逻辑可以直接复用这些外部能力。
 import {
   getAllHooks,
   type IndividualHookConfig,
   sortMatchersByPriority,
 } from './hooksSettings.js'
 
+// MatcherMetadata 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type MatcherMetadata = {
   fieldToMatch: string
   values: string[]
 }
 
+// HookEventMetadata 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 export type HookEventMetadata = {
   summary: string
   description: string
@@ -23,8 +30,11 @@ export type HookEventMetadata = {
 // Resolver uses sorted-joined string key so that callers passing a fresh
 // toolNames array each render (e.g. HooksConfigMenu) hit the cache instead
 // of leaking a new entry per call.
+// getHookEventMetadata保存`memoize`，供共享工具后续处理使用。
 export const getHookEventMetadata = memoize(
+  // function 使用 toolNames: string[] 完成共享工具里的对应操作。
   function (toolNames: string[]): Record<HookEvent, HookEventMetadata> {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       PreToolUse: {
         summary: 'Before tool execution',
@@ -263,14 +273,17 @@ export const getHookEventMetadata = memoize(
       },
     }
   },
+  // toolNames 集合更新为 `> toolNames.slice().sort().join(',')`，确保共享工具后续读取最新状态。
   toolNames => toolNames.slice().sort().join(','),
 )
 
 // Group hooks by event and matcher
+// groupHooksByEventAndMatcher 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function groupHooksByEventAndMatcher(
   appState: AppState,
   toolNames: string[],
 ): Record<HookEvent, Record<string, IndividualHookConfig[]>> {
+  // grouped 集中保存React hook hooks Config Manager要一起传递的字段。
   const grouped: Record<HookEvent, Record<string, IndividualHookConfig[]>> = {
     PreToolUse: {},
     PostToolUse: {},
@@ -301,40 +314,60 @@ export function groupHooksByEventAndMatcher(
     FileChanged: {},
   }
 
+  // metadata读取`getHookEventMetadata`，供共享工具后续处理使用。
   const metadata = getHookEventMetadata(toolNames)
 
   // Include hooks from settings files
+  // 调用 getAllHooks，触发共享工具此处需要的副作用。
   getAllHooks(appState).forEach(hook => {
+    // eventGroup保存`grouped[hook.event]`，供共享工具React hook hooks Config Manag...后续判断或输出使用。
     const eventGroup = grouped[hook.event]
+    // 满足 `eventGroup` 时，共享工具执行该分支。
     if (eventGroup) {
       // For events without matchers, use empty string as key
+      // matcherKey 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
       const matcherKey =
         metadata[hook.event].matcherMetadata !== undefined
           ? hook.matcher || ''
           : ''
+      // 满足 `!eventGroup[matcherKey]` 时，共享工具执行该分支。
       if (!eventGroup[matcherKey]) {
+        // eventGroup[matcherKey更新为 `[]`，确保React hook hooks Config Manager后续读取最新状态。
         eventGroup[matcherKey] = []
       }
+      // React hook hooks Config Manager在这里处理 `eventGroup[matcherKey].push(hook)`，完成这一小步状态转换。
       eventGroup[matcherKey].push(hook)
     }
   })
 
   // Include registered hooks (e.g., plugin hooks)
+  // registeredHooks 集合读取`getRegisteredHooks`，供共享工具后续处理使用。
   const registeredHooks = getRegisteredHooks()
+  // 满足 `registeredHooks` 时，共享工具执行该分支。
   if (registeredHooks) {
+    // 循环处理 `const [event, matchers] of Object.entries(registeredHooks)`，让共享工具把同类条目按顺序走完。
     for (const [event, matchers] of Object.entries(registeredHooks)) {
+      // hookEvent保存`event as HookEvent`，供后续判断或组装使用。
       const hookEvent = event as HookEvent
+      // eventGroup读取 `grouped[hookEvent]` 对应条目，后续围绕该成员继续处理。
       const eventGroup = grouped[hookEvent]
+      // eventGroup缺失时直接走兜底路径，避免共享工具使用无效输入。
       if (!eventGroup) continue
 
+      // 按顺序遍历 `matchers` 中的matcher，逐个交给共享工具处理。
       for (const matcher of matchers) {
+        // matcherKey标记共享工具React hook hooks Config Manag...是否启用对应路径。
         const matcherKey = matcher.matcher || ''
 
         // Only PluginHookMatcher has pluginRoot; HookCallbackMatcher (internal
         // callbacks like attributionHooks, sessionFileAccessHooks) does not.
+        // 满足 `'pluginRoot' in matcher` 时，共享工具执行该分支。
         if ('pluginRoot' in matcher) {
+          // React hook hooks Config Manager在这里处理 `eventGroup[matcherKey] ??= []`，完成这一小步状态转换。
           eventGroup[matcherKey] ??= []
+          // 按顺序遍历 `matcher.hooks` 中的hook，逐个交给共享工具处理。
           for (const hook of matcher.hooks) {
+            // React hook hooks Config Manager在这里处理 `eventGroup[matcherKey].push({`，完成这一小步状态转换。
             eventGroup[matcherKey].push({
               event: hookEvent,
               config: hook,
@@ -343,9 +376,13 @@ export function groupHooksByEventAndMatcher(
               pluginName: matcher.pluginId,
             })
           }
+        // React hook hooks Config Manager在这里处理 `} else if (process.env.USER_TYPE === 'ant') {`，完成这一小步状态转换。
         } else if (process.env.USER_TYPE === 'ant') {
+          // React hook hooks Config Manager在这里处理 `eventGroup[matcherKey] ??= []`，完成这一小步状态转换。
           eventGroup[matcherKey] ??= []
+          // 按顺序遍历 `matcher.hooks` 中的_hook，逐个交给共享工具处理。
           for (const _hook of matcher.hooks) {
+            // React hook hooks Config Manager在这里处理 `eventGroup[matcherKey].push({`，完成这一小步状态转换。
             eventGroup[matcherKey].push({
               event: hookEvent,
               config: {
@@ -361,10 +398,12 @@ export function groupHooksByEventAndMatcher(
     }
   }
 
+  // 返回 `grouped`，作为共享工具这次计算的结果。
   return grouped
 }
 
 // Get sorted matchers for a specific event
+// getSortedMatchersForEvent 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getSortedMatchersForEvent(
   hooksByEventAndMatcher: Record<
     HookEvent,
@@ -372,11 +411,14 @@ export function getSortedMatchersForEvent(
   >,
   event: HookEvent,
 ): string[] {
+  // matchers 集合派生`Object.keys`，供共享工具后续处理使用。
   const matchers = Object.keys(hooksByEventAndMatcher[event] || {})
+  // 返回 `sortMatchersByPriority(matchers, hooksByEventAndMatcher, event)`，作为共享工具这次计算的结果。
   return sortMatchersByPriority(matchers, hooksByEventAndMatcher, event)
 }
 
 // Get hooks for a specific event and matcher
+// getHooksForMatcher 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getHooksForMatcher(
   hooksByEventAndMatcher: Record<
     HookEvent,
@@ -387,14 +429,18 @@ export function getHooksForMatcher(
 ): IndividualHookConfig[] {
   // For events without matchers, hooks are stored with empty string as key
   // because the record keys must be strings.
+  // matcherKey保存`matcher ?? ''`，供共享工具React hook hooks Config Manag...后续判断或输出使用。
   const matcherKey = matcher ?? ''
+  // 返回 `hooksByEventAndMatcher[event]?.[matcherKey] ?? []`，作为共享工具这次计算的结果。
   return hooksByEventAndMatcher[event]?.[matcherKey] ?? []
 }
 
 // Get metadata for a specific event's matcher
+// getMatcherMetadata 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getMatcherMetadata(
   event: HookEvent,
   toolNames: string[],
 ): MatcherMetadata | undefined {
+  // 返回 `getHookEventMetadata(toolNames)[event].matcherMetadata`，作为共享工具这次计算的结果。
   return getHookEventMetadata(toolNames)[event].matcherMetadata
 }

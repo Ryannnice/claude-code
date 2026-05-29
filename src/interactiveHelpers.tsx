@@ -1,44 +1,81 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 使用 Node/Bun 的 fs 能力处理本地运行时资源。
 import { appendFileSync } from 'fs';
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
+// 复用 gracefulShutdown、gracefulShutdownSync 工具函数，把通用处理留在 src/utils/gracefulShutdown.js 中维护。
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
+// 引入 ChannelEntry、getAllowedChannels、setAllowedChannels、setHasDevChannels、setSessionTrustAccepted、setStatsStore，将 ./bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { type ChannelEntry, getAllowedChannels, setAllowedChannels, setHasDevChannels, setSessionTrustAccepted, setStatsStore } from './bootstrap/state.js';
+// 类型依赖 { Command } 来自 ./commands.js，用于校准interactive Helpers的数据契约。
 import type { Command } from './commands.js';
+// 引入 createStatsStore、StatsStore，将 ./context/stats.js 中已经封装好的能力接到本文件流程里。
 import { createStatsStore, type StatsStore } from './context/stats.js';
+// 引入 getSystemContext，将 ./context.js 中已经封装好的能力接到本文件流程里。
 import { getSystemContext } from './context.js';
+// 引入 initializeTelemetryAfterTrust，将 ./entrypoints/init.js 中已经封装好的能力接到本文件流程里。
 import { initializeTelemetryAfterTrust } from './entrypoints/init.js';
+// 复用 isSynchronizedOutputSupported 终端界面组件，避免在这里重复拼装显示逻辑。
 import { isSynchronizedOutputSupported } from './ink/terminal.js';
+// 类型依赖 { RenderOptions, Root, TextProps } 来自 ./ink.js，用于校准interactive Helpers的数据契约。
 import type { RenderOptions, Root, TextProps } from './ink.js';
+// 引入 KeybindingSetup，将 ./keybindings/KeybindingProviderSetup.js 中已经封装好的能力接到本文件流程里。
 import { KeybindingSetup } from './keybindings/KeybindingProviderSetup.js';
+// 引入 startDeferredPrefetches，将 ./main.js 中已经封装好的能力接到本文件流程里。
 import { startDeferredPrefetches } from './main.js';
+// 接入 checkGate_CACHED_OR_BLOCKING、initializeGrowthBook、resetGrowthBook 服务层能力，把外部通信或共享状态交给 ./services/analytics/growthbook.js 处理。
 import { checkGate_CACHED_OR_BLOCKING, initializeGrowthBook, resetGrowthBook } from './services/analytics/growthbook.js';
+// 接入 isQualifiedForGrove 服务层能力，把外部通信或共享状态交给 ./services/api/grove.js 处理。
 import { isQualifiedForGrove } from './services/api/grove.js';
+// 接入 handleMcpjsonServerApprovals 服务层能力，把外部通信或共享状态交给 ./services/mcpServerApproval.js 处理。
 import { handleMcpjsonServerApprovals } from './services/mcpServerApproval.js';
+// 引入 AppStateProvider，将 ./state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { AppStateProvider } from './state/AppState.js';
+// 引入 onChangeAppState，将 ./state/onChangeAppState.js 中已经封装好的能力接到本文件流程里。
 import { onChangeAppState } from './state/onChangeAppState.js';
+// 复用 normalizeApiKeyForConfig 工具函数，把通用处理留在 ./utils/authPortable.js 中维护。
 import { normalizeApiKeyForConfig } from './utils/authPortable.js';
+// 复用 getExternalClaudeMdIncludes、getMemoryFiles、shouldShowClaudeMdExternalIncludesWarning 工具函数，把通用处理留在 ./utils/claudemd.js 中维护。
 import { getExternalClaudeMdIncludes, getMemoryFiles, shouldShowClaudeMdExternalIncludesWarning } from './utils/claudemd.js';
+// 复用 checkHasTrustDialogAccepted、getCustomApiKeyStatus、getGlobalConfig、saveGlobalConfig 工具函数，把通用处理留在 ./utils/config.js 中维护。
 import { checkHasTrustDialogAccepted, getCustomApiKeyStatus, getGlobalConfig, saveGlobalConfig } from './utils/config.js';
+// 复用 updateDeepLinkTerminalPreference 工具函数，把通用处理留在 ./utils/deepLink/terminalPreference.js 中维护。
 import { updateDeepLinkTerminalPreference } from './utils/deepLink/terminalPreference.js';
+// 复用 isEnvTruthy、isRunningOnHomespace 工具函数，把通用处理留在 ./utils/envUtils.js 中维护。
 import { isEnvTruthy, isRunningOnHomespace } from './utils/envUtils.js';
+// 复用 FpsMetrics、FpsTracker 工具函数，把通用处理留在 ./utils/fpsTracker.js 中维护。
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js';
+// 复用 updateGithubRepoPathMapping 工具函数，把通用处理留在 ./utils/githubRepoPathMapping.js 中维护。
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js';
+// 复用 applyConfigEnvironmentVariables 工具函数，把通用处理留在 ./utils/managedEnv.js 中维护。
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
+// 类型依赖 { PermissionMode } 来自 ./utils/permissions/PermissionMode.js，用于校准interactive Helpers的数据契约。
 import type { PermissionMode } from './utils/permissions/PermissionMode.js';
+// 复用 getBaseRenderOptions 工具函数，把通用处理留在 ./utils/renderOptions.js 中维护。
 import { getBaseRenderOptions } from './utils/renderOptions.js';
+// 复用 getSettingsWithAllErrors 工具函数，把通用处理留在 ./utils/settings/allErrors.js 中维护。
 import { getSettingsWithAllErrors } from './utils/settings/allErrors.js';
+// 复用 hasAutoModeOptIn、hasSkipDangerousModePermissionPrompt 工具函数，把通用处理留在 ./utils/settings/settings.js 中维护。
 import { hasAutoModeOptIn, hasSkipDangerousModePermissionPrompt } from './utils/settings/settings.js';
+// completeOnboarding 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function completeOnboarding(): void {
+  // 调用 saveGlobalConfig，触发interactive Helpers此处需要的副作用。
   saveGlobalConfig(current => ({
     ...current,
     hasCompletedOnboarding: true,
     lastOnboardingVersion: MACRO.VERSION
   }));
 }
+// showDialog 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function showDialog<T = void>(root: Root, renderer: (done: (result: T) => void) => React.ReactNode): Promise<T> {
+  // 返回 `new Promise<T>(resolve => {`，作为interactive Helpers这次计算的结果。
   return new Promise<T>(resolve => {
+    // done读取`resolve`，供interactive Helpers后续处理使用。
     const done = (result: T): void => void resolve(result);
+    // 调用 root.render，触发interactive Helpers此处需要的副作用。
     root.render(renderer(done));
   });
 }
@@ -49,7 +86,9 @@ export function showDialog<T = void>(root: Root, renderer: (done: (result: T) =>
  * console.error is swallowed by Ink's patchConsole, so we render
  * through the React tree instead.
  */
+// exitWithError 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function exitWithError(root: Root, message: string, beforeExit?: () => Promise<void>): Promise<never> {
+  // 返回 `exitWithMessage(root, message, {`，作为interactive Helpers这次计算的结果。
   return exitWithMessage(root, message, {
     color: 'error',
     beforeExit
@@ -62,20 +101,28 @@ export async function exitWithError(root: Root, message: string, beforeExit?: ()
  * console output is swallowed by Ink's patchConsole, so we render
  * through the React tree instead.
  */
+// exitWithMessage 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function exitWithMessage(root: Root, message: string, options?: {
   color?: TextProps['color'];
   exitCode?: number;
   beforeExit?: () => Promise<void>;
 }): Promise<never> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     Text
   } = await import('./ink.js');
+  // color保存`options?.color`，供后续判断或组装使用。
   const color = options?.color;
+  // exitCode保存`options?.exitCode ?? 1`，供后续判断或组装使用。
   const exitCode = options?.exitCode ?? 1;
+  // 调用 root.render，触发interactive Helpers此处需要的副作用。
   root.render(color ? <Text color={color}>{message}</Text> : <Text>{message}</Text>);
+  // 调用 root.unmount，触发interactive Helpers此处需要的副作用。
   root.unmount();
+  // 等待 `options?.beforeExit?.()` 完成，再继续interactive Helpers的异步流程。
   await options?.beforeExit?.();
   // eslint-disable-next-line custom-rules/no-process-exit -- exit after Ink unmount
+  // 调用 process.exit，触发interactive Helpers此处需要的副作用。
   process.exit(exitCode);
 }
 
@@ -83,9 +130,11 @@ export async function exitWithMessage(root: Root, message: string, options?: {
  * Show a setup dialog wrapped in AppStateProvider + KeybindingSetup.
  * Reduces boilerplate in showSetupScreens() where every dialog needs these wrappers.
  */
+// showSetupDialog 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function showSetupDialog<T = void>(root: Root, renderer: (done: (result: T) => void) => React.ReactNode, options?: {
   onChangeAppState?: typeof onChangeAppState;
 }): Promise<T> {
+  // 返回 `showDialog<T>(root, done => <AppStateProvider onChangeAppState={options...`，作为interactive Helpers这次计算的结果。
   return showDialog<T>(root, done => <AppStateProvider onChangeAppState={options?.onChangeAppState}>
       <KeybindingSetup>{renderer(done)}</KeybindingSetup>
     </AppStateProvider>);
@@ -95,27 +144,43 @@ export function showSetupDialog<T = void>(root: Root, renderer: (done: (result: 
  * Render the main UI into the root and wait for it to exit.
  * Handles the common epilogue: start deferred prefetches, wait for exit, graceful shutdown.
  */
+// renderAndRun 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function renderAndRun(root: Root, element: React.ReactNode): Promise<void> {
+  // 调用 root.render，触发interactive Helpers此处需要的副作用。
   root.render(element);
+  // 调用 startDeferredPrefetches，触发interactive Helpers此处需要的副作用。
   startDeferredPrefetches();
+  // 等待 `root.waitUntilExit()` 完成，再继续interactive Helpers的异步流程。
   await root.waitUntilExit();
+  // 等待 `gracefulShutdown(0)` 完成，再继续interactive Helpers的异步流程。
   await gracefulShutdown(0);
 }
+// showSetupScreens 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function showSetupScreens(root: Root, permissionMode: PermissionMode, allowDangerouslySkipPermissions: boolean, commands?: Command[], claudeInChrome?: boolean, devChannels?: ChannelEntry[]): Promise<boolean> {
+  // 组合条件 `"production" === 'test' || isEnvTruthy(false` 成立时，interactive Helpers才启用这条专门路径。
   if ("production" === 'test' || isEnvTruthy(false) || process.env.IS_DEMO // Skip onboarding in demo mode
   ) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
+  // 配置读取`getGlobalConfig`，供interactive Helpers后续处理使用。
   const config = getGlobalConfig();
+  // onboardingShown标记interactive Helpers是否启用对应路径。
   let onboardingShown = false;
+  // interactive Helpers在这里进入条件判断，后续代码按实际状态分流。
   if (!config.theme || !config.hasCompletedOnboarding // always show onboarding at least once
   ) {
+    // onboardingShown更新为 `true`，确保interactiveHelpers后续读取最新状态。
     onboardingShown = true;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       Onboarding
     } = await import('./components/Onboarding.js');
+    // 这个回调绑定到 await showSetupDialog(root, done => <Onboarding onDone={() => {，负责interactive Helpers在该局部场景下的响应。
     await showSetupDialog(root, done => <Onboarding onDone={() => {
+      // 调用 completeOnboarding，触发interactive Helpers此处需要的副作用。
       completeOnboarding();
+      // 显式忽略 `done()` 的返回值，只保留它触发的副作用。
       void done();
     }} />, {
       onChangeAppState
@@ -128,52 +193,70 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // only affects tool execution permissions, not workspace trust.
   // Note: non-interactive sessions (CI/CD with -p) never reach showSetupScreens at all.
   // Skip permission checks in claubbit
+  // 满足 `!isEnvTruthy(process.env.CLAUBBIT)` 时，interactive Helpers执行该分支。
   if (!isEnvTruthy(process.env.CLAUBBIT)) {
     // Fast-path: skip TrustDialog import+render when CWD is already trusted.
     // If it returns true, the TrustDialog would auto-resolve regardless of
     // security features, so we can skip the dynamic import and render cycle.
+    // 满足 `!checkHasTrustDialogAccepted()` 时，interactive Helpers执行该分支。
     if (!checkHasTrustDialogAccepted()) {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         TrustDialog
       } = await import('./components/TrustDialog/TrustDialog.js');
+      // 这个回调绑定到 await showSetupDialog(root, done => <TrustDialog commands={commands} onDone={done} /…，负责interactive Helpers在该局部场景下的响应。
       await showSetupDialog(root, done => <TrustDialog commands={commands} onDone={done} />);
     }
 
     // Signal that trust has been verified for this session.
     // GrowthBook checks this to decide whether to include auth headers.
+    // setSessionTrustAccepted 写入新的状态值，使interactive Helpers后续读取保持一致。
     setSessionTrustAccepted(true);
 
     // Reset and reinitialize GrowthBook after trust is established.
     // Defense for login/logout: clears any prior client so the next init
     // picks up fresh auth headers.
+    // 调用 resetGrowthBook，触发interactive Helpers此处需要的副作用。
     resetGrowthBook();
+    // 显式忽略 `initializeGrowthBook()` 的返回值，只保留它触发的副作用。
     void initializeGrowthBook();
 
     // Now that trust is established, prefetch system context if it wasn't already
+    // 显式忽略 `getSystemContext()` 的返回值，只保留它触发的副作用。
     void getSystemContext();
 
     // If settings are valid, check for any mcp.json servers that need approval
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       errors: allErrors
     } = getSettingsWithAllErrors();
+    // allErrors 错误信息为空时立即返回或跳过，避免interactive Helpers把空集合当成可处理内容。
     if (allErrors.length === 0) {
+      // 等待 `handleMcpjsonServerApprovals(root)` 完成，再继续interactive Helpers的异步流程。
       await handleMcpjsonServerApprovals(root);
     }
 
     // Check for claude.md includes that need approval
+    // 满足 `await shouldShowClaudeMdExternalIncludesWarning()` 时，interactive Helpers执行该分支。
     if (await shouldShowClaudeMdExternalIncludesWarning()) {
+      // externalIncludes 集合读取`getExternalClaudeMdIncludes`，供interactive Helpers后续处理使用。
       const externalIncludes = getExternalClaudeMdIncludes(await getMemoryFiles(true));
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         ClaudeMdExternalIncludesDialog
       } = await import('./components/ClaudeMdExternalIncludesDialog.js');
+      // 这个回调绑定到 await showSetupDialog(root, done => <ClaudeMdExternalIncludesDialog onDone={done} is…，负责interactive Helpers在该局部场景下的响应。
       await showSetupDialog(root, done => <ClaudeMdExternalIncludesDialog onDone={done} isStandaloneDialog externalIncludes={externalIncludes} />);
     }
   }
 
   // Track current repo path for teleport directory switching (fire-and-forget)
   // This must happen AFTER trust to prevent untrusted directories from poisoning the mapping
+  // 显式忽略 `updateGithubRepoPathMapping()` 的返回值，只保留它触发的副作用。
   void updateGithubRepoPathMapping();
+  // 满足 `feature('LODESTONE')` 时，interactive Helpers执行该分支。
   if (feature('LODESTONE')) {
+    // 调用 updateDeepLinkTerminalPreference，触发interactive Helpers此处需要的副作用。
     updateDeepLinkTerminalPreference();
   }
 
@@ -181,21 +264,30 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // In bypass mode (CI/CD, automation), we trust the environment so apply all variables
   // In normal mode, this happens after the trust dialog is accepted
   // This includes potentially dangerous environment variables from untrusted sources
+  // 调用 applyConfigEnvironmentVariables，触发interactive Helpers此处需要的副作用。
   applyConfigEnvironmentVariables();
 
   // Initialize telemetry after env vars are applied so OTEL endpoint env vars and
   // otelHeadersHelper (which requires trust to execute) are available.
   // Defer to next tick so the OTel dynamic import resolves after first render
   // instead of during the pre-render microtask queue.
+  // setImmediate 写入新的状态值，使interactive Helpers后续读取保持一致。
   setImmediate(() => initializeTelemetryAfterTrust());
+  // 满足 `await isQualifiedForGrove()` 时，interactive Helpers执行该分支。
   if (await isQualifiedForGrove()) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       GroveDialog
     } = await import('src/components/grove/Grove.js');
+    // decision 等待 `showSetupDialog<string>(root, done => <GroveDialog showIf...`，确保继续执行前已有结果。
     const decision = await showSetupDialog<string>(root, done => <GroveDialog showIfAlreadyViewed={false} location={onboardingShown ? 'onboarding' : 'policy_update_modal'} onDone={done} />);
+    // 当 `decision` 匹配 `'escape'` 时，interactive Helpers执行对应分支。
     if (decision === 'escape') {
+      // 记录interactive Helpers运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_grove_policy_exited', {});
+      // 调用 gracefulShutdownSync，触发interactive Helpers此处需要的副作用。
       gracefulShutdownSync(0);
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
   }
@@ -203,33 +295,46 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // Check for custom API key
   // On homespace, ANTHROPIC_API_KEY is preserved in process.env for child
   // processes but ignored by Claude Code itself (see auth.ts).
+  // 组合条件 `process.env.ANTHROPIC_API_KEY && !isRunningOnHomespace()` 成立时，interactive Helpers才启用这条专门路径。
   if (process.env.ANTHROPIC_API_KEY && !isRunningOnHomespace()) {
+    // customApiKeyTruncated保存`normalizeApiKeyForConfig`，供interactive Helpers后续处理使用。
     const customApiKeyTruncated = normalizeApiKeyForConfig(process.env.ANTHROPIC_API_KEY);
+    // keyStatus 集合读取`getCustomApiKeyStatus`，供interactive Helpers后续处理使用。
     const keyStatus = getCustomApiKeyStatus(customApiKeyTruncated);
+    // 当 `keyStatus` 匹配 `'new'` 时，interactive Helpers执行对应分支。
     if (keyStatus === 'new') {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         ApproveApiKey
       } = await import('./components/ApproveApiKey.js');
+      // 这个回调绑定到 await showSetupDialog<boolean>(root, done => <ApproveApiKey customApiKeyTruncated={c…，负责interactive Helpers在该局部场景下的响应。
       await showSetupDialog<boolean>(root, done => <ApproveApiKey customApiKeyTruncated={customApiKeyTruncated} onDone={done} />, {
         onChangeAppState
       });
     }
   }
+  // 组合条件 `(permissionMode === 'bypassPermissions' || allowDangerouslySkipPermissions) && !h...` 成立时，interactive Helpers才启用这条专门路径。
   if ((permissionMode === 'bypassPermissions' || allowDangerouslySkipPermissions) && !hasSkipDangerousModePermissionPrompt()) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       BypassPermissionsModeDialog
     } = await import('./components/BypassPermissionsModeDialog.js');
+    // 这个回调绑定到 await showSetupDialog(root, done => <BypassPermissionsModeDialog onAccept={done} />);，负责interactive Helpers在该局部场景下的响应。
     await showSetupDialog(root, done => <BypassPermissionsModeDialog onAccept={done} />);
   }
+  // 满足 `feature('TRANSCRIPT_CLASSIFIER')` 时，interactive Helpers执行该分支。
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     // Only show the opt-in dialog if auto mode actually resolved — if the
     // gate denied it (org not allowlisted, settings disabled), showing
     // consent for an unavailable feature is pointless. The
     // verifyAutoModeGateAccess notification will explain why instead.
+    // 组合条件 `permissionMode === 'auto' && !hasAutoModeOptIn()` 成立时，interactive Helpers才启用这条专门路径。
     if (permissionMode === 'auto' && !hasAutoModeOptIn()) {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         AutoModeOptInDialog
       } = await import('./components/AutoModeOptInDialog.js');
+      // 这个回调绑定到 await showSetupDialog(root, done => <AutoModeOptInDialog onAccept={done} onDecline={…，负责interactive Helpers在该局部场景下的响应。
       await showSetupDialog(root, done => <AutoModeOptInDialog onAccept={done} onDecline={() => gracefulShutdownSync(1)} declineExits />);
     }
   }
@@ -238,6 +343,7 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // dev channels to any --channels list already set in main.tsx. Org policy
   // is NOT bypassed — gateChannelServer() still runs; this flag only exists
   // to sidestep the --channels approved-server allowlist.
+  // 组合条件 `feature('KAIROS') || feature('KAIROS_CHANNELS')` 成立时，interactive Helpers才启用这条专门路径。
   if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
     // gateChannelServer and ChannelsNotice read tengu_harbor after this
     // function returns. A cold disk cache (fresh install, or first run after
@@ -247,10 +353,14 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
     // true; only blocks on a cold/stale-false cache (awaits the same memoized
     // initializeGrowthBook promise fired earlier). Also warms the
     // isChannelsEnabled() check in the dev-channels dialog below.
+    // 组合条件 `getAllowedChannels().length > 0 || (devChannels?.length ?? 0) > 0` 成立时，interactive Helpers才启用这条专门路径。
     if (getAllowedChannels().length > 0 || (devChannels?.length ?? 0) > 0) {
+      // 等待 `checkGate_CACHED_OR_BLOCKING('tengu_harbor')` 完成，再继续interactive Helpers的异步流程。
       await checkGate_CACHED_OR_BLOCKING('tengu_harbor');
     }
+    // 组合条件 `devChannels && devChannels.length > 0` 成立时，interactive Helpers才启用这条专门路径。
     if (devChannels && devChannels.length > 0) {
+      // interactive Helpers先整理这一处局部数据，后续分支可以直接读取。
       const [{
         isChannelsEnabled
       }, {
@@ -263,24 +373,32 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
       // named. dev:true here is for the flag label in ChannelsNotice
       // (hasNonDev check); the allowlist bypass it also grants is moot
       // since the gate blocks upstream.
+      // 组合条件 `!isChannelsEnabled() || !getClaudeAIOAuthTokens()?.accessToken` 成立时，interactive Helpers才启用这条专门路径。
       if (!isChannelsEnabled() || !getClaudeAIOAuthTokens()?.accessToken) {
+        // setAllowedChannels 写入新的状态值，使interactive Helpers后续读取保持一致。
         setAllowedChannels([...getAllowedChannels(), ...devChannels.map(c => ({
           ...c,
           dev: true
         }))]);
+        // setHasDevChannels 写入新的状态值，使interactive Helpers后续读取保持一致。
         setHasDevChannels(true);
       } else {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           DevChannelsDialog
         } = await import('./components/DevChannelsDialog.js');
+        // 这个回调绑定到 await showSetupDialog(root, done => <DevChannelsDialog channels={devChannels} onAcce…，负责interactive Helpers在该局部场景下的响应。
         await showSetupDialog(root, done => <DevChannelsDialog channels={devChannels} onAccept={() => {
           // Mark dev entries per-entry so the allowlist bypass doesn't leak
           // to --channels entries when both flags are passed.
+          // setAllowedChannels 写入新的状态值，使interactive Helpers后续读取保持一致。
           setAllowedChannels([...getAllowedChannels(), ...devChannels.map(c => ({
             ...c,
             dev: true
           }))]);
+          // setHasDevChannels 写入新的状态值，使interactive Helpers后续读取保持一致。
           setHasDevChannels(true);
+          // 显式忽略 `done()` 的返回值，只保留它触发的副作用。
           void done();
         }} />);
       }
@@ -288,47 +406,68 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   }
 
   // Show Chrome onboarding for first-time Claude in Chrome users
+  // 组合条件 `claudeInChrome && !getGlobalConfig().hasCompletedClaudeInChromeOnboarding` 成立时，interactive Helpers才启用这条专门路径。
   if (claudeInChrome && !getGlobalConfig().hasCompletedClaudeInChromeOnboarding) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       ClaudeInChromeOnboarding
     } = await import('./components/ClaudeInChromeOnboarding.js');
+    // 这个回调绑定到 await showSetupDialog(root, done => <ClaudeInChromeOnboarding onDone={done} />);，负责interactive Helpers在该局部场景下的响应。
     await showSetupDialog(root, done => <ClaudeInChromeOnboarding onDone={done} />);
   }
+  // 返回 `onboardingShown`，作为interactive Helpers这次计算的结果。
   return onboardingShown;
 }
+// getRenderContext 封装interactiveHelpers的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getRenderContext(exitOnCtrlC: boolean): {
   renderOptions: RenderOptions;
+  // 这个回调绑定到 getFpsMetrics: () => FpsMetrics | undefined;，负责interactive Helpers在该局部场景下的响应。
   getFpsMetrics: () => FpsMetrics | undefined;
   stats: StatsStore;
 } {
+  // lastFlickerTime保存`0`，供interactive Helpers后续判断或输出使用。
   let lastFlickerTime = 0;
+  // baseOptions 集合读取`getBaseRenderOptions`，供interactive Helpers后续处理使用。
   const baseOptions = getBaseRenderOptions(exitOnCtrlC);
 
   // Log analytics event when stdin override is active
+  // 满足 `baseOptions.stdin` 时，interactive Helpers执行该分支。
   if (baseOptions.stdin) {
+    // 记录interactive Helpers运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_stdin_interactive', {});
   }
+  // fpsTracker保存`FpsTracker`，供interactive Helpers后续处理使用。
   const fpsTracker = new FpsTracker();
+  // stats 集合构建`createStatsStore`，供interactive Helpers后续处理使用。
   const stats = createStatsStore();
+  // setStatsStore 写入新的状态值，使interactive Helpers后续读取保持一致。
   setStatsStore(stats);
 
   // Bench mode: when set, append per-frame phase timings as JSONL for
   // offline analysis by bench/repl-scroll.ts. Captures the full TUI
   // render pipeline (yoga → screen buffer → diff → optimize → stdout)
   // so perf work on any phase can be validated against real user flows.
+  // frameTimingLogPath 路径数据 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const frameTimingLogPath = process.env.CLAUDE_CODE_FRAME_TIMING_LOG;
+  // 返回结构化结果，集中表达interactive Helpers已经整理出的状态。
   return {
+    // 这个回调绑定到 getFpsMetrics: () => fpsTracker.getMetrics(),，负责interactive Helpers在该局部场景下的响应。
     getFpsMetrics: () => fpsTracker.getMetrics(),
     stats,
     renderOptions: {
       ...baseOptions,
+      // 这个回调绑定到 onFrame: event => {，负责interactive Helpers在该局部场景下的响应。
       onFrame: event => {
+        // 调用 fpsTracker.record，触发interactive Helpers此处需要的副作用。
         fpsTracker.record(event.durationMs);
+        // 调用 stats.observe，触发interactive Helpers此处需要的副作用。
         stats.observe('frame_duration_ms', event.durationMs);
+        // 组合条件 `frameTimingLogPath && event.phases` 成立时，interactive Helpers才启用这条专门路径。
         if (frameTimingLogPath && event.phases) {
           // Bench-only env-var-gated path: sync write so no frames dropped
           // on abrupt exit. ~100 bytes at ≤60fps is negligible. rss/cpu are
           // single syscalls; cpu is cumulative — bench side computes delta.
+          // line 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
           const line =
           // eslint-disable-next-line custom-rules/no-direct-json-operations -- tiny object, hot bench path
           JSON.stringify({
@@ -338,25 +477,35 @@ export function getRenderContext(exitOnCtrlC: boolean): {
             cpu: process.cpuUsage()
           }) + '\n';
           // eslint-disable-next-line custom-rules/no-sync-fs -- bench-only, sync so no frames dropped on exit
+          // 调用 appendFileSync，触发interactive Helpers此处需要的副作用。
           appendFileSync(frameTimingLogPath, line);
         }
         // Skip flicker reporting for terminals with synchronized output —
         // DEC 2026 buffers between BSU/ESU so clear+redraw is atomic.
+        // 满足 `isSynchronizedOutputSupported()` 时，interactive Helpers执行该分支。
         if (isSynchronizedOutputSupported()) {
+          // interactive Helpers在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // 按顺序遍历 `event.flickers` 中的flicker，逐个交给interactive Helpers处理。
         for (const flicker of event.flickers) {
+          // 当 `flicker.reason` 匹配 `'resize'` 时，interactive Helpers执行对应分支。
           if (flicker.reason === 'resize') {
+            // 跳过当前项，继续处理interactive Helpers中的下一轮循环。
             continue;
           }
+          // now记录时间`Date.now`，供interactive Helpers后续处理使用。
           const now = Date.now();
+          // 满足 `now - lastFlickerTime < 1000` 时，interactive Helpers执行该分支。
           if (now - lastFlickerTime < 1000) {
+            // 记录interactive Helpers运行诊断，方便排查异常路径或性能问题。
             logEvent('tengu_flicker', {
               desiredHeight: flicker.desiredHeight,
               actualHeight: flicker.availableHeight,
               reason: flicker.reason
             } as unknown as Record<string, boolean | number | undefined>);
           }
+          // lastFlickerTime更新为 `now`，确保interactiveHelpers后续读取最新状态。
           lastFlickerTime = now;
         }
       }

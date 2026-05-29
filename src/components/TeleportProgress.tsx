@@ -1,16 +1,27 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useState } from 'react';
+// 类型依赖 { Root } 来自 ../ink.js，用于校准终端渲染的数据契约。
 import type { Root } from '../ink.js';
+// 引入 Box、Text、useAnimationFrame，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useAnimationFrame } from '../ink.js';
+// 引入 AppStateProvider，将 ../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { AppStateProvider } from '../state/AppState.js';
+// 复用 checkOutTeleportedSessionBranch、processMessagesForTeleportResume、TeleportProgressStep、TeleportResult、teleportResumeCodeSession 工具函数，把通用处理留在 ../utils/teleport.js 中维护。
 import { checkOutTeleportedSessionBranch, processMessagesForTeleportResume, type TeleportProgressStep, type TeleportResult, teleportResumeCodeSession } from '../utils/teleport.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   currentStep: TeleportProgressStep;
   sessionId?: string;
 };
+// SPINNER_FRAMES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const SPINNER_FRAMES = ['◐', '◓', '◑', '◒'];
+// STEPS 集合 先占位，稍后的条件分支会根据实际输入补齐它。
 const STEPS: {
   key: TeleportProgressStep;
   label: string;
@@ -27,87 +38,149 @@ const STEPS: {
   key: 'checking_out',
   label: 'Checking out branch'
 }];
+// TeleportProgress 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function TeleportProgress(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(16);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     currentStep,
     sessionId
   } = t0;
+  // 从 `useAnimationFrame(100)` 按位置拆出 ref、time，让终端 UI 组件 Teleport Progress分别处理这些返回值。
   const [ref, time] = useAnimationFrame(100);
+  // frame保存`Math.floor`，供终端渲染后续处理使用。
   const frame = Math.floor(time / 100) % SPINNER_FRAMES.length;
+  // t1 暂存 `s => s.key === currentStep` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== currentStep) {
+    // t1 暂存 `s => s.key === currentStep` 生成的渲染片段，后续返回路径直接复用。
     t1 = s => s.key === currentStep;
+    // $[0] 缓存 `currentStep`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = currentStep;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // currentStepIndex 索引筛选`STEPS.findIndex`，供终端渲染后续处理使用。
   const currentStepIndex = STEPS.findIndex(t1);
+  // t2保存`SPINNER_FRAMES[frame]`，供终端 UI Teleport Progress后续判断或输出使用。
   const t2 = SPINNER_FRAMES[frame];
+  // t3 暂存 `<Box marginBottom={1}><Text bold={true} color="claude">{t...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== t2) {
+    // t3 暂存 `<Box marginBottom={1}><Text bold={true} color="claude">{t...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Box marginBottom={1}><Text bold={true} color="claude">{t2} Teleporting session…</Text></Box>;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
+    // $[3] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[3];
   }
+  // t4 暂存 `sessionId && <Box marginBottom={1}><Text dimColor={true}>...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== sessionId) {
+    // t4 暂存 `sessionId && <Box marginBottom={1}><Text dimColor={true}>...` 生成的渲染片段，后续返回路径直接复用。
     t4 = sessionId && <Box marginBottom={1}><Text dimColor={true}>{sessionId}</Text></Box>;
+    // $[4] 缓存 `sessionId`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = sessionId;
+    // $[5] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[5];
   }
+  // t5 暂存 `STEPS.map((step, index) => {` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[6] !== currentStepIndex || $[7] !== frame) {
+    // t5 暂存 `STEPS.map((step, index) => {` 生成的渲染片段，后续返回路径直接复用。
     t5 = STEPS.map((step, index) => {
+      // isComplete标记终端 UI Teleport Progress是否启用对应路径。
       const isComplete = index < currentStepIndex;
+      // isCurrent标记终端 UI Teleport Progress是否启用对应路径。
       const isCurrent = index === currentStepIndex;
+      // isPending标记终端 UI Teleport Progress是否启用对应路径。
       const isPending = index > currentStepIndex;
+      // icon 先占位，稍后的条件分支会根据实际输入补齐它。
       let icon;
+      // color 先占位，稍后的条件分支会根据实际输入补齐它。
       let color;
+      // 满足 `isComplete` 时，终端渲染执行该分支。
       if (isComplete) {
+        // icon更新为 `figures.tick`，确保终端 UI后续读取最新状态。
         icon = figures.tick;
+        // color更新为 `"green"`，确保终端 UI后续读取最新状态。
         color = "green";
       } else {
+        // 满足 `isCurrent` 时，终端渲染执行该分支。
         if (isCurrent) {
+          // icon更新为 `SPINNER_FRAMES[frame]`，确保终端 UI后续读取最新状态。
           icon = SPINNER_FRAMES[frame];
+          // color更新为 `"claude"`，确保终端 UI后续读取最新状态。
           color = "claude";
         } else {
+          // icon更新为 `figures.circle`，确保终端 UI后续读取最新状态。
           icon = figures.circle;
+          // color更新为 `undefined`，确保终端 UI后续读取最新状态。
           color = undefined;
         }
       }
+      // 返回 `<Box key={step.key} flexDirection="row"><Box width={2}><Text color={col...`，作为终端渲染这次计算的结果。
       return <Box key={step.key} flexDirection="row"><Box width={2}><Text color={color as never} dimColor={isPending}>{icon}</Text></Box><Text dimColor={isPending} bold={isCurrent}>{step.label}</Text></Box>;
     });
+    // $[6] 缓存 `currentStepIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = currentStepIndex;
+    // $[7] 缓存 `frame`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = frame;
+    // $[8] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[8];
   }
+  // t6 暂存 `<Box flexDirection="column" marginLeft={2}>{t5}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== t5) {
+    // t6 暂存 `<Box flexDirection="column" marginLeft={2}>{t5}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Box flexDirection="column" marginLeft={2}>{t5}</Box>;
+    // $[9] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t5;
+    // $[10] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[10];
   }
+  // t7 暂存 `<Box ref={ref} flexDirection="column" paddingX={1} paddin...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[11] !== ref || $[12] !== t3 || $[13] !== t4 || $[14] !== t6) {
+    // t7 暂存 `<Box ref={ref} flexDirection="column" paddingX={1} paddin...` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Box ref={ref} flexDirection="column" paddingX={1} paddingY={1}>{t3}{t4}{t6}</Box>;
+    // $[11] 缓存 `ref`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = ref;
+    // $[12] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t3;
+    // $[13] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t4;
+    // $[14] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t6;
+    // $[15] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[15];
   }
+  // 返回 `t7`，作为终端渲染这次计算的结果。
   return t7;
 }
 
@@ -115,23 +188,34 @@ export function TeleportProgress(t0) {
  * Teleports to a remote session with progress UI rendered into the existing root.
  * Fetches the session, checks out the branch, and returns the result.
  */
+// teleportWithProgress 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function teleportWithProgress(root: Root, sessionId: string): Promise<TeleportResult> {
   // Capture the setState function from the rendered component
+  // 这个回调绑定到 let setStep: (step: TeleportProgressStep) => void = () => {};，负责终端渲染在该局部场景下的响应。
   let setStep: (step: TeleportProgressStep) => void = () => {};
+  // TeleportProgressWrapper 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function TeleportProgressWrapper(): React.ReactNode {
+    // step 由 React state 持有，_setStep 会在用户操作或异步结果返回时触发刷新。
     const [step, _setStep] = useState<TeleportProgressStep>('validating');
+    // setStep更新为 `_setStep`，确保终端 UI后续读取最新状态。
     setStep = _setStep;
+    // 返回 `<TeleportProgress currentStep={step} sessionId={sessionId} />`，作为终端渲染这次计算的结果。
     return <TeleportProgress currentStep={step} sessionId={sessionId} />;
   }
+  // 调用 root.render，触发终端渲染此处需要的副作用。
   root.render(<AppStateProvider>
       <TeleportProgressWrapper />
     </AppStateProvider>);
+  // 结果保存`teleportResumeCodeSession`，供终端渲染后续处理使用。
   const result = await teleportResumeCodeSession(sessionId, setStep);
+  // setStep 写入新的状态值，使终端渲染后续读取保持一致。
   setStep('checking_out');
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     branchName,
     branchError
   } = await checkOutTeleportedSessionBranch(result.branch);
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     messages: processMessagesForTeleportResume(result.log, branchError),
     branchName

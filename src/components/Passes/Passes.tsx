@@ -1,112 +1,178 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useState } from 'react';
+// 类型依赖 { CommandResultDisplay } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../../commands.js';
+// 引入 TEARDROP_ASTERISK，将 ../../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { TEARDROP_ASTERISK } from '../../constants/figures.js';
+// 引入 useExitOnCtrlCDWithKeybindings，将 ../../hooks/useExitOnCtrlCDWithKeybindings.js 中已经封装好的能力接到本文件流程里。
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+// 复用 setClipboard 终端界面组件，避免在这里重复拼装显示逻辑。
 import { setClipboard } from '../../ink/termio/osc.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- enter to copy link
+// 引入 Box、Link、Text、useInput，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Link, Text, useInput } from '../../ink.js';
+// 引入 useKeybinding，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { logEvent } from '../../services/analytics/index.js';
+// 接入 fetchReferralRedemptions、formatCreditAmount、getCachedOrFetchPassesEligibility 服务层能力，把外部通信或共享状态交给 ../../services/api/referral.js 处理。
 import { fetchReferralRedemptions, formatCreditAmount, getCachedOrFetchPassesEligibility } from '../../services/api/referral.js';
+// 类型依赖 { ReferralRedemptionsResponse, ReferrerRewardInfo } 来自 ../../services/oauth/types.js，用于校准终端渲染的数据契约。
 import type { ReferralRedemptionsResponse, ReferrerRewardInfo } from '../../services/oauth/types.js';
+// 复用 count 工具函数，把通用处理留在 ../../utils/array.js 中维护。
 import { count } from '../../utils/array.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 引入 Pane，将 ../design-system/Pane.js 中已经封装好的能力接到本文件流程里。
 import { Pane } from '../design-system/Pane.js';
+// PassStatus 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type PassStatus = {
   passNumber: number;
   isAvailable: boolean;
 };
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   onDone: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
 };
+// Passes 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function Passes({
   onDone
 }: Props): React.ReactNode {
+  // 加载状态 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [loading, setLoading] = useState(true);
+  // passStatuses 集合 由 React state 持有，setPassStatuses 会在用户操作或异步结果返回时触发刷新。
   const [passStatuses, setPassStatuses] = useState<PassStatus[]>([]);
+  // isAvailable 由 React state 持有，setIsAvailable 会在用户操作或异步结果返回时触发刷新。
   const [isAvailable, setIsAvailable] = useState(false);
+  // referralLink 由 React state 持有，setReferralLink 会在用户操作或异步结果返回时触发刷新。
   const [referralLink, setReferralLink] = useState<string | null>(null);
+  // referrerReward 由 React state 持有，setReferrerReward 会在用户操作或异步结果返回时触发刷新。
   const [referrerReward, setReferrerReward] = useState<ReferrerRewardInfo | null | undefined>(undefined);
+  // exitState 状态保存`useExitOnCtrlCDWithKeybindings`，供终端渲染后续处理使用。
   const exitState = useExitOnCtrlCDWithKeybindings(() => onDone('Guest passes dialog dismissed', {
     display: 'system'
   }));
+  // handleCancel保存`useCallback`，供终端渲染后续处理使用。
   const handleCancel = useCallback(() => {
+    // 调用 onDone，触发终端渲染此处需要的副作用。
     onDone('Guest passes dialog dismissed', {
       display: 'system'
     });
   }, [onDone]);
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleCancel, {
     context: 'Confirmation'
   });
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((_input, key) => {
+    // 只有 `key.return && referralLink` 满足时，终端渲染才执行该分支。
     if (key.return && referralLink) {
+      // 这个回调绑定到 void setClipboard(referralLink).then(raw => {，负责终端渲染在该局部场景下的响应。
       void setClipboard(referralLink).then(raw => {
+        // 满足 `raw) process.stdout.write(raw` 时，终端渲染执行该分支。
         if (raw) process.stdout.write(raw);
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_guest_passes_link_copied', {});
+        // 调用 onDone，触发终端渲染此处需要的副作用。
         onDone(`Referral link copied to clipboard!`);
       });
     }
   });
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // loadPassesData 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadPassesData() {
+      // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
       try {
         // Check eligibility first (uses cache if available)
+        // eligibilityData读取`getCachedOrFetchPassesEligibility`，供终端渲染后续处理使用。
         const eligibilityData = await getCachedOrFetchPassesEligibility();
+        // 只有 `!eligibilityData || !eligibilityData.eligible` 满足时，终端渲染才执行该分支。
         if (!eligibilityData || !eligibilityData.eligible) {
+          // setIsAvailable 写入新的状态值，使终端渲染后续读取保持一致。
           setIsAvailable(false);
+          // setLoading 写入新的状态值，使终端渲染后续读取保持一致。
           setLoading(false);
+          // 终端 UI 组件 Passes在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // setIsAvailable 写入新的状态值，使终端渲染后续读取保持一致。
         setIsAvailable(true);
 
         // Store the referral link if available
+        // 满足 `eligibilityData.referral_code_details?.referral_l` 时，终端渲染执行该分支。
         if (eligibilityData.referral_code_details?.referral_link) {
+          // setReferralLink 写入新的状态值，使终端渲染后续读取保持一致。
           setReferralLink(eligibilityData.referral_code_details.referral_link);
         }
 
         // Store referrer reward info for v1 campaign messaging
+        // setReferrerReward 写入新的状态值，使终端渲染后续读取保持一致。
         setReferrerReward(eligibilityData.referrer_reward);
 
         // Use the campaign returned from eligibility for redemptions
+        // campaign保存`eligibilityData.referral_code_details?.campaign ?? 'claud...`，供后续判断或组装使用。
         const campaign = eligibilityData.referral_code_details?.campaign ?? 'claude_code_guest_pass';
 
         // Fetch redemptions data
+        // redemptionsData 先占位，稍后的条件分支会根据实际输入补齐它。
         let redemptionsData: ReferralRedemptionsResponse;
+        // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
         try {
+          // redemptionsData更新为 `await fetchReferralRedemptions(campaign)`，确保终端 UI后续读取最新状态。
           redemptionsData = await fetchReferralRedemptions(campaign);
         } catch (err_0) {
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logError(err_0 as Error);
+          // setIsAvailable 写入新的状态值，使终端渲染后续读取保持一致。
           setIsAvailable(false);
+          // setLoading 写入新的状态值，使终端渲染后续读取保持一致。
           setLoading(false);
+          // 终端 UI 组件 Passes在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
 
         // Build pass statuses array
+        // redemptions 集合标记终端 UI Passes是否启用对应路径。
         const redemptions = redemptionsData.redemptions || [];
+        // maxRedemptions 集合标记终端 UI Passes是否启用对应路径。
         const maxRedemptions = redemptionsData.limit || 3;
+        // statuses 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
         const statuses: PassStatus[] = [];
+        // 按索引扫描 `maxRedemptions`，需要消费相邻参数时可以精确移动游标。
         for (let i = 0; i < maxRedemptions; i++) {
+          // redemption保存`redemptions[i]`，供终端 UI Passes后续判断或输出使用。
           const redemption = redemptions[i];
+          // statuses 集合追加新条目，保持收集顺序与输入顺序一致。
           statuses.push({
             passNumber: i + 1,
             isAvailable: !redemption
           });
         }
+        // setPassStatuses 写入新的状态值，使终端渲染后续读取保持一致。
         setPassStatuses(statuses);
+        // setLoading 写入新的状态值，使终端渲染后续读取保持一致。
         setLoading(false);
       } catch (err) {
         // For any error, just show passes as not available
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logError(err as Error);
+        // setIsAvailable 写入新的状态值，使终端渲染后续读取保持一致。
         setIsAvailable(false);
+        // setLoading 写入新的状态值，使终端渲染后续读取保持一致。
         setLoading(false);
       }
     }
+    // 显式忽略 `loadPassesData()` 的返回值，只保留它触发的副作用。
     void loadPassesData();
   }, []);
+  // 满足 `loading` 时，终端渲染执行该分支。
   if (loading) {
+    // 返回 `<Pane>`，作为终端渲染这次计算的结果。
     return <Pane>
         <Box flexDirection="column" gap={1}>
           <Text dimColor>Loading guest pass information…</Text>
@@ -116,7 +182,9 @@ export function Passes({
         </Box>
       </Pane>;
   }
+  // isAvailable缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!isAvailable) {
+    // 返回 `<Pane>`，作为终端渲染这次计算的结果。
     return <Pane>
         <Box flexDirection="column" gap={1}>
           <Text>Guest passes are not currently available.</Text>
@@ -126,22 +194,29 @@ export function Passes({
         </Box>
       </Pane>;
   }
+  // availableCount 数量统计`count`，供终端渲染后续处理使用。
   const availableCount = count(passStatuses, p => p.isAvailable);
 
   // Sort passes: available first, then redeemed
+  // sortedPasses 集合保存`sort`，供终端渲染后续处理使用。
   const sortedPasses = [...passStatuses].sort((a, b) => +b.isAvailable - +a.isAvailable);
 
   // ASCII art for tickets
+  // renderTicket封装成回调，供终端 UI Passes在事件触发或异步步骤中调用。
   const renderTicket = (pass: PassStatus) => {
+    // isRedeemed标记终端 UI Passes是否启用对应路径。
     const isRedeemed = !pass.isAvailable;
+    // 满足 `isRedeemed` 时，终端渲染执行该分支。
     if (isRedeemed) {
       // Grayed out redeemed ticket with slashes
+      // 返回 `<Box key={pass.passNumber} flexDirection="column" marginRight={1}>`，作为终端渲染这次计算的结果。
       return <Box key={pass.passNumber} flexDirection="column" marginRight={1}>
           <Text dimColor>{'┌─────────╱'}</Text>
           <Text dimColor>{` ) CC ${TEARDROP_ASTERISK} ┊╱`}</Text>
           <Text dimColor>{'└───────╱'}</Text>
         </Box>;
     }
+    // 返回 `<Box key={pass.passNumber} flexDirection="column" marginRight={1}>`，作为终端渲染这次计算的结果。
     return <Box key={pass.passNumber} flexDirection="column" marginRight={1}>
         <Text>{'┌──────────┐'}</Text>
         <Text>
@@ -152,11 +227,13 @@ export function Passes({
         <Text>{'└──────────┘'}</Text>
       </Box>;
   };
+  // 返回 `<Pane>`，作为终端渲染这次计算的结果。
   return <Pane>
       <Box flexDirection="column" gap={1}>
         <Text color="permission">Guest passes · {availableCount} left</Text>
 
         <Box flexDirection="row" marginLeft={2}>
+          {/* 这个回调绑定到 {sortedPasses.slice(0, 3).map(pass_0 => renderTicket(pass_0))}，负责终端渲染在该局部场景下的响应。 */}
           {sortedPasses.slice(0, 3).map(pass_0 => renderTicket(pass_0))}
         </Box>
 

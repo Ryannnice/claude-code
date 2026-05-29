@@ -1,18 +1,33 @@
+// 类型依赖 { ContentBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准command的数据契约。
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
+// 类型依赖 { UUID } 来自 crypto，用于校准command的数据契约。
 import type { UUID } from 'crypto'
+// 类型依赖 { CanUseToolFn } 来自 ../hooks/useCanUseTool.js，用于校准command的数据契约。
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
+// 类型依赖 { CompactionResult } 来自 ../services/compact/compact.js，用于校准command的数据契约。
 import type { CompactionResult } from '../services/compact/compact.js'
+// 类型依赖 { ScopedMcpServerConfig } 来自 ../services/mcp/types.js，用于校准command的数据契约。
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js'
+// 类型依赖 { ToolUseContext } 来自 ../Tool.js，用于校准command的数据契约。
 import type { ToolUseContext } from '../Tool.js'
+// 类型依赖 { EffortValue } 来自 ../utils/effort.js，用于校准command的数据契约。
 import type { EffortValue } from '../utils/effort.js'
+// 类型依赖 { IDEExtensionInstallationStatus, IdeType } 来自 ../utils/ide.js，用于校准command的数据契约。
 import type { IDEExtensionInstallationStatus, IdeType } from '../utils/ide.js'
+// 类型依赖 { SettingSource } 来自 ../utils/settings/constants.js，用于校准command的数据契约。
 import type { SettingSource } from '../utils/settings/constants.js'
+// 类型依赖 { HooksSettings } 来自 ../utils/settings/types.js，用于校准command的数据契约。
 import type { HooksSettings } from '../utils/settings/types.js'
+// 类型依赖 { ThemeName } 来自 ../utils/theme.js，用于校准command的数据契约。
 import type { ThemeName } from '../utils/theme.js'
+// 类型依赖 { LogOption } 来自 ./logs.js，用于校准command的数据契约。
 import type { LogOption } from './logs.js'
+// 类型依赖 { Message } 来自 ./message.js，用于校准command的数据契约。
 import type { Message } from './message.js'
+// 类型依赖 { PluginManifest } 来自 ./plugin.js，用于校准command的数据契约。
 import type { PluginManifest } from './plugin.js'
 
+// LocalCommandResult 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LocalCommandResult =
   | { type: 'text'; value: string }
   | {
@@ -22,6 +37,7 @@ export type LocalCommandResult =
     }
   | { type: 'skip' } // Skip messages
 
+// PromptCommand 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PromptCommand = {
   type: 'prompt'
   progressMessage: string
@@ -50,6 +66,7 @@ export type PromptCommand = {
   // Glob patterns for file paths this skill applies to
   // When set, the skill is only visible after the model touches matching files
   paths?: string[]
+  // 调用 getPromptForCommand，触发command此处需要的副作用。
   getPromptForCommand(
     args: string,
     context: ToolUseContext,
@@ -59,6 +76,7 @@ export type PromptCommand = {
 /**
  * The call signature for a local command implementation.
  */
+// LocalCommandCall 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LocalCommandCall = (
   args: string,
   context: LocalJSXCommandContext,
@@ -67,29 +85,36 @@ export type LocalCommandCall = (
 /**
  * Module shape returned by load() for lazy-loaded local commands.
  */
+// LocalCommandModule 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LocalCommandModule = {
   call: LocalCommandCall
 }
 
+// LocalCommand 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 type LocalCommand = {
   type: 'local'
   supportsNonInteractive: boolean
+  // 这个回调绑定到 load: () => Promise<LocalCommandModule>，负责command在该局部场景下的响应。
   load: () => Promise<LocalCommandModule>
 }
 
+// LocalJSXCommandContext 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LocalJSXCommandContext = ToolUseContext & {
   canUseTool?: CanUseToolFn
+  // 这个回调绑定到 setMessages: (updater: (prev: Message[]) => Message[]) => void，负责command在该局部场景下的响应。
   setMessages: (updater: (prev: Message[]) => Message[]) => void
   options: {
     dynamicMcpConfig?: Record<string, ScopedMcpServerConfig>
     ideInstallationStatus: IDEExtensionInstallationStatus | null
     theme: ThemeName
   }
+  // 这个回调绑定到 onChangeAPIKey: () => void，负责command在该局部场景下的响应。
   onChangeAPIKey: () => void
   onChangeDynamicMcpConfig?: (
     config: Record<string, ScopedMcpServerConfig>,
   ) => void
   onInstallIDEExtension?: (ide: IdeType) => void
+  // command在这里处理 `resume?: (`，完成这一小步状态转换。
   resume?: (
     sessionId: UUID,
     log: LogOption,
@@ -97,6 +122,7 @@ export type LocalJSXCommandContext = ToolUseContext & {
   ) => Promise<void>
 }
 
+// ResumeEntrypoint 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ResumeEntrypoint =
   | 'cli_flag'
   | 'slash_command_picker'
@@ -104,6 +130,7 @@ export type ResumeEntrypoint =
   | 'slash_command_title'
   | 'fork'
 
+// CommandResultDisplay 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CommandResultDisplay = 'skip' | 'system' | 'user'
 
 /**
@@ -114,6 +141,7 @@ export type CommandResultDisplay = 'skip' | 'system' | 'user'
  * @param options.shouldQuery - If true, send messages to the model after command completes
  * @param options.metaMessages - Additional messages to insert as isMeta (model-visible but hidden)
  */
+// LocalJSXCommandOnDone 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LocalJSXCommandOnDone = (
   result?: string,
   options?: {
@@ -128,6 +156,7 @@ export type LocalJSXCommandOnDone = (
 /**
  * The call signature for a local JSX command implementation.
  */
+// LocalJSXCommandCall 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LocalJSXCommandCall = (
   onDone: LocalJSXCommandOnDone,
   context: ToolUseContext & LocalJSXCommandContext,
@@ -137,10 +166,12 @@ export type LocalJSXCommandCall = (
 /**
  * Module shape returned by load() for lazy-loaded commands.
  */
+// LocalJSXCommandModule 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LocalJSXCommandModule = {
   call: LocalJSXCommandCall
 }
 
+// LocalJSXCommand 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 type LocalJSXCommand = {
   type: 'local-jsx'
   /**
@@ -148,6 +179,7 @@ type LocalJSXCommand = {
    * Returns a module with a call() function.
    * This defers loading heavy dependencies until the command is invoked.
    */
+  // 这个回调绑定到 load: () => Promise<LocalJSXCommandModule>，负责command在该局部场景下的响应。
   load: () => Promise<LocalJSXCommandModule>
 }
 
@@ -166,17 +198,20 @@ type LocalJSXCommand = {
  * claude.ai subscribers and direct Console API key users (api.anthropic.com),
  * but hides it from Bedrock/Vertex/Foundry users and custom base URL users.
  */
+// CommandAvailability 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CommandAvailability =
   // claude.ai OAuth subscriber (Pro/Max/Team/Enterprise via claude.ai)
   | 'claude-ai'
   // Console API key user (direct api.anthropic.com, not via claude.ai OAuth)
   | 'console'
 
+// CommandBase 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CommandBase = {
   availability?: CommandAvailability[]
   description: string
   hasUserSpecifiedDescription?: boolean
   /** Defaults to true. Only set when the command has conditional enablement (feature flags, env checks, etc). */
+  // 这个回调绑定到 isEnabled?: () => boolean，负责command在该局部场景下的响应。
   isEnabled?: () => boolean
   /** Defaults to false. Only set when the command should be hidden from typeahead/help. */
   isHidden?: boolean
@@ -199,18 +234,24 @@ export type CommandBase = {
   immediate?: boolean // If true, command executes immediately without waiting for a stop point (bypasses queue)
   isSensitive?: boolean // If true, args are redacted from the conversation history
   /** Defaults to `name`. Only override when the displayed name differs (e.g. plugin prefix stripping). */
+  // 这个回调绑定到 userFacingName?: () => string，负责command在该局部场景下的响应。
   userFacingName?: () => string
 }
 
+// Command 固化command里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Command = CommandBase &
   (PromptCommand | LocalCommand | LocalJSXCommand)
 
 /** Resolves the user-visible name, falling back to `cmd.name` when not overridden. */
+// getCommandName 封装command的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getCommandName(cmd: CommandBase): string {
+  // 返回 `cmd.userFacingName?.() ?? cmd.name`，作为command这次计算的结果。
   return cmd.userFacingName?.() ?? cmd.name
 }
 
 /** Resolves whether the command is enabled, defaulting to true. */
+// isCommandEnabled 封装command的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isCommandEnabled(cmd: CommandBase): boolean {
+  // 返回 `cmd.isEnabled?.() ?? true`，作为command这次计算的结果。
   return cmd.isEnabled?.() ?? true
 }

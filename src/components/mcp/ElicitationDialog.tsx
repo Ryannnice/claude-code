@@ -1,38 +1,64 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { ElicitRequestFormParams, ElicitRequestURLParams, ElicitRe… 来自 @modelcontextprotocol/sdk/types.js，用于校准终端渲染的数据契约。
 import type { ElicitRequestFormParams, ElicitRequestURLParams, ElicitResult, PrimitiveSchemaDefinition } from '@modelcontextprotocol/sdk/types.js';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 引入 useRegisterOverlay，将 ../../context/overlayContext.js 中已经封装好的能力接到本文件流程里。
 import { useRegisterOverlay } from '../../context/overlayContext.js';
+// 引入 useNotifyAfterTimeout，将 ../../hooks/useNotifyAfterTimeout.js 中已经封装好的能力接到本文件流程里。
 import { useNotifyAfterTimeout } from '../../hooks/useNotifyAfterTimeout.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw text input for elicitation form
+// 引入 Box、Text、useInput，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useInput } from '../../ink.js';
+// 引入 useKeybinding，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+// 类型依赖 { ElicitationRequestEvent } 来自 ../../services/mcp/elicitationHandler.js，用于校准终端渲染的数据契约。
 import type { ElicitationRequestEvent } from '../../services/mcp/elicitationHandler.js';
+// 复用 openBrowser 工具函数，把通用处理留在 ../../utils/browser.js 中维护。
 import { openBrowser } from '../../utils/browser.js';
+// 复用 getEnumLabel、getEnumValues、getMultiSelectLabel、getMultiSelectValues、isDateTimeSchema、isEnumSchema、isMultiSelectEnumSchema、validateElicitationInput、validateElicitationInputAsync 工具函数，把通用处理留在 ../../utils/mcp/elicitationValidation.js 中维护。
 import { getEnumLabel, getEnumValues, getMultiSelectLabel, getMultiSelectValues, isDateTimeSchema, isEnumSchema, isMultiSelectEnumSchema, validateElicitationInput, validateElicitationInputAsync } from '../../utils/mcp/elicitationValidation.js';
+// 复用 plural 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { plural } from '../../utils/stringUtils.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 Dialog，将 ../design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from '../design-system/Dialog.js';
+// 引入 KeyboardShortcutHint，将 ../design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
+// 引入 TextInput，将 ../TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from '../TextInput.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   event: ElicitationRequestEvent;
+  // 这个回调绑定到 onResponse: (action: ElicitResult['action'], content?: ElicitResult['content']) => v…，负责终端渲染在该局部场景下的响应。
   onResponse: (action: ElicitResult['action'], content?: ElicitResult['content']) => void;
   /** Called when the phase 2 waiting state is dismissed (URL elicitations only). */
   onWaitingDismiss?: (action: 'dismiss' | 'retry' | 'cancel') => void;
 };
+// isTextField记录 `includes` 是否成立，终端渲染随后按该结果分支。
 const isTextField = (s: PrimitiveSchemaDefinition) => ['string', 'number', 'integer'].includes(s.type);
+// RESOLVING_SPINNER_CHARS 集合保存`'\u280B\u2819\u2839\u2838\u283C\u2834\u2826\u2827\u2807\u...`，作为后续固定文本处理的输入。
 const RESOLVING_SPINNER_CHARS = '\u280B\u2819\u2839\u2838\u283C\u2834\u2826\u2827\u2807\u280F';
+// advanceSpinnerFrame封装成回调，供终端渲染MCP 界面组件 Elicitation Dialog在事件触发或异步步骤中调用。
 const advanceSpinnerFrame = (f: number) => (f + 1) % RESOLVING_SPINNER_CHARS.length;
 
 /** Timer callback for enumTypeaheadRef — module-scope to avoid closure capture. */
+// resetTypeahead 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function resetTypeahead(ta: {
   buffer: string;
   timer: ReturnType<typeof setTimeout> | undefined;
 }): void {
+  // buffer更新为 `''`，确保MCP 界面后续读取最新状态。
   ta.buffer = '';
+  // timer更新为 `undefined`，确保MCP 界面后续读取最新状态。
   ta.timer = undefined;
 }
 
@@ -46,43 +72,73 @@ function resetTypeahead(ta: {
  * <Box width={2}> with color="text", which would break the 1-col checkbox
  * column alignment here (other checkbox states are width-1 glyphs).
  */
+// ResolvingSpinner 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ResolvingSpinner() {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(4);
+  // frame 由 React state 持有，setFrame 会在用户操作或异步结果返回时触发刷新。
   const [frame, setFrame] = useState(0);
+  // t0 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // t1 暂存 `[]` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t0 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t0 = () => {
+      // timer保存`setInterval`，供终端渲染后续处理使用。
       const timer = setInterval(setFrame, 80, advanceSpinnerFrame);
+      // 返回 `() => clearInterval(timer)`，作为终端渲染这次计算的结果。
       return () => clearInterval(timer);
     };
+    // t1 暂存 `[]` 生成的渲染片段，后续返回路径直接复用。
     t1 = [];
+    // $[0] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t0;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t0 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[0];
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(t0, t1);
+  // 临时值 t2 命名 `RESOLVING_SPINNER_CHARS[frame]`，让后续代码直接表达这个值的用途。
   const t2 = RESOLVING_SPINNER_CHARS[frame];
+  // t3 暂存 `<Text color="warning">{t2}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== t2) {
+    // t3 暂存 `<Text color="warning">{t2}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text color="warning">{t2}</Text>;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
+    // $[3] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[3];
   }
+  // 返回 `t3`，作为终端渲染这次计算的结果。
   return t3;
 }
 
 /** Format an ISO date/datetime for display, keeping the ISO value for submission. */
+// formatDateDisplay 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatDateDisplay(isoValue: string, schema: PrimitiveSchemaDefinition): string {
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // date记录时间`Date`，供终端渲染后续处理使用。
     const date = new Date(isoValue);
+    // 满足 `Number.isNaN(date.getTime())` 时，终端渲染执行该分支。
     if (Number.isNaN(date.getTime())) return isoValue;
+    // format格式化`'format' in schema ? schema.format : undefined`，作为后续固定文本处理的输入。
     const format = 'format' in schema ? schema.format : undefined;
+    // 当 `format` 匹配 `'date-time'` 时，终端渲染执行对应分支。
     if (format === 'date-time') {
+      // 返回 `date.toLocaleDateString('en-US', {`，作为终端渲染这次计算的结果。
       return date.toLocaleDateString('en-US', {
         weekday: 'short',
         year: 'numeric',
@@ -94,9 +150,13 @@ function formatDateDisplay(isoValue: string, schema: PrimitiveSchemaDefinition):
       });
     }
     // date-only: parse as local date to avoid timezone shift
+    // 片段列表格式化`isoValue.split`，供终端渲染后续处理使用。
     const parts = isoValue.split('-');
+    // 满足 `parts.length === 3` 时，终端渲染执行该分支。
     if (parts.length === 3) {
+      // local记录时间`Date`，供终端渲染后续处理使用。
       const local = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      // 返回 `local.toLocaleDateString('en-US', {`，作为终端渲染这次计算的结果。
       return local.toLocaleDateString('en-US', {
         weekday: 'short',
         year: 'numeric',
@@ -104,42 +164,66 @@ function formatDateDisplay(isoValue: string, schema: PrimitiveSchemaDefinition):
         day: 'numeric'
       });
     }
+    // 返回 `isoValue`，作为终端渲染这次计算的结果。
     return isoValue;
   } catch {
+    // 返回 `isoValue`，作为终端渲染这次计算的结果。
     return isoValue;
   }
 }
+// ElicitationDialog 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function ElicitationDialog(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(7);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     event,
     onResponse,
     onWaitingDismiss
   } = t0;
+  // 当 `event.params.mode` 匹配 `"url"` 时，终端渲染执行对应分支。
   if (event.params.mode === "url") {
+    // t1 暂存 `<ElicitationURLDialog event={event} onResponse={onRespons...` 的派生结果，便于缓存命中时直接复用。
     let t1;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[0] !== event || $[1] !== onResponse || $[2] !== onWaitingDismiss) {
+      // t1 暂存 `<ElicitationURLDialog event={event} onResponse={onRespons...` 生成的渲染片段，后续返回路径直接复用。
       t1 = <ElicitationURLDialog event={event} onResponse={onResponse} onWaitingDismiss={onWaitingDismiss} />;
+      // $[0] 缓存 `event`，下次依赖未变时 React 编译产物可直接复用。
       $[0] = event;
+      // $[1] 缓存 `onResponse`，下次依赖未变时 React 编译产物可直接复用。
       $[1] = onResponse;
+      // $[2] 缓存 `onWaitingDismiss`，下次依赖未变时 React 编译产物可直接复用。
       $[2] = onWaitingDismiss;
+      // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[3] = t1;
     } else {
+      // t1 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
       t1 = $[3];
     }
+    // 返回 `t1`，作为终端渲染这次计算的结果。
     return t1;
   }
+  // t1 暂存 `<ElicitationFormDialog event={event} onResponse={onRespon...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== event || $[5] !== onResponse) {
+    // t1 暂存 `<ElicitationFormDialog event={event} onResponse={onRespon...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <ElicitationFormDialog event={event} onResponse={onResponse} />;
+    // $[4] 缓存 `event`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = event;
+    // $[5] 缓存 `onResponse`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = onResponse;
+    // $[6] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[6];
   }
+  // 返回 `t1`，作为终端渲染这次计算的结果。
   return t1;
 }
+// ElicitationFormDialog 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ElicitationFormDialog({
   event,
   onResponse
@@ -147,82 +231,131 @@ function ElicitationFormDialog({
   event: ElicitationRequestEvent;
   onResponse: Props['onResponse'];
 }): React.ReactNode {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     serverName,
     signal
   } = event;
+  // request 请求数据保存`event.params as ElicitRequestFormParams`，供后续判断或组装使用。
   const request = event.params as ElicitRequestFormParams;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     message,
     requestedSchema
   } = request;
+  // hasFields 集合记录 `Object.keys` 是否成立，终端渲染随后按该结果分支。
   const hasFields = Object.keys(requestedSchema.properties).length > 0;
+  // focusedButton 由 React state 持有，setFocusedButton 会在用户操作或异步结果返回时触发刷新。
   const [focusedButton, setFocusedButton] = useState<'accept' | 'decline' | null>(hasFields ? null : 'accept');
+  // 这个回调绑定到 const [formValues, setFormValues] = useState<Record<string, string | number | boolea…，负责终端渲染在该局部场景下的响应。
   const [formValues, setFormValues] = useState<Record<string, string | number | boolean | string[]>>(() => {
+    // initialValues 集合 从空对象开始收集键值，后续按名称补齐内容。
     const initialValues: Record<string, string | number | boolean | string[]> = {};
+    // 满足 `requestedSchema.properties` 时，终端渲染执行该分支。
     if (requestedSchema.properties) {
+      // 循环处理 `const [propName, propSchema] of Object.entries(requestedSchema.properti...`，让终端渲染把同类条目按顺序走完。
       for (const [propName, propSchema] of Object.entries(requestedSchema.properties)) {
+        // 只有 `typeof propSchema === 'object' && propSchema !==` 满足时，终端渲染才执行该分支。
         if (typeof propSchema === 'object' && propSchema !== null) {
+          // `propSchema.default` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
           if (propSchema.default !== undefined) {
+            // initialValues[propName更新为 `propSchema.default`，确保MCP 界面组件 Elicitation Dialog后续读取最新状态。
             initialValues[propName] = propSchema.default;
           }
         }
       }
     }
+    // 返回 `initialValues`，作为终端渲染这次计算的结果。
     return initialValues;
   });
+  // 这个回调绑定到 const [validationErrors, setValidationErrors] = useState<Record<string, string>>(() …，负责终端渲染在该局部场景下的响应。
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>(() => {
+    // initialErrors 错误信息 从空对象开始收集键值，后续按名称补齐内容。
     const initialErrors: Record<string, string> = {};
+    // 循环处理 `const [propName_0, propSchema_0] of Object.entries(requestedSchema.prop...`，让终端渲染把同类条目按顺序走完。
     for (const [propName_0, propSchema_0] of Object.entries(requestedSchema.properties)) {
+      // `isTextField(propSchema_0) && propSchema_0?....` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (isTextField(propSchema_0) && propSchema_0?.default !== undefined) {
+        // validation读取`validateElicitationInput`，供终端渲染后续处理使用。
         const validation = validateElicitationInput(String(propSchema_0.default), propSchema_0);
+        // 只有 `!validation.isValid && validation.error` 满足时，终端渲染才执行该分支。
         if (!validation.isValid && validation.error) {
+          // initialErrors[propName_0 错误信息更新为 `validation.error`，确保MCP 界面组件 Elicitation Dialog后续读取最新状态。
           initialErrors[propName_0] = validation.error;
         }
       }
     }
+    // 返回 `initialErrors`，作为终端渲染这次计算的结果。
     return initialErrors;
   });
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // signal缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!signal) return;
+    // handleAbort封装成回调，供终端渲染MCP 界面组件 Elicitation Dialog在事件触发或异步步骤中调用。
     const handleAbort = () => {
+      // 调用 onResponse，触发终端渲染此处需要的副作用。
       onResponse('cancel');
     };
+    // 满足 `signal.aborted` 时，终端渲染执行该分支。
     if (signal.aborted) {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       handleAbort();
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 调用 signal.addEventListener，触发终端渲染此处需要的副作用。
     signal.addEventListener('abort', handleAbort);
+    // 返回 `() => {`，作为终端渲染这次计算的结果。
     return () => {
+      // 调用 signal.removeEventListener，触发终端渲染此处需要的副作用。
       signal.removeEventListener('abort', handleAbort);
     };
   }, [signal, onResponse]);
+  // schemaFields 集合保存`useMemo`，供终端渲染后续处理使用。
   const schemaFields = useMemo(() => {
+    // requiredFields 集合 命名 `requestedSchema.required ?? []`，让后续代码直接表达这个值的用途。
     const requiredFields = requestedSchema.required ?? [];
+    // 返回 `Object.entries(requestedSchema.properties).map(([name, schema]) => ({`，作为终端渲染这次计算的结果。
     return Object.entries(requestedSchema.properties).map(([name, schema]) => ({
       name,
       schema,
       isRequired: requiredFields.includes(name)
     }));
   }, [requestedSchema]);
+  // currentFieldIndex 索引 由 React state 持有，setCurrentFieldIndex 会在用户操作或异步结果返回时触发刷新。
   const [currentFieldIndex, setCurrentFieldIndex] = useState<number | undefined>(hasFields ? 0 : undefined);
+  // 这个回调绑定到 const [textInputValue, setTextInputValue] = useState(() => {，负责终端渲染在该局部场景下的响应。
   const [textInputValue, setTextInputValue] = useState(() => {
     // Initialize from the first field's value if it's a text field
+    // firstField 命名 `schemaFields[0]`，让后续代码直接表达这个值的用途。
     const firstField = schemaFields[0];
+    // 只有 `firstField && isTextField(firstField.schema)` 满足时，终端渲染才执行该分支。
     if (firstField && isTextField(firstField.schema)) {
+      // val保存`formValues[firstField.name]`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
       const val = formValues[firstField.name];
+      // 满足 `val === undefined` 时，终端渲染执行该分支。
       if (val === undefined) return '';
+      // 返回 `String(val)`，作为终端渲染这次计算的结果。
       return String(val);
     }
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return '';
   });
+  // textInputCursorOffset 由 React state 持有，setTextInputCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [textInputCursorOffset, setTextInputCursorOffset] = useState(textInputValue.length);
+  // 这个回调绑定到 const [resolvingFields, setResolvingFields] = useState<Set<string>>(() => new Set());，负责终端渲染在该局部场景下的响应。
   const [resolvingFields, setResolvingFields] = useState<Set<string>>(() => new Set());
   // Accordion state (shared by multi-select and single-select enum)
+  // expandedAccordion 由 React state 持有，setExpandedAccordion 会在用户操作或异步结果返回时触发刷新。
   const [expandedAccordion, setExpandedAccordion] = useState<string | undefined>();
+  // accordionOptionIndex 索引 由 React state 持有，setAccordionOptionIndex 会在用户操作或异步结果返回时触发刷新。
   const [accordionOptionIndex, setAccordionOptionIndex] = useState(0);
+  // dateDebounceRef 引用保存 hook 状态，让终端渲染MCP 界面组件 Elicitation Dialog跨渲染复用同一个容器。
   const dateDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // resolveAbortRef 引用保存`Map`，供终端渲染后续处理使用。
   const resolveAbortRef = useRef<Map<string, AbortController>>(new Map());
+  // enumTypeaheadRef 引用保存`useRef`，供终端渲染后续处理使用。
   const enumTypeaheadRef = useRef({
     buffer: '',
     timer: undefined as ReturnType<typeof setTimeout> | undefined
@@ -231,223 +364,363 @@ function ElicitationFormDialog({
   // Clear pending debounce/typeahead timers and abort in-flight async
   // validations on unmount so they don't fire against an unmounted component
   // (e.g. dialog dismissed mid-debounce or mid-resolve).
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => () => {
+    // `dateDebounceRef.current` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (dateDebounceRef.current !== undefined) {
+      // 调用 clearTimeout，触发终端渲染此处需要的副作用。
       clearTimeout(dateDebounceRef.current);
     }
+    // ta保存`enumTypeaheadRef.current`，供后续判断或组装使用。
     const ta = enumTypeaheadRef.current;
+    // `ta.timer` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (ta.timer !== undefined) {
+      // 调用 clearTimeout，触发终端渲染此处需要的副作用。
       clearTimeout(ta.timer);
     }
+    // 逐项读取 `resolveAbortRef.current.values()` 中的controller，按输入顺序推进终端渲染。
     for (const controller of resolveAbortRef.current.values()) {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       controller.abort();
     }
+    // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
     resolveAbortRef.current.clear();
   }, []);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns,
     rows
   } = useTerminalSize();
+  // currentField标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
   const currentField = currentFieldIndex !== undefined ? schemaFields[currentFieldIndex] : undefined;
+  // currentFieldIsText保存`isTextField`，供终端渲染后续处理使用。
   const currentFieldIsText = currentField !== undefined && isTextField(currentField.schema) && !isEnumSchema(currentField.schema);
 
   // Text fields are always in edit mode when focused — no Enter-to-edit step.
+  // isEditingTextField标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
   const isEditingTextField = currentFieldIsText && !focusedButton;
+  // 调用 useRegisterOverlay，触发终端渲染此处需要的副作用。
   useRegisterOverlay('elicitation');
+  // 调用 useNotifyAfterTimeout，触发终端渲染此处需要的副作用。
   useNotifyAfterTimeout('Claude Code needs your input', 'elicitation_dialog');
 
   // Sync textInputValue when the focused field changes
+  // syncTextInput保存`useCallback`，供终端渲染后续处理使用。
   const syncTextInput = useCallback((fieldIndex: number | undefined) => {
+    // 满足 `fieldIndex === undefined` 时，终端渲染执行该分支。
     if (fieldIndex === undefined) {
+      // setTextInputValue 写入新的状态值，使终端渲染后续读取保持一致。
       setTextInputValue('');
+      // setTextInputCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setTextInputCursorOffset(0);
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // field 命名 `schemaFields[fieldIndex]`，让后续代码直接表达这个值的用途。
     const field = schemaFields[fieldIndex];
+    // 只有 `field && isTextField(field.schema) && !isEnumSchema(field.schema)` 满足时，终端渲染才执行该分支。
     if (field && isTextField(field.schema) && !isEnumSchema(field.schema)) {
+      // val_0读取 `formValues[field.name]` 对应条目，后续围绕该成员继续处理。
       const val_0 = formValues[field.name];
+      // 文本保存`String`，供终端渲染后续处理使用。
       const text = val_0 !== undefined ? String(val_0) : '';
+      // setTextInputValue 写入新的状态值，使终端渲染后续读取保持一致。
       setTextInputValue(text);
+      // setTextInputCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setTextInputCursorOffset(text.length);
     }
   }, [schemaFields, formValues]);
+  // validateMultiSelect 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function validateMultiSelect(fieldName: string, schema_0: PrimitiveSchemaDefinition) {
+    // 满足 `!isMultiSelectEnumSchema(schema_0)` 时，终端渲染执行该分支。
     if (!isMultiSelectEnumSchema(schema_0)) return;
+    // selected保存`formValues[fieldName] as string[] | undefined ?? []`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
     const selected = formValues[fieldName] as string[] | undefined ?? [];
+    // fieldRequired筛选`schemaFields.find`，供终端渲染后续处理使用。
     const fieldRequired = schemaFields.find(f => f.name === fieldName)?.isRequired ?? false;
+    // min保存`schema_0.minItems`，供后续判断或组装使用。
     const min = schema_0.minItems;
+    // max保存`schema_0.maxItems`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
     const max = schema_0.maxItems;
     // Skip minItems check when field is optional and unset
+    // `min` 与 `undefined && selected.length < ...` 不一致时刷新派生状态，避免使用过期结果。
     if (min !== undefined && selected.length < min && (selected.length > 0 || fieldRequired)) {
+      // 调用 updateValidationError，触发终端渲染此处需要的副作用。
       updateValidationError(fieldName, `Select at least ${min} ${plural(min, 'item')}`);
+    // MCP 界面组件 Elicitation Dialog在这里处理 `} else if (max !== undefined && selected.length > max) {`，完成这一小步状态转换。
     } else if (max !== undefined && selected.length > max) {
+      // 调用 updateValidationError，触发终端渲染此处需要的副作用。
       updateValidationError(fieldName, `Select at most ${max} ${plural(max, 'item')}`);
     } else {
+      // 调用 updateValidationError，触发终端渲染此处需要的副作用。
       updateValidationError(fieldName);
     }
   }
+  // handleNavigation 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleNavigation(direction: 'up' | 'down'): void {
     // Collapse accordion and validate on navigate away
+    // 只有 `currentField && isMultiSelectEnumSchema(currentField.schema)` 满足时，终端渲染才执行该分支。
     if (currentField && isMultiSelectEnumSchema(currentField.schema)) {
+      // 调用 validateMultiSelect，触发终端渲染此处需要的副作用。
       validateMultiSelect(currentField.name, currentField.schema);
+      // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
       setExpandedAccordion(undefined);
+    // MCP 界面组件 Elicitation Dialog在这里处理 `} else if (currentField && isEnumSchema(currentField.schema)) {`，完成这一小步状态转换。
     } else if (currentField && isEnumSchema(currentField.schema)) {
+      // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
       setExpandedAccordion(undefined);
     }
 
     // Commit current text field before navigating away
+    // 只有 `isEditingTextField && currentField` 满足时，终端渲染才执行该分支。
     if (isEditingTextField && currentField) {
+      // 调用 commitTextField，触发终端渲染此处需要的副作用。
       commitTextField(currentField.name, currentField.schema, textInputValue);
 
       // Cancel any pending debounce — we're resolving now on navigate-away
+      // `dateDebounceRef.current` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (dateDebounceRef.current !== undefined) {
+        // 调用 clearTimeout，触发终端渲染此处需要的副作用。
         clearTimeout(dateDebounceRef.current);
+        // current更新为 `undefined`，确保MCP 界面后续读取最新状态。
         dateDebounceRef.current = undefined;
       }
 
       // For date/datetime fields that failed sync validation, try async NL parsing
+      // `isDateTimeSchema(currentField.schema) && te...` 与 `'' && validationErrors[c...` 不一致时刷新派生状态，避免使用过期结果。
       if (isDateTimeSchema(currentField.schema) && textInputValue.trim() !== '' && validationErrors[currentField.name]) {
+        // resolveFieldAsync 结算当前 Promise，唤醒等待这个异步结果的调用方。
         resolveFieldAsync(currentField.name, currentField.schema, textInputValue);
       }
     }
 
     // Fields + accept + decline
+    // itemCount 数量记录 `schemaFields.length + 2` 是否成立，下一步按该结果分支。
     const itemCount = schemaFields.length + 2;
+    // index 索引标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
     const index = currentFieldIndex ?? (focusedButton === 'accept' ? schemaFields.length : focusedButton === 'decline' ? schemaFields.length + 1 : undefined);
+    // nextIndex 索引标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
     const nextIndex = index !== undefined ? (index + (direction === 'up' ? itemCount - 1 : 1)) % itemCount : 0;
+    // 满足 `nextIndex < schemaFields.length` 时，终端渲染执行该分支。
     if (nextIndex < schemaFields.length) {
+      // setCurrentFieldIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setCurrentFieldIndex(nextIndex);
+      // setFocusedButton 写入新的状态值，使终端渲染后续读取保持一致。
       setFocusedButton(null);
+      // 调用 syncTextInput，触发终端渲染此处需要的副作用。
       syncTextInput(nextIndex);
     } else {
+      // setCurrentFieldIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setCurrentFieldIndex(undefined);
+      // setFocusedButton 写入新的状态值，使终端渲染后续读取保持一致。
       setFocusedButton(nextIndex === schemaFields.length ? 'accept' : 'decline');
+      // setTextInputValue 写入新的状态值，使终端渲染后续读取保持一致。
       setTextInputValue('');
     }
   }
+  // setField 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function setField(fieldName_0: string, value: number | string | boolean | string[] | undefined) {
+    // setFormValues 写入新的状态值，使终端渲染后续读取保持一致。
     setFormValues(prev => {
+      // next 集中保存终端渲染MCP 界面组件 Elicitation Dialog要一起传递的字段。
       const next = {
         ...prev
       };
+      // 满足 `value === undefined` 时，终端渲染执行该分支。
       if (value === undefined) {
+        // MCP 界面组件 Elicitation Dialog在这里处理 `delete next[fieldName_0]`，完成这一小步状态转换。
         delete next[fieldName_0];
       } else {
+        // next[fieldName_0更新为 `value`，确保MCP 界面组件 Elicitation Dialog后续读取最新状态。
         next[fieldName_0] = value;
       }
+      // 返回 `next`，作为终端渲染这次计算的结果。
       return next;
     });
     // Clear "required" error when a value is provided
+    // `value` 与 `undefined && validationErrors[f...` 不一致时刷新派生状态，避免使用过期结果。
     if (value !== undefined && validationErrors[fieldName_0] === 'This field is required') {
+      // 调用 updateValidationError，触发终端渲染此处需要的副作用。
       updateValidationError(fieldName_0);
     }
   }
+  // updateValidationError 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function updateValidationError(fieldName_1: string, error?: string) {
+    // setValidationErrors 写入新的状态值，使终端渲染后续读取保持一致。
     setValidationErrors(prev_0 => {
+      // next_0 集中保存终端渲染MCP 界面组件 Elicitation Dialog要一起传递的字段。
       const next_0 = {
         ...prev_0
       };
+      // 满足 `error` 时，终端渲染执行该分支。
       if (error) {
+        // next_0[fieldName_1更新为 `error`，确保MCP 界面组件 Elicitation Dialog后续读取最新状态。
         next_0[fieldName_1] = error;
       } else {
+        // MCP 界面组件 Elicitation Dialog在这里处理 `delete next_0[fieldName_1]`，完成这一小步状态转换。
         delete next_0[fieldName_1];
       }
+      // 返回 `next_0`，作为终端渲染这次计算的结果。
       return next_0;
     });
   }
+  // unsetField 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function unsetField(fieldName_2: string) {
+    // fieldName_2缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!fieldName_2) return;
+    // setField 写入新的状态值，使终端渲染后续读取保持一致。
     setField(fieldName_2, undefined);
+    // 调用 updateValidationError，触发终端渲染此处需要的副作用。
     updateValidationError(fieldName_2);
+    // setTextInputValue 写入新的状态值，使终端渲染后续读取保持一致。
     setTextInputValue('');
+    // setTextInputCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setTextInputCursorOffset(0);
   }
+  // commitTextField 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function commitTextField(fieldName_3: string, schema_1: PrimitiveSchemaDefinition, value_0: string) {
+    // trimmedValue格式化`value_0.trim`，供终端渲染后续处理使用。
     const trimmedValue = value_0.trim();
 
     // Empty input for non-plain-string types means unset
+    // `trimmedValue === '' && (schema_1.type` 与 `'string' || 'format' in schema_...` 不一致时刷新派生状态，避免使用过期结果。
     if (trimmedValue === '' && (schema_1.type !== 'string' || 'format' in schema_1 && schema_1.format !== undefined)) {
+      // 调用 unsetField，触发终端渲染此处需要的副作用。
       unsetField(fieldName_3);
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `trimmedValue === ''` 时，终端渲染执行该分支。
     if (trimmedValue === '') {
       // Empty plain string — keep or unset depending on whether it was set
+      // `formValues[fieldName_3]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (formValues[fieldName_3] !== undefined) {
+        // setField 写入新的状态值，使终端渲染后续读取保持一致。
         setField(fieldName_3, '');
       }
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // validation_0读取`validateElicitationInput`，供终端渲染后续处理使用。
     const validation_0 = validateElicitationInput(value_0, schema_1);
+    // setField 写入新的状态值，使终端渲染后续读取保持一致。
     setField(fieldName_3, validation_0.isValid ? validation_0.value : value_0);
+    // 调用 updateValidationError，触发终端渲染此处需要的副作用。
     updateValidationError(fieldName_3, validation_0.isValid ? undefined : validation_0.error);
   }
+  // resolveFieldAsync 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function resolveFieldAsync(fieldName_4: string, schema_2: PrimitiveSchemaDefinition, rawValue: string) {
+    // signal缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!signal) return;
 
     // Abort any existing resolution for this field
+    // existing读取`current.get`，供终端渲染后续处理使用。
     const existing = resolveAbortRef.current.get(fieldName_4);
+    // 满足 `existing` 时，终端渲染执行该分支。
     if (existing) {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       existing.abort();
     }
+    // controller_0保存`AbortController`，供终端渲染后续处理使用。
     const controller_0 = new AbortController();
+    // resolveAbortRef.current.set 写入新的状态值，使终端渲染后续读取保持一致。
     resolveAbortRef.current.set(fieldName_4, controller_0);
+    // setResolvingFields 写入新的状态值，使终端渲染后续读取保持一致。
     setResolvingFields(prev_1 => new Set(prev_1).add(fieldName_4));
+    // 这个回调绑定到 void validateElicitationInputAsync(rawValue, schema_2, controller_0.signal).then(res…，负责终端渲染在该局部场景下的响应。
     void validateElicitationInputAsync(rawValue, schema_2, controller_0.signal).then(result => {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       resolveAbortRef.current.delete(fieldName_4);
+      // setResolvingFields 写入新的状态值，使终端渲染后续读取保持一致。
       setResolvingFields(prev_2 => {
+        // next_1保存`Set`，供终端渲染后续处理使用。
         const next_1 = new Set(prev_2);
+        // 调用 next_1.delete，触发终端渲染此处需要的副作用。
         next_1.delete(fieldName_4);
+        // 返回 `next_1`，作为终端渲染这次计算的结果。
         return next_1;
       });
+      // 满足 `controller_0.signal.aborted` 时，终端渲染执行该分支。
       if (controller_0.signal.aborted) return;
+      // 满足 `result.isValid` 时，终端渲染执行该分支。
       if (result.isValid) {
+        // setField 写入新的状态值，使终端渲染后续读取保持一致。
         setField(fieldName_4, result.value);
+        // 调用 updateValidationError，触发终端渲染此处需要的副作用。
         updateValidationError(fieldName_4);
         // Update the text input if we're still on this field
+        // isoText保存`String`，供终端渲染后续处理使用。
         const isoText = String(result.value);
+        // setTextInputValue 写入新的状态值，使终端渲染后续读取保持一致。
         setTextInputValue(prev_3 => {
           // Only replace if the field is still showing the raw input
+          // 满足 `prev_3 === rawValue` 时，终端渲染执行该分支。
           if (prev_3 === rawValue) {
+            // setTextInputCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
             setTextInputCursorOffset(isoText.length);
+            // 返回 `isoText`，作为终端渲染这次计算的结果。
             return isoText;
           }
+          // 返回 `prev_3`，作为终端渲染这次计算的结果。
           return prev_3;
         });
       } else {
         // Keep raw text, show validation error
+        // 调用 updateValidationError，触发终端渲染此处需要的副作用。
         updateValidationError(fieldName_4, result.error);
       }
+    // 这个回调绑定到 }, () => {，负责终端渲染在该局部场景下的响应。
     }, () => {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       resolveAbortRef.current.delete(fieldName_4);
+      // setResolvingFields 写入新的状态值，使终端渲染后续读取保持一致。
       setResolvingFields(prev_4 => {
+        // next_2保存`Set`，供终端渲染后续处理使用。
         const next_2 = new Set(prev_4);
+        // 调用 next_2.delete，触发终端渲染此处需要的副作用。
         next_2.delete(fieldName_4);
+        // 返回 `next_2`，作为终端渲染这次计算的结果。
         return next_2;
       });
     });
   }
+  // handleTextInputChange 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleTextInputChange(newValue: string) {
+    // setTextInputValue 写入新的状态值，使终端渲染后续读取保持一致。
     setTextInputValue(newValue);
     // Commit immediately on each keystroke (sync validation)
+    // 满足 `currentField` 时，终端渲染执行该分支。
     if (currentField) {
+      // 调用 commitTextField，触发终端渲染此处需要的副作用。
       commitTextField(currentField.name, currentField.schema, newValue);
 
       // For date/datetime fields, debounce async NL parsing after 2s of inactivity
+      // `dateDebounceRef.current` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (dateDebounceRef.current !== undefined) {
+        // 调用 clearTimeout，触发终端渲染此处需要的副作用。
         clearTimeout(dateDebounceRef.current);
+        // current更新为 `undefined`，确保MCP 界面后续读取最新状态。
         dateDebounceRef.current = undefined;
       }
+      // `isDateTimeSchema(currentField.schema) && ne...` 与 `'' && validationErrors[current....` 不一致时刷新派生状态，避免使用过期结果。
       if (isDateTimeSchema(currentField.schema) && newValue.trim() !== '' && validationErrors[currentField.name]) {
+        // fieldName_5保存`currentField.name`，供后续判断或组装使用。
         const fieldName_5 = currentField.name;
+        // schema_3 命名 `currentField.schema`，让后续代码直接表达这个值的用途。
         const schema_3 = currentField.schema;
+        // current更新为 `setTimeout((dateDebounceRef_0, resolveFieldAsync_0, field...`，确保MCP 界面后续读取最新状态。
         dateDebounceRef.current = setTimeout((dateDebounceRef_0, resolveFieldAsync_0, fieldName_6, schema_4, newValue_0) => {
+          // current更新为 `undefined`，确保MCP 界面后续读取最新状态。
           dateDebounceRef_0.current = undefined;
+          // resolveFieldAsync_0 结算当前 Promise，唤醒等待这个异步结果的调用方。
           resolveFieldAsync_0(fieldName_6, schema_4, newValue_0);
         }, 2000, dateDebounceRef, resolveFieldAsync, fieldName_5, schema_3, newValue);
       }
     }
   }
+  // handleTextInputSubmit 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleTextInputSubmit() {
+    // 调用 handleNavigation，触发终端渲染此处需要的副作用。
     handleNavigation('down');
   }
 
@@ -456,270 +729,441 @@ function ElicitationFormDialog({
    * call `onMatch` with the index of the first label that prefix-matches.
    * Shared by boolean y/n, enum accordion, and multi-select accordion.
    */
+  // runTypeahead 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function runTypeahead(char: string, labels: string[], onMatch: (index: number) => void) {
+    // ta_0保存`enumTypeaheadRef.current`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
     const ta_0 = enumTypeaheadRef.current;
+    // `ta_0.timer` 与 `undefined) clearTimeout(ta_0.ti...` 不一致时刷新派生状态，避免使用过期结果。
     if (ta_0.timer !== undefined) clearTimeout(ta_0.timer);
+    // MCP 界面组件 Elicitation Dialog在这里处理 `ta_0.buffer += char.toLowerCase()`，完成这一小步状态转换。
     ta_0.buffer += char.toLowerCase();
+    // timer更新为 `setTimeout(resetTypeahead, 2000, ta_0)`，确保MCP 界面后续读取最新状态。
     ta_0.timer = setTimeout(resetTypeahead, 2000, ta_0);
+    // match筛选`labels.findIndex`，供终端渲染后续处理使用。
     const match = labels.findIndex(l => l.startsWith(ta_0.buffer));
+    // `match` 与 `-1) onMatch(match` 不一致时刷新派生状态，避免使用过期结果。
     if (match !== -1) onMatch(match);
   }
 
   // Esc while a field is focused: cancel the dialog.
   // Uses Settings context (escape-only, no 'n' key) since Dialog's
   // Confirmation-context cancel is suppressed when a field is focused.
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', () => {
     // For text fields, revert uncommitted changes first
+    // 只有 `isEditingTextField && currentField` 满足时，终端渲染才执行该分支。
     if (isEditingTextField && currentField) {
+      // val_1 命名 `formValues[currentField.name]`，让后续代码直接表达这个值的用途。
       const val_1 = formValues[currentField.name];
+      // setTextInputValue 根据 val_1 !== undefined ? String(val_1 更新终端渲染的状态。
       setTextInputValue(val_1 !== undefined ? String(val_1) : '');
+      // setTextInputCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setTextInputCursorOffset(0);
     }
+    // 调用 onResponse，触发终端渲染此处需要的副作用。
     onResponse('cancel');
   }, {
     context: 'Settings',
     isActive: !!currentField && !focusedButton && !expandedAccordion
   });
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((_input, key) => {
     // Text fields handle their own character input; we only intercept
     // navigation keys and backspace-on-empty here.
+    // 只有 `isEditingTextField && !key.upArrow && !key.downAr` 满足时，终端渲染才执行该分支。
     if (isEditingTextField && !key.upArrow && !key.downArrow && !key.return && !key.backspace) {
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Expanded multi-select accordion
+    // 只有 `expandedAccordion && currentField && isMultiSelectEnumSchema(currentField.s...` 满足时，终端渲染才执行该分支。
     if (expandedAccordion && currentField && isMultiSelectEnumSchema(currentField.schema)) {
+      // msSchema保存`currentField.schema`，供后续判断或组装使用。
       const msSchema = currentField.schema;
+      // msValues 集合读取`getMultiSelectValues`，供终端渲染后续处理使用。
       const msValues = getMultiSelectValues(msSchema);
+      // selected_0 命名 `formValues[currentField.name] as string[] ?? []`，让后续代码直接表达这个值的用途。
       const selected_0 = formValues[currentField.name] as string[] ?? [];
+      // 只有 `key.leftArrow || key.escape` 满足时，终端渲染才执行该分支。
       if (key.leftArrow || key.escape) {
+        // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
         setExpandedAccordion(undefined);
+        // 调用 validateMultiSelect，触发终端渲染此处需要的副作用。
         validateMultiSelect(currentField.name, msSchema);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.upArrow` 时，终端渲染执行该分支。
       if (key.upArrow) {
+        // 满足 `accordionOptionIndex === 0` 时，终端渲染执行该分支。
         if (accordionOptionIndex === 0) {
+          // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
           setExpandedAccordion(undefined);
+          // 调用 validateMultiSelect，触发终端渲染此处需要的副作用。
           validateMultiSelect(currentField.name, msSchema);
         } else {
+          // setAccordionOptionIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setAccordionOptionIndex(accordionOptionIndex - 1);
         }
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.downArrow` 时，终端渲染执行该分支。
       if (key.downArrow) {
+        // 满足 `accordionOptionIndex >= msValues.length - 1` 时，终端渲染执行该分支。
         if (accordionOptionIndex >= msValues.length - 1) {
+          // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
           setExpandedAccordion(undefined);
+          // 调用 handleNavigation，触发终端渲染此处需要的副作用。
           handleNavigation('down');
         } else {
+          // setAccordionOptionIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setAccordionOptionIndex(accordionOptionIndex + 1);
         }
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 当 `_input` 匹配 `' '` 时，终端渲染执行对应分支。
       if (_input === ' ') {
+        // optionValue 命名 `msValues[accordionOptionIndex]`，让后续代码直接表达这个值的用途。
         const optionValue = msValues[accordionOptionIndex];
+        // `optionValue` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
         if (optionValue !== undefined) {
+          // newSelected筛选`selected_0.includes`，供终端渲染后续处理使用。
           const newSelected = selected_0.includes(optionValue) ? selected_0.filter(v => v !== optionValue) : [...selected_0, optionValue];
+          // newValue_1记录 `newSelected.length > 0 ? newSelected : undefined` 是否成立，下一步按该结果分支。
           const newValue_1 = newSelected.length > 0 ? newSelected : undefined;
+          // setField 写入新的状态值，使终端渲染后续读取保持一致。
           setField(currentField.name, newValue_1);
+          // min_0保存`msSchema.minItems`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
           const min_0 = msSchema.minItems;
+          // max_0保存`msSchema.maxItems`，供后续判断或组装使用。
           const max_0 = msSchema.maxItems;
+          // `min_0` 与 `undefined && newSelected.length...` 不一致时刷新派生状态，避免使用过期结果。
           if (min_0 !== undefined && newSelected.length < min_0 && (newSelected.length > 0 || currentField.isRequired)) {
+            // 调用 updateValidationError，触发终端渲染此处需要的副作用。
             updateValidationError(currentField.name, `Select at least ${min_0} ${plural(min_0, 'item')}`);
+          // MCP 界面组件 Elicitation Dialog在这里处理 `} else if (max_0 !== undefined && newSelected.length > max_0) {`，完成这一小步状态转换。
           } else if (max_0 !== undefined && newSelected.length > max_0) {
+            // 调用 updateValidationError，触发终端渲染此处需要的副作用。
             updateValidationError(currentField.name, `Select at most ${max_0} ${plural(max_0, 'item')}`);
           } else {
+            // 调用 updateValidationError，触发终端渲染此处需要的副作用。
             updateValidationError(currentField.name);
           }
         }
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.return` 时，终端渲染执行该分支。
       if (key.return) {
         // Check (not toggle) the focused item, then collapse and advance
+        // optionValue_0保存`msValues[accordionOptionIndex]`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
         const optionValue_0 = msValues[accordionOptionIndex];
+        // `optionValue_0` 与 `undefined && !selected_0.includ...` 不一致时刷新派生状态，避免使用过期结果。
         if (optionValue_0 !== undefined && !selected_0.includes(optionValue_0)) {
+          // setField 写入新的状态值，使终端渲染后续读取保持一致。
           setField(currentField.name, [...selected_0, optionValue_0]);
         }
+        // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
         setExpandedAccordion(undefined);
+        // 调用 handleNavigation，触发终端渲染此处需要的副作用。
         handleNavigation('down');
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `_input` 时，终端渲染执行该分支。
       if (_input) {
+        // labels_0派生`msValues.map`，供终端渲染后续处理使用。
         const labels_0 = msValues.map(v_0 => getMultiSelectLabel(msSchema, v_0).toLowerCase());
+        // 调用 runTypeahead，触发终端渲染此处需要的副作用。
         runTypeahead(_input, labels_0, setAccordionOptionIndex);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Expanded single-select enum accordion
+    // 只有 `expandedAccordion && currentField && isEnumSchema(currentField.schema)` 满足时，终端渲染才执行该分支。
     if (expandedAccordion && currentField && isEnumSchema(currentField.schema)) {
+      // enumSchema 命名 `currentField.schema`，让后续代码直接表达这个值的用途。
       const enumSchema = currentField.schema;
+      // enumValues 集合读取`getEnumValues`，供终端渲染后续处理使用。
       const enumValues = getEnumValues(enumSchema);
+      // 只有 `key.leftArrow || key.escape` 满足时，终端渲染才执行该分支。
       if (key.leftArrow || key.escape) {
+        // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
         setExpandedAccordion(undefined);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.upArrow` 时，终端渲染执行该分支。
       if (key.upArrow) {
+        // 满足 `accordionOptionIndex === 0` 时，终端渲染执行该分支。
         if (accordionOptionIndex === 0) {
+          // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
           setExpandedAccordion(undefined);
         } else {
+          // setAccordionOptionIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setAccordionOptionIndex(accordionOptionIndex - 1);
         }
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.downArrow` 时，终端渲染执行该分支。
       if (key.downArrow) {
+        // 满足 `accordionOptionIndex >= enumValues.length - 1` 时，终端渲染执行该分支。
         if (accordionOptionIndex >= enumValues.length - 1) {
+          // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
           setExpandedAccordion(undefined);
+          // 调用 handleNavigation，触发终端渲染此处需要的副作用。
           handleNavigation('down');
         } else {
+          // setAccordionOptionIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setAccordionOptionIndex(accordionOptionIndex + 1);
         }
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Space: select and collapse
+      // 当 `_input` 匹配 `' '` 时，终端渲染执行对应分支。
       if (_input === ' ') {
+        // optionValue_1读取 `enumValues[accordionOptionIndex]` 对应条目，后续围绕该成员继续处理。
         const optionValue_1 = enumValues[accordionOptionIndex];
+        // `optionValue_1` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
         if (optionValue_1 !== undefined) {
+          // setField 写入新的状态值，使终端渲染后续读取保持一致。
           setField(currentField.name, optionValue_1);
         }
+        // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
         setExpandedAccordion(undefined);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Enter: select, collapse, and move to next field
+      // 满足 `key.return` 时，终端渲染执行该分支。
       if (key.return) {
+        // optionValue_2保存`enumValues[accordionOptionIndex]`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
         const optionValue_2 = enumValues[accordionOptionIndex];
+        // `optionValue_2` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
         if (optionValue_2 !== undefined) {
+          // setField 写入新的状态值，使终端渲染后续读取保持一致。
           setField(currentField.name, optionValue_2);
         }
+        // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
         setExpandedAccordion(undefined);
+        // 调用 handleNavigation，触发终端渲染此处需要的副作用。
         handleNavigation('down');
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `_input` 时，终端渲染执行该分支。
       if (_input) {
+        // labels_1派生`enumValues.map`，供终端渲染后续处理使用。
         const labels_1 = enumValues.map(v_1 => getEnumLabel(enumSchema, v_1).toLowerCase());
+        // 调用 runTypeahead，触发终端渲染此处需要的副作用。
         runTypeahead(_input, labels_1, setAccordionOptionIndex);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Accept / Decline buttons
+    // 当 `key.return && focusedButton` 匹配 `'accept'` 时，终端渲染执行对应分支。
     if (key.return && focusedButton === 'accept') {
+      // validateRequired() && Object.ke...为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
       if (validateRequired() && Object.keys(validationErrors).length === 0) {
+        // 调用 onResponse，触发终端渲染此处需要的副作用。
         onResponse('accept', formValues);
       } else {
         // Show "required" validation errors on missing fields
+        // requiredFields_0标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
         const requiredFields_0 = requestedSchema.required || [];
+        // 按顺序遍历 `requiredFields_0` 中的fieldName_7，逐个交给终端渲染处理。
         for (const fieldName_7 of requiredFields_0) {
+          // 满足 `formValues[fieldName_7] === undefined` 时，终端渲染执行该分支。
           if (formValues[fieldName_7] === undefined) {
+            // 调用 updateValidationError，触发终端渲染此处需要的副作用。
             updateValidationError(fieldName_7, 'This field is required');
           }
         }
+        // firstBadIndex 索引筛选`schemaFields.findIndex`，供终端渲染后续处理使用。
         const firstBadIndex = schemaFields.findIndex(f_0 => requiredFields_0.includes(f_0.name) && formValues[f_0.name] === undefined || validationErrors[f_0.name] !== undefined);
+        // `firstBadIndex` 与 `-1` 不一致时刷新派生状态，避免使用过期结果。
         if (firstBadIndex !== -1) {
+          // setCurrentFieldIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setCurrentFieldIndex(firstBadIndex);
+          // setFocusedButton 写入新的状态值，使终端渲染后续读取保持一致。
           setFocusedButton(null);
+          // 调用 syncTextInput，触发终端渲染此处需要的副作用。
           syncTextInput(firstBadIndex);
         }
       }
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 当 `key.return && focusedButton` 匹配 `'decline'` 时，终端渲染执行对应分支。
     if (key.return && focusedButton === 'decline') {
+      // 调用 onResponse，触发终端渲染此处需要的副作用。
       onResponse('decline');
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Up/Down navigation
+    // 只有 `key.upArrow || key.downArrow` 满足时，终端渲染才执行该分支。
     if (key.upArrow || key.downArrow) {
       // Reset enum typeahead when leaving a field
+      // ta_1 命名 `enumTypeaheadRef.current`，让后续代码直接表达这个值的用途。
       const ta_1 = enumTypeaheadRef.current;
+      // buffer更新为 `''`，确保MCP 界面后续读取最新状态。
       ta_1.buffer = '';
+      // `ta_1.timer` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (ta_1.timer !== undefined) {
+        // 调用 clearTimeout，触发终端渲染此处需要的副作用。
         clearTimeout(ta_1.timer);
+        // timer更新为 `undefined`，确保MCP 界面后续读取最新状态。
         ta_1.timer = undefined;
       }
+      // 调用 handleNavigation，触发终端渲染此处需要的副作用。
       handleNavigation(key.upArrow ? 'up' : 'down');
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Left/Right to switch between Accept and Decline buttons
+    // 只有 `focusedButton && (key.leftArrow || key.rightArrow)` 满足时，终端渲染才执行该分支。
     if (focusedButton && (key.leftArrow || key.rightArrow)) {
+      // setFocusedButton 写入新的状态值，使终端渲染后续读取保持一致。
       setFocusedButton(focusedButton === 'accept' ? 'decline' : 'accept');
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // currentField缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!currentField) return;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       schema: schema_5,
       name: name_0
     } = currentField;
+    // value_1保存`formValues[name_0]`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
     const value_1 = formValues[name_0];
 
     // Boolean: Space to toggle, Enter to move on
+    // 当 `schema_5.type` 匹配 `'boolean'` 时，终端渲染执行对应分支。
     if (schema_5.type === 'boolean') {
+      // 当 `_input` 匹配 `' '` 时，终端渲染执行对应分支。
       if (_input === ' ') {
+        // setField 写入新的状态值，使终端渲染后续读取保持一致。
         setField(name_0, value_1 === undefined ? true : !value_1);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.return` 时，终端渲染执行该分支。
       if (key.return) {
+        // 调用 handleNavigation，触发终端渲染此处需要的副作用。
         handleNavigation('down');
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // `key.backspace && value_1` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (key.backspace && value_1 !== undefined) {
+        // 调用 unsetField，触发终端渲染此处需要的副作用。
         unsetField(name_0);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // y/n typeahead
+      // 只有 `_input && !key.return` 满足时，终端渲染才执行该分支。
       if (_input && !key.return) {
+        // 调用 runTypeahead，触发终端渲染此处需要的副作用。
         runTypeahead(_input, ['yes', 'no'], i => setField(name_0, i === 0));
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Enum or multi-select (collapsed) — accordion style
+    // 只有 `isEnumSchema(schema_5) || isMultiSelectEnumSchema(schema_5)` 满足时，终端渲染才执行该分支。
     if (isEnumSchema(schema_5) || isMultiSelectEnumSchema(schema_5)) {
+      // 满足 `key.return` 时，终端渲染执行该分支。
       if (key.return) {
+        // 调用 handleNavigation，触发终端渲染此处需要的副作用。
         handleNavigation('down');
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // `key.backspace && value_1` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
       if (key.backspace && value_1 !== undefined) {
+        // 调用 unsetField，触发终端渲染此处需要的副作用。
         unsetField(name_0);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Compute option labels + initial focus index for rightArrow expand.
       // Single-select focuses on the current value; multi-select starts at 0.
+      // labels_2 先占位，稍后的条件分支会根据实际输入补齐它。
       let labels_2: string[];
+      // startIdx保存`0`，供后续判断或组装使用。
       let startIdx = 0;
+      // 满足 `isEnumSchema(schema_5)` 时，终端渲染执行该分支。
       if (isEnumSchema(schema_5)) {
+        // vals 集合读取`getEnumValues`，供终端渲染后续处理使用。
         const vals = getEnumValues(schema_5);
+        // labels_2更新为 `vals.map(v_2 => getEnumLabel(schema_5, v_2).toLowerCase())`，确保MCP 界面后续读取最新状态。
         labels_2 = vals.map(v_2 => getEnumLabel(schema_5, v_2).toLowerCase());
+        // `value_1` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
         if (value_1 !== undefined) {
+          // startIdx更新为 `Math.max(0, vals.indexOf(value_1 as string))`，确保MCP 界面后续读取最新状态。
           startIdx = Math.max(0, vals.indexOf(value_1 as string));
         }
       } else {
+        // vals_0读取`getMultiSelectValues`，供终端渲染后续处理使用。
         const vals_0 = getMultiSelectValues(schema_5);
+        // labels_2更新为 `vals_0.map(v_3 => getMultiSelectLabel(schema_5, v_3).toLo...`，确保MCP 界面后续读取最新状态。
         labels_2 = vals_0.map(v_3 => getMultiSelectLabel(schema_5, v_3).toLowerCase());
       }
+      // 满足 `key.rightArrow` 时，终端渲染执行该分支。
       if (key.rightArrow) {
+        // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
         setExpandedAccordion(name_0);
+        // setAccordionOptionIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setAccordionOptionIndex(startIdx);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
       // Typeahead: expand and jump to matching option
+      // 只有 `_input && !key.leftArrow` 满足时，终端渲染才执行该分支。
       if (_input && !key.leftArrow) {
+        // 调用 runTypeahead，触发终端渲染此处需要的副作用。
         runTypeahead(_input, labels_2, i_0 => {
+          // setExpandedAccordion 写入新的状态值，使终端渲染后续读取保持一致。
           setExpandedAccordion(name_0);
+          // setAccordionOptionIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setAccordionOptionIndex(i_0);
         });
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Backspace: text fields when empty
+    // 满足 `key.backspace` 时，终端渲染执行该分支。
     if (key.backspace) {
+      // 只有 `isEditingTextField && textInputValue === ''` 满足时，终端渲染才执行该分支。
       if (isEditingTextField && textInputValue === '') {
+        // 调用 unsetField，触发终端渲染此处需要的副作用。
         unsetField(name_0);
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
     }
@@ -728,17 +1172,26 @@ function ElicitationFormDialog({
   }, {
     isActive: true
   });
+  // validateRequired 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function validateRequired(): boolean {
+    // requiredFields_1标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
     const requiredFields_1 = requestedSchema.required || [];
+    // 按顺序遍历 `requiredFields_1` 中的fieldName_8，逐个交给终端渲染处理。
     for (const fieldName_8 of requiredFields_1) {
+      // value_2保存`formValues[fieldName_8]`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
       const value_2 = formValues[fieldName_8];
+      // 只有 `value_2 === undefined || value_2 === null || valu` 满足时，终端渲染才执行该分支。
       if (value_2 === undefined || value_2 === null || value_2 === '') {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
+      // Array.isArray(value_2) && value...为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
       if (Array.isArray(value_2) && value_2.length === 0) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
     }
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   }
 
@@ -751,77 +1204,120 @@ function ElicitationFormDialog({
   // To generalize: track per-field height (3 for collapsed, N+3 for
   // expanded multi-select) and compute a pixel-budget window instead
   // of a simple item-count window.
+  // LINES_PER_FIELD 命名 `3`，让后续代码直接表达这个值的用途。
   const LINES_PER_FIELD = 3;
+  // DIALOG_OVERHEAD保存`14`，供后续判断或组装使用。
   const DIALOG_OVERHEAD = 14;
+  // maxVisibleFields 集合保存`Math.max`，供终端渲染后续处理使用。
   const maxVisibleFields = Math.max(2, Math.floor((rows - DIALOG_OVERHEAD) / LINES_PER_FIELD));
+  // scrollWindow保存`useMemo`，供终端渲染后续处理使用。
   const scrollWindow = useMemo(() => {
+    // total记录 `schemaFields.length` 是否成立，下一步按该结果分支。
     const total = schemaFields.length;
+    // 满足 `total <= maxVisibleFields` 时，终端渲染执行该分支。
     if (total <= maxVisibleFields) {
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         start: 0,
         end: total
       };
     }
     // When buttons are focused (currentFieldIndex undefined), pin to end
+    // focusIdx保存`currentFieldIndex ?? total - 1`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
     const focusIdx = currentFieldIndex ?? total - 1;
+    // start保存`Math.max`，供终端渲染后续处理使用。
     let start = Math.max(0, focusIdx - Math.floor(maxVisibleFields / 2));
+    // end保存`Math.min`，供终端渲染后续处理使用。
     const end = Math.min(start + maxVisibleFields, total);
     // Adjust start if we hit the bottom
+    // start更新为 `Math.max(0, end - maxVisibleFields)`，确保MCP 界面后续读取最新状态。
     start = Math.max(0, end - maxVisibleFields);
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       start,
       end
     };
   }, [schemaFields.length, maxVisibleFields, currentFieldIndex]);
+  // hasFieldsAbove标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
   const hasFieldsAbove = scrollWindow.start > 0;
+  // hasFieldsBelow标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
   const hasFieldsBelow = scrollWindow.end < schemaFields.length;
+  // renderFormFields 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function renderFormFields(): React.ReactNode {
+    // schemaFields.length 数量缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!schemaFields.length) return null;
+    // 返回 `<Box flexDirection="column">`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column">
         {hasFieldsAbove && <Box marginLeft={2}>
             <Text dimColor>
               {figures.arrowUp} {scrollWindow.start} more above
             </Text>
           </Box>}
+        {/* 这个回调绑定到 {schemaFields.slice(scrollWindow.start, scrollWindow.end).map((field_0, visibleIdx) …，负责终端渲染在该局部场景下的响应。 */}
         {schemaFields.slice(scrollWindow.start, scrollWindow.end).map((field_0, visibleIdx) => {
+        // index_0 索引 命名 `scrollWindow.start + visibleIdx`，让后续代码直接表达这个值的用途。
         const index_0 = scrollWindow.start + visibleIdx;
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           name: name_1,
           schema: schema_6,
           isRequired
         } = field_0;
+        // isActive标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
         const isActive = index_0 === currentFieldIndex && !focusedButton;
+        // value_3保存`formValues[name_1]`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
         const value_3 = formValues[name_1];
+        // hasValue记录 `Array.isArray` 是否成立，终端渲染随后按该结果分支。
         const hasValue = value_3 !== undefined && (!Array.isArray(value_3) || value_3.length > 0);
+        // error_0 错误信息读取 `validationErrors[name_1]` 对应条目，后续围绕该成员继续处理。
         const error_0 = validationErrors[name_1];
 
         // Checkbox: spinner → ⚠ error → ✔ set → * required → space
+        // isResolving记录 `resolvingFields.has` 是否成立，终端渲染随后按该结果分支。
         const isResolving = resolvingFields.has(name_1);
+        // checkbox保存`isResolving ? <ResolvingSpinner /> : error_0 ? <Text colo...`，供后续判断或组装使用。
         const checkbox = isResolving ? <ResolvingSpinner /> : error_0 ? <Text color="error">{figures.warning}</Text> : hasValue ? <Text color="success" dimColor={!isActive}>
                 {figures.tick}
               </Text> : isRequired ? <Text color="error">*</Text> : <Text> </Text>;
 
         // Selection color matches field status
+        // selectionColor保存`error_0 ? 'error' : hasValue ? 'success' : isRequired ? '...`，供后续判断或组装使用。
         const selectionColor = error_0 ? 'error' : hasValue ? 'success' : isRequired ? 'error' : 'suggestion';
+        // activeColor 命名 `isActive ? selectionColor : undefined`，让后续代码直接表达这个值的用途。
         const activeColor = isActive ? selectionColor : undefined;
+        // label 命名 `<Text color={activeColor} bold={isActive}>`，让后续代码直接表达这个值的用途。
         const label = <Text color={activeColor} bold={isActive}>
                 {schema_6.title || name_1}
               </Text>;
 
         // Render the value portion based on field type
+        // valueContent 先占位，稍后的条件分支会根据实际输入补齐它。
         let valueContent: React.ReactNode;
+        // accordionContent保存`null`，作为后续空值处理的输入。
         let accordionContent: React.ReactNode = null;
+        // 满足 `isMultiSelectEnumSchema(schema_6)` 时，终端渲染执行该分支。
         if (isMultiSelectEnumSchema(schema_6)) {
+          // msValues_0读取`getMultiSelectValues`，供终端渲染后续处理使用。
           const msValues_0 = getMultiSelectValues(schema_6);
+          // selected_1保存`value_3 as string[] | undefined ?? []`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
           const selected_1 = value_3 as string[] | undefined ?? [];
+          // isExpanded标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
           const isExpanded = expandedAccordion === name_1 && isActive;
+          // 满足 `isExpanded` 时，终端渲染执行该分支。
           if (isExpanded) {
+            // valueContent更新为 `<Text dimColor>{figures.triangleDownSmall}</Text>`，确保MCP 界面后续读取最新状态。
             valueContent = <Text dimColor>{figures.triangleDownSmall}</Text>;
+            // accordionContent更新为 `<Box flexDirection="column" marginLeft={6}>`，确保MCP 界面后续读取最新状态。
             accordionContent = <Box flexDirection="column" marginLeft={6}>
+                    {/* 这个回调绑定到 {msValues_0.map((optVal, optIdx) => {，负责终端渲染在该局部场景下的响应。 */}
                     {msValues_0.map((optVal, optIdx) => {
+                // optLabel读取`getMultiSelectLabel`，供终端渲染后续处理使用。
                 const optLabel = getMultiSelectLabel(schema_6, optVal);
+                // isChecked记录 `selected_1.includes` 是否成立，终端渲染随后按该结果分支。
                 const isChecked = selected_1.includes(optVal);
+                // isFocused标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
                 const isFocused = optIdx === accordionOptionIndex;
+                // 返回 `<Box key={optVal} gap={1}>`，作为终端渲染这次计算的结果。
                 return <Box key={optVal} gap={1}>
                           <Text color="suggestion">
                             {isFocused ? figures.pointer : ' '}
@@ -837,9 +1333,13 @@ function ElicitationFormDialog({
                   </Box>;
           } else {
             // Collapsed: ▸ arrow then comma-joined selected items
+            // arrow保存`isActive ? <Text dimColor>{figures.triangleRightSmall} </...`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
             const arrow = isActive ? <Text dimColor>{figures.triangleRightSmall} </Text> : null;
+            // 满足 `selected_1.length > 0` 时，终端渲染执行该分支。
             if (selected_1.length > 0) {
+              {/* 多选项折叠展示时先把选中值映射成标签，避免直接暴露内部 value。 */}
               const displayLabels = selected_1.map(v_4 => getMultiSelectLabel(schema_6, v_4));
+              // valueContent更新为 `<Text>`，确保MCP 界面后续读取最新状态。
               valueContent = <Text>
                       {arrow}
                       <Text color={activeColor} bold={isActive}>
@@ -847,6 +1347,7 @@ function ElicitationFormDialog({
                       </Text>
                     </Text>;
             } else {
+              // valueContent更新为 `<Text>`，确保MCP 界面后续读取最新状态。
               valueContent = <Text>
                       {arrow}
                       <Text dimColor italic>
@@ -855,16 +1356,27 @@ function ElicitationFormDialog({
                     </Text>;
             }
           }
+        // MCP 界面组件 Elicitation Dialog在这里处理 `} else if (isEnumSchema(schema_6)) {`，完成这一小步状态转换。
         } else if (isEnumSchema(schema_6)) {
+          // enumValues_0读取`getEnumValues`，供终端渲染后续处理使用。
           const enumValues_0 = getEnumValues(schema_6);
+          // isExpanded_0标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
           const isExpanded_0 = expandedAccordion === name_1 && isActive;
+          // 满足 `isExpanded_0` 时，终端渲染执行该分支。
           if (isExpanded_0) {
+            // valueContent更新为 `<Text dimColor>{figures.triangleDownSmall}</Text>`，确保MCP 界面后续读取最新状态。
             valueContent = <Text dimColor>{figures.triangleDownSmall}</Text>;
+            // accordionContent更新为 `<Box flexDirection="column" marginLeft={6}>`，确保MCP 界面后续读取最新状态。
             accordionContent = <Box flexDirection="column" marginLeft={6}>
+                    {/* 这个回调绑定到 {enumValues_0.map((optVal_0, optIdx_0) => {，负责终端渲染在该局部场景下的响应。 */}
                     {enumValues_0.map((optVal_0, optIdx_0) => {
+                // optLabel_0读取`getEnumLabel`，供终端渲染后续处理使用。
                 const optLabel_0 = getEnumLabel(schema_6, optVal_0);
+                // isSelected标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
                 const isSelected = value_3 === optVal_0;
+                // isFocused_0标记终端渲染MCP 界面组件 Elicitation Dialog是否启用对应路径。
                 const isFocused_0 = optIdx_0 === accordionOptionIndex;
+                // 返回 `<Box key={optVal_0} gap={1}>`，作为终端渲染这次计算的结果。
                 return <Box key={optVal_0} gap={1}>
                           <Text color="suggestion">
                             {isFocused_0 ? figures.pointer : ' '}
@@ -880,8 +1392,11 @@ function ElicitationFormDialog({
                   </Box>;
           } else {
             // Collapsed: ▸ arrow then current value
+            // arrow_0 命名 `isActive ? <Text dimColor>{figures.triangleRightSmall} </...`，让后续代码直接表达这个值的用途。
             const arrow_0 = isActive ? <Text dimColor>{figures.triangleRightSmall} </Text> : null;
+            // 满足 `hasValue` 时，终端渲染执行该分支。
             if (hasValue) {
+              // valueContent更新为 `<Text>`，确保MCP 界面后续读取最新状态。
               valueContent = <Text>
                       {arrow_0}
                       <Text color={activeColor} bold={isActive}>
@@ -889,6 +1404,7 @@ function ElicitationFormDialog({
                       </Text>
                     </Text>;
             } else {
+              // valueContent更新为 `<Text>`，确保MCP 界面后续读取最新状态。
               valueContent = <Text>
                       {arrow_0}
                       <Text dimColor italic>
@@ -897,32 +1413,43 @@ function ElicitationFormDialog({
                     </Text>;
             }
           }
+        // MCP 界面组件 Elicitation Dialog在这里处理 `} else if (schema_6.type === 'boolean') {`，完成这一小步状态转换。
         } else if (schema_6.type === 'boolean') {
+          // 满足 `isActive` 时，终端渲染执行该分支。
           if (isActive) {
+            // valueContent更新为 `hasValue ? <Text color={activeColor} bold>`，确保MCP 界面后续读取最新状态。
             valueContent = hasValue ? <Text color={activeColor} bold>
                     {value_3 ? figures.checkboxOn : figures.checkboxOff}
                   </Text> : <Text dimColor>{figures.checkboxOff}</Text>;
           } else {
+            // valueContent更新为 `hasValue ? <Text>`，确保MCP 界面后续读取最新状态。
             valueContent = hasValue ? <Text>
                     {value_3 ? figures.checkboxOn : figures.checkboxOff}
                   </Text> : <Text dimColor italic>
                     not set
                   </Text>;
           }
+        // MCP 界面组件 Elicitation Dialog在这里处理 `} else if (isTextField(schema_6)) {`，完成这一小步状态转换。
         } else if (isTextField(schema_6)) {
+          // 满足 `isActive` 时，终端渲染执行该分支。
           if (isActive) {
+            // valueContent更新为 `<TextInput value={textInputValue} onChange={handleTextInp...`，确保MCP 界面后续读取最新状态。
             valueContent = <TextInput value={textInputValue} onChange={handleTextInputChange} onSubmit={handleTextInputSubmit} placeholder={`Type something\u{2026}`} columns={Math.min(columns - 20, 60)} cursorOffset={textInputCursorOffset} onChangeCursorOffset={setTextInputCursorOffset} focus showCursor />;
           } else {
+            // displayValue记录时间`isDateTimeSchema`，供终端渲染后续处理使用。
             const displayValue = hasValue && isDateTimeSchema(schema_6) ? formatDateDisplay(String(value_3), schema_6) : String(value_3);
+            // valueContent更新为 `hasValue ? <Text>{displayValue}</Text> : <Text dimColor i...`，确保MCP 界面后续读取最新状态。
             valueContent = hasValue ? <Text>{displayValue}</Text> : <Text dimColor italic>
                     not set
                   </Text>;
           }
         } else {
+          // valueContent更新为 `hasValue ? <Text>{String(value_3)}</Text> : <Text dimColo...`，确保MCP 界面后续读取最新状态。
           valueContent = hasValue ? <Text>{String(value_3)}</Text> : <Text dimColor italic>
                   not set
                 </Text>;
         }
+        // 返回 `<Box key={name_1} flexDirection="column">`，作为终端渲染这次计算的结果。
         return <Box key={name_1} flexDirection="column">
                 <Box gap={1}>
                   <Text color={selectionColor}>
@@ -954,6 +1481,7 @@ function ElicitationFormDialog({
           </Box>}
       </Box>;
   }
+  // 返回 `<Dialog title={`MCP server \u201c${serverName}\u201d requests your inpu...`，作为终端渲染这次计算的结果。
   return <Dialog title={`MCP server \u201c${serverName}\u201d requests your input`} subtitle={`\n${message}`} color="permission" onCancel={() => onResponse('cancel')} isCancelActive={(!currentField || !!focusedButton) && !expandedAccordion} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
             <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
             <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
@@ -981,6 +1509,7 @@ function ElicitationFormDialog({
       </Box>
     </Dialog>;
 }
+// ElicitationURLDialog 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ElicitationURLDialog({
   event,
   onResponse,
@@ -990,110 +1519,177 @@ function ElicitationURLDialog({
   onResponse: Props['onResponse'];
   onWaitingDismiss: Props['onWaitingDismiss'];
 }): React.ReactNode {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     serverName,
     signal,
     waitingState
   } = event;
+  // urlParams 集合 命名 `event.params as ElicitRequestURLParams`，让后续代码直接表达这个值的用途。
   const urlParams = event.params as ElicitRequestURLParams;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     message,
     url
   } = urlParams;
+  // phase 由 React state 持有，setPhase 会在用户操作或异步结果返回时触发刷新。
   const [phase, setPhase] = useState<'prompt' | 'waiting'>('prompt');
+  // phaseRef 引用保存 hook 状态，让终端渲染MCP 界面组件 Elicitation Dialog跨渲染复用同一个容器。
   const phaseRef = useRef<'prompt' | 'waiting'>('prompt');
+  // focusedButton 由 React state 持有，setFocusedButton 会在用户操作或异步结果返回时触发刷新。
   const [focusedButton, setFocusedButton] = useState<'accept' | 'decline' | 'open' | 'action' | 'cancel'>('accept');
+  // showCancel保存`waitingState?.showCancel ?? false`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
   const showCancel = waitingState?.showCancel ?? false;
+  // 调用 useNotifyAfterTimeout，触发终端渲染此处需要的副作用。
   useNotifyAfterTimeout('Claude Code needs your input', 'elicitation_url_dialog');
+  // 调用 useRegisterOverlay，触发终端渲染此处需要的副作用。
   useRegisterOverlay('elicitation-url');
 
   // Keep refs in sync for use in abort handler (avoids re-registering listener)
+  // current更新为 `phase`，确保MCP 界面后续读取最新状态。
   phaseRef.current = phase;
+  // onWaitingDismissRef 引用保存`useRef`，供终端渲染后续处理使用。
   const onWaitingDismissRef = useRef(onWaitingDismiss);
+  // current更新为 `onWaitingDismiss`，确保MCP 界面后续读取最新状态。
   onWaitingDismissRef.current = onWaitingDismiss;
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // handleAbort封装成回调，供终端渲染MCP 界面组件 Elicitation Dialog在事件触发或异步步骤中调用。
     const handleAbort = () => {
+      // 当 `phaseRef.current` 匹配 `'waiting'` 时，终端渲染执行对应分支。
       if (phaseRef.current === 'waiting') {
+        // 调用 onWaitingDismissRef.current?.('cancel');，完成这一处局部操作。
         onWaitingDismissRef.current?.('cancel');
       } else {
+        // 调用 onResponse，触发终端渲染此处需要的副作用。
         onResponse('cancel');
       }
     };
+    // 满足 `signal.aborted` 时，终端渲染执行该分支。
     if (signal.aborted) {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       handleAbort();
+      // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 调用 signal.addEventListener，触发终端渲染此处需要的副作用。
     signal.addEventListener('abort', handleAbort);
+    // 返回 `() => signal.removeEventListener('abort', handleAbort)`，作为终端渲染这次计算的结果。
     return () => signal.removeEventListener('abort', handleAbort);
   }, [signal, onResponse]);
 
   // Parse URL to highlight the domain
+  // domain保存`''`，作为后续固定文本处理的输入。
   let domain = '';
+  // urlBeforeDomain 命名 `''`，让后续代码直接表达这个值的用途。
   let urlBeforeDomain = '';
+  // urlAfterDomain 命名 `''`，让后续代码直接表达这个值的用途。
   let urlAfterDomain = '';
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // 解析结果保存`URL`，供终端渲染后续处理使用。
     const parsed = new URL(url);
+    // domain更新为 `parsed.hostname`，确保MCP 界面后续读取最新状态。
     domain = parsed.hostname;
+    // domainStart保存`url.indexOf`，供终端渲染后续处理使用。
     const domainStart = url.indexOf(domain);
+    // urlBeforeDomain更新为 `url.slice(0, domainStart)`，确保MCP 界面后续读取最新状态。
     urlBeforeDomain = url.slice(0, domainStart);
+    // urlAfterDomain更新为 `url.slice(domainStart + domain.length)`，确保MCP 界面后续读取最新状态。
     urlAfterDomain = url.slice(domainStart + domain.length);
   } catch {
+    // domain更新为 `url`，确保MCP 界面后续读取最新状态。
     domain = url;
   }
 
   // Auto-dismiss when the server sends a completion notification (sets completed flag)
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 只有 `phase === 'waiting' && event.completed` 满足时，终端渲染才执行该分支。
     if (phase === 'waiting' && event.completed) {
+      // 调用 onWaitingDismiss?.(showCancel ? 'retry' : 'dismiss');，完成这一处局部操作。
       onWaitingDismiss?.(showCancel ? 'retry' : 'dismiss');
     }
   }, [phase, event.completed, onWaitingDismiss, showCancel]);
+  // handleAccept保存`useCallback`，供终端渲染后续处理使用。
   const handleAccept = useCallback(() => {
+    // 显式忽略 `openBrowser(url)` 的返回值，只保留它触发的副作用。
     void openBrowser(url);
+    // 调用 onResponse，触发终端渲染此处需要的副作用。
     onResponse('accept');
+    // setPhase 写入新的状态值，使终端渲染后续读取保持一致。
     setPhase('waiting');
+    // current更新为 `'waiting'`，确保MCP 界面后续读取最新状态。
     phaseRef.current = 'waiting';
+    // setFocusedButton 写入新的状态值，使终端渲染后续读取保持一致。
     setFocusedButton('open');
   }, [onResponse, url]);
 
   // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw input for button navigation
+  // 调用 useInput，触发终端渲染此处需要的副作用。
   useInput((_input, key) => {
+    // 当 `phase` 匹配 `'prompt'` 时，终端渲染执行对应分支。
     if (phase === 'prompt') {
+      // 只有 `key.leftArrow || key.rightArrow` 满足时，终端渲染才执行该分支。
       if (key.leftArrow || key.rightArrow) {
+        // setFocusedButton 写入新的状态值，使终端渲染后续读取保持一致。
         setFocusedButton(prev => prev === 'accept' ? 'decline' : 'accept');
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.return` 时，终端渲染执行该分支。
       if (key.return) {
+        // 当 `focusedButton` 匹配 `'accept'` 时，终端渲染执行对应分支。
         if (focusedButton === 'accept') {
+          // 调用 handleAccept，触发终端渲染此处需要的副作用。
           handleAccept();
         } else {
+          // 调用 onResponse，触发终端渲染此处需要的副作用。
           onResponse('decline');
         }
       }
     } else {
       // waiting phase — cycle through buttons
+      // ButtonName 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
       type ButtonName = 'accept' | 'decline' | 'open' | 'action' | 'cancel';
+      // waitingButtons 集合 命名 `showCancel ? ['open', 'action', 'cancel'] : ['open', 'act...`，让后续代码直接表达这个值的用途。
       const waitingButtons: readonly ButtonName[] = showCancel ? ['open', 'action', 'cancel'] : ['open', 'action'];
+      // 只有 `key.leftArrow || key.rightArrow` 满足时，终端渲染才执行该分支。
       if (key.leftArrow || key.rightArrow) {
+        // setFocusedButton 写入新的状态值，使终端渲染后续读取保持一致。
         setFocusedButton(prev_0 => {
+          // idx保存`waitingButtons.indexOf`，供终端渲染后续处理使用。
           const idx = waitingButtons.indexOf(prev_0);
+          // delta保存`key.rightArrow ? 1 : -1`，供终端渲染MCP 界面组件 Elicitation Dialog后续判断或输出使用。
           const delta = key.rightArrow ? 1 : -1;
+          // 返回 `waitingButtons[(idx + delta + waitingButtons.length) % waitingButtons.l...`，作为终端渲染这次计算的结果。
           return waitingButtons[(idx + delta + waitingButtons.length) % waitingButtons.length]!;
         });
+        // MCP 界面组件 Elicitation Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `key.return` 时，终端渲染执行该分支。
       if (key.return) {
+        // 当 `focusedButton` 匹配 `'open'` 时，终端渲染执行对应分支。
         if (focusedButton === 'open') {
+          // 显式忽略 `openBrowser(url)` 的返回值，只保留它触发的副作用。
           void openBrowser(url);
+        // MCP 界面组件 Elicitation Dialog在这里处理 `} else if (focusedButton === 'cancel') {`，完成这一小步状态转换。
         } else if (focusedButton === 'cancel') {
+          // 调用 onWaitingDismiss?.('cancel');，完成这一处局部操作。
           onWaitingDismiss?.('cancel');
         } else {
+          // 调用 onWaitingDismiss?.(showCancel ? 'retry' : 'dismiss');，完成这一处局部操作。
           onWaitingDismiss?.(showCancel ? 'retry' : 'dismiss');
         }
       }
     }
   });
+  // 当 `phase` 匹配 `'waiting'` 时，终端渲染执行对应分支。
   if (phase === 'waiting') {
+    // actionLabel 命名 `waitingState?.actionLabel ?? 'Continue without waiting'`，让后续代码直接表达这个值的用途。
     const actionLabel = waitingState?.actionLabel ?? 'Continue without waiting';
+    // 返回 `<Dialog title={`MCP server \u201c${serverName}\u201d \u2014 waiting for...`，作为终端渲染这次计算的结果。
     return <Dialog title={`MCP server \u201c${serverName}\u201d \u2014 waiting for completion`} subtitle={`\n${message}`} color="permission" onCancel={() => onWaitingDismiss?.('cancel')} isCancelActive inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
               <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
               <KeyboardShortcutHint shortcut="\u2190\u2192" action="switch" />
@@ -1137,6 +1733,7 @@ function ElicitationURLDialog({
         </Box>
       </Dialog>;
   }
+  // 返回 `<Dialog title={`MCP server \u201c${serverName}\u201d wants to open a UR...`，作为终端渲染这次计算的结果。
   return <Dialog title={`MCP server \u201c${serverName}\u201d wants to open a URL`} subtitle={`\n${message}`} color="permission" onCancel={() => onResponse('cancel')} isCancelActive inputGuide={exitState_0 => exitState_0.pending ? <Text>Press {exitState_0.keyName} again to exit</Text> : <Byline>
             <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
             <KeyboardShortcutHint shortcut="\u2190\u2192" action="switch" />

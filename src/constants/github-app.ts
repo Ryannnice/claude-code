@@ -1,8 +1,11 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 export const PR_TITLE = 'Add Claude Code GitHub Workflow'
 
+// GITHUB_ACTION_SETUP_DOCS_URL 先占位，稍后的条件分支会根据实际输入补齐它。
 export const GITHUB_ACTION_SETUP_DOCS_URL =
   'https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md'
 
+// WORKFLOW_CONTENT保存``name: Claude Code`，作为后续固定文本处理的输入。
 export const WORKFLOW_CONTENT = `name: Claude Code
 
 on:
@@ -55,6 +58,7 @@ jobs:
 
 `
 
+// PR_BODY固定为 ``## 🤖 Installing Claude Code GitHub App`，作为github app后续展示或比较的基准。
 export const PR_BODY = `## 🤖 Installing Claude Code GitHub App
 
 This PR adds a GitHub Actions workflow that enables Claude Code integration in our repository.
@@ -97,6 +101,7 @@ There's more information in the [Claude Code action repo](https://github.com/ant
 
 After merging this PR, let's try mentioning @claude in a comment on any PR to get started!`
 
+// CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT 插件数据固定为 ``name: Claude Code Review`，作为github app后续展示或比较的基准。
 export const CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT = `name: Claude Code Review
 
 on:

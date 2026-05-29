@@ -1,65 +1,121 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 类型依赖 { ToolResultBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准工具调用的数据契约。
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 使用 Node/Bun 的 fs/promises 能力处理本地运行时资源。
 import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'fs/promises';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { CanUseToolFn } 来自 src/hooks/useCanUseTool.js，用于校准工具调用的数据契约。
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js';
+// 类型依赖 { AppState } 来自 src/state/AppState.js，用于校准工具调用的数据契约。
 import type { AppState } from 'src/state/AppState.js';
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4';
+// 引入 getKairosActive，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getKairosActive } from '../../bootstrap/state.js';
+// 引入 TOOL_SUMMARY_MAX_LENGTH，将 ../../constants/toolLimits.js 中已经封装好的能力接到本文件流程里。
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
+// 接入 notifyVscodeFileUpdated 服务层能力，把外部通信或共享状态交给 ../../services/mcp/vscodeSdkMcp.js 处理。
 import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeSdkMcp.js';
+// 类型依赖 { SetToolJSXFn, ToolCallProgress, ToolUseContext, Validatio… 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { SetToolJSXFn, ToolCallProgress, ToolUseContext, ValidationResult } from '../../Tool.js';
+// 引入 buildTool、ToolDef，将 ../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { buildTool, type ToolDef } from '../../Tool.js';
+// 引入 backgroundExistingForegroundTask、markTaskNotified、registerForeground、spawnShellTask、unregisterForeground，将 ../../tasks/LocalShellTask/LocalShellTask.js 中已经封装好的能力接到本文件流程里。
 import { backgroundExistingForegroundTask, markTaskNotified, registerForeground, spawnShellTask, unregisterForeground } from '../../tasks/LocalShellTask/LocalShellTask.js';
+// 类型依赖 { AgentId } 来自 ../../types/ids.js，用于校准工具调用的数据契约。
 import type { AgentId } from '../../types/ids.js';
+// 类型依赖 { AssistantMessage } 来自 ../../types/message.js，用于校准工具调用的数据契约。
 import type { AssistantMessage } from '../../types/message.js';
+// 复用 parseForSecurity 工具函数，把通用处理留在 ../../utils/bash/ast.js 中维护。
 import { parseForSecurity } from '../../utils/bash/ast.js';
+// 复用 splitCommand_DEPRECATED、splitCommandWithOperators 工具函数，把通用处理留在 ../../utils/bash/commands.js 中维护。
 import { splitCommand_DEPRECATED, splitCommandWithOperators } from '../../utils/bash/commands.js';
+// 复用 extractClaudeCodeHints 工具函数，把通用处理留在 ../../utils/claudeCodeHints.js 中维护。
 import { extractClaudeCodeHints } from '../../utils/claudeCodeHints.js';
+// 复用 detectCodeIndexingFromCommand 工具函数，把通用处理留在 ../../utils/codeIndexing.js 中维护。
 import { detectCodeIndexingFromCommand } from '../../utils/codeIndexing.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js';
+// 复用 isENOENT、ShellError 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { isENOENT, ShellError } from '../../utils/errors.js';
+// 复用 detectFileEncoding、detectLineEndings、getFileModificationTime、writeTextContent 工具函数，把通用处理留在 ../../utils/file.js 中维护。
 import { detectFileEncoding, detectLineEndings, getFileModificationTime, writeTextContent } from '../../utils/file.js';
+// 复用 fileHistoryEnabled、fileHistoryTrackEdit 工具函数，把通用处理留在 ../../utils/fileHistory.js 中维护。
 import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../utils/fileHistory.js';
+// 复用 truncate 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { truncate } from '../../utils/format.js';
+// 复用 getFsImplementation 工具函数，把通用处理留在 ../../utils/fsOperations.js 中维护。
 import { getFsImplementation } from '../../utils/fsOperations.js';
+// 复用 lazySchema 工具函数，把通用处理留在 ../../utils/lazySchema.js 中维护。
 import { lazySchema } from '../../utils/lazySchema.js';
+// 复用 expandPath 工具函数，把通用处理留在 ../../utils/path.js 中维护。
 import { expandPath } from '../../utils/path.js';
+// 类型依赖 { PermissionResult } 来自 ../../utils/permissions/PermissionResult.js，用于校准工具调用的数据契约。
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js';
+// 复用 maybeRecordPluginHint 工具函数，把通用处理留在 ../../utils/plugins/hintRecommendation.js 中维护。
 import { maybeRecordPluginHint } from '../../utils/plugins/hintRecommendation.js';
+// 复用 exec 工具函数，把通用处理留在 ../../utils/Shell.js 中维护。
 import { exec } from '../../utils/Shell.js';
+// 类型依赖 { ExecResult } 来自 ../../utils/ShellCommand.js，用于校准工具调用的数据契约。
 import type { ExecResult } from '../../utils/ShellCommand.js';
+// 复用 SandboxManager 工具函数，把通用处理留在 ../../utils/sandbox/sandbox-adapter.js 中维护。
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js';
+// 复用 semanticBoolean 工具函数，把通用处理留在 ../../utils/semanticBoolean.js 中维护。
 import { semanticBoolean } from '../../utils/semanticBoolean.js';
+// 复用 semanticNumber 工具函数，把通用处理留在 ../../utils/semanticNumber.js 中维护。
 import { semanticNumber } from '../../utils/semanticNumber.js';
+// 复用 EndTruncatingAccumulator 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { EndTruncatingAccumulator } from '../../utils/stringUtils.js';
+// 复用 getTaskOutputPath 工具函数，把通用处理留在 ../../utils/task/diskOutput.js 中维护。
 import { getTaskOutputPath } from '../../utils/task/diskOutput.js';
+// 复用 TaskOutput 工具函数，把通用处理留在 ../../utils/task/TaskOutput.js 中维护。
 import { TaskOutput } from '../../utils/task/TaskOutput.js';
+// 复用 isOutputLineTruncated 工具函数，把通用处理留在 ../../utils/terminal.js 中维护。
 import { isOutputLineTruncated } from '../../utils/terminal.js';
+// 复用 buildLargeToolResultMessage、ensureToolResultsDir、generatePreview、getToolResultPath、PREVIEW_SIZE_BYTES 工具函数，把通用处理留在 ../../utils/toolResultStorage.js 中维护。
 import { buildLargeToolResultMessage, ensureToolResultsDir, generatePreview, getToolResultPath, PREVIEW_SIZE_BYTES } from '../../utils/toolResultStorage.js';
+// 引入 userFacingName as fileEditUserFacingName，将 ../FileEditTool/UI.js 中已经封装好的能力接到本文件流程里。
 import { userFacingName as fileEditUserFacingName } from '../FileEditTool/UI.js';
+// 引入 trackGitOperations，将 ../shared/gitOperationTracking.js 中已经封装好的能力接到本文件流程里。
 import { trackGitOperations } from '../shared/gitOperationTracking.js';
+// 引入 bashToolHasPermission、commandHasAnyCd、matchWildcardPattern、permissionRuleExtractPrefix，将 ./bashPermissions.js 中已经封装好的能力接到本文件流程里。
 import { bashToolHasPermission, commandHasAnyCd, matchWildcardPattern, permissionRuleExtractPrefix } from './bashPermissions.js';
+// 引入 interpretCommandResult，将 ./commandSemantics.js 中已经封装好的能力接到本文件流程里。
 import { interpretCommandResult } from './commandSemantics.js';
+// 引入 getDefaultTimeoutMs、getMaxTimeoutMs、getSimplePrompt，将 ./prompt.js 中已经封装好的能力接到本文件流程里。
 import { getDefaultTimeoutMs, getMaxTimeoutMs, getSimplePrompt } from './prompt.js';
+// 引入 checkReadOnlyConstraints，将 ./readOnlyValidation.js 中已经封装好的能力接到本文件流程里。
 import { checkReadOnlyConstraints } from './readOnlyValidation.js';
+// 引入 parseSedEditCommand，将 ./sedEditParser.js 中已经封装好的能力接到本文件流程里。
 import { parseSedEditCommand } from './sedEditParser.js';
+// 引入 shouldUseSandbox，将 ./shouldUseSandbox.js 中已经封装好的能力接到本文件流程里。
 import { shouldUseSandbox } from './shouldUseSandbox.js';
+// 引入 BASH_TOOL_NAME，将 ./toolName.js 中已经封装好的能力接到本文件流程里。
 import { BASH_TOOL_NAME } from './toolName.js';
+// 引入 BackgroundHint、renderToolResultMessage、renderToolUseErrorMessage、renderToolUseMessage、renderToolUseProgressMessage、renderToolUseQueuedMessage，将 ./UI.js 中已经封装好的能力接到本文件流程里。
 import { BackgroundHint, renderToolResultMessage, renderToolUseErrorMessage, renderToolUseMessage, renderToolUseProgressMessage, renderToolUseQueuedMessage } from './UI.js';
+// 引入 buildImageToolResult、isImageOutput、resetCwdIfOutsideProject、resizeShellImageOutput、stdErrAppendShellResetMessage、stripEmptyLines，将 ./utils.js 中已经封装好的能力接到本文件流程里。
 import { buildImageToolResult, isImageOutput, resetCwdIfOutsideProject, resizeShellImageOutput, stdErrAppendShellResetMessage, stripEmptyLines } from './utils.js';
+// EOL固定为 `'\n'`，作为Bash 工具 Bash Tool后续展示或比较的基准。
 const EOL = '\n';
 
 // Progress display constants
+// PROGRESS_THRESHOLD_MS 集合保存`2000; // Show progress after 2 seconds`，供Bash 工具 Bash Tool后续判断或输出使用。
 const PROGRESS_THRESHOLD_MS = 2000; // Show progress after 2 seconds
 // In assistant mode, blocking bash auto-backgrounds after this many ms in the main agent
+// ASSISTANT_BLOCKING_BUDGET_MS 集合保存`15_000`，供Bash 工具 Bash Tool后续判断或输出使用。
 const ASSISTANT_BLOCKING_BUDGET_MS = 15_000;
 
 // Search commands for collapsible display (grep, find, etc.)
+// BASH_SEARCH_COMMANDS 命令数据保存`Set`，供工具调用后续处理使用。
 const BASH_SEARCH_COMMANDS = new Set(['find', 'grep', 'rg', 'ag', 'ack', 'locate', 'which', 'whereis']);
 
 // Read/view commands for collapsible display (cat, head, etc.)
+// BASH_READ_COMMANDS 命令数据保存`Set`，供工具调用后续处理使用。
 const BASH_READ_COMMANDS = new Set(['cat', 'head', 'tail', 'less', 'more',
 // Analysis commands
 'wc', 'stat', 'file', 'strings',
@@ -69,15 +125,18 @@ const BASH_READ_COMMANDS = new Set(['cat', 'head', 'tail', 'less', 'more',
 // Directory-listing commands for collapsible display (ls, tree, du).
 // Split from BASH_READ_COMMANDS so the summary says "Listed N directories"
 // instead of the misleading "Read N files".
+// BASH_LIST_COMMANDS 命令数据保存`Set`，供工具调用后续处理使用。
 const BASH_LIST_COMMANDS = new Set(['ls', 'tree', 'du']);
 
 // Commands that are semantic-neutral in any position — pure output/status commands
 // that don't change the read/search nature of the overall pipeline.
 // e.g. `ls dir && echo "---" && ls dir2` is still a read-only compound command.
+// BASH_SEMANTIC_NEUTRAL_COMMANDS 命令数据保存`Set`，供工具调用后续处理使用。
 const BASH_SEMANTIC_NEUTRAL_COMMANDS = new Set(['echo', 'printf', 'true', 'false', ':' // bash no-op
 ]);
 
 // Commands that typically produce no stdout on success
+// BASH_SILENT_COMMANDS 命令数据保存`Set`，供工具调用后续处理使用。
 const BASH_SILENT_COMMANDS = new Set(['mv', 'cp', 'rm', 'mkdir', 'rmdir', 'chmod', 'chown', 'chgrp', 'touch', 'ln', 'cd', 'export', 'unset', 'wait']);
 
 /**
@@ -92,78 +151,116 @@ const BASH_SILENT_COMMANDS = new Set(['mv', 'cp', 'rm', 'mkdir', 'rmdir', 'chmod
  * position, as they're pure output/status commands that don't affect the read/search
  * nature of the pipeline (e.g. `ls dir && echo "---" && ls dir2` is still a read).
  */
+// isSearchOrReadBashCommand 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isSearchOrReadBashCommand(command: string): {
   isSearch: boolean;
   isRead: boolean;
   isList: boolean;
 } {
+  // partsWithOperators 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   let partsWithOperators: string[];
+  // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
   try {
+    // partsWithOperators 集合更新为 `splitCommandWithOperators(command)`，确保Bash 工具后续读取最新状态。
     partsWithOperators = splitCommandWithOperators(command);
   } catch {
     // If we can't parse the command due to malformed syntax,
     // it's not a search/read command
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       isSearch: false,
       isRead: false,
       isList: false
     };
   }
+  // partsWithOperators 集合为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (partsWithOperators.length === 0) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       isSearch: false,
       isRead: false,
       isList: false
     };
   }
+  // hasSearch标记Bash 工具 Bash Tool是否启用对应路径。
   let hasSearch = false;
+  // hasRead标记Bash 工具 Bash Tool是否启用对应路径。
   let hasRead = false;
+  // hasList 集合标记Bash 工具 Bash Tool是否启用对应路径。
   let hasList = false;
+  // hasNonNeutralCommand 命令数据标记Bash 工具 Bash Tool是否启用对应路径。
   let hasNonNeutralCommand = false;
+  // skipNextAsRedirectTarget标记Bash 工具 Bash Tool是否启用对应路径。
   let skipNextAsRedirectTarget = false;
+  // 按顺序遍历 `partsWithOperators` 中的part，逐个交给工具调用处理。
   for (const part of partsWithOperators) {
+    // 满足 `skipNextAsRedirectTarget` 时，工具调用执行该分支。
     if (skipNextAsRedirectTarget) {
+      // skipNextAsRedirectTarget更新为 `false`，确保Bash 工具后续读取最新状态。
       skipNextAsRedirectTarget = false;
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // 当 `part` 匹配 `'>' || part === '>>' || par...` 时，工具调用执行对应分支。
     if (part === '>' || part === '>>' || part === '>&') {
+      // skipNextAsRedirectTarget更新为 `true`，确保Bash 工具后续读取最新状态。
       skipNextAsRedirectTarget = true;
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // 只有 `part === '||' || part === '&&' || part === '|' ||` 满足时，工具调用才执行该分支。
     if (part === '||' || part === '&&' || part === '|' || part === ';') {
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // baseCommand 命令数据格式化`part.trim`，供工具调用后续处理使用。
     const baseCommand = part.trim().split(/\s+/)[0];
+    // baseCommand 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!baseCommand) {
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // 满足 `BASH_SEMANTIC_NEUTRAL_COMMANDS.has(baseCommand)` 时，工具调用执行该分支。
     if (BASH_SEMANTIC_NEUTRAL_COMMANDS.has(baseCommand)) {
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // hasNonNeutralCommand 命令数据更新为 `true`，确保Bash 工具后续读取最新状态。
     hasNonNeutralCommand = true;
+    // isPartSearch记录 `BASH_SEARCH_COMMANDS.has` 是否成立，工具调用随后按该结果分支。
     const isPartSearch = BASH_SEARCH_COMMANDS.has(baseCommand);
+    // isPartRead记录 `BASH_READ_COMMANDS.has` 是否成立，工具调用随后按该结果分支。
     const isPartRead = BASH_READ_COMMANDS.has(baseCommand);
+    // isPartList 集合记录 `BASH_LIST_COMMANDS.has` 是否成立，工具调用随后按该结果分支。
     const isPartList = BASH_LIST_COMMANDS.has(baseCommand);
+    // 只有 `!isPartSearch && !isPartRead && !isPartList` 满足时，工具调用才执行该分支。
     if (!isPartSearch && !isPartRead && !isPartList) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         isSearch: false,
         isRead: false,
         isList: false
       };
     }
+    // 满足 `isPartSearch` 时，工具调用执行该分支。
     if (isPartSearch) hasSearch = true;
+    // 满足 `isPartRead` 时，工具调用执行该分支。
     if (isPartRead) hasRead = true;
+    // 满足 `isPartList` 时，工具调用执行该分支。
     if (isPartList) hasList = true;
   }
 
   // Only neutral commands (e.g., just "echo foo") -- not collapsible
+  // hasNonNeutralCommand 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!hasNonNeutralCommand) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       isSearch: false,
       isRead: false,
       isList: false
     };
   }
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     isSearch: hasSearch,
     isRead: hasRead,
@@ -175,55 +272,87 @@ export function isSearchOrReadBashCommand(command: string): {
  * Checks if a bash command is expected to produce no stdout on success.
  * Used to show "Done" instead of "(No output)" in the UI.
  */
+// isSilentBashCommand 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isSilentBashCommand(command: string): boolean {
+  // partsWithOperators 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   let partsWithOperators: string[];
+  // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
   try {
+    // partsWithOperators 集合更新为 `splitCommandWithOperators(command)`，确保Bash 工具后续读取最新状态。
     partsWithOperators = splitCommandWithOperators(command);
   } catch {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
+  // partsWithOperators 集合为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (partsWithOperators.length === 0) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
+  // hasNonFallbackCommand 命令数据标记Bash 工具 Bash Tool是否启用对应路径。
   let hasNonFallbackCommand = false;
+  // lastOperator 命名 `null`，让后续代码直接表达这个值的用途。
   let lastOperator: string | null = null;
+  // skipNextAsRedirectTarget标记Bash 工具 Bash Tool是否启用对应路径。
   let skipNextAsRedirectTarget = false;
+  // 按顺序遍历 `partsWithOperators` 中的part，逐个交给工具调用处理。
   for (const part of partsWithOperators) {
+    // 满足 `skipNextAsRedirectTarget` 时，工具调用执行该分支。
     if (skipNextAsRedirectTarget) {
+      // skipNextAsRedirectTarget更新为 `false`，确保Bash 工具后续读取最新状态。
       skipNextAsRedirectTarget = false;
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // 当 `part` 匹配 `'>' || part === '>>' || par...` 时，工具调用执行对应分支。
     if (part === '>' || part === '>>' || part === '>&') {
+      // skipNextAsRedirectTarget更新为 `true`，确保Bash 工具后续读取最新状态。
       skipNextAsRedirectTarget = true;
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // 只有 `part === '||' || part === '&&' || part === '|' ||` 满足时，工具调用才执行该分支。
     if (part === '||' || part === '&&' || part === '|' || part === ';') {
+      // lastOperator更新为 `part`，确保Bash 工具后续读取最新状态。
       lastOperator = part;
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // baseCommand 命令数据格式化`part.trim`，供工具调用后续处理使用。
     const baseCommand = part.trim().split(/\s+/)[0];
+    // baseCommand 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!baseCommand) {
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // 只有 `lastOperator === '||' && BASH_SEMANTIC_NEUTRAL_COMMANDS.has(baseCommand)` 满足时，工具调用才执行该分支。
     if (lastOperator === '||' && BASH_SEMANTIC_NEUTRAL_COMMANDS.has(baseCommand)) {
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue;
     }
+    // hasNonFallbackCommand 命令数据更新为 `true`，确保Bash 工具后续读取最新状态。
     hasNonFallbackCommand = true;
+    // 满足 `!BASH_SILENT_COMMANDS.has(baseCommand)` 时，工具调用执行该分支。
     if (!BASH_SILENT_COMMANDS.has(baseCommand)) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
   }
+  // 返回 `hasNonFallbackCommand`，作为工具调用这次计算的结果。
   return hasNonFallbackCommand;
 }
 
 // Commands that should not be auto-backgrounded
+// DISALLOWED_AUTO_BACKGROUND_COMMANDS 命令数据 聚合成有序列表，保持后续遍历顺序稳定。
 const DISALLOWED_AUTO_BACKGROUND_COMMANDS = ['sleep' // Sleep should run in foreground unless explicitly backgrounded by user
 ];
 
 // Check if background tasks are disabled at module load time
+// isBackgroundTasksDisabled 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const isBackgroundTasksDisabled =
 // eslint-disable-next-line custom-rules/no-process-env-top-level -- Intentional: schema must be defined at module load
 isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS);
+// fullInputSchema保存`lazySchema`，供工具调用后续处理使用。
 const fullInputSchema = lazySchema(() => z.strictObject({
   command: z.string().describe('The command to execute'),
   timeout: semanticNumber(z.number().optional()).describe(`Optional timeout in milliseconds (max ${getMaxTimeoutMs()})`),
@@ -251,31 +380,44 @@ For commands that are harder to parse at a glance (piped commands, obscure flags
 // Exposing it in the schema would let the model bypass permission checks and the
 // sandbox by pairing an innocuous command with an arbitrary file write.
 // Also conditionally remove run_in_background when background tasks are disabled.
+// inputSchema保存`lazySchema`，供工具调用后续处理使用。
 const inputSchema = lazySchema(() => isBackgroundTasksDisabled ? fullInputSchema().omit({
   run_in_background: true,
   _simulatedSedEdit: true
 }) : fullInputSchema().omit({
   _simulatedSedEdit: true
 }));
+// InputSchema 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type InputSchema = ReturnType<typeof inputSchema>;
 
 // Use fullInputSchema for the type to always include run_in_background
 // (even when it's omitted from the schema, the code needs to handle it)
+// BashToolInput 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 export type BashToolInput = z.infer<ReturnType<typeof fullInputSchema>>;
+// COMMON_BACKGROUND_COMMANDS 命令数据 聚合成有序列表，保持后续遍历顺序稳定。
 const COMMON_BACKGROUND_COMMANDS = ['npm', 'yarn', 'pnpm', 'node', 'python', 'python3', 'go', 'cargo', 'make', 'docker', 'terraform', 'webpack', 'vite', 'jest', 'pytest', 'curl', 'wget', 'build', 'test', 'serve', 'watch', 'dev'] as const;
+// getCommandTypeForLogging 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getCommandTypeForLogging(command: string): AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS {
+  // 片段列表格式化`splitCommand_DEPRECATED`，供工具调用后续处理使用。
   const parts = splitCommand_DEPRECATED(command);
+  // 片段列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (parts.length === 0) return 'other' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
 
   // Check each part of the command to see if any match common background commands
+  // 按顺序遍历 `parts` 中的part，逐个交给工具调用处理。
   for (const part of parts) {
+    // baseCommand 命令数据格式化`part.split`，供工具调用后续处理使用。
     const baseCommand = part.split(' ')[0] || '';
+    // 满足 `COMMON_BACKGROUND_COMMANDS.includes(baseCommand as (typeof COMMON_BACKGROUN...` 时，工具调用执行该分支。
     if (COMMON_BACKGROUND_COMMANDS.includes(baseCommand as (typeof COMMON_BACKGROUND_COMMANDS)[number])) {
+      // 返回 `baseCommand as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPAT...`，作为工具调用这次计算的结果。
       return baseCommand as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
     }
   }
+  // 返回 `'other' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS`，作为工具调用这次计算的结果。
   return 'other' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
 }
+// outputSchema保存`lazySchema`，供工具调用后续处理使用。
 const outputSchema = lazySchema(() => z.object({
   stdout: z.string().describe('The standard output of the command'),
   stderr: z.string().describe('The standard error output of the command'),
@@ -292,11 +434,15 @@ const outputSchema = lazySchema(() => z.object({
   persistedOutputPath: z.string().optional().describe('Path to the persisted full output in tool-results dir (set when output is too large for inline)'),
   persistedOutputSize: z.number().optional().describe('Total size of the output in bytes (set when output is too large for inline)')
 }));
+// OutputSchema 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type OutputSchema = ReturnType<typeof outputSchema>;
+// Out 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Out = z.infer<OutputSchema>;
 
 // Re-export BashProgress from centralized types to break import cycles
+// 导出类型定义，让其他模块沿用Bash 工具 Bash Tool的数据契约。
 export type { BashProgress } from '../../types/tools.js';
+// 类型依赖 { BashProgress } 来自 ../../types/tools.js，用于校准工具调用的数据契约。
 import type { BashProgress } from '../../types/tools.js';
 
 /**
@@ -304,13 +450,19 @@ import type { BashProgress } from '../../types/tools.js';
  * @param command The command to check
  * @returns false for commands that should not be auto-backgrounded (like sleep)
  */
+// isAutobackgroundingAllowed 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isAutobackgroundingAllowed(command: string): boolean {
+  // 片段列表格式化`splitCommand_DEPRECATED`，供工具调用后续处理使用。
   const parts = splitCommand_DEPRECATED(command);
+  // 片段列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (parts.length === 0) return true;
 
   // Get the first part which should be the base command
+  // baseCommand 命令数据格式化`trim`，供工具调用后续处理使用。
   const baseCommand = parts[0]?.trim();
+  // baseCommand 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!baseCommand) return true;
+  // 返回 `!DISALLOWED_AUTO_BACKGROUND_COMMANDS.includes(baseCommand)`，作为工具调用这次计算的结果。
   return !DISALLOWED_AUTO_BACKGROUND_COMMANDS.includes(baseCommand);
 }
 
@@ -319,20 +471,30 @@ function isAutobackgroundingAllowed(command: string): boolean {
  * instead. Catches `sleep 5`, `sleep 5 && check`, `sleep 5; check` — but
  * not sleep inside pipelines, subshells, or scripts (those are fine).
  */
+// detectBlockedSleepPattern 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function detectBlockedSleepPattern(command: string): string | null {
+  // 片段列表格式化`splitCommand_DEPRECATED`，供工具调用后续处理使用。
   const parts = splitCommand_DEPRECATED(command);
+  // 片段列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (parts.length === 0) return null;
+  // first格式化`trim`，供工具调用后续处理使用。
   const first = parts[0]?.trim() ?? '';
   // Bare `sleep N` or `sleep N.N` as the first subcommand.
   // Float durations (sleep 0.5) are allowed — those are legit pacing, not polls.
+  // m保存`exec`，供工具调用后续处理使用。
   const m = /^sleep\s+(\d+)\s*$/.exec(first);
+  // m缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!m) return null;
+  // secs 集合解析`parseInt`，供工具调用后续处理使用。
   const secs = parseInt(m[1]!, 10);
+  // 满足 `secs < 2) return null; // sub-2s sleeps are fine (rate limiting, pacing` 时，工具调用执行该分支。
   if (secs < 2) return null; // sub-2s sleeps are fine (rate limiting, pacing)
 
   // `sleep N` alone → "what are you waiting for?"
   // `sleep N && check` → "use Monitor { command: check }"
+  // rest格式化`parts.slice`，供工具调用后续处理使用。
   const rest = parts.slice(1).join(' ').trim();
+  // 返回 `rest ? `sleep ${secs} followed by: ${rest}` : `standalone sleep ${secs}``，作为工具调用这次计算的结果。
   return rest ? `sleep ${secs} followed by: ${rest}` : `standalone sleep ${secs}`;
 }
 
@@ -347,9 +509,11 @@ export function detectBlockedSleepPattern(command: string): string | null {
  * - Prefix patterns: "npm run test:*"
  */
 
+// SimulatedSedEditResult 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type SimulatedSedEditResult = {
   data: Out;
 };
+// SimulatedSedEditContext 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type SimulatedSedEditContext = Pick<ToolUseContext, 'readFileState' | 'updateFileHistoryState'>;
 
 /**
@@ -357,26 +521,36 @@ type SimulatedSedEditContext = Pick<ToolUseContext, 'readFileState' | 'updateFil
  * This is used by the permission dialog to ensure what the user previews
  * is exactly what gets written to the file.
  */
+// applySedEdit 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function applySedEdit(simulatedEdit: {
   filePath: string;
   newContent: string;
 }, toolUseContext: SimulatedSedEditContext, parentMessage?: AssistantMessage): Promise<SimulatedSedEditResult> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     filePath,
     newContent
   } = simulatedEdit;
+  // absoluteFilePath 路径数据保存`expandPath`，供工具调用后续处理使用。
   const absoluteFilePath = expandPath(filePath);
+  // fs 集合读取`getFsImplementation`，供工具调用后续处理使用。
   const fs = getFsImplementation();
 
   // Read original content for VS Code notification
+  // encoding读取`detectFileEncoding`，供工具调用后续处理使用。
   const encoding = detectFileEncoding(absoluteFilePath);
+  // originalContent 先占位，稍后的条件分支会根据实际输入补齐它。
   let originalContent: string;
+  // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
   try {
+    // originalContent更新为 `await fs.readFile(absoluteFilePath, {`，确保Bash 工具后续读取最新状态。
     originalContent = await fs.readFile(absoluteFilePath, {
       encoding
     });
   } catch (e) {
+    // 满足 `isENOENT(e)` 时，工具调用执行该分支。
     if (isENOENT(e)) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         data: {
           stdout: '',
@@ -385,22 +559,29 @@ async function applySedEdit(simulatedEdit: {
         }
       };
     }
+    // 抛出 e;，阻止工具调用在无效状态下继续运行。
     throw e;
   }
 
   // Track file history before making changes (for undo support)
+  // 只有 `fileHistoryEnabled() && parentMessage` 满足时，工具调用才执行该分支。
   if (fileHistoryEnabled() && parentMessage) {
+    // 等待 `fileHistoryTrackEdit(toolUseContext.updateFileHistoryState, absoluteFil...` 完成，再继续Bash 工具 Bash Tool的异步流程。
     await fileHistoryTrackEdit(toolUseContext.updateFileHistoryState, absoluteFilePath, parentMessage.uuid);
   }
 
   // Detect line endings and write new content
+  // endings 集合读取`detectLineEndings`，供工具调用后续处理使用。
   const endings = detectLineEndings(absoluteFilePath);
+  // 调用 writeTextContent，触发工具调用此处需要的副作用。
   writeTextContent(absoluteFilePath, newContent, encoding, endings);
 
   // Notify VS Code about the file change
+  // 调用 notifyVscodeFileUpdated，触发工具调用此处需要的副作用。
   notifyVscodeFileUpdated(absoluteFilePath, originalContent, newContent);
 
   // Update read timestamp to invalidate stale writes
+  // toolUseContext.readFileState.set 写入新的状态值，使工具调用后续读取保持一致。
   toolUseContext.readFileState.set(absoluteFilePath, {
     content: newContent,
     timestamp: getFileModificationTime(absoluteFilePath),
@@ -409,6 +590,7 @@ async function applySedEdit(simulatedEdit: {
   });
 
   // Return success result matching sed output format (sed produces no output on success)
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     data: {
       stdout: '',
@@ -417,29 +599,42 @@ async function applySedEdit(simulatedEdit: {
     }
   };
 }
+// BashTool构建`buildTool`，供工具调用后续处理使用。
 export const BashTool = buildTool({
   name: BASH_TOOL_NAME,
   searchHint: 'execute shell commands',
   // 30K chars - tool result persistence threshold
   maxResultSizeChars: 30_000,
   strict: true,
+  // Bash 工具 Bash Tool在这里处理 `async description({`，完成这一小步状态转换。
   async description({
     description
   }) {
+    // 返回 `description || 'Run shell command'`，作为工具调用这次计算的结果。
     return description || 'Run shell command';
   },
+  // prompt 使用 无 完成工具调用里的对应操作。
   async prompt() {
+    // 返回 `getSimplePrompt()`，作为工具调用这次计算的结果。
     return getSimplePrompt();
   },
+  // isConcurrencySafe 用 input 判断工具调用是否满足条件。
   isConcurrencySafe(input) {
+    // 返回 `this.isReadOnly?.(input) ?? false`，作为工具调用这次计算的结果。
     return this.isReadOnly?.(input) ?? false;
   },
+  // isReadOnly 用 input 判断工具调用是否满足条件。
   isReadOnly(input) {
+    // compoundCommandHasCd 命令数据保存`commandHasAnyCd`，供工具调用后续处理使用。
     const compoundCommandHasCd = commandHasAnyCd(input.command);
+    // 结果读取`checkReadOnlyConstraints`，供工具调用后续处理使用。
     const result = checkReadOnlyConstraints(input, compoundCommandHasCd);
+    // 返回 `result.behavior === 'allow'`，作为工具调用这次计算的结果。
     return result.behavior === 'allow';
   },
+  // toAutoClassifierInput 使用 input 完成工具调用里的对应操作。
   toAutoClassifierInput(input) {
+    // 返回 `input.command`，作为工具调用这次计算的结果。
     return input.command;
   },
   async preparePermissionMatcher({
@@ -448,47 +643,72 @@ export const BashTool = buildTool({
     // Hook `if` filtering is "no match → skip hook" (deny-like semantics), so
     // compound commands must fire the hook if ANY subcommand matches. Without
     // splitting, `ls && git push` would bypass a `Bash(git *)` security hook.
+    // 解析结果解析`parseForSecurity`，供工具调用后续处理使用。
     const parsed = await parseForSecurity(command);
+    // `parsed.kind` 与 `'simple'` 不一致时刷新派生状态，避免使用过期结果。
     if (parsed.kind !== 'simple') {
       // parse-unavailable / too-complex: fail safe by running the hook.
+      // 返回 `() => true`，作为工具调用这次计算的结果。
       return () => true;
     }
     // Match on argv (strips leading VAR=val) so `FOO=bar git push` still
     // matches `Bash(git *)`.
+    // subcommands 命令数据派生`commands.map`，供工具调用后续处理使用。
     const subcommands = parsed.commands.map(c => c.argv.join(' '));
+    // 返回 `pattern => {`，作为工具调用这次计算的结果。
     return pattern => {
+      // prefix保存`permissionRuleExtractPrefix`，供工具调用后续处理使用。
       const prefix = permissionRuleExtractPrefix(pattern);
+      // 返回 `subcommands.some(cmd => {`，作为工具调用这次计算的结果。
       return subcommands.some(cmd => {
+        // `prefix` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
         if (prefix !== null) {
+          // 返回 `cmd === prefix || cmd.startsWith(`${prefix} `)`，作为工具调用这次计算的结果。
           return cmd === prefix || cmd.startsWith(`${prefix} `);
         }
+        // 返回 `matchWildcardPattern(pattern, cmd)`，作为工具调用这次计算的结果。
         return matchWildcardPattern(pattern, cmd);
       });
     };
   },
+  // isSearchOrReadCommand 用 input 判断工具调用是否满足条件。
   isSearchOrReadCommand(input) {
+    // 解析结果保存`inputSchema`，供工具调用后续处理使用。
     const parsed = inputSchema().safeParse(input);
+    // parsed.success 集合缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!parsed.success) return {
       isSearch: false,
       isRead: false,
       isList: false
     };
+    // 返回 `isSearchOrReadBashCommand(parsed.data.command)`，作为工具调用这次计算的结果。
     return isSearchOrReadBashCommand(parsed.data.command);
   },
+  // Bash 工具 Bash Tool在这里处理 `get inputSchema(): InputSchema {`，完成这一小步状态转换。
   get inputSchema(): InputSchema {
+    // 返回 `inputSchema()`，作为工具调用这次计算的结果。
     return inputSchema();
   },
+  // Bash 工具 Bash Tool在这里处理 `get outputSchema(): OutputSchema {`，完成这一小步状态转换。
   get outputSchema(): OutputSchema {
+    // 返回 `outputSchema()`，作为工具调用这次计算的结果。
     return outputSchema();
   },
+  // userFacingName 使用 input 完成工具调用里的对应操作。
   userFacingName(input) {
+    // 用户输入缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!input) {
+      // 返回 `'Bash'`，作为工具调用这次计算的结果。
       return 'Bash';
     }
     // Render sed in-place edits as file edits
+    // 满足 `input.command` 时，工具调用执行该分支。
     if (input.command) {
+      // sed 替换信息解析`parseSedEditCommand`，供工具调用后续处理使用。
       const sedInfo = parseSedEditCommand(input.command);
+      // 满足 `sedInfo` 时，工具调用执行该分支。
       if (sedInfo) {
+        // 返回 `fileEditUserFacingName({`，作为工具调用这次计算的结果。
         return fileEditUserFacingName({
           file_path: sedInfo.filePath,
           old_string: 'x'
@@ -499,32 +719,50 @@ export const BashTool = buildTool({
     // `new RegExp` per call. userFacingName runs per-render for every bash
     // message in history; with ~50 msgs + one slow-to-tokenize command, this
     // exceeds the shimmer tick → transition abort → infinite retry (#21605).
+    // 返回 `isEnvTruthy(process.env.CLAUDE_CODE_BASH_SANDBOX_SHOW_INDICATOR) && sho...`，作为工具调用这次计算的结果。
     return isEnvTruthy(process.env.CLAUDE_CODE_BASH_SANDBOX_SHOW_INDICATOR) && shouldUseSandbox(input) ? 'SandboxedBash' : 'Bash';
   },
+  // getToolUseSummary 根据 input 读取或计算工具调用需要的结果。
   getToolUseSummary(input) {
+    // 满足 `!input?.command` 时，工具调用执行该分支。
     if (!input?.command) {
+      // 返回 `null`，作为工具调用这次计算的结果。
       return null;
     }
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       command,
       description
     } = input;
+    // 满足 `description` 时，工具调用执行该分支。
     if (description) {
+      // 返回 `description`，作为工具调用这次计算的结果。
       return description;
     }
+    // 返回 `truncate(command, TOOL_SUMMARY_MAX_LENGTH)`，作为工具调用这次计算的结果。
     return truncate(command, TOOL_SUMMARY_MAX_LENGTH);
   },
+  // getActivityDescription 根据 input 读取或计算工具调用需要的结果。
   getActivityDescription(input) {
+    // 满足 `!input?.command` 时，工具调用执行该分支。
     if (!input?.command) {
+      // 返回 `'Running command'`，作为工具调用这次计算的结果。
       return 'Running command';
     }
+    // desc保存`truncate`，供工具调用后续处理使用。
     const desc = input.description ?? truncate(input.command, TOOL_SUMMARY_MAX_LENGTH);
+    // 返回 ``Running ${desc}``，作为工具调用这次计算的结果。
     return `Running ${desc}`;
   },
+  // validateInput 使用 input: BashToolInput 完成工具调用里的对应操作。
   async validateInput(input: BashToolInput): Promise<ValidationResult> {
+    // 只有 `feature('MONITOR_TOOL') && !isBackgroundTasksDisabled && !input.run_in_back...` 满足时，工具调用才执行该分支。
     if (feature('MONITOR_TOOL') && !isBackgroundTasksDisabled && !input.run_in_background) {
+      // sleepPattern读取`detectBlockedSleepPattern`，供工具调用后续处理使用。
       const sleepPattern = detectBlockedSleepPattern(input.command);
+      // `sleepPattern` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (sleepPattern !== null) {
+        // 返回结构化结果，集中表达工具调用已经整理出的状态。
         return {
           result: false,
           message: `Blocked: ${sleepPattern}. Run blocking commands in the background with run_in_background: true — you'll get a completion notification when done. For streaming events (watching logs, polling APIs), use the Monitor tool. If you genuinely need a delay (rate limiting, deliberate pacing), keep it under 2 seconds.`,
@@ -532,11 +770,14 @@ export const BashTool = buildTool({
         };
       }
     }
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       result: true
     };
   },
+  // checkPermissions 使用 input, context 完成工具调用里的对应操作。
   async checkPermissions(input, context): Promise<PermissionResult> {
+    // 返回 `bashToolHasPermission(input, context)`，作为工具调用这次计算的结果。
     return bashToolHasPermission(input, context);
   },
   renderToolUseMessage,
@@ -546,12 +787,15 @@ export const BashTool = buildTool({
   // BashToolResultMessage shows <OutputLine content={stdout}> + stderr.
   // UI never shows persistedOutputPath wrapper, backgroundInfo — those are
   // model-facing (mapToolResult... below).
+  // 调用 extractSearchText，触发工具调用此处需要的副作用。
   extractSearchText({
     stdout,
     stderr
   }) {
+    // 返回 `stderr ? `${stdout}\n${stderr}` : stdout`，作为工具调用这次计算的结果。
     return stderr ? `${stdout}\n${stderr}` : stdout;
   },
+  // 调用 mapToolResultToToolResultBlockParam，触发工具调用此处需要的副作用。
   mapToolResultToToolResultBlockParam({
     interrupted,
     stdout,
@@ -565,7 +809,9 @@ export const BashTool = buildTool({
     persistedOutputSize
   }, toolUseID): ToolResultBlockParam {
     // Handle structured content
+    // 只有 `structuredContent && structuredContent.length > 0` 满足时，工具调用才执行该分支。
     if (structuredContent && structuredContent.length > 0) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
@@ -574,22 +820,32 @@ export const BashTool = buildTool({
     }
 
     // For image data, format as image content block for Claude
+    // 满足 `isImage` 时，工具调用执行该分支。
     if (isImage) {
+      // block构建`buildImageToolResult`，供工具调用后续处理使用。
       const block = buildImageToolResult(stdout, toolUseID);
+      // 满足 `block` 时，工具调用执行该分支。
       if (block) return block;
     }
+    // processedStdout 命名 `stdout`，让后续代码直接表达这个值的用途。
     let processedStdout = stdout;
+    // 满足 `stdout` 时，工具调用执行该分支。
     if (stdout) {
       // Replace any leading newlines or lines with only whitespace
+      // processedStdout更新为 `stdout.replace(/^(\s*\n)+/, '')`，确保Bash 工具后续读取最新状态。
       processedStdout = stdout.replace(/^(\s*\n)+/, '');
       // Still trim the end as before
+      // processedStdout更新为 `processedStdout.trimEnd()`，确保Bash 工具后续读取最新状态。
       processedStdout = processedStdout.trimEnd();
     }
 
     // For large output that was persisted to disk, build <persisted-output>
     // message for the model. The UI never sees this — it uses data.stdout.
+    // 满足 `persistedOutputPath` 时，工具调用执行该分支。
     if (persistedOutputPath) {
+      // preview保存`generatePreview`，供工具调用后续处理使用。
       const preview = generatePreview(processedStdout, PREVIEW_SIZE_BYTES);
+      // processedStdout更新为 `buildLargeToolResultMessage({`，确保Bash 工具后续读取最新状态。
       processedStdout = buildLargeToolResultMessage({
         filepath: persistedOutputPath,
         originalSize: persistedOutputSize ?? 0,
@@ -598,22 +854,35 @@ export const BashTool = buildTool({
         hasMore: preview.hasMore
       });
     }
+    // errorMessage 消息数据格式化`stderr.trim`，供工具调用后续处理使用。
     let errorMessage = stderr.trim();
+    // 满足 `interrupted` 时，工具调用执行该分支。
     if (interrupted) {
+      // 满足 `stderr` 时，工具调用执行该分支。
       if (stderr) errorMessage += EOL;
+      // Bash 工具 Bash Tool在这里处理 `errorMessage += '<error>Command was aborted before completion</error>'`，完成这一小步状态转换。
       errorMessage += '<error>Command was aborted before completion</error>';
     }
+    // backgroundInfo固定为 `''`，作为Bash 工具 Bash Tool后续展示或比较的基准。
     let backgroundInfo = '';
+    // 满足 `backgroundTaskId` 时，工具调用执行该分支。
     if (backgroundTaskId) {
+      // outputPath 路径数据读取`getTaskOutputPath`，供工具调用后续处理使用。
       const outputPath = getTaskOutputPath(backgroundTaskId);
+      // 满足 `assistantAutoBackgrounded` 时，工具调用执行该分支。
       if (assistantAutoBackgrounded) {
+        // backgroundInfo更新为 ``Command exceeded the assistant-mode blocking budget (${A...`，确保Bash 工具后续读取最新状态。
         backgroundInfo = `Command exceeded the assistant-mode blocking budget (${ASSISTANT_BLOCKING_BUDGET_MS / 1000}s) and was moved to the background with ID: ${backgroundTaskId}. It is still running — you will be notified when it completes. Output is being written to: ${outputPath}. In assistant mode, delegate long-running work to a subagent or use run_in_background to keep this conversation responsive.`;
+      // Bash 工具 Bash Tool在这里处理 `} else if (backgroundedByUser) {`，完成这一小步状态转换。
       } else if (backgroundedByUser) {
+        // backgroundInfo更新为 ``Command was manually backgrounded by user with ID: ${bac...`，确保Bash 工具后续读取最新状态。
         backgroundInfo = `Command was manually backgrounded by user with ID: ${backgroundTaskId}. Output is being written to: ${outputPath}`;
       } else {
+        // backgroundInfo更新为 ``Command running in background with ID: ${backgroundTaskI...`，确保Bash 工具后续读取最新状态。
         backgroundInfo = `Command running in background with ID: ${backgroundTaskId}. Output is being written to: ${outputPath}`;
       }
     }
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
@@ -621,28 +890,42 @@ export const BashTool = buildTool({
       is_error: interrupted
     };
   },
+  // call 使用 input: BashToolInput, toolUseContext, _canUseTool… 完成工具调用里的对应操作。
   async call(input: BashToolInput, toolUseContext, _canUseTool?: CanUseToolFn, parentMessage?: AssistantMessage, onProgress?: ToolCallProgress<BashProgress>) {
     // Handle simulated sed edit - apply directly instead of running sed
     // This ensures what the user previewed is exactly what gets written
+    // 满足 `input._simulatedSedEdit` 时，工具调用执行该分支。
     if (input._simulatedSedEdit) {
+      // 返回 `applySedEdit(input._simulatedSedEdit, toolUseContext, parentMessage)`，作为工具调用这次计算的结果。
       return applySedEdit(input._simulatedSedEdit, toolUseContext, parentMessage);
     }
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       abortController,
       getAppState,
       setAppState,
       setToolJSX
     } = toolUseContext;
+    // stdoutAccumulator保存`EndTruncatingAccumulator`，供工具调用后续处理使用。
     const stdoutAccumulator = new EndTruncatingAccumulator();
+    // stderrForShellReset 命名 `''`，让后续代码直接表达这个值的用途。
     let stderrForShellReset = '';
+    // interpretationResult 先占位，稍后的条件分支会根据实际输入补齐它。
     let interpretationResult: ReturnType<typeof interpretCommandResult> | undefined;
+    // progressCounter 数量保存`0`，供后续判断或组装使用。
     let progressCounter = 0;
+    // wasInterrupted标记Bash 工具 Bash Tool是否启用对应路径。
     let wasInterrupted = false;
+    // 结果 先占位，稍后的条件分支会根据实际输入补齐它。
     let result: ExecResult;
+    // isMainThread标记Bash 工具 Bash Tool是否启用对应路径。
     const isMainThread = !toolUseContext.agentId;
+    // preventCwdChanges 集合标记Bash 工具 Bash Tool是否启用对应路径。
     const preventCwdChanges = !isMainThread;
+    // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
     try {
       // Use the new async generator version of runShellCommand
+      // commandGenerator 命令数据保存`runShellCommand`，供工具调用后续处理使用。
       const commandGenerator = runShellCommand({
         input,
         abortController,
@@ -657,11 +940,17 @@ export const BashTool = buildTool({
       });
 
       // Consume the generator and capture the return value
+      // generatorResult 先占位，稍后的条件分支会根据实际输入补齐它。
       let generatorResult;
+      // 先执行一次循环体，再按尾部条件决定是否继续工具调用处理。
       do {
+        // generatorResult更新为 `await commandGenerator.next()`，确保Bash 工具后续读取最新状态。
         generatorResult = await commandGenerator.next();
+        // 只有 `!generatorResult.done && onProgress` 满足时，工具调用才执行该分支。
         if (!generatorResult.done && onProgress) {
+          // progress 集合保存`generatorResult.value`，供Bash 工具 Bash Tool后续判断或输出使用。
           const progress = generatorResult.value;
+          // 调用 onProgress，触发工具调用此处需要的副作用。
           onProgress({
             toolUseID: `bash-progress-${progressCounter++}`,
             data: {
@@ -679,79 +968,118 @@ export const BashTool = buildTool({
       } while (!generatorResult.done);
 
       // Get the final result from the generator's return value
+      // 结果更新为 `generatorResult.value`，确保Bash 工具后续读取最新状态。
       result = generatorResult.value;
+      // 调用 trackGitOperations，触发工具调用此处需要的副作用。
       trackGitOperations(input.command, result.code, result.stdout);
+      // isInterrupt标记Bash 工具 Bash Tool是否启用对应路径。
       const isInterrupt = result.interrupted && abortController.signal.reason === 'interrupt';
 
       // stderr is interleaved in stdout (merged fd) — result.stdout has both
+      // 调用 stdoutAccumulator.append，触发工具调用此处需要的副作用。
       stdoutAccumulator.append((result.stdout || '').trimEnd() + EOL);
 
       // Interpret the command result using semantic rules
+      // interpretationResult更新为 `interpretCommandResult(input.command, result.code, result...`，确保Bash 工具后续读取最新状态。
       interpretationResult = interpretCommandResult(input.command, result.code, result.stdout || '', '');
 
       // Check for git index.lock error (stderr is in stdout now)
+      // 只有 `result.stdout && result.stdout.includes(".git/index.lock': File exists")` 满足时，工具调用才执行该分支。
       if (result.stdout && result.stdout.includes(".git/index.lock': File exists")) {
+        // 记录工具调用运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_git_index_lock_error', {});
       }
+      // 只有 `interpretationResult.isError && !isInterrupt` 满足时，工具调用才执行该分支。
       if (interpretationResult.isError && !isInterrupt) {
         // Only add exit code if it's actually an error
+        // `result.code` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
         if (result.code !== 0) {
+          // 调用 stdoutAccumulator.append，触发工具调用此处需要的副作用。
           stdoutAccumulator.append(`Exit code ${result.code}`);
         }
       }
+      // preventCwdChanges 集合缺失时直接走兜底路径，避免工具调用使用无效输入。
       if (!preventCwdChanges) {
+        // appState 状态读取`getAppState`，供工具调用后续处理使用。
         const appState = getAppState();
+        // 满足 `resetCwdIfOutsideProject(appState.toolPermissionContext)` 时，工具调用执行该分支。
         if (resetCwdIfOutsideProject(appState.toolPermissionContext)) {
+          // stderrForShellReset更新为 `stdErrAppendShellResetMessage('')`，确保Bash 工具后续读取最新状态。
           stderrForShellReset = stdErrAppendShellResetMessage('');
         }
       }
 
       // Annotate output with sandbox violations if any (stderr is in stdout)
+      // outputWithSbFailures 集合保存`SandboxManager.annotateStderrWithSandboxFailures`，供工具调用后续处理使用。
       const outputWithSbFailures = SandboxManager.annotateStderrWithSandboxFailures(input.command, result.stdout || '');
+      // 满足 `result.preSpawnError` 时，工具调用执行该分支。
       if (result.preSpawnError) {
+        // 抛出 new Error(result.preSpawnError);，阻止工具调用在无效状态下继续运行。
         throw new Error(result.preSpawnError);
       }
+      // 只有 `interpretationResult.isError && !isInterrupt` 满足时，工具调用才执行该分支。
       if (interpretationResult.isError && !isInterrupt) {
         // stderr is merged into stdout (merged fd); outputWithSbFailures
         // already has the full output. Pass '' for stdout to avoid
         // duplication in getErrorParts() and processBashCommand.
+        // 抛出 new ShellError('', outputWithSbFailures, result.code, result.interrupted);，阻止工具调用在无效状态下继续运行。
         throw new ShellError('', outputWithSbFailures, result.code, result.interrupted);
       }
+      // wasInterrupted更新为 `result.interrupted`，确保Bash 工具后续读取最新状态。
       wasInterrupted = result.interrupted;
     } finally {
+      // 满足 `setToolJSX) setToolJSX(null` 时，工具调用执行该分支。
       if (setToolJSX) setToolJSX(null);
     }
 
     // Get final string from accumulator
+    // stdout格式化`stdoutAccumulator.toString`，供工具调用后续处理使用。
     const stdout = stdoutAccumulator.toString();
 
     // Large output: the file on disk has more than getMaxOutputLength() bytes.
     // stdout already contains the first chunk (from getStdout()). Copy the
     // output file to the tool-results dir so the model can read it via
     // FileRead. If > 64 MB, truncate after copying.
+    // MAX_PERSISTED_SIZE保存`64 * 1024 * 1024`，供后续判断或组装使用。
     const MAX_PERSISTED_SIZE = 64 * 1024 * 1024;
+    // persistedOutputPath 路径数据 先占位，稍后的条件分支会根据实际输入补齐它。
     let persistedOutputPath: string | undefined;
+    // persistedOutputSize 先占位，稍后的条件分支会根据实际输入补齐它。
     let persistedOutputSize: number | undefined;
+    // 只有 `result.outputFilePath && result.outputTaskId` 满足时，工具调用才执行该分支。
     if (result.outputFilePath && result.outputTaskId) {
+      // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
       try {
+        // fileStat 文件数据保存`fsStat`，供工具调用后续处理使用。
         const fileStat = await fsStat(result.outputFilePath);
+        // persistedOutputSize更新为 `fileStat.size`，确保Bash 工具后续读取最新状态。
         persistedOutputSize = fileStat.size;
+        // 等待 `ensureToolResultsDir()` 完成，再继续Bash 工具 Bash Tool的异步流程。
         await ensureToolResultsDir();
+        // dest读取`getToolResultPath`，供工具调用后续处理使用。
         const dest = getToolResultPath(result.outputTaskId, false);
+        // 满足 `fileStat.size > MAX_PERSISTED_SIZE` 时，工具调用执行该分支。
         if (fileStat.size > MAX_PERSISTED_SIZE) {
+          // 等待 `fsTruncate(result.outputFilePath, MAX_PERSISTED_SIZE)` 完成，再继续Bash 工具 Bash Tool的异步流程。
           await fsTruncate(result.outputFilePath, MAX_PERSISTED_SIZE);
         }
+        // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
         try {
+          // 等待 `link(result.outputFilePath, dest)` 完成，再继续Bash 工具 Bash Tool的异步流程。
           await link(result.outputFilePath, dest);
         } catch {
+          // 等待 `copyFile(result.outputFilePath, dest)` 完成，再继续Bash 工具 Bash Tool的异步流程。
           await copyFile(result.outputFilePath, dest);
         }
+        // persistedOutputPath 路径数据更新为 `dest`，确保Bash 工具后续读取最新状态。
         persistedOutputPath = dest;
       } catch {
         // File may already be gone — stdout preview is sufficient
       }
     }
+    // commandType 命令数据格式化`command.split`，供工具调用后续处理使用。
     const commandType = input.command.split(' ')[0];
+    // 记录工具调用运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_bash_tool_command_executed', {
       command_type: commandType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       stdout_length: stdout.length,
@@ -761,14 +1089,18 @@ export const BashTool = buildTool({
     });
 
     // Log code indexing tool usage
+    // codeIndexingTool 索引读取`detectCodeIndexingFromCommand`，供工具调用后续处理使用。
     const codeIndexingTool = detectCodeIndexingFromCommand(input.command);
+    // 满足 `codeIndexingTool` 时，工具调用执行该分支。
     if (codeIndexingTool) {
+      // 记录工具调用运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_code_indexing_tool_used', {
         tool: codeIndexingTool as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         source: 'cli' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         success: result.code === 0
       });
     }
+    // strippedStdout保存`stripEmptyLines`，供工具调用后续处理使用。
     let strippedStdout = stripEmptyLines(stdout);
 
     // Claude Code hints protocol: CLIs/SDKs gated on CLAUDECODE=1 emit a
@@ -777,29 +1109,41 @@ export const BashTool = buildTool({
     // so the model never sees the tag — a zero-token side channel.
     // Stripping runs unconditionally (subagent output must stay clean too);
     // only the dialog recording is main-thread-only.
+    // extracted保存`extractClaudeCodeHints`，供工具调用后续处理使用。
     const extracted = extractClaudeCodeHints(strippedStdout, input.command);
+    // strippedStdout更新为 `extracted.stripped`，确保Bash 工具后续读取最新状态。
     strippedStdout = extracted.stripped;
+    // 只有 `isMainThread && extracted.hints.length > 0` 满足时，工具调用才执行该分支。
     if (isMainThread && extracted.hints.length > 0) {
+      // 逐项读取 `extracted.hints) maybeRecordPluginHint(hint` 中的hint，按输入顺序推进工具调用。
       for (const hint of extracted.hints) maybeRecordPluginHint(hint);
     }
+    // isImage记录 `isImageOutput` 是否成立，工具调用随后按该结果分支。
     let isImage = isImageOutput(strippedStdout);
 
     // Cap image dimensions + size if present (CC-304 — see
     // resizeShellImageOutput). Scope the decoded buffer so it can be reclaimed
     // before we build the output Out object.
+    // compressedStdout保存`strippedStdout`，供后续判断或组装使用。
     let compressedStdout = strippedStdout;
+    // 满足 `isImage` 时，工具调用执行该分支。
     if (isImage) {
+      // resized统计`resizeShellImageOutput`，供工具调用后续处理使用。
       const resized = await resizeShellImageOutput(strippedStdout, result.outputFilePath, persistedOutputSize);
+      // 满足 `resized` 时，工具调用执行该分支。
       if (resized) {
+        // compressedStdout更新为 `resized`，确保Bash 工具后续读取最新状态。
         compressedStdout = resized;
       } else {
         // Parse failed or file too large (e.g. exceeds MAX_IMAGE_FILE_SIZE).
         // Keep isImage in sync with what we actually send so the UI label stays
         // accurate — mapToolResultToToolResultBlockParam's defensive
         // fallthrough will send text, not an image block.
+        // isImage更新为 `false`，确保Bash 工具后续读取最新状态。
         isImage = false;
       }
     }
+    // data 集中保存Bash 工具 Bash Tool要一起传递的字段。
     const data: Out = {
       stdout: compressedStdout,
       stderr: stderrForShellReset,
@@ -814,15 +1158,19 @@ export const BashTool = buildTool({
       persistedOutputPath,
       persistedOutputSize
     };
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       data
     };
   },
   renderToolUseErrorMessage,
+  // isResultTruncated 用 output: Out 判断工具调用是否满足条件。
   isResultTruncated(output: Out): boolean {
+    // 返回 `isOutputLineTruncated(output.stdout) || isOutputLineTruncated(output.st...`，作为工具调用这次计算的结果。
     return isOutputLineTruncated(output.stdout) || isOutputLineTruncated(output.stderr);
   }
 } satisfies ToolDef<InputSchema, Out, BashProgress>);
+// Bash 工具 Bash Tool在这里处理 `async function* runShellCommand({`，完成这一小步状态转换。
 async function* runShellCommand({
   input,
   abortController,
@@ -835,6 +1183,7 @@ async function* runShellCommand({
 }: {
   input: BashToolInput;
   abortController: AbortController;
+  // 这个回调绑定到 setAppState: (f: (prev: AppState) => AppState) => void;，负责工具调用在该局部场景下的响应。
   setAppState: (f: (prev: AppState) => AppState) => void;
   setToolJSX?: SetToolJSXFn;
   preventCwdChanges?: boolean;
@@ -851,25 +1200,37 @@ async function* runShellCommand({
   taskId?: string;
   timeoutMs?: number;
 }, ExecResult, void> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     command,
     description,
     timeout,
     run_in_background
   } = input;
+  // timeoutMs 集合读取`getDefaultTimeoutMs`，供工具调用后续处理使用。
   const timeoutMs = timeout || getDefaultTimeoutMs();
+  // fullOutput固定为 `''`，作为Bash 工具 Bash Tool后续展示或比较的基准。
   let fullOutput = '';
+  // lastProgressOutput保存`''`，作为后续固定文本处理的输入。
   let lastProgressOutput = '';
+  // lastTotalLines 集合保存`0`，供后续判断或组装使用。
   let lastTotalLines = 0;
+  // lastTotalBytes 集合 命名 `0`，让后续代码直接表达这个值的用途。
   let lastTotalBytes = 0;
+  // backgroundShellId初始化为未定义值，后续分支会在有数据时补齐。
   let backgroundShellId: string | undefined = undefined;
+  // assistantAutoBackgrounded标记Bash 工具 Bash Tool是否启用对应路径。
   let assistantAutoBackgrounded = false;
 
   // Progress signal: resolved by onProgress callback from the shared poller,
   // waking the generator to yield a progress update.
+  // 这个回调绑定到 let resolveProgress: (() => void) | null = null;，负责工具调用在该局部场景下的响应。
   let resolveProgress: (() => void) | null = null;
+  // createProgressSignal 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function createProgressSignal(): Promise<null> {
+    // 返回 `new Promise<null>(resolve => {`，作为工具调用这次计算的结果。
     return new Promise<null>(resolve => {
+      // resolveProgress 集合更新为 `() => resolve(null)`，确保Bash 工具后续读取最新状态。
       resolveProgress = () => resolve(null);
     });
   }
@@ -877,18 +1238,29 @@ async function* runShellCommand({
   // Determine if auto-backgrounding should be enabled
   // Only enable for commands that are allowed to be auto-backgrounded
   // and when background tasks are not disabled
+  // shouldAutoBackground记录 `isAutobackgroundingAllowed` 是否成立，工具调用随后按该结果分支。
   const shouldAutoBackground = !isBackgroundTasksDisabled && isAutobackgroundingAllowed(command);
+  // shellCommand 命令数据保存`exec`，供工具调用后续处理使用。
   const shellCommand = await exec(command, abortController.signal, 'bash', {
     timeout: timeoutMs,
+    // onProgress 使用 lastLines, allLines, totalLines, totalBytes, isIn… 完成工具调用里的对应操作。
     onProgress(lastLines, allLines, totalLines, totalBytes, isIncomplete) {
+      // lastProgressOutput更新为 `lastLines`，确保Bash 工具后续读取最新状态。
       lastProgressOutput = lastLines;
+      // fullOutput更新为 `allLines`，确保Bash 工具后续读取最新状态。
       fullOutput = allLines;
+      // lastTotalLines 集合更新为 `totalLines`，确保Bash 工具后续读取最新状态。
       lastTotalLines = totalLines;
+      // lastTotalBytes 集合更新为 `isIncomplete ? totalBytes : 0`，确保Bash 工具后续读取最新状态。
       lastTotalBytes = isIncomplete ? totalBytes : 0;
       // Wake the generator so it yields the new progress data
+      // resolve读取`resolveProgress` 整理出中间结果，供Bash 工具 Bash Tool后续步骤使用。
       const resolve = resolveProgress;
+      // 满足 `resolve` 时，工具调用执行该分支。
       if (resolve) {
+        // resolveProgress 集合更新为 `null`，确保Bash 工具后续读取最新状态。
         resolveProgress = null;
+        // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
         resolve();
       }
     },
@@ -898,10 +1270,13 @@ async function* runShellCommand({
   });
 
   // Start the command execution
+  // resultPromise 异步任务保存`shellCommand.result`，供后续判断或组装使用。
   const resultPromise = shellCommand.result;
 
   // Helper to spawn a background task and return its ID
+  // spawnBackgroundTask 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   async function spawnBackgroundTask(): Promise<string> {
+    // handle保存`spawnShellTask`，供工具调用后续处理使用。
     const handle = await spawnShellTask({
       command,
       description: description || command,
@@ -910,37 +1285,50 @@ async function* runShellCommand({
       agentId
     }, {
       abortController,
+      // 这个回调绑定到 getAppState: () => {，负责工具调用在该局部场景下的响应。
       getAppState: () => {
         // We don't have direct access to getAppState here, but spawn doesn't
         // actually use it during the spawn process
+        // 抛出 new Error('getAppState not available in runShellCommand context');，阻止工具调用在无效状态下继续运行。
         throw new Error('getAppState not available in runShellCommand context');
       },
       setAppState
     });
+    // 返回 `handle.taskId`，作为工具调用这次计算的结果。
     return handle.taskId;
   }
 
   // Helper to start backgrounding with optional logging
+  // startBackgrounding 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function startBackgrounding(eventName: string, backgroundFn?: (shellId: string) => void): void {
     // If a foreground task is already registered (via registerForeground in the
     // progress loop), background it in-place instead of re-spawning. Re-spawning
     // would overwrite tasks[taskId], emit a duplicate task_started SDK event,
     // and leak the first cleanup callback.
+    // 满足 `foregroundTaskId` 时，工具调用执行该分支。
     if (foregroundTaskId) {
+      // 只有 `!backgroundExistingForegroundTask(foregroundTaskId, shellCommand, descripti...` 满足时，工具调用才执行该分支。
       if (!backgroundExistingForegroundTask(foregroundTaskId, shellCommand, description || command, setAppState, toolUseId)) {
+        // Bash 工具 Bash Tool在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // backgroundShellId更新为 `foregroundTaskId`，确保Bash 工具后续读取最新状态。
       backgroundShellId = foregroundTaskId;
+      // 记录工具调用运行诊断，方便排查异常路径或性能问题。
       logEvent(eventName, {
         command_type: getCommandTypeForLogging(command)
       });
+      // 调用 backgroundFn?.(foregroundTaskId);，完成这一处局部操作。
       backgroundFn?.(foregroundTaskId);
+      // Bash 工具 Bash Tool在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // No foreground task registered — spawn a new background task
     // Note: spawn is essentially synchronous despite being async
+    // 这个回调绑定到 void spawnBackgroundTask().then(shellId => {，负责工具调用在该局部场景下的响应。
     void spawnBackgroundTask().then(shellId => {
+      // backgroundShellId更新为 `shellId`，确保Bash 工具后续读取最新状态。
       backgroundShellId = shellId;
 
       // Wake the generator's Promise.race so it sees backgroundShellId.
@@ -948,15 +1336,22 @@ async function* runShellCommand({
       // (no output + shared-poller race with sibling stopPolling calls)
       // and the process is hung on I/O, the race at line ~1357 never
       // resolves and the generator deadlocks despite being backgrounded.
+      // resolve读取`resolveProgress` 整理出中间结果，供Bash 工具 Bash Tool后续步骤使用。
       const resolve = resolveProgress;
+      // 满足 `resolve` 时，工具调用执行该分支。
       if (resolve) {
+        // resolveProgress 集合更新为 `null`，确保Bash 工具后续读取最新状态。
         resolveProgress = null;
+        // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
         resolve();
       }
+      // 记录工具调用运行诊断，方便排查异常路径或性能问题。
       logEvent(eventName, {
         command_type: getCommandTypeForLogging(command)
       });
+      // 满足 `backgroundFn` 时，工具调用执行该分支。
       if (backgroundFn) {
+        // 调用 backgroundFn，触发工具调用此处需要的副作用。
         backgroundFn(shellId);
       }
     });
@@ -964,8 +1359,11 @@ async function* runShellCommand({
 
   // Set up auto-backgrounding on timeout if enabled
   // Only background commands that are allowed to be auto-backgrounded (not sleep, etc.)
+  // 只有 `shellCommand.onTimeout && shouldAutoBackground` 满足时，工具调用才执行该分支。
   if (shellCommand.onTimeout && shouldAutoBackground) {
+    // 调用 shellCommand.onTimeout，触发工具调用此处需要的副作用。
     shellCommand.onTimeout(backgroundFn => {
+      // 调用 startBackgrounding，触发工具调用此处需要的副作用。
       startBackgrounding('tengu_bash_command_timeout_backgrounded', backgroundFn);
     });
   }
@@ -973,10 +1371,15 @@ async function* runShellCommand({
   // In assistant mode, the main agent should stay responsive. Auto-background
   // blocking commands after ASSISTANT_BLOCKING_BUDGET_MS so the agent can keep
   // coordinating instead of waiting. The command keeps running — no state loss.
+  // 只有 `feature('KAIROS') && getKairosActive() && isMainThread && !isBackgroundTask...` 满足时，工具调用才执行该分支。
   if (feature('KAIROS') && getKairosActive() && isMainThread && !isBackgroundTasksDisabled && run_in_background !== true) {
+    // setTimeout 写入新的状态值，使工具调用后续读取保持一致。
     setTimeout(() => {
+      // 只有 `shellCommand.status === 'running' && backgroundSh` 满足时，工具调用才执行该分支。
       if (shellCommand.status === 'running' && backgroundShellId === undefined) {
+        // assistantAutoBackgrounded更新为 `true`，确保Bash 工具后续读取最新状态。
         assistantAutoBackgrounded = true;
+        // 调用 startBackgrounding，触发工具调用此处需要的副作用。
         startBackgrounding('tengu_bash_command_assistant_auto_backgrounded');
       }
     }, ASSISTANT_BLOCKING_BUDGET_MS).unref();
@@ -986,11 +1389,15 @@ async function* runShellCommand({
   // When explicitly requested via run_in_background, always honor the request
   // regardless of the command type (isAutobackgroundingAllowed only applies to automatic backgrounding)
   // Skip if background tasks are disabled - run in foreground instead
+  // 只有 `run_in_background === true && !isBackgroundTasksD` 满足时，工具调用才执行该分支。
   if (run_in_background === true && !isBackgroundTasksDisabled) {
+    // shellId保存`spawnBackgroundTask`，供工具调用后续处理使用。
     const shellId = await spawnBackgroundTask();
+    // 记录工具调用运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_bash_command_explicitly_backgrounded', {
       command_type: getCommandTypeForLogging(command)
     });
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       stdout: '',
       stderr: '',
@@ -1001,18 +1408,28 @@ async function* runShellCommand({
   }
 
   // Wait for the initial threshold before showing progress
+  // startTime记录时间`Date.now`，供工具调用后续处理使用。
   const startTime = Date.now();
+  // foregroundTaskId保存`undefined`，作为后续未定义值处理的输入。
   let foregroundTaskId: string | undefined = undefined;
   {
+    // initialResult保存`Promise.race`，供工具调用后续处理使用。
     const initialResult = await Promise.race([resultPromise, new Promise<null>(resolve => {
+      // t保存`setTimeout`，供工具调用后续处理使用。
       const t = setTimeout((r: (v: null) => void) => r(null), PROGRESS_THRESHOLD_MS, resolve);
+      // 调用 t.unref，触发工具调用此处需要的副作用。
       t.unref();
     })]);
+    // `initialResult` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
     if (initialResult !== null) {
+      // 调用 shellCommand.cleanup，触发工具调用此处需要的副作用。
       shellCommand.cleanup();
+      // 返回 `initialResult`，作为工具调用这次计算的结果。
       return initialResult;
     }
+    // 满足 `backgroundShellId` 时，工具调用执行该分支。
     if (backgroundShellId) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         stdout: '',
         stderr: '',
@@ -1026,14 +1443,20 @@ async function* runShellCommand({
 
   // Start polling the output file for progress. The poller's #tick calls
   // onProgress every second, which resolves progressSignal below.
+  // 调用 TaskOutput.startPolling，触发工具调用此处需要的副作用。
   TaskOutput.startPolling(shellCommand.taskOutput.taskId);
 
   // Progress loop: wake is driven by the shared poller calling onProgress,
   // which resolves the progressSignal.
+  // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
   try {
+    // while 使用 true 完成工具调用里的对应操作。
     while (true) {
+      // progressSignal构建`createProgressSignal`，供工具调用后续处理使用。
       const progressSignal = createProgressSignal();
+      // 结果保存`Promise.race`，供工具调用后续处理使用。
       const result = await Promise.race([resultPromise, progressSignal]);
+      // `result` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
       if (result !== null) {
         // Race: backgrounding fired (15s timer / onTimeout / Ctrl+B) but the
         // command completed before the next poll tick. #handleExit sets
@@ -1044,38 +1467,54 @@ async function* runShellCommand({
         // redundant <task_notification> from the .then() handler.
         // Check result.backgroundTaskId (not the closure var) to also cover
         // Ctrl+B, which calls shellCommand.background() directly.
+        // `result.backgroundTaskId` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
         if (result.backgroundTaskId !== undefined) {
+          // 调用 markTaskNotified，触发工具调用此处需要的副作用。
           markTaskNotified(result.backgroundTaskId, setAppState);
+          // fixedResult 集中保存Bash 工具 Bash Tool要一起传递的字段。
           const fixedResult: ExecResult = {
             ...result,
             backgroundTaskId: undefined
           };
           // Mirror ShellCommand.#handleExit's large-output branch that was
           // skipped because #backgroundTaskId was set.
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             taskOutput
           } = shellCommand;
+          // 只有 `taskOutput.stdoutToFile && !taskOutput.outputFile` 满足时，工具调用才执行该分支。
           if (taskOutput.stdoutToFile && !taskOutput.outputFileRedundant) {
+            // outputFilePath 路径数据更新为 `taskOutput.path`，确保Bash 工具后续读取最新状态。
             fixedResult.outputFilePath = taskOutput.path;
+            // outputFileSize 文件数据更新为 `taskOutput.outputFileSize`，确保Bash 工具后续读取最新状态。
             fixedResult.outputFileSize = taskOutput.outputFileSize;
+            // outputTaskId更新为 `taskOutput.taskId`，确保Bash 工具后续读取最新状态。
             fixedResult.outputTaskId = taskOutput.taskId;
           }
+          // 调用 shellCommand.cleanup，触发工具调用此处需要的副作用。
           shellCommand.cleanup();
+          // 返回 `fixedResult`，作为工具调用这次计算的结果。
           return fixedResult;
         }
         // Command has completed - return the actual result
         // If we registered as a foreground task, unregister it
+        // 满足 `foregroundTaskId` 时，工具调用执行该分支。
         if (foregroundTaskId) {
+          // 调用 unregisterForeground，触发工具调用此处需要的副作用。
           unregisterForeground(foregroundTaskId, setAppState);
         }
         // Clean up stream resources for foreground commands
         // (backgrounded commands are cleaned up by LocalShellTask)
+        // 调用 shellCommand.cleanup，触发工具调用此处需要的副作用。
         shellCommand.cleanup();
+        // 返回 `result`，作为工具调用这次计算的结果。
         return result;
       }
 
       // Check if command was backgrounded (either via old mechanism or new backgroundAll)
+      // 满足 `backgroundShellId` 时，工具调用执行该分支。
       if (backgroundShellId) {
+        // 返回结构化结果，集中表达工具调用已经整理出的状态。
         return {
           stdout: '',
           stderr: '',
@@ -1087,9 +1526,12 @@ async function* runShellCommand({
       }
 
       // Check if this foreground task was backgrounded via backgroundAll()
+      // 满足 `foregroundTaskId` 时，工具调用执行该分支。
       if (foregroundTaskId) {
         // shellCommand.status becomes 'backgrounded' when background() is called
+        // 当 `shellCommand.status` 匹配 `'backgrounded'` 时，工具调用执行对应分支。
         if (shellCommand.status === 'backgrounded') {
+          // 返回结构化结果，集中表达工具调用已经整理出的状态。
           return {
             stdout: '',
             stderr: '',
@@ -1102,14 +1544,19 @@ async function* runShellCommand({
       }
 
       // Time for a progress update
+      // elapsed记录时间`Date.now`，供工具调用后续处理使用。
       const elapsed = Date.now() - startTime;
+      // elapsedSeconds 集合保存`Math.floor`，供工具调用后续处理使用。
       const elapsedSeconds = Math.floor(elapsed / 1000);
 
       // Show minimal backgrounding UI if available
       // Skip if background tasks are disabled
+      // 只有 `!isBackgroundTasksDisabled && backgroundShellId =` 满足时，工具调用才执行该分支。
       if (!isBackgroundTasksDisabled && backgroundShellId === undefined && elapsedSeconds >= PROGRESS_THRESHOLD_MS / 1000 && setToolJSX) {
         // Register this command as a foreground task so it can be backgrounded via Ctrl+B
+        // foregroundTaskId缺失时直接走兜底路径，避免工具调用使用无效输入。
         if (!foregroundTaskId) {
+          // foregroundTaskId更新为 `registerForeground({`，确保Bash 工具后续读取最新状态。
           foregroundTaskId = registerForeground({
             command,
             description: description || command,
@@ -1117,6 +1564,7 @@ async function* runShellCommand({
             agentId
           }, setAppState, toolUseId);
         }
+        // setToolJSX 写入新的状态值，使工具调用后续读取保持一致。
         setToolJSX({
           jsx: <BackgroundHint />,
           shouldHidePromptInput: false,
@@ -1124,6 +1572,7 @@ async function* runShellCommand({
           showSpinner: true
         });
       }
+      // 生成器产出 `{`，把阶段性结果交给上层消费。
       yield {
         type: 'progress',
         fullOutput,
@@ -1138,6 +1587,7 @@ async function* runShellCommand({
       };
     }
   } finally {
+    // 调用 TaskOutput.stopPolling，触发工具调用此处需要的副作用。
     TaskOutput.stopPolling(shellCommand.taskOutput.taskId);
   }
 }

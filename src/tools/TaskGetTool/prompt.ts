@@ -1,5 +1,7 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 export const DESCRIPTION = 'Get a task by ID from the task list'
 
+// PROMPT固定为 ``Use this tool to retrieve a task by its ID from the task...`，作为工具实现 prompt后续展示或比较的基准。
 export const PROMPT = `Use this tool to retrieve a task by its ID from the task list.
 
 ## When to Use This Tool

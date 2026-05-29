@@ -1,11 +1,20 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React、ReactNode、useCallback、useMemo、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { type ReactNode, useCallback, useMemo, useState } from 'react';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { KeybindingAction } 来自 ../../keybindings/types.js，用于校准终端渲染的数据契约。
 import type { KeybindingAction } from '../../keybindings/types.js';
+// 引入 useKeybindings，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
+// 引入 useSetAppState，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useSetAppState } from '../../state/AppState.js';
+// 引入 OptionWithDescription、Select，将 ../CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { type OptionWithDescription, Select } from '../CustomSelect/select.js';
+// FeedbackType 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type FeedbackType = 'accept' | 'reject';
 export type PermissionPromptOption<T extends string> = {
   value: T;
@@ -16,17 +25,20 @@ export type PermissionPromptOption<T extends string> = {
   };
   keybinding?: KeybindingAction;
 };
+// ToolAnalyticsContext 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ToolAnalyticsContext = {
   toolName: string;
   isMcp: boolean;
 };
 export type PermissionPromptProps<T extends string> = {
   options: PermissionPromptOption<T>[];
+  // 这个回调绑定到 onSelect: (value: T, feedback?: string) => void;，负责终端渲染在该局部场景下的响应。
   onSelect: (value: T, feedback?: string) => void;
   onCancel?: () => void;
   question?: string | ReactNode;
   toolAnalyticsContext?: ToolAnalyticsContext;
 };
+// DEFAULT_PLACEHOLDERS 集合 集中保存权限确认界面 Permission Prompt要一起传递的字段。
 const DEFAULT_PLACEHOLDERS: Record<FeedbackType, string> = {
   accept: 'tell Claude what to do next',
   reject: 'tell Claude what to do differently'
@@ -42,8 +54,11 @@ const DEFAULT_PLACEHOLDERS: Record<FeedbackType, string> = {
  * - Analytics events for feedback interactions
  * - Transforming options to Select-compatible format
  */
+// PermissionPrompt 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function PermissionPrompt(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(54);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     options,
     onSelect,
@@ -51,59 +66,98 @@ export function PermissionPrompt(t0) {
     question: t1,
     toolAnalyticsContext
   } = t0;
+  // question标记终端渲染权限确认界面 Permission Prompt是否启用对应路径。
   const question = t1 === undefined ? "Do you want to proceed?" : t1;
+  // setAppState 状态保存`useSetAppState`，供终端渲染后续处理使用。
   const setAppState = useSetAppState();
+  // acceptFeedback 由 React state 持有，setAcceptFeedback 会在用户操作或异步结果返回时触发刷新。
   const [acceptFeedback, setAcceptFeedback] = useState("");
+  // rejectFeedback 由 React state 持有，setRejectFeedback 会在用户操作或异步结果返回时触发刷新。
   const [rejectFeedback, setRejectFeedback] = useState("");
+  // acceptInputMode 由 React state 持有，setAcceptInputMode 会在用户操作或异步结果返回时触发刷新。
   const [acceptInputMode, setAcceptInputMode] = useState(false);
+  // rejectInputMode 由 React state 持有，setRejectInputMode 会在用户操作或异步结果返回时触发刷新。
   const [rejectInputMode, setRejectInputMode] = useState(false);
+  // focusedValue 由 React state 持有，setFocusedValue 会在用户操作或异步结果返回时触发刷新。
   const [focusedValue, setFocusedValue] = useState(null);
+  // acceptFeedbackModeEntered 由 React state 持有，setAcceptFeedbackModeEntered 会在用户操作或异步结果返回时触发刷新。
   const [acceptFeedbackModeEntered, setAcceptFeedbackModeEntered] = useState(false);
+  // rejectFeedbackModeEntered 由 React state 持有，setRejectFeedbackModeEntered 会在用户操作或异步结果返回时触发刷新。
   const [rejectFeedbackModeEntered, setRejectFeedbackModeEntered] = useState(false);
+  // t2 暂存 `options.find(t3)` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== focusedValue || $[1] !== options) {
+    // t3 暂存 `opt => opt.value === focusedValue` 的派生结果，便于缓存命中时直接复用。
     let t3;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[3] !== focusedValue) {
+      // t3 暂存 `opt => opt.value === focusedValue` 生成的渲染片段，后续返回路径直接复用。
       t3 = opt => opt.value === focusedValue;
+      // $[3] 缓存 `focusedValue`，下次依赖未变时 React 编译产物可直接复用。
       $[3] = focusedValue;
+      // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
       $[4] = t3;
     } else {
+      // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
       t3 = $[4];
     }
+    // t2 暂存 `options.find(t3)` 生成的渲染片段，后续返回路径直接复用。
     t2 = options.find(t3);
+    // $[0] 缓存 `focusedValue`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = focusedValue;
+    // $[1] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = options;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // focusedOption 命名 `t2`，让后续代码直接表达这个值的用途。
   const focusedOption = t2;
+  // focusedFeedbackType 命名 `focusedOption?.feedbackConfig?.type`，让后续代码直接表达这个值的用途。
   const focusedFeedbackType = focusedOption?.feedbackConfig?.type;
+  // showTabHint标记终端渲染权限确认界面 Permission Prompt是否启用对应路径。
   const showTabHint = focusedFeedbackType === "accept" && !acceptInputMode || focusedFeedbackType === "reject" && !rejectInputMode;
+  // t3 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== acceptInputMode || $[6] !== options || $[7] !== rejectInputMode) {
+    // t4 暂存 `opt_0 => {` 的派生结果，便于缓存命中时直接复用。
     let t4;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[9] !== acceptInputMode || $[10] !== rejectInputMode) {
+      // t4 暂存 `opt_0 => {` 生成的渲染片段，后续返回路径直接复用。
       t4 = opt_0 => {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           value,
           label,
           feedbackConfig
         } = opt_0;
+        // feedbackConfig 配置缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!feedbackConfig) {
+          // 返回结构化结果，集中表达终端渲染已经整理出的状态。
           return {
             label,
             value
           };
         }
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           type,
           placeholder
         } = feedbackConfig;
+        // isInputMode标记终端渲染权限确认界面 Permission Prompt是否启用对应路径。
         const isInputMode = type === "accept" ? acceptInputMode : rejectInputMode;
+        // onChange标记终端渲染权限确认界面 Permission Prompt是否启用对应路径。
         const onChange = type === "accept" ? setAcceptFeedback : setRejectFeedback;
+        // defaultPlaceholder读取 `DEFAULT_PLACEHOLDERS[type]` 对应条目，后续围绕该成员继续处理。
         const defaultPlaceholder = DEFAULT_PLACEHOLDERS[type];
+        // 满足 `isInputMode` 时，终端渲染执行该分支。
         if (isInputMode) {
+          // 返回结构化结果，集中表达终端渲染已经整理出的状态。
           return {
             type: "input" as const,
             label,
@@ -113,86 +167,141 @@ export function PermissionPrompt(t0) {
             allowEmptySubmitToCancel: true
           };
         }
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           label,
           value
         };
       };
+      // $[9] 缓存 `acceptInputMode`，下次依赖未变时 React 编译产物可直接复用。
       $[9] = acceptInputMode;
+      // $[10] 缓存 `rejectInputMode`，下次依赖未变时 React 编译产物可直接复用。
       $[10] = rejectInputMode;
+      // $[11] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[11] = t4;
     } else {
+      // t4 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
       t4 = $[11];
     }
+    // t3 暂存 `options.map(t4)` 生成的渲染片段，后续返回路径直接复用。
     t3 = options.map(t4);
+    // $[5] 缓存 `acceptInputMode`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = acceptInputMode;
+    // $[6] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = options;
+    // $[7] 缓存 `rejectInputMode`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = rejectInputMode;
+    // $[8] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[8];
   }
+  // selectOptions 集合沿用 `t3` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const selectOptions = t3;
+  // t4 暂存 `value_0 => {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[12] !== acceptInputMode || $[13] !== options || $[14] !== rejectInputMode || $[15] !== toolAnalyticsContext?.isMcp || $[16] !== toolAnalyticsContext?.toolName) {
+    // t4 暂存 `value_0 => {` 生成的渲染片段，后续返回路径直接复用。
     t4 = value_0 => {
+      // option筛选`options.find`，供终端渲染后续处理使用。
       const option = options.find(opt_1 => opt_1.value === value_0);
+      // 满足 `!option?.feedbackConfig` 时，终端渲染执行该分支。
       if (!option?.feedbackConfig) {
+        // 权限确认界面 Permission Prompt在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         type: type_0
       } = option.feedbackConfig;
+      // analyticsProps 集合 集中保存终端渲染权限确认界面 Permission Prompt要一起传递的字段。
       const analyticsProps = {
         toolName: toolAnalyticsContext?.toolName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         isMcp: toolAnalyticsContext?.isMcp ?? false
       };
+      // 当 `type_0` 匹配 `"accept"` 时，终端渲染执行对应分支。
       if (type_0 === "accept") {
+        // 满足 `acceptInputMode` 时，终端渲染执行该分支。
         if (acceptInputMode) {
+          // setAcceptInputMode 写入新的状态值，使终端渲染后续读取保持一致。
           setAcceptInputMode(false);
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent("tengu_accept_feedback_mode_collapsed", analyticsProps);
         } else {
+          // setAcceptInputMode 写入新的状态值，使终端渲染后续读取保持一致。
           setAcceptInputMode(true);
+          // setAcceptFeedbackModeEntered 写入新的状态值，使终端渲染后续读取保持一致。
           setAcceptFeedbackModeEntered(true);
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent("tengu_accept_feedback_mode_entered", analyticsProps);
         }
       } else {
+        // 当 `type_0` 匹配 `"reject"` 时，终端渲染执行对应分支。
         if (type_0 === "reject") {
+          // 满足 `rejectInputMode` 时，终端渲染执行该分支。
           if (rejectInputMode) {
+            // setRejectInputMode 写入新的状态值，使终端渲染后续读取保持一致。
             setRejectInputMode(false);
+            // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
             logEvent("tengu_reject_feedback_mode_collapsed", analyticsProps);
           } else {
+            // setRejectInputMode 写入新的状态值，使终端渲染后续读取保持一致。
             setRejectInputMode(true);
+            // setRejectFeedbackModeEntered 写入新的状态值，使终端渲染后续读取保持一致。
             setRejectFeedbackModeEntered(true);
+            // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
             logEvent("tengu_reject_feedback_mode_entered", analyticsProps);
           }
         }
       }
     };
+    // $[12] 缓存 `acceptInputMode`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = acceptInputMode;
+    // $[13] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = options;
+    // $[14] 缓存 `rejectInputMode`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = rejectInputMode;
+    // $[15] 缓存 `toolAnalyticsContext?.isMcp`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = toolAnalyticsContext?.isMcp;
+    // $[16] 缓存 `toolAnalyticsContext?.toolName`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = toolAnalyticsContext?.toolName;
+    // $[17] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[17];
   }
+  // handleInputModeToggle沿用 `t4` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const handleInputModeToggle = t4;
+  // t5 暂存 `value_1 => {` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[18] !== acceptFeedback || $[19] !== acceptFeedbackModeEntered || $[20] !== onSelect || $[21] !== options || $[22] !== rejectFeedback || $[23] !== rejectFeedbackModeEntered || $[24] !== toolAnalyticsContext?.isMcp || $[25] !== toolAnalyticsContext?.toolName) {
+    // t5 暂存 `value_1 => {` 生成的渲染片段，后续返回路径直接复用。
     t5 = value_1 => {
+      // option_0筛选`options.find`，供终端渲染后续处理使用。
       const option_0 = options.find(opt_2 => opt_2.value === value_1);
+      // option_0缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!option_0) {
+        // 权限确认界面 Permission Prompt在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // feedback 先占位，稍后的条件分支会根据实际输入补齐它。
       let feedback;
+      // 满足 `option_0.feedbackConfig` 时，终端渲染执行该分支。
       if (option_0.feedbackConfig) {
+        // rawFeedback标记终端渲染权限确认界面 Permission Prompt是否启用对应路径。
         const rawFeedback = option_0.feedbackConfig.type === "accept" ? acceptFeedback : rejectFeedback;
+        // trimmedFeedback格式化`rawFeedback.trim`，供终端渲染后续处理使用。
         const trimmedFeedback = rawFeedback.trim();
+        // 满足 `trimmedFeedback` 时，终端渲染执行该分支。
         if (trimmedFeedback) {
+          // feedback更新为 `trimmedFeedback`，确保权限确认界面后续读取最新状态。
           feedback = trimmedFeedback;
         }
+        // analyticsProps_0 集中保存终端渲染权限确认界面 Permission Prompt要一起传递的字段。
         const analyticsProps_0 = {
           toolName: toolAnalyticsContext?.toolName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           isMcp: toolAnalyticsContext?.isMcp ?? false,
@@ -200,131 +309,225 @@ export function PermissionPrompt(t0) {
           instructions_length: trimmedFeedback?.length ?? 0,
           entered_feedback_mode: option_0.feedbackConfig.type === "accept" ? acceptFeedbackModeEntered : rejectFeedbackModeEntered
         };
+        // 当 `option_0.feedbackConfig.type` 匹配 `"accept"` 时，终端渲染执行对应分支。
         if (option_0.feedbackConfig.type === "accept") {
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent("tengu_accept_submitted", analyticsProps_0);
         } else {
+          // 当 `option_0.feedbackConfig.type` 匹配 `"reject"` 时，终端渲染执行对应分支。
           if (option_0.feedbackConfig.type === "reject") {
+            // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
             logEvent("tengu_reject_submitted", analyticsProps_0);
           }
         }
       }
+      // 调用 onSelect，触发终端渲染此处需要的副作用。
       onSelect(value_1, feedback);
     };
+    // $[18] 缓存 `acceptFeedback`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = acceptFeedback;
+    // $[19] 缓存 `acceptFeedbackModeEntered`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = acceptFeedbackModeEntered;
+    // $[20] 缓存 `onSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = onSelect;
+    // $[21] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = options;
+    // $[22] 缓存 `rejectFeedback`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = rejectFeedback;
+    // $[23] 缓存 `rejectFeedbackModeEntered`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = rejectFeedbackModeEntered;
+    // $[24] 缓存 `toolAnalyticsContext?.isMcp`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = toolAnalyticsContext?.isMcp;
+    // $[25] 缓存 `toolAnalyticsContext?.toolName`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = toolAnalyticsContext?.toolName;
+    // $[26] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[26] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[26];
   }
+  // handleSelect沿用 `t5` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const handleSelect = t5;
+  // handlers 集合 先占位，稍后的条件分支会根据实际输入补齐它。
   let handlers;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[27] !== handleSelect || $[28] !== options) {
+    // handlers 集合更新为 `{}`，确保权限确认界面后续读取最新状态。
     handlers = {};
+    // 按顺序遍历 `options` 中的opt_3，逐个交给终端渲染处理。
     for (const opt_3 of options) {
+      // 满足 `opt_3.keybinding` 时，终端渲染执行该分支。
       if (opt_3.keybinding) {
+        // 这个回调绑定到 handlers[opt_3.keybinding] = () => handleSelect(opt_3.value);，负责终端渲染在该局部场景下的响应。
         handlers[opt_3.keybinding] = () => handleSelect(opt_3.value);
       }
     }
+    // $[27] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = handleSelect;
+    // $[28] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = options;
+    // $[29] 缓存 `handlers`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = handlers;
   } else {
+    // handlers 集合更新为 `$[29]`，确保权限确认界面后续读取最新状态。
     handlers = $[29];
   }
+  // keybindingHandlers 集合保存`handlers`，供后续判断或组装使用。
   const keybindingHandlers = handlers;
+  // t6 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[30] === Symbol.for("react.memo_cache_sentinel")) {
+    // t6 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t6 = {
       context: "Confirmation"
     };
+    // $[30] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[30] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[30];
   }
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings(keybindingHandlers, t6);
+  // t7 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[31] !== onCancel || $[32] !== setAppState) {
+    // t7 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t7 = () => {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent("tengu_permission_request_escape", {});
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(_temp);
+      // 调用 onCancel?.();，完成这一处局部操作。
       onCancel?.();
     };
+    // $[31] 缓存 `onCancel`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = onCancel;
+    // $[32] 缓存 `setAppState`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = setAppState;
+    // $[33] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[33] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[33];
   }
+  // handleCancel 命名 `t7`，让后续代码直接表达这个值的用途。
   const handleCancel = t7;
+  // t8 暂存 `typeof question === "string" ? <Text>{question}</Text> : ...` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[34] !== question) {
+    // t8 暂存 `typeof question === "string" ? <Text>{question}</Text> : ...` 生成的渲染片段，后续返回路径直接复用。
     t8 = typeof question === "string" ? <Text>{question}</Text> : question;
+    // $[34] 缓存 `question`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = question;
+    // $[35] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[35] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[35];
   }
+  // t9 暂存 `value_2 => {` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[36] !== acceptFeedback || $[37] !== acceptInputMode || $[38] !== options || $[39] !== rejectFeedback || $[40] !== rejectInputMode) {
+    // t9 暂存 `value_2 => {` 生成的渲染片段，后续返回路径直接复用。
     t9 = value_2 => {
+      // newOption筛选`options.find`，供终端渲染后续处理使用。
       const newOption = options.find(opt_4 => opt_4.value === value_2);
+      // `newOption?.feedbackConfig?.type` 与 `"accept" && acceptInputMode && ...` 不一致时刷新派生状态，避免使用过期结果。
       if (newOption?.feedbackConfig?.type !== "accept" && acceptInputMode && !acceptFeedback.trim()) {
+        // setAcceptInputMode 写入新的状态值，使终端渲染后续读取保持一致。
         setAcceptInputMode(false);
       }
+      // `newOption?.feedbackConfig?.type` 与 `"reject" && rejectInputMode && ...` 不一致时刷新派生状态，避免使用过期结果。
       if (newOption?.feedbackConfig?.type !== "reject" && rejectInputMode && !rejectFeedback.trim()) {
+        // setRejectInputMode 写入新的状态值，使终端渲染后续读取保持一致。
         setRejectInputMode(false);
       }
+      // setFocusedValue 写入新的状态值，使终端渲染后续读取保持一致。
       setFocusedValue(value_2);
     };
+    // $[36] 缓存 `acceptFeedback`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = acceptFeedback;
+    // $[37] 缓存 `acceptInputMode`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = acceptInputMode;
+    // $[38] 缓存 `options`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = options;
+    // $[39] 缓存 `rejectFeedback`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = rejectFeedback;
+    // $[40] 缓存 `rejectInputMode`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = rejectInputMode;
+    // $[41] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[41];
   }
+  // t10 暂存 `<Select options={selectOptions} inlineDescriptions={true}...` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[42] !== handleCancel || $[43] !== handleInputModeToggle || $[44] !== handleSelect || $[45] !== selectOptions || $[46] !== t9) {
+    // t10 暂存 `<Select options={selectOptions} inlineDescriptions={true}...` 生成的渲染片段，后续返回路径直接复用。
     t10 = <Select options={selectOptions} inlineDescriptions={true} onChange={handleSelect} onCancel={handleCancel} onFocus={t9} onInputModeToggle={handleInputModeToggle} />;
+    // $[42] 缓存 `handleCancel`，下次依赖未变时 React 编译产物可直接复用。
     $[42] = handleCancel;
+    // $[43] 缓存 `handleInputModeToggle`，下次依赖未变时 React 编译产物可直接复用。
     $[43] = handleInputModeToggle;
+    // $[44] 缓存 `handleSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[44] = handleSelect;
+    // $[45] 缓存 `selectOptions`，下次依赖未变时 React 编译产物可直接复用。
     $[45] = selectOptions;
+    // $[46] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = t9;
+    // $[47] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[47];
   }
+  // t11标记终端渲染权限确认界面 Permission Prompt是否启用对应路径。
   const t11 = showTabHint && " \xB7 Tab to amend";
+  // t12 暂存 `<Box marginTop={1}><Text dimColor={true}>Esc to cancel{t1...` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[48] !== t11) {
+    // t12 暂存 `<Box marginTop={1}><Text dimColor={true}>Esc to cancel{t1...` 生成的渲染片段，后续返回路径直接复用。
     t12 = <Box marginTop={1}><Text dimColor={true}>Esc to cancel{t11}</Text></Box>;
+    // $[48] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = t11;
+    // $[49] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = t12;
   } else {
+    // t12 从 React 编译缓存槽 $[49] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[49];
   }
+  // t13 暂存 `<Box flexDirection="column">{t8}{t10}{t12}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[50] !== t10 || $[51] !== t12 || $[52] !== t8) {
+    // t13 暂存 `<Box flexDirection="column">{t8}{t10}{t12}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t13 = <Box flexDirection="column">{t8}{t10}{t12}</Box>;
+    // $[50] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = t10;
+    // $[51] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = t12;
+    // $[52] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = t8;
+    // $[53] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = t13;
   } else {
+    // t13 从 React 编译缓存槽 $[53] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[53];
   }
+  // 返回 `t13`，作为终端渲染这次计算的结果。
   return t13;
 }
+// _temp 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(prev) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     ...prev,
     attribution: {

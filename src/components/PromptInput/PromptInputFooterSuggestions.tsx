@@ -1,11 +1,20 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 memo、ReactNode，将 react 中已经封装好的能力接到本文件流程里。
 import { memo, type ReactNode } from 'react';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../ink/stringWidth.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 复用 truncatePathMiddle、truncateToWidth 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { truncatePathMiddle, truncateToWidth } from '../../utils/format.js';
+// 类型依赖 { Theme } 来自 ../../utils/theme.js，用于校准终端渲染的数据契约。
 import type { Theme } from '../../utils/theme.js';
+// SuggestionItem 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SuggestionItem = {
   id: string;
   displayText: string;
@@ -14,191 +23,329 @@ export type SuggestionItem = {
   metadata?: unknown;
   color?: keyof Theme;
 };
+// SuggestionType 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SuggestionType = 'command' | 'file' | 'directory' | 'agent' | 'shell' | 'custom-title' | 'slack-channel' | 'none';
+// OVERLAY_MAX_ITEMS 集合保存`5`，供终端渲染提示输入组件 Prompt Input Footer Su...后续判断或输出使用。
 export const OVERLAY_MAX_ITEMS = 5;
 
 /**
  * Get the icon for a suggestion based on its type
  * Icons: + for files, ◇ for MCP resources, * for agents
  */
+// getIcon 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getIcon(itemId: string): string {
+  // 满足 `itemId.startsWith('file-')` 时，终端渲染执行该分支。
   if (itemId.startsWith('file-')) return '+';
+  // 满足 `itemId.startsWith('mcp-resource-')` 时，终端渲染执行该分支。
   if (itemId.startsWith('mcp-resource-')) return '◇';
+  // 满足 `itemId.startsWith('agent-')` 时，终端渲染执行该分支。
   if (itemId.startsWith('agent-')) return '*';
+  // 返回 `'+'`，作为终端渲染这次计算的结果。
   return '+';
 }
 
 /**
  * Check if an item is a unified suggestion type (file, mcp-resource, or agent)
  */
+// isUnifiedSuggestion 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isUnifiedSuggestion(itemId: string): boolean {
+  // 返回 `itemId.startsWith('file-') || itemId.startsWith('mcp-resource-') || ite...`，作为终端渲染这次计算的结果。
   return itemId.startsWith('file-') || itemId.startsWith('mcp-resource-') || itemId.startsWith('agent-');
 }
+// SuggestionItemRow保存`memo`，供终端渲染后续处理使用。
 const SuggestionItemRow = memo(function SuggestionItemRow(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(36);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     item,
     maxColumnWidth,
     isSelected
   } = t0;
+  // columns 集合保存`useTerminalSize`，供终端渲染后续处理使用。
   const columns = useTerminalSize().columns;
+  // isUnified记录 `isUnifiedSuggestion` 是否成立，终端渲染随后按该结果分支。
   const isUnified = isUnifiedSuggestion(item.id);
+  // 满足 `isUnified` 时，终端渲染执行该分支。
   if (isUnified) {
+    // t1 暂存 `getIcon(item.id)` 的派生结果，便于缓存命中时直接复用。
     let t1;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[0] !== item.id) {
+      // t1 暂存 `getIcon(item.id)` 生成的渲染片段，后续返回路径直接复用。
       t1 = getIcon(item.id);
+      // $[0] 缓存 `item.id`，下次依赖未变时 React 编译产物可直接复用。
       $[0] = item.id;
+      // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[1] = t1;
     } else {
+      // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
       t1 = $[1];
     }
+    // icon保存`t1`，作为后续临时缓存值处理的输入。
     const icon = t1;
+    // textColor 命名 `isSelected ? "suggestion" : undefined`，让后续代码直接表达这个值的用途。
     const textColor = isSelected ? "suggestion" : undefined;
+    // dimColor标记终端渲染提示输入组件 Prompt Input Footer Su...是否启用对应路径。
     const dimColor = !isSelected;
+    // isFile 文件数据记录 `id.startsWith` 是否成立，终端渲染随后按该结果分支。
     const isFile = item.id.startsWith("file-");
+    // isMcpResource记录 `id.startsWith` 是否成立，终端渲染随后按该结果分支。
     const isMcpResource = item.id.startsWith("mcp-resource-");
+    // separatorWidth 命名 `item.description ? 3 : 0`，让后续代码直接表达这个值的用途。
     const separatorWidth = item.description ? 3 : 0;
+    // displayText 先占位，稍后的条件分支会根据实际输入补齐它。
     let displayText;
+    // 满足 `isFile` 时，终端渲染执行该分支。
     if (isFile) {
+      // t2 暂存 `item.description ? Math.min(20, stringWidth(item.descript...` 的派生结果，便于缓存命中时直接复用。
       let t2;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[2] !== item.description) {
+        // t2 暂存 `item.description ? Math.min(20, stringWidth(item.descript...` 生成的渲染片段，后续返回路径直接复用。
         t2 = item.description ? Math.min(20, stringWidth(item.description)) : 0;
+        // $[2] 缓存 `item.description`，下次依赖未变时 React 编译产物可直接复用。
         $[2] = item.description;
+        // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
         $[3] = t2;
       } else {
+        // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
         t2 = $[3];
       }
+      // descReserve 命名 `t2`，让后续代码直接表达这个值的用途。
       const descReserve = t2;
+      // maxPathLength 路径数据保存`columns - 2 - 4 - separatorWidth - descReserve`，供后续判断或组装使用。
       const maxPathLength = columns - 2 - 4 - separatorWidth - descReserve;
+      // t3 暂存 `truncatePathMiddle(item.displayText, maxPathLength)` 的派生结果，便于缓存命中时直接复用。
       let t3;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[4] !== item.displayText || $[5] !== maxPathLength) {
+        // t3 暂存 `truncatePathMiddle(item.displayText, maxPathLength)` 生成的渲染片段，后续返回路径直接复用。
         t3 = truncatePathMiddle(item.displayText, maxPathLength);
+        // $[4] 缓存 `item.displayText`，下次依赖未变时 React 编译产物可直接复用。
         $[4] = item.displayText;
+        // $[5] 缓存 `maxPathLength`，下次依赖未变时 React 编译产物可直接复用。
         $[5] = maxPathLength;
+        // $[6] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
         $[6] = t3;
       } else {
+        // t3 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
         t3 = $[6];
       }
+      // displayText更新为 `t3`，确保提示输入组件后续读取最新状态。
       displayText = t3;
     } else {
+      // 满足 `isMcpResource` 时，终端渲染执行该分支。
       if (isMcpResource) {
+        // t2 暂存 `truncateToWidth(item.displayText, 30)` 的派生结果，便于缓存命中时直接复用。
         let t2;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[7] !== item.displayText) {
+          // t2 暂存 `truncateToWidth(item.displayText, 30)` 生成的渲染片段，后续返回路径直接复用。
           t2 = truncateToWidth(item.displayText, 30);
+          // $[7] 缓存 `item.displayText`，下次依赖未变时 React 编译产物可直接复用。
           $[7] = item.displayText;
+          // $[8] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
           $[8] = t2;
         } else {
+          // t2 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
           t2 = $[8];
         }
+        // displayText更新为 `t2`，确保提示输入组件后续读取最新状态。
         displayText = t2;
       } else {
+        // displayText更新为 `item.displayText`，确保提示输入组件后续读取最新状态。
         displayText = item.displayText;
       }
     }
+    // availableWidth保存`stringWidth`，供终端渲染后续处理使用。
     const availableWidth = columns - 2 - stringWidth(displayText) - separatorWidth - 4;
+    // lineContent 先占位，稍后的条件分支会根据实际输入补齐它。
     let lineContent;
+    // 满足 `item.description` 时，终端渲染执行该分支。
     if (item.description) {
+      // maxDescLength 数量保存`Math.max`，供终端渲染后续处理使用。
       const maxDescLength = Math.max(0, availableWidth);
+      // t2 暂存 `truncateToWidth(item.description.replace(/\s+/g, " "), ma...` 的派生结果，便于缓存命中时直接复用。
       let t2;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[9] !== item.description || $[10] !== maxDescLength) {
+        // t2 暂存 `truncateToWidth(item.description.replace(/\s+/g, " "), ma...` 生成的渲染片段，后续返回路径直接复用。
         t2 = truncateToWidth(item.description.replace(/\s+/g, " "), maxDescLength);
+        // $[9] 缓存 `item.description`，下次依赖未变时 React 编译产物可直接复用。
         $[9] = item.description;
+        // $[10] 缓存 `maxDescLength`，下次依赖未变时 React 编译产物可直接复用。
         $[10] = maxDescLength;
+        // $[11] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
         $[11] = t2;
       } else {
+        // t2 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
         t2 = $[11];
       }
+      // truncatedDesc沿用 `t2` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
       const truncatedDesc = t2;
+      // lineContent更新为 ``${icon} ${displayText} – ${truncatedDesc}``，确保提示输入组件后续读取最新状态。
       lineContent = `${icon} ${displayText} – ${truncatedDesc}`;
     } else {
+      // lineContent更新为 ``${icon} ${displayText}``，确保提示输入组件后续读取最新状态。
       lineContent = `${icon} ${displayText}`;
     }
+    // t2 暂存 `<Text color={textColor} dimColor={dimColor} wrap="truncat...` 的派生结果，便于缓存命中时直接复用。
     let t2;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[12] !== dimColor || $[13] !== lineContent || $[14] !== textColor) {
+      // t2 暂存 `<Text color={textColor} dimColor={dimColor} wrap="truncat...` 生成的渲染片段，后续返回路径直接复用。
       t2 = <Text color={textColor} dimColor={dimColor} wrap="truncate">{lineContent}</Text>;
+      // $[12] 缓存 `dimColor`，下次依赖未变时 React 编译产物可直接复用。
       $[12] = dimColor;
+      // $[13] 缓存 `lineContent`，下次依赖未变时 React 编译产物可直接复用。
       $[13] = lineContent;
+      // $[14] 缓存 `textColor`，下次依赖未变时 React 编译产物可直接复用。
       $[14] = textColor;
+      // $[15] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
       $[15] = t2;
     } else {
+      // t2 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
       t2 = $[15];
     }
+    // 返回 `t2`，作为终端渲染这次计算的结果。
     return t2;
   }
+  // maxNameWidth保存`Math.floor`，供终端渲染后续处理使用。
   const maxNameWidth = Math.floor(columns * 0.4);
+  // displayTextWidth保存`Math.min`，供终端渲染后续处理使用。
   const displayTextWidth = Math.min(maxColumnWidth ?? stringWidth(item.displayText) + 5, maxNameWidth);
+  // textColor_0标记终端渲染提示输入组件 Prompt Input Footer Su...是否启用对应路径。
   const textColor_0 = item.color || (isSelected ? "suggestion" : undefined);
+  // shouldDim标记终端渲染提示输入组件 Prompt Input Footer Su...是否启用对应路径。
   const shouldDim = !isSelected;
+  // displayText_0保存`item.displayText`，供终端渲染提示输入组件 Prompt Input Footer Su...后续判断或输出使用。
   let displayText_0 = item.displayText;
+  // 满足 `stringWidth(displayText_0) > displayTextWidth - 2` 时，终端渲染执行该分支。
   if (stringWidth(displayText_0) > displayTextWidth - 2) {
+    // t1保存`displayTextWidth - 2`，供后续判断或组装使用。
     const t1 = displayTextWidth - 2;
+    // t2 暂存 `truncateToWidth(displayText_0, t1)` 的派生结果，便于缓存命中时直接复用。
     let t2;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[16] !== displayText_0 || $[17] !== t1) {
+      // t2 暂存 `truncateToWidth(displayText_0, t1)` 生成的渲染片段，后续返回路径直接复用。
       t2 = truncateToWidth(displayText_0, t1);
+      // $[16] 缓存 `displayText_0`，下次依赖未变时 React 编译产物可直接复用。
       $[16] = displayText_0;
+      // $[17] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[17] = t1;
+      // $[18] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
       $[18] = t2;
     } else {
+      // t2 从 React 编译缓存槽 $[18] 取回渲染片段，避免依赖未变时重建 JSX。
       t2 = $[18];
     }
+    // displayText_0更新为 `t2`，确保提示输入组件后续读取最新状态。
     displayText_0 = t2;
   }
+  // paddedDisplayText保存`repeat`，供终端渲染后续处理使用。
   const paddedDisplayText = displayText_0 + " ".repeat(Math.max(0, displayTextWidth - stringWidth(displayText_0)));
+  // tagText 命名 `item.tag ? `[${item.tag}] ` : ""`，让后续代码直接表达这个值的用途。
   const tagText = item.tag ? `[${item.tag}] ` : "";
+  // tagWidth保存`stringWidth`，供终端渲染后续处理使用。
   const tagWidth = stringWidth(tagText);
+  // descriptionWidth保存`Math.max`，供终端渲染后续处理使用。
   const descriptionWidth = Math.max(0, columns - displayTextWidth - tagWidth - 4);
+  // t1 暂存 `item.description ? truncateToWidth(item.description.repla...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[19] !== descriptionWidth || $[20] !== item.description) {
+    // t1 暂存 `item.description ? truncateToWidth(item.description.repla...` 生成的渲染片段，后续返回路径直接复用。
     t1 = item.description ? truncateToWidth(item.description.replace(/\s+/g, " "), descriptionWidth) : "";
+    // $[19] 缓存 `descriptionWidth`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = descriptionWidth;
+    // $[20] 缓存 `item.description`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = item.description;
+    // $[21] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[21];
   }
+  // truncatedDescription沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const truncatedDescription = t1;
+  // t2 暂存 `<Text color={textColor_0} dimColor={shouldDim}>{paddedDis...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[22] !== paddedDisplayText || $[23] !== shouldDim || $[24] !== textColor_0) {
+    // t2 暂存 `<Text color={textColor_0} dimColor={shouldDim}>{paddedDis...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <Text color={textColor_0} dimColor={shouldDim}>{paddedDisplayText}</Text>;
+    // $[22] 缓存 `paddedDisplayText`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = paddedDisplayText;
+    // $[23] 缓存 `shouldDim`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = shouldDim;
+    // $[24] 缓存 `textColor_0`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = textColor_0;
+    // $[25] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[25] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[25];
   }
+  // t3 暂存 `tagText ? <Text dimColor={true}>{tagText}</Text> : null` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[26] !== tagText) {
+    // t3 暂存 `tagText ? <Text dimColor={true}>{tagText}</Text> : null` 生成的渲染片段，后续返回路径直接复用。
     t3 = tagText ? <Text dimColor={true}>{tagText}</Text> : null;
+    // $[26] 缓存 `tagText`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = tagText;
+    // $[27] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[27] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[27];
   }
+  // t4保存`isSelected ? "suggestion" : undefined`，供终端渲染提示输入组件 Prompt Input Footer Su...后续判断或输出使用。
   const t4 = isSelected ? "suggestion" : undefined;
+  // t5标记终端渲染提示输入组件 Prompt Input Footer Su...是否启用对应路径。
   const t5 = !isSelected;
+  // t6 暂存 `<Text color={t4} dimColor={t5}>{truncatedDescription}</Te...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[28] !== t4 || $[29] !== t5 || $[30] !== truncatedDescription) {
+    // t6 暂存 `<Text color={t4} dimColor={t5}>{truncatedDescription}</Te...` 生成的渲染片段，后续返回路径直接复用。
     t6 = <Text color={t4} dimColor={t5}>{truncatedDescription}</Text>;
+    // $[28] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = t4;
+    // $[29] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = t5;
+    // $[30] 缓存 `truncatedDescription`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = truncatedDescription;
+    // $[31] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[31] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[31];
   }
+  // t7 暂存 `<Text wrap="truncate">{t2}{t3}{t6}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[32] !== t2 || $[33] !== t3 || $[34] !== t6) {
+    // t7 暂存 `<Text wrap="truncate">{t2}{t3}{t6}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Text wrap="truncate">{t2}{t3}{t6}</Text>;
+    // $[32] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = t2;
+    // $[33] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = t3;
+    // $[34] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = t6;
+    // $[35] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[35] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[35];
   }
+  // 返回 `t7`，作为终端渲染这次计算的结果。
   return t7;
 });
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   suggestions: SuggestionItem[];
   selectedSuggestion: number;
@@ -210,83 +357,144 @@ type Props = {
    */
   overlay?: boolean;
 };
+// PromptInputFooterSuggestions 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function PromptInputFooterSuggestions(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(22);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     suggestions,
     selectedSuggestion,
     maxColumnWidth: maxColumnWidthProp,
     overlay
   } = t0;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     rows
   } = useTerminalSize();
+  // maxVisibleItems 集合保存`Math.min`，供终端渲染后续处理使用。
   const maxVisibleItems = overlay ? OVERLAY_MAX_ITEMS : Math.min(6, Math.max(1, rows - 3));
+  // suggestions 集合为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
   if (suggestions.length === 0) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // t1 暂存 `maxColumnWidthProp ?? Math.max(...suggestions.map(_temp))...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== maxColumnWidthProp || $[1] !== suggestions) {
+    // t1 暂存 `maxColumnWidthProp ?? Math.max(...suggestions.map(_temp))...` 生成的渲染片段，后续返回路径直接复用。
     t1 = maxColumnWidthProp ?? Math.max(...suggestions.map(_temp)) + 5;
+    // $[0] 缓存 `maxColumnWidthProp`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = maxColumnWidthProp;
+    // $[1] 缓存 `suggestions`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = suggestions;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // maxColumnWidth保存`t1`，作为后续临时缓存值处理的输入。
   const maxColumnWidth = t1;
+  // startIndex 索引保存`Math.max`，供终端渲染后续处理使用。
   const startIndex = Math.max(0, Math.min(selectedSuggestion - Math.floor(maxVisibleItems / 2), suggestions.length - maxVisibleItems));
+  // endIndex 索引保存`Math.min`，供终端渲染后续处理使用。
   const endIndex = Math.min(startIndex + maxVisibleItems, suggestions.length);
+  // T0 暂存 `Box` 的派生结果，便于缓存命中时直接复用。
   let T0;
+  // t2 暂存 `"column"` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // t3 暂存 `overlay ? undefined : "flex-end"` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // t4 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== endIndex || $[4] !== maxColumnWidth || $[5] !== overlay || $[6] !== selectedSuggestion || $[7] !== startIndex || $[8] !== suggestions) {
+    // visibleItems 集合格式化`suggestions.slice`，供终端渲染后续处理使用。
     const visibleItems = suggestions.slice(startIndex, endIndex);
+    // T0 暂存 `Box` 生成的渲染片段，后续返回路径直接复用。
     T0 = Box;
+    // t2 暂存 `"column"` 生成的渲染片段，后续返回路径直接复用。
     t2 = "column";
+    // t3 暂存 `overlay ? undefined : "flex-end"` 生成的渲染片段，后续返回路径直接复用。
     t3 = overlay ? undefined : "flex-end";
+    // t5 暂存 `item_0 => <SuggestionItemRow key={item_0.id} item={item_0...` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[13] !== maxColumnWidth || $[14] !== selectedSuggestion || $[15] !== suggestions) {
+      // t5 暂存 `item_0 => <SuggestionItemRow key={item_0.id} item={item_0...` 生成的渲染片段，后续返回路径直接复用。
       t5 = item_0 => <SuggestionItemRow key={item_0.id} item={item_0} maxColumnWidth={maxColumnWidth} isSelected={item_0.id === suggestions[selectedSuggestion]?.id} />;
+      // $[13] 缓存 `maxColumnWidth`，下次依赖未变时 React 编译产物可直接复用。
       $[13] = maxColumnWidth;
+      // $[14] 缓存 `selectedSuggestion`，下次依赖未变时 React 编译产物可直接复用。
       $[14] = selectedSuggestion;
+      // $[15] 缓存 `suggestions`，下次依赖未变时 React 编译产物可直接复用。
       $[15] = suggestions;
+      // $[16] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[16] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[16];
     }
+    // t4 暂存 `visibleItems.map(t5)` 生成的渲染片段，后续返回路径直接复用。
     t4 = visibleItems.map(t5);
+    // $[3] 缓存 `endIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = endIndex;
+    // $[4] 缓存 `maxColumnWidth`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = maxColumnWidth;
+    // $[5] 缓存 `overlay`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = overlay;
+    // $[6] 缓存 `selectedSuggestion`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = selectedSuggestion;
+    // $[7] 缓存 `startIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = startIndex;
+    // $[8] 缓存 `suggestions`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = suggestions;
+    // $[9] 缓存 `T0`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = T0;
+    // $[10] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t2;
+    // $[11] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t3;
+    // $[12] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t4;
   } else {
+    // T0 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     T0 = $[9];
+    // t2 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[10];
+    // t3 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[11];
+    // t4 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[12];
   }
+  // t5 暂存 `<T0 flexDirection={t2} justifyContent={t3}>{t4}</T0>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[17] !== T0 || $[18] !== t2 || $[19] !== t3 || $[20] !== t4) {
+    // t5 暂存 `<T0 flexDirection={t2} justifyContent={t3}>{t4}</T0>` 生成的渲染片段，后续返回路径直接复用。
     t5 = <T0 flexDirection={t2} justifyContent={t3}>{t4}</T0>;
+    // $[17] 缓存 `T0`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = T0;
+    // $[18] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t2;
+    // $[19] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t3;
+    // $[20] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t4;
+    // $[21] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[21];
   }
+  // 返回 `t5`，作为终端渲染这次计算的结果。
   return t5;
 }
+// _temp 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(item) {
+  // 返回 `stringWidth(item.displayText)`，作为终端渲染这次计算的结果。
   return stringWidth(item.displayText);
 }
 export default memo(PromptInputFooterSuggestions);

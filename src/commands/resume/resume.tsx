@@ -1,25 +1,48 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 类型依赖 { UUID } 来自 crypto，用于校准命令处理的数据契约。
 import type { UUID } from 'crypto';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 getOriginalCwd、getSessionId，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js';
+// 类型依赖 { CommandResultDisplay, ResumeEntrypoint } 来自 ../../commands.js，用于校准命令处理的数据契约。
 import type { CommandResultDisplay, ResumeEntrypoint } from '../../commands.js';
+// 复用 LogSelector 终端界面组件，避免在这里重复拼装显示逻辑。
 import { LogSelector } from '../../components/LogSelector.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 复用 Spinner 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Spinner } from '../../components/Spinner.js';
+// 引入 useIsInsideModal，将 ../../context/modalContext.js 中已经封装好的能力接到本文件流程里。
 import { useIsInsideModal } from '../../context/modalContext.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 复用 setClipboard 终端界面组件，避免在这里重复拼装显示逻辑。
 import { setClipboard } from '../../ink/termio/osc.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { LocalJSXCommandCall } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandCall } from '../../types/command.js';
+// 类型依赖 { LogOption } 来自 ../../types/logs.js，用于校准命令处理的数据契约。
 import type { LogOption } from '../../types/logs.js';
+// 复用 agenticSessionSearch 工具函数，把通用处理留在 ../../utils/agenticSessionSearch.js 中维护。
 import { agenticSessionSearch } from '../../utils/agenticSessionSearch.js';
+// 复用 checkCrossProjectResume 工具函数，把通用处理留在 ../../utils/crossProjectResume.js 中维护。
 import { checkCrossProjectResume } from '../../utils/crossProjectResume.js';
+// 复用 getWorktreePaths 工具函数，把通用处理留在 ../../utils/getWorktreePaths.js 中维护。
 import { getWorktreePaths } from '../../utils/getWorktreePaths.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 getLastSessionLog、getSessionIdFromLog、isCustomTitleEnabled、isLiteLog、loadAllProjectsMessageLogs、loadFullLog、loadSameRepoMessageLogs、searchSessionsByCustomTitle 工具函数，把通用处理留在 ../../utils/sessionStorage.js 中维护。
 import { getLastSessionLog, getSessionIdFromLog, isCustomTitleEnabled, isLiteLog, loadAllProjectsMessageLogs, loadFullLog, loadSameRepoMessageLogs, searchSessionsByCustomTitle } from '../../utils/sessionStorage.js';
+// 复用 validateUuid 工具函数，把通用处理留在 ../../utils/uuid.js 中维护。
 import { validateUuid } from '../../utils/uuid.js';
+// ResumeResult 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type ResumeResult = {
   resultType: 'sessionNotFound';
   arg: string;
@@ -28,64 +51,105 @@ type ResumeResult = {
   arg: string;
   count: number;
 };
+// resumeHelpMessage 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function resumeHelpMessage(result: ResumeResult): string {
+  // 按照 result.resultType 的取值选择命令处理的具体处理分支。
   switch (result.resultType) {
     case 'sessionNotFound':
+      // 返回 ``Session ${chalk.bold(result.arg)} was not found.``，作为命令处理这次计算的结果。
       return `Session ${chalk.bold(result.arg)} was not found.`;
     case 'multipleMatches':
+      // 返回 ``Found ${result.count} sessions matching ${chalk.bold(result.arg)}. Ple...`，作为命令处理这次计算的结果。
       return `Found ${result.count} sessions matching ${chalk.bold(result.arg)}. Please use /resume to pick a specific session.`;
   }
 }
+// ResumeError 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ResumeError(t0) {
+  // $保存`_c`，供命令处理后续处理使用。
   const $ = _c(10);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     message,
     args,
     onDone
   } = t0;
+  // t1 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // t2 暂存 `[onDone]` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== onDone) {
+    // t1 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t1 = () => {
+      // timer保存`setTimeout`，供命令处理后续处理使用。
       const timer = setTimeout(onDone, 0);
+      // 返回 `() => clearTimeout(timer)`，作为命令处理这次计算的结果。
       return () => clearTimeout(timer);
     };
+    // t2 暂存 `[onDone]` 生成的渲染片段，后续返回路径直接复用。
     t2 = [onDone];
+    // $[0] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = onDone;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // 调用 React.useEffect，触发命令处理此处需要的副作用。
   React.useEffect(t1, t2);
+  // t3 暂存 `<Text dimColor={true}>{figures.pointer} /resume {args}</T...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== args) {
+    // t3 暂存 `<Text dimColor={true}>{figures.pointer} /resume {args}</T...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text dimColor={true}>{figures.pointer} /resume {args}</Text>;
+    // $[3] 缓存 `args`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = args;
+    // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[4];
   }
+  // t4 暂存 `<MessageResponse><Text>{message}</Text></MessageResponse>` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== message) {
+    // t4 暂存 `<MessageResponse><Text>{message}</Text></MessageResponse>` 生成的渲染片段，后续返回路径直接复用。
     t4 = <MessageResponse><Text>{message}</Text></MessageResponse>;
+    // $[5] 缓存 `message`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = message;
+    // $[6] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[6];
   }
+  // t5 暂存 `<Box flexDirection="column">{t3}{t4}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== t3 || $[8] !== t4) {
+    // t5 暂存 `<Box flexDirection="column">{t3}{t4}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Box flexDirection="column">{t3}{t4}</Box>;
+    // $[7] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t3;
+    // $[8] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t4;
+    // $[9] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[9];
   }
+  // 返回 `t5`，作为命令处理这次计算的结果。
   return t5;
 }
+// ResumeCommand 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function ResumeCommand({
   onDone,
   onResume
@@ -93,183 +157,281 @@ function ResumeCommand({
   onDone: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
+  // 这个回调绑定到 onResume: (sessionId: UUID, log: LogOption, entrypoint: ResumeEntrypoint) => Promise…，负责命令处理在该局部场景下的响应。
   onResume: (sessionId: UUID, log: LogOption, entrypoint: ResumeEntrypoint) => Promise<void>;
 }): React.ReactNode {
+  // 从 `React.useState<LogOption[]>([])` 按位置拆出 logs、setLogs，让斜杠命令 resume分别处理这些返回值。
   const [logs, setLogs] = React.useState<LogOption[]>([]);
+  // 从 `React.useState<string[]>([])` 按位置拆出 worktreePaths、setWorktreePaths，让斜杠命令 resume分别处理这些返回值。
   const [worktreePaths, setWorktreePaths] = React.useState<string[]>([]);
+  // 从 `React.useState(true)` 按位置拆出 loading、setLoading，让斜杠命令 resume分别处理这些返回值。
   const [loading, setLoading] = React.useState(true);
+  // 从 `React.useState(false)` 按位置拆出 resuming、setResuming，让斜杠命令 resume分别处理这些返回值。
   const [resuming, setResuming] = React.useState(false);
+  // 从 `React.useState(false)` 按位置拆出 showAllProjects、setShowAllProjects，让斜杠命令 resume分别处理这些返回值。
   const [showAllProjects, setShowAllProjects] = React.useState(false);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     rows
   } = useTerminalSize();
+  // insideModal保存`useIsInsideModal`，供命令处理后续处理使用。
   const insideModal = useIsInsideModal();
+  // loadLogs 集合保存`React.useCallback`，供命令处理后续处理使用。
   const loadLogs = React.useCallback(async (allProjects: boolean, paths: string[]) => {
+    // setLoading 写入新的状态值，使命令处理后续读取保持一致。
     setLoading(true);
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // allLogs 集合读取`loadAllProjectsMessageLogs`，供命令处理后续处理使用。
       const allLogs = allProjects ? await loadAllProjectsMessageLogs() : await loadSameRepoMessageLogs(paths);
+      // resumable筛选`filterResumableSessions`，供命令处理后续处理使用。
       const resumable = filterResumableSessions(allLogs, getSessionId());
+      // resumable为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
       if (resumable.length === 0) {
+        // 调用 onDone，触发命令处理此处需要的副作用。
         onDone('No conversations found to resume');
+        // 斜杠命令 resume在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // setLogs 写入新的状态值，使命令处理后续读取保持一致。
       setLogs(resumable);
     } catch (_err) {
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone('Failed to load conversations');
     } finally {
+      // setLoading 写入新的状态值，使命令处理后续读取保持一致。
       setLoading(false);
     }
   }, [onDone]);
+  // 调用 React.useEffect，触发命令处理此处需要的副作用。
   React.useEffect(() => {
+    // init 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function init() {
+      // paths_0 路径数据读取`getWorktreePaths`，供命令处理后续处理使用。
       const paths_0 = await getWorktreePaths(getOriginalCwd());
+      // setWorktreePaths 写入新的状态值，使命令处理后续读取保持一致。
       setWorktreePaths(paths_0);
+      // 显式忽略 `loadLogs(false, paths_0)` 的返回值，只保留它触发的副作用。
       void loadLogs(false, paths_0);
     }
+    // 显式忽略 `init()` 的返回值，只保留它触发的副作用。
     void init();
   }, [loadLogs]);
+  // handleToggleAllProjects 集合保存`React.useCallback`，供命令处理后续处理使用。
   const handleToggleAllProjects = React.useCallback(() => {
+    // newValue标记命令处理斜杠命令 resume是否启用对应路径。
     const newValue = !showAllProjects;
+    // setShowAllProjects 写入新的状态值，使命令处理后续读取保持一致。
     setShowAllProjects(newValue);
+    // 显式忽略 `loadLogs(newValue, worktreePaths)` 的返回值，只保留它触发的副作用。
     void loadLogs(newValue, worktreePaths);
   }, [showAllProjects, loadLogs, worktreePaths]);
+  // handleSelect 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   async function handleSelect(log: LogOption) {
+    // sessionId 会话数据读取`validateUuid`，供命令处理后续处理使用。
     const sessionId = validateUuid(getSessionIdFromLog(log));
+    // sessionId 会话数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!sessionId) {
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone('Failed to resume conversation');
+      // 斜杠命令 resume在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Load full messages for lite logs
+    // fullLog保存`isLiteLog`，供命令处理后续处理使用。
     const fullLog = isLiteLog(log) ? await loadFullLog(log) : log;
 
     // Check if this conversation is from a different directory
+    // crossProjectCheck读取`checkCrossProjectResume`，供命令处理后续处理使用。
     const crossProjectCheck = checkCrossProjectResume(fullLog, showAllProjects, worktreePaths);
+    // 满足 `crossProjectCheck.isCrossProject` 时，命令处理执行该分支。
     if (crossProjectCheck.isCrossProject) {
+      // 满足 `crossProjectCheck.isSameRepoWorktree` 时，命令处理执行该分支。
       if (crossProjectCheck.isSameRepoWorktree) {
         // Same repo worktree - can resume directly
+        // setResuming 写入新的状态值，使命令处理后续读取保持一致。
         setResuming(true);
+        // 显式忽略 `onResume(sessionId, fullLog, 'slash_command_picker')` 的返回值，只保留它触发的副作用。
         void onResume(sessionId, fullLog, 'slash_command_picker');
+        // 斜杠命令 resume在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Different project - show command instead of resuming
+      // 原始文本保存`setClipboard`，供命令处理后续处理使用。
       const raw = await setClipboard(crossProjectCheck.command);
+      // 满足 `raw) process.stdout.write(raw` 时，命令处理执行该分支。
       if (raw) process.stdout.write(raw);
 
       // Format the output message
+      // 消息格式化`join`，供命令处理后续处理使用。
       const message = ['', 'This conversation is from a different directory.', '', 'To resume, run:', `  ${crossProjectCheck.command}`, '', '(Command copied to clipboard)', ''].join('\n');
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone(message, {
         display: 'user'
       });
+      // 斜杠命令 resume在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Same directory - proceed with resume
+    // setResuming 写入新的状态值，使命令处理后续读取保持一致。
     setResuming(true);
+    // 显式忽略 `onResume(sessionId, fullLog, 'slash_command_picker')` 的返回值，只保留它触发的副作用。
     void onResume(sessionId, fullLog, 'slash_command_picker');
   }
+  // handleCancel 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleCancel() {
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone('Resume cancelled', {
       display: 'system'
     });
   }
+  // 满足 `loading` 时，命令处理执行该分支。
   if (loading) {
+    // 返回 `<Box>`，作为命令处理这次计算的结果。
     return <Box>
         <Spinner />
         <Text> Loading conversations…</Text>
       </Box>;
   }
+  // 满足 `resuming` 时，命令处理执行该分支。
   if (resuming) {
+    // 返回 `<Box>`，作为命令处理这次计算的结果。
     return <Box>
         <Spinner />
         <Text> Resuming conversation…</Text>
       </Box>;
   }
+  // 返回 `<LogSelector logs={logs} maxHeight={insideModal ? Math.floor(rows / 2) ...`，作为命令处理这次计算的结果。
   return <LogSelector logs={logs} maxHeight={insideModal ? Math.floor(rows / 2) : rows - 2} onCancel={handleCancel} onSelect={handleSelect} onLogsChanged={() => loadLogs(showAllProjects, worktreePaths)} showAllProjects={showAllProjects} onToggleAllProjects={handleToggleAllProjects} onAgenticSearch={agenticSessionSearch} />;
 }
+// filterResumableSessions 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function filterResumableSessions(logs: LogOption[], currentSessionId: string): LogOption[] {
+  // 返回 `logs.filter(l => !l.isSidechain && getSessionIdFromLog(l) !== currentSe...`，作为命令处理这次计算的结果。
   return logs.filter(l => !l.isSidechain && getSessionIdFromLog(l) !== currentSessionId);
 }
+// 这个回调绑定到 export const call: LocalJSXCommandCall = async (onDone, context, args) => {，负责命令处理在该局部场景下的响应。
 export const call: LocalJSXCommandCall = async (onDone, context, args) => {
+  // onResume保存`async`，供命令处理后续处理使用。
   const onResume = async (sessionId: UUID, log: LogOption, entrypoint: ResumeEntrypoint) => {
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // 等待 `context.resume?.(sessionId, log, entrypoint)` 完成，再继续斜杠命令 resume的异步流程。
       await context.resume?.(sessionId, log, entrypoint);
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone(undefined, {
         display: 'skip'
       });
     } catch (error) {
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logError(error as Error);
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone(`Failed to resume: ${(error as Error).message}`);
     }
   };
+  // 当前参数格式化`trim`，供命令处理后续处理使用。
   const arg = args?.trim();
 
   // No argument provided - show picker
+  // 当前参数缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!arg) {
+    // 返回 `<ResumeCommand key={Date.now()} onDone={onDone} onResume={onResume} />`，作为命令处理这次计算的结果。
     return <ResumeCommand key={Date.now()} onDone={onDone} onResume={onResume} />;
   }
 
   // Load logs to search (includes same-repo worktrees)
+  // worktreePaths 路径数据读取`getWorktreePaths`，供命令处理后续处理使用。
   const worktreePaths = await getWorktreePaths(getOriginalCwd());
+  // logs 集合读取`loadSameRepoMessageLogs`，供命令处理后续处理使用。
   const logs = await loadSameRepoMessageLogs(worktreePaths);
+  // logs 集合为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
   if (logs.length === 0) {
+    // 消息 命名 `'No conversations found to resume.'`，让后续代码直接表达这个值的用途。
     const message = 'No conversations found to resume.';
+    // 返回 `<ResumeError message={message} args={arg} onDone={() => onDone(message)...`，作为命令处理这次计算的结果。
     return <ResumeError message={message} args={arg} onDone={() => onDone(message)} />;
   }
 
   // First, check if arg is a valid UUID
+  // maybeSessionId 会话数据读取`validateUuid`，供命令处理后续处理使用。
   const maybeSessionId = validateUuid(arg);
+  // 满足 `maybeSessionId` 时，命令处理执行该分支。
   if (maybeSessionId) {
+    // matchingLogs 集合筛选`logs.filter`，供命令处理后续处理使用。
     const matchingLogs = logs.filter(l => getSessionIdFromLog(l) === maybeSessionId).sort((a, b) => b.modified.getTime() - a.modified.getTime());
+    // 满足 `matchingLogs.length > 0` 时，命令处理执行该分支。
     if (matchingLogs.length > 0) {
+      // log 命名 `matchingLogs[0]!`，让后续代码直接表达这个值的用途。
       const log = matchingLogs[0]!;
+      // fullLog保存`isLiteLog`，供命令处理后续处理使用。
       const fullLog = isLiteLog(log) ? await loadFullLog(log) : log;
+      // 显式忽略 `onResume(maybeSessionId, fullLog, 'slash_command_session_id')` 的返回值，只保留它触发的副作用。
       void onResume(maybeSessionId, fullLog, 'slash_command_session_id');
+      // 返回 `null`，作为命令处理这次计算的结果。
       return null;
     }
 
     // Enriched logs didn't find it — try direct file lookup. This handles
     // sessions filtered out by enrichLogs (e.g., first message >16KB makes
     // firstPrompt extraction fail, causing the session to be dropped).
+    // directLog读取`getLastSessionLog`，供命令处理后续处理使用。
     const directLog = await getLastSessionLog(maybeSessionId);
+    // 满足 `directLog` 时，命令处理执行该分支。
     if (directLog) {
+      // 显式忽略 `onResume(maybeSessionId, directLog, 'slash_command_session_id')` 的返回值，只保留它触发的副作用。
       void onResume(maybeSessionId, directLog, 'slash_command_session_id');
+      // 返回 `null`，作为命令处理这次计算的结果。
       return null;
     }
   }
 
   // Next, try exact custom title match (only if feature is enabled)
+  // 满足 `isCustomTitleEnabled()` 时，命令处理执行该分支。
   if (isCustomTitleEnabled()) {
+    // titleMatches 标题保存`searchSessionsByCustomTitle`，供命令处理后续处理使用。
     const titleMatches = await searchSessionsByCustomTitle(arg, {
       exact: true
     });
+    // 满足 `titleMatches.length === 1` 时，命令处理执行该分支。
     if (titleMatches.length === 1) {
+      // log 命名 `titleMatches[0]!`，让后续代码直接表达这个值的用途。
       const log = titleMatches[0]!;
+      // sessionId 会话数据读取`getSessionIdFromLog`，供命令处理后续处理使用。
       const sessionId = getSessionIdFromLog(log);
+      // 满足 `sessionId` 时，命令处理执行该分支。
       if (sessionId) {
+        // fullLog保存`isLiteLog`，供命令处理后续处理使用。
         const fullLog = isLiteLog(log) ? await loadFullLog(log) : log;
+        // 显式忽略 `onResume(sessionId, fullLog, 'slash_command_title')` 的返回值，只保留它触发的副作用。
         void onResume(sessionId, fullLog, 'slash_command_title');
+        // 返回 `null`，作为命令处理这次计算的结果。
         return null;
       }
     }
 
     // Multiple matches - show error
+    // 满足 `titleMatches.length > 1` 时，命令处理执行该分支。
     if (titleMatches.length > 1) {
+      // 消息保存`resumeHelpMessage`，供命令处理后续处理使用。
       const message = resumeHelpMessage({
         resultType: 'multipleMatches',
         arg,
         count: titleMatches.length
       });
+      // 返回 `<ResumeError message={message} args={arg} onDone={() => onDone(message)...`，作为命令处理这次计算的结果。
       return <ResumeError message={message} args={arg} onDone={() => onDone(message)} />;
     }
   }
 
   // No match found - show error
+  // 消息保存`resumeHelpMessage`，供命令处理后续处理使用。
   const message = resumeHelpMessage({
     resultType: 'sessionNotFound',
     arg
   });
+  // 返回 `<ResumeError message={message} args={arg} onDone={() => onDone(message)...`，作为命令处理这次计算的结果。
   return <ResumeError message={message} args={arg} onDone={() => onDone(message)} />;
 };
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjaGFsayIsIlVVSUQiLCJmaWd1cmVzIiwiUmVhY3QiLCJnZXRPcmlnaW5hbEN3ZCIsImdldFNlc3Npb25JZCIsIkNvbW1hbmRSZXN1bHREaXNwbGF5IiwiUmVzdW1lRW50cnlwb2ludCIsIkxvZ1NlbGVjdG9yIiwiTWVzc2FnZVJlc3BvbnNlIiwiU3Bpbm5lciIsInVzZUlzSW5zaWRlTW9kYWwiLCJ1c2VUZXJtaW5hbFNpemUiLCJzZXRDbGlwYm9hcmQiLCJCb3giLCJUZXh0IiwiTG9jYWxKU1hDb21tYW5kQ2FsbCIsIkxvZ09wdGlvbiIsImFnZW50aWNTZXNzaW9uU2VhcmNoIiwiY2hlY2tDcm9zc1Byb2plY3RSZXN1bWUiLCJnZXRXb3JrdHJlZVBhdGhzIiwibG9nRXJyb3IiLCJnZXRMYXN0U2Vzc2lvbkxvZyIsImdldFNlc3Npb25JZEZyb21Mb2ciLCJpc0N1c3RvbVRpdGxlRW5hYmxlZCIsImlzTGl0ZUxvZyIsImxvYWRBbGxQcm9qZWN0c01lc3NhZ2VMb2dzIiwibG9hZEZ1bGxMb2ciLCJsb2FkU2FtZVJlcG9NZXNzYWdlTG9ncyIsInNlYXJjaFNlc3Npb25zQnlDdXN0b21UaXRsZSIsInZhbGlkYXRlVXVpZCIsIlJlc3VtZVJlc3VsdCIsInJlc3VsdFR5cGUiLCJhcmciLCJjb3VudCIsInJlc3VtZUhlbHBNZXNzYWdlIiwicmVzdWx0IiwiYm9sZCIsIlJlc3VtZUVycm9yIiwidDAiLCIkIiwiX2MiLCJtZXNzYWdlIiwiYXJncyIsIm9uRG9uZSIsInQxIiwidDIiLCJ0aW1lciIsInNldFRpbWVvdXQiLCJjbGVhclRpbWVvdXQiLCJ1c2VFZmZlY3QiLCJ0MyIsInBvaW50ZXIiLCJ0NCIsInQ1IiwiUmVzdW1lQ29tbWFuZCIsIm9uUmVzdW1lIiwib3B0aW9ucyIsImRpc3BsYXkiLCJzZXNzaW9uSWQiLCJsb2ciLCJlbnRyeXBvaW50IiwiUHJvbWlzZSIsIlJlYWN0Tm9kZSIsImxvZ3MiLCJzZXRMb2dzIiwidXNlU3RhdGUiLCJ3b3JrdHJlZVBhdGhzIiwic2V0V29ya3RyZWVQYXRocyIsImxvYWRpbmciLCJzZXRMb2FkaW5nIiwicmVzdW1pbmciLCJzZXRSZXN1bWluZyIsInNob3dBbGxQcm9qZWN0cyIsInNldFNob3dBbGxQcm9qZWN0cyIsInJvd3MiLCJpbnNpZGVNb2RhbCIsImxvYWRMb2dzIiwidXNlQ2FsbGJhY2siLCJhbGxQcm9qZWN0cyIsInBhdGhzIiwiYWxsTG9ncyIsInJlc3VtYWJsZSIsImZpbHRlclJlc3VtYWJsZVNlc3Npb25zIiwibGVuZ3RoIiwiX2VyciIsImluaXQiLCJoYW5kbGVUb2dnbGVBbGxQcm9qZWN0cyIsIm5ld1ZhbHVlIiwiaGFuZGxlU2VsZWN0IiwiZnVsbExvZyIsImNyb3NzUHJvamVjdENoZWNrIiwiaXNDcm9zc1Byb2plY3QiLCJpc1NhbWVSZXBvV29ya3RyZWUiLCJyYXciLCJjb21tYW5kIiwicHJvY2VzcyIsInN0ZG91dCIsIndyaXRlIiwiam9pbiIsImhhbmRsZUNhbmNlbCIsIk1hdGgiLCJmbG9vciIsImN1cnJlbnRTZXNzaW9uSWQiLCJmaWx0ZXIiLCJsIiwiaXNTaWRlY2hhaW4iLCJjYWxsIiwiY29udGV4dCIsInJlc3VtZSIsInVuZGVmaW5lZCIsImVycm9yIiwiRXJyb3IiLCJ0cmltIiwiRGF0ZSIsIm5vdyIsIm1heWJlU2Vzc2lvbklkIiwibWF0Y2hpbmdMb2dzIiwic29ydCIsImEiLCJiIiwibW9kaWZpZWQiLCJnZXRUaW1lIiwiZGlyZWN0TG9nIiwidGl0bGVNYXRjaGVzIiwiZXhhY3QiXSwic291cmNlcyI6WyJyZXN1bWUudHN4Il0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBjaGFsayBmcm9tICdjaGFsaydcbmltcG9ydCB0eXBlIHsgVVVJRCB9IGZyb20gJ2NyeXB0bydcbmltcG9ydCBmaWd1cmVzIGZyb20gJ2ZpZ3VyZXMnXG5pbXBvcnQgKiBhcyBSZWFjdCBmcm9tICdyZWFjdCdcbmltcG9ydCB7IGdldE9yaWdpbmFsQ3dkLCBnZXRTZXNzaW9uSWQgfSBmcm9tICcuLi8uLi9ib290c3RyYXAvc3RhdGUuanMnXG5pbXBvcnQgdHlwZSB7IENvbW1hbmRSZXN1bHREaXNwbGF5LCBSZXN1bWVFbnRyeXBvaW50IH0gZnJvbSAnLi4vLi4vY29tbWFuZHMuanMnXG5pbXBvcnQgeyBMb2dTZWxlY3RvciB9IGZyb20gJy4uLy4uL2NvbXBvbmVudHMvTG9nU2VsZWN0b3IuanMnXG5pbXBvcnQgeyBNZXNzYWdlUmVzcG9uc2UgfSBmcm9tICcuLi8uLi9jb21wb25lbnRzL01lc3NhZ2VSZXNwb25zZS5qcydcbmltcG9ydCB7IFNwaW5uZXIgfSBmcm9tICcuLi8uLi9jb21wb25lbnRzL1NwaW5uZXIuanMnXG5pbXBvcnQgeyB1c2VJc0luc2lkZU1vZGFsIH0gZnJvbSAnLi4vLi4vY29udGV4dC9tb2RhbENvbnRleHQuanMnXG5pbXBvcnQgeyB1c2VUZXJtaW5hbFNpemUgfSBmcm9tICcuLi8uLi9ob29rcy91c2VUZXJtaW5hbFNpemUuanMnXG5pbXBvcnQgeyBzZXRDbGlwYm9hcmQgfSBmcm9tICcuLi8uLi9pbmsvdGVybWlvL29zYy5qcydcbmltcG9ydCB7IEJveCwgVGV4dCB9IGZyb20gJy4uLy4uL2luay5qcydcbmltcG9ydCB0eXBlIHsgTG9jYWxKU1hDb21tYW5kQ2FsbCB9IGZyb20gJy4uLy4uL3R5cGVzL2NvbW1hbmQuanMnXG5pbXBvcnQgdHlwZSB7IExvZ09wdGlvbiB9IGZyb20gJy4uLy4uL3R5cGVzL2xvZ3MuanMnXG5pbXBvcnQgeyBhZ2VudGljU2Vzc2lvblNlYXJjaCB9IGZyb20gJy4uLy4uL3V0aWxzL2FnZW50aWNTZXNzaW9uU2VhcmNoLmpzJ1xuaW1wb3J0IHsgY2hlY2tDcm9zc1Byb2plY3RSZXN1bWUgfSBmcm9tICcuLi8uLi91dGlscy9jcm9zc1Byb2plY3RSZXN1bWUuanMnXG5pbXBvcnQgeyBnZXRXb3JrdHJlZVBhdGhzIH0gZnJvbSAnLi4vLi4vdXRpbHMvZ2V0V29ya3RyZWVQYXRocy5qcydcbmltcG9ydCB7IGxvZ0Vycm9yIH0gZnJvbSAnLi4vLi4vdXRpbHMvbG9nLmpzJ1xuaW1wb3J0IHtcbiAgZ2V0TGFzdFNlc3Npb25Mb2csXG4gIGdldFNlc3Npb25JZEZyb21Mb2csXG4gIGlzQ3VzdG9tVGl0bGVFbmFibGVkLFxuICBpc0xpdGVMb2csXG4gIGxvYWRBbGxQcm9qZWN0c01lc3NhZ2VMb2dzLFxuICBsb2FkRnVsbExvZyxcbiAgbG9hZFNhbWVSZXBvTWVzc2FnZUxvZ3MsXG4gIHNlYXJjaFNlc3Npb25zQnlDdXN0b21UaXRsZSxcbn0gZnJvbSAnLi4vLi4vdXRpbHMvc2Vzc2lvblN0b3JhZ2UuanMnXG5pbXBvcnQgeyB2YWxpZGF0ZVV1aWQgfSBmcm9tICcuLi8uLi91dGlscy91dWlkLmpzJ1xuXG50eXBlIFJlc3VtZVJlc3VsdCA9XG4gIHwgeyByZXN1bHRUeXBlOiAnc2Vzc2lvbk5vdEZvdW5kJzsgYXJnOiBzdHJpbmcgfVxuICB8IHsgcmVzdWx0VHlwZTogJ211bHRpcGxlTWF0Y2hlcyc7IGFyZzogc3RyaW5nOyBjb3VudDogbnVtYmVyIH1cblxuZnVuY3Rpb24gcmVzdW1lSGVscE1lc3NhZ2UocmVzdWx0OiBSZXN1bWVSZXN1bHQpOiBzdHJpbmcge1xuICBzd2l0Y2ggKHJlc3VsdC5yZXN1bHRUeXBlKSB7XG4gICAgY2FzZSAnc2Vzc2lvbk5vdEZvdW5kJzpcbiAgICAgIHJldHVybiBgU2Vzc2lvbiAke2NoYWxrLmJvbGQocmVzdWx0LmFyZyl9IHdhcyBub3QgZm91bmQuYFxuICAgIGNhc2UgJ211bHRpcGxlTWF0Y2hlcyc6XG4gICAgICByZXR1cm4gYEZvdW5kICR7cmVzdWx0LmNvdW50fSBzZXNzaW9ucyBtYXRjaGluZyAke2NoYWxrLmJvbGQocmVzdWx0LmFyZyl9LiBQbGVhc2UgdXNlIC9yZXN1bWUgdG8gcGljayBhIHNwZWNpZmljIHNlc3Npb24uYFxuICB9XG59XG5cbmZ1bmN0aW9uIFJlc3VtZUVycm9yKHtcbiAgbWVzc2FnZSxcbiAgYXJncyxcbiAgb25Eb25lLFxufToge1xuICBtZXNzYWdlOiBzdHJpbmdcbiAgYXJnczogc3RyaW5nXG4gIG9uRG9uZTogKCkgPT4gdm9pZFxufSk6IFJlYWN0LlJlYWN0Tm9kZSB7XG4gIFJlYWN0LnVzZUVmZmVjdCgoKSA9PiB7XG4gICAgY29uc3QgdGltZXIgPSBzZXRUaW1lb3V0KG9uRG9uZSwgMClcbiAgICByZXR1cm4gKCkgPT4gY2xlYXJUaW1lb3V0KHRpbWVyKVxuICB9LCBbb25Eb25lXSlcblxuICByZXR1cm4gKFxuICAgIDxCb3ggZmxleERpcmVjdGlvbj1cImNvbHVtblwiPlxuICAgICAgPFRleHQgZGltQ29sb3I+XG4gICAgICAgIHtmaWd1cmVzLnBvaW50ZXJ9IC9yZXN1bWUge2FyZ3N9XG4gICAgICA8L1RleHQ+XG4gICAgICA8TWVzc2FnZVJlc3BvbnNlPlxuICAgICAgICA8VGV4dD57bWVzc2FnZX08L1RleHQ+XG4gICAgICA8L01lc3NhZ2VSZXNwb25zZT5cbiAgICA8L0JveD5cbiAgKVxufVxuXG5mdW5jdGlvbiBSZXN1bWVDb21tYW5kKHtcbiAgb25Eb25lLFxuICBvblJlc3VtZSxcbn06IHtcbiAgb25Eb25lOiAoXG4gICAgcmVzdWx0Pzogc3RyaW5nLFxuICAgIG9wdGlvbnM/OiB7IGRpc3BsYXk/OiBDb21tYW5kUmVzdWx0RGlzcGxheSB9LFxuICApID0+IHZvaWRcbiAgb25SZXN1bWU6IChcbiAgICBzZXNzaW9uSWQ6IFVVSUQsXG4gICAgbG9nOiBMb2dPcHRpb24sXG4gICAgZW50cnlwb2ludDogUmVzdW1lRW50cnlwb2ludCxcbiAgKSA9PiBQcm9taXNlPHZvaWQ+XG59KTogUmVhY3QuUmVhY3ROb2RlIHtcbiAgY29uc3QgW2xvZ3MsIHNldExvZ3NdID0gUmVhY3QudXNlU3RhdGU8TG9nT3B0aW9uW10+KFtdKVxuICBjb25zdCBbd29ya3RyZWVQYXRocywgc2V0V29ya3RyZWVQYXRoc10gPSBSZWFjdC51c2VTdGF0ZTxzdHJpbmdbXT4oW10pXG4gIGNvbnN0IFtsb2FkaW5nLCBzZXRMb2FkaW5nXSA9IFJlYWN0LnVzZVN0YXRlKHRydWUpXG4gIGNvbnN0IFtyZXN1bWluZywgc2V0UmVzdW1pbmddID0gUmVhY3QudXNlU3RhdGUoZmFsc2UpXG4gIGNvbnN0IFtzaG93QWxsUHJvamVjdHMsIHNldFNob3dBbGxQcm9qZWN0c10gPSBSZWFjdC51c2VTdGF0ZShmYWxzZSlcbiAgY29uc3QgeyByb3dzIH0gPSB1c2VUZXJtaW5hbFNpemUoKVxuICBjb25zdCBpbnNpZGVNb2RhbCA9IHVzZUlzSW5zaWRlTW9kYWwoKVxuXG4gIGNvbnN0IGxvYWRMb2dzID0gUmVhY3QudXNlQ2FsbGJhY2soXG4gICAgYXN5bmMgKGFsbFByb2plY3RzOiBib29sZWFuLCBwYXRoczogc3RyaW5nW10pID0+IHtcbiAgICAgIHNldExvYWRpbmcodHJ1ZSlcbiAgICAgIHRyeSB7XG4gICAgICAgIGNvbnN0IGFsbExvZ3MgPSBhbGxQcm9qZWN0c1xuICAgICAgICAgID8gYXdhaXQgbG9hZEFsbFByb2plY3RzTWVzc2FnZUxvZ3MoKVxuICAgICAgICAgIDogYXdhaXQgbG9hZFNhbWVSZXBvTWVzc2FnZUxvZ3MocGF0aHMpXG4gICAgICAgIGNvbnN0IHJlc3VtYWJsZSA9IGZpbHRlclJlc3VtYWJsZVNlc3Npb25zKGFsbExvZ3MsIGdldFNlc3Npb25JZCgpKVxuICAgICAgICBpZiAocmVzdW1hYmxlLmxlbmd0aCA9PT0gMCkge1xuICAgICAgICAgIG9uRG9uZSgnTm8gY29udmVyc2F0aW9ucyBmb3VuZCB0byByZXN1bWUnKVxuICAgICAgICAgIHJldHVyblxuICAgICAgICB9XG4gICAgICAgIHNldExvZ3MocmVzdW1hYmxlKVxuICAgICAgfSBjYXRjaCAoX2Vycikge1xuICAgICAgICBvbkRvbmUoJ0ZhaWxlZCB0byBsb2FkIGNvbnZlcnNhdGlvbnMnKVxuICAgICAgfSBmaW5hbGx5IHtcbiAgICAgICAgc2V0TG9hZGluZyhmYWxzZSlcbiAgICAgIH1cbiAgICB9LFxuICAgIFtvbkRvbmVdLFxuICApXG5cbiAgUmVhY3QudXNlRWZmZWN0KCgpID0+IHtcbiAgICBhc3luYyBmdW5jdGlvbiBpbml0KCkge1xuICAgICAgY29uc3QgcGF0aHMgPSBhd2FpdCBnZXRXb3JrdHJlZVBhdGhzKGdldE9yaWdpbmFsQ3dkKCkpXG4gICAgICBzZXRXb3JrdHJlZVBhdGhzKHBhdGhzKVxuICAgICAgdm9pZCBsb2FkTG9ncyhmYWxzZSwgcGF0aHMpXG4gICAgfVxuICAgIHZvaWQgaW5pdCgpXG4gIH0sIFtsb2FkTG9nc10pXG5cbiAgY29uc3QgaGFuZGxlVG9nZ2xlQWxsUHJvamVjdHMgPSBSZWFjdC51c2VDYWxsYmFjaygoKSA9PiB7XG4gICAgY29uc3QgbmV3VmFsdWUgPSAhc2hvd0FsbFByb2plY3RzXG4gICAgc2V0U2hvd0FsbFByb2plY3RzKG5ld1ZhbHVlKVxuICAgIHZvaWQgbG9hZExvZ3MobmV3VmFsdWUsIHdvcmt0cmVlUGF0aHMpXG4gIH0sIFtzaG93QWxsUHJvamVjdHMsIGxvYWRMb2dzLCB3b3JrdHJlZVBhdGhzXSlcblxuICBhc3luYyBmdW5jdGlvbiBoYW5kbGVTZWxlY3QobG9nOiBMb2dPcHRpb24pIHtcbiAgICBjb25zdCBzZXNzaW9uSWQgPSB2YWxpZGF0ZVV1aWQoZ2V0U2Vzc2lvbklkRnJvbUxvZyhsb2cpKVxuICAgIGlmICghc2Vzc2lvbklkKSB7XG4gICAgICBvbkRvbmUoJ0ZhaWxlZCB0byByZXN1bWUgY29udmVyc2F0aW9uJylcbiAgICAgIHJldHVyblxuICAgIH1cblxuICAgIC8vIExvYWQgZnVsbCBtZXNzYWdlcyBmb3IgbGl0ZSBsb2dzXG4gICAgY29uc3QgZnVsbExvZyA9IGlzTGl0ZUxvZyhsb2cpID8gYXdhaXQgbG9hZEZ1bGxMb2cobG9nKSA6IGxvZ1xuXG4gICAgLy8gQ2hlY2sgaWYgdGhpcyBjb252ZXJzYXRpb24gaXMgZnJvbSBhIGRpZmZlcmVudCBkaXJlY3RvcnlcbiAgICBjb25zdCBjcm9zc1Byb2plY3RDaGVjayA9IGNoZWNrQ3Jvc3NQcm9qZWN0UmVzdW1lKFxuICAgICAgZnVsbExvZyxcbiAgICAgIHNob3dBbGxQcm9qZWN0cyxcbiAgICAgIHdvcmt0cmVlUGF0aHMsXG4gICAgKVxuICAgIGlmIChjcm9zc1Byb2plY3RDaGVjay5pc0Nyb3NzUHJvamVjdCkge1xuICAgICAgaWYgKGNyb3NzUHJvamVjdENoZWNrLmlzU2FtZVJlcG9Xb3JrdHJlZSkge1xuICAgICAgICAvLyBTYW1lIHJlcG8gd29ya3RyZWUgLSBjYW4gcmVzdW1lIGRpcmVjdGx5XG4gICAgICAgIHNldFJlc3VtaW5nKHRydWUpXG4gICAgICAgIHZvaWQgb25SZXN1bWUoc2Vzc2lvbklkLCBmdWxsTG9nLCAnc2xhc2hfY29tbWFuZF9waWNrZXInKVxuICAgICAgICByZXR1cm5cbiAgICAgIH1cblxuICAgICAgLy8gRGlmZmVyZW50IHByb2plY3QgLSBzaG93IGNvbW1hbmQgaW5zdGVhZCBvZiByZXN1bWluZ1xuICAgICAgY29uc3QgcmF3ID0gYXdhaXQgc2V0Q2xpcGJvYXJkKGNyb3NzUHJvamVjdENoZWNrLmNvbW1hbmQpXG4gICAgICBpZiAocmF3KSBwcm9jZXNzLnN0ZG91dC53cml0ZShyYXcpXG5cbiAgICAgIC8vIEZvcm1hdCB0aGUgb3V0cHV0IG1lc3NhZ2VcbiAgICAgIGNvbnN0IG1lc3NhZ2UgPSBbXG4gICAgICAgICcnLFxuICAgICAgICAnVGhpcyBjb252ZXJzYXRpb24gaXMgZnJvbSBhIGRpZmZlcmVudCBkaXJlY3RvcnkuJyxcbiAgICAgICAgJycsXG4gICAgICAgICdUbyByZXN1bWUsIHJ1bjonLFxuICAgICAgICBgICAke2Nyb3NzUHJvamVjdENoZWNrLmNvbW1hbmR9YCxcbiAgICAgICAgJycsXG4gICAgICAgICcoQ29tbWFuZCBjb3BpZWQgdG8gY2xpcGJvYXJkKScsXG4gICAgICAgICcnLFxuICAgICAgXS5qb2luKCdcXG4nKVxuXG4gICAgICBvbkRvbmUobWVzc2FnZSwgeyBkaXNwbGF5OiAndXNlcicgfSlcbiAgICAgIHJldHVyblxuICAgIH1cblxuICAgIC8vIFNhbWUgZGlyZWN0b3J5IC0gcHJvY2VlZCB3aXRoIHJlc3VtZVxuICAgIHNldFJlc3VtaW5nKHRydWUpXG4gICAgdm9pZCBvblJlc3VtZShzZXNzaW9uSWQsIGZ1bGxMb2csICdzbGFzaF9jb21tYW5kX3BpY2tlcicpXG4gIH1cblxuICBmdW5jdGlvbiBoYW5kbGVDYW5jZWwoKSB7XG4gICAgb25Eb25lKCdSZXN1bWUgY2FuY2VsbGVkJywgeyBkaXNwbGF5OiAnc3lzdGVtJyB9KVxuICB9XG5cbiAgaWYgKGxvYWRpbmcpIHtcbiAgICByZXR1cm4gKFxuICAgICAgPEJveD5cbiAgICAgICAgPFNwaW5uZXIgLz5cbiAgICAgICAgPFRleHQ+IExvYWRpbmcgY29udmVyc2F0aW9uc+KApjwvVGV4dD5cbiAgICAgIDwvQm94PlxuICAgIClcbiAgfVxuXG4gIGlmIChyZXN1bWluZykge1xuICAgIHJldHVybiAoXG4gICAgICA8Qm94PlxuICAgICAgICA8U3Bpbm5lciAvPlxuICAgICAgICA8VGV4dD4gUmVzdW1pbmcgY29udmVyc2F0aW9u4oCmPC9UZXh0PlxuICAgICAgPC9Cb3g+XG4gICAgKVxuICB9XG5cbiAgcmV0dXJuIChcbiAgICA8TG9nU2VsZWN0b3JcbiAgICAgIGxvZ3M9e2xvZ3N9XG4gICAgICBtYXhIZWlnaHQ9e2luc2lkZU1vZGFsID8gTWF0aC5mbG9vcihyb3dzIC8gMikgOiByb3dzIC0gMn1cbiAgICAgIG9uQ2FuY2VsPXtoYW5kbGVDYW5jZWx9XG4gICAgICBvblNlbGVjdD17aGFuZGxlU2VsZWN0fVxuICAgICAgb25Mb2dzQ2hhbmdlZD17KCkgPT4gbG9hZExvZ3Moc2hvd0FsbFByb2plY3RzLCB3b3JrdHJlZVBhdGhzKX1cbiAgICAgIHNob3dBbGxQcm9qZWN0cz17c2hvd0FsbFByb2plY3RzfVxuICAgICAgb25Ub2dnbGVBbGxQcm9qZWN0cz17aGFuZGxlVG9nZ2xlQWxsUHJvamVjdHN9XG4gICAgICBvbkFnZW50aWNTZWFyY2g9e2FnZW50aWNTZXNzaW9uU2VhcmNofVxuICAgIC8+XG4gIClcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIGZpbHRlclJlc3VtYWJsZVNlc3Npb25zKFxuICBsb2dzOiBMb2dPcHRpb25bXSxcbiAgY3VycmVudFNlc3Npb25JZDogc3RyaW5nLFxuKTogTG9nT3B0aW9uW10ge1xuICByZXR1cm4gbG9ncy5maWx0ZXIoXG4gICAgbCA9PiAhbC5pc1NpZGVjaGFpbiAmJiBnZXRTZXNzaW9uSWRGcm9tTG9nKGwpICE9PSBjdXJyZW50U2Vzc2lvbklkLFxuICApXG59XG5cbmV4cG9ydCBjb25zdCBjYWxsOiBMb2NhbEpTWENvbW1hbmRDYWxsID0gYXN5bmMgKG9uRG9uZSwgY29udGV4dCwgYXJncykgPT4ge1xuICBjb25zdCBvblJlc3VtZSA9IGFzeW5jIChcbiAgICBzZXNzaW9uSWQ6IFVVSUQsXG4gICAgbG9nOiBMb2dPcHRpb24sXG4gICAgZW50cnlwb2ludDogUmVzdW1lRW50cnlwb2ludCxcbiAgKSA9PiB7XG4gICAgdHJ5IHtcbiAgICAgIGF3YWl0IGNvbnRleHQucmVzdW1lPy4oc2Vzc2lvbklkLCBsb2csIGVudHJ5cG9pbnQpXG4gICAgICBvbkRvbmUodW5kZWZpbmVkLCB7IGRpc3BsYXk6ICdza2lwJyB9KVxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICBsb2dFcnJvcihlcnJvciBhcyBFcnJvcilcbiAgICAgIG9uRG9uZShgRmFpbGVkIHRvIHJlc3VtZTogJHsoZXJyb3IgYXMgRXJyb3IpLm1lc3NhZ2V9YClcbiAgICB9XG4gIH1cblxuICBjb25zdCBhcmcgPSBhcmdzPy50cmltKClcblxuICAvLyBObyBhcmd1bWVudCBwcm92aWRlZCAtIHNob3cgcGlja2VyXG4gIGlmICghYXJnKSB7XG4gICAgcmV0dXJuIChcbiAgICAgIDxSZXN1bWVDb21tYW5kIGtleT17RGF0ZS5ub3coKX0gb25Eb25lPXtvbkRvbmV9IG9uUmVzdW1lPXtvblJlc3VtZX0gLz5cbiAgICApXG4gIH1cblxuICAvLyBMb2FkIGxvZ3MgdG8gc2VhcmNoIChpbmNsdWRlcyBzYW1lLXJlcG8gd29ya3RyZWVzKVxuICBjb25zdCB3b3JrdHJlZVBhdGhzID0gYXdhaXQgZ2V0V29ya3RyZWVQYXRocyhnZXRPcmlnaW5hbEN3ZCgpKVxuICBjb25zdCBsb2dzID0gYXdhaXQgbG9hZFNhbWVSZXBvTWVzc2FnZUxvZ3Mod29ya3RyZWVQYXRocylcbiAgaWYgKGxvZ3MubGVuZ3RoID09PSAwKSB7XG4gICAgY29uc3QgbWVzc2FnZSA9ICdObyBjb252ZXJzYXRpb25zIGZvdW5kIHRvIHJlc3VtZS4nXG4gICAgcmV0dXJuIChcbiAgICAgIDxSZXN1bWVFcnJvclxuICAgICAgICBtZXNzYWdlPXttZXNzYWdlfVxuICAgICAgICBhcmdzPXthcmd9XG4gICAgICAgIG9uRG9uZT17KCkgPT4gb25Eb25lKG1lc3NhZ2UpfVxuICAgICAgLz5cbiAgICApXG4gIH1cblxuICAvLyBGaXJzdCwgY2hlY2sgaWYgYXJnIGlzIGEgdmFsaWQgVVVJRFxuICBjb25zdCBtYXliZVNlc3Npb25JZCA9IHZhbGlkYXRlVXVpZChhcmcpXG4gIGlmIChtYXliZVNlc3Npb25JZCkge1xuICAgIGNvbnN0IG1hdGNoaW5nTG9ncyA9IGxvZ3NcbiAgICAgIC5maWx0ZXIobCA9PiBnZXRTZXNzaW9uSWRGcm9tTG9nKGwpID09PSBtYXliZVNlc3Npb25JZClcbiAgICAgIC5zb3J0KChhLCBiKSA9PiBiLm1vZGlmaWVkLmdldFRpbWUoKSAtIGEubW9kaWZpZWQuZ2V0VGltZSgpKVxuXG4gICAgaWYgKG1hdGNoaW5nTG9ncy5sZW5ndGggPiAwKSB7XG4gICAgICBjb25zdCBsb2cgPSBtYXRjaGluZ0xvZ3NbMF0hXG4gICAgICBjb25zdCBmdWxsTG9nID0gaXNMaXRlTG9nKGxvZykgPyBhd2FpdCBsb2FkRnVsbExvZyhsb2cpIDogbG9nXG4gICAgICB2b2lkIG9uUmVzdW1lKG1heWJlU2Vzc2lvbklkLCBmdWxsTG9nLCAnc2xhc2hfY29tbWFuZF9zZXNzaW9uX2lkJylcbiAgICAgIHJldHVybiBudWxsXG4gICAgfVxuXG4gICAgLy8gRW5yaWNoZWQgbG9ncyBkaWRuJ3QgZmluZCBpdCDigJQgdHJ5IGRpcmVjdCBmaWxlIGxvb2t1cC4gVGhpcyBoYW5kbGVzXG4gICAgLy8gc2Vzc2lvbnMgZmlsdGVyZWQgb3V0IGJ5IGVucmljaExvZ3MgKGUuZy4sIGZpcnN0IG1lc3NhZ2UgPjE2S0IgbWFrZXNcbiAgICAvLyBmaXJzdFByb21wdCBleHRyYWN0aW9uIGZhaWwsIGNhdXNpbmcgdGhlIHNlc3Npb24gdG8gYmUgZHJvcHBlZCkuXG4gICAgY29uc3QgZGlyZWN0TG9nID0gYXdhaXQgZ2V0TGFzdFNlc3Npb25Mb2cobWF5YmVTZXNzaW9uSWQpXG4gICAgaWYgKGRpcmVjdExvZykge1xuICAgICAgdm9pZCBvblJlc3VtZShtYXliZVNlc3Npb25JZCwgZGlyZWN0TG9nLCAnc2xhc2hfY29tbWFuZF9zZXNzaW9uX2lkJylcbiAgICAgIHJldHVybiBudWxsXG4gICAgfVxuICB9XG5cbiAgLy8gTmV4dCwgdHJ5IGV4YWN0IGN1c3RvbSB0aXRsZSBtYXRjaCAob25seSBpZiBmZWF0dXJlIGlzIGVuYWJsZWQpXG4gIGlmIChpc0N1c3RvbVRpdGxlRW5hYmxlZCgpKSB7XG4gICAgY29uc3QgdGl0bGVNYXRjaGVzID0gYXdhaXQgc2VhcmNoU2Vzc2lvbnNCeUN1c3RvbVRpdGxlKGFyZywge1xuICAgICAgZXhhY3Q6IHRydWUsXG4gICAgfSlcbiAgICBpZiAodGl0bGVNYXRjaGVzLmxlbmd0aCA9PT0gMSkge1xuICAgICAgY29uc3QgbG9nID0gdGl0bGVNYXRjaGVzWzBdIVxuICAgICAgY29uc3Qgc2Vzc2lvbklkID0gZ2V0U2Vzc2lvbklkRnJvbUxvZyhsb2cpXG4gICAgICBpZiAoc2Vzc2lvbklkKSB7XG4gICAgICAgIGNvbnN0IGZ1bGxMb2cgPSBpc0xpdGVMb2cobG9nKSA/IGF3YWl0IGxvYWRGdWxsTG9nKGxvZykgOiBsb2dcbiAgICAgICAgdm9pZCBvblJlc3VtZShzZXNzaW9uSWQsIGZ1bGxMb2csICdzbGFzaF9jb21tYW5kX3RpdGxlJylcbiAgICAgICAgcmV0dXJuIG51bGxcbiAgICAgIH1cbiAgICB9XG5cbiAgICAvLyBNdWx0aXBsZSBtYXRjaGVzIC0gc2hvdyBlcnJvclxuICAgIGlmICh0aXRsZU1hdGNoZXMubGVuZ3RoID4gMSkge1xuICAgICAgY29uc3QgbWVzc2FnZSA9IHJlc3VtZUhlbHBNZXNzYWdlKHtcbiAgICAgICAgcmVzdWx0VHlwZTogJ211bHRpcGxlTWF0Y2hlcycsXG4gICAgICAgIGFyZyxcbiAgICAgICAgY291bnQ6IHRpdGxlTWF0Y2hlcy5sZW5ndGgsXG4gICAgICB9KVxuICAgICAgcmV0dXJuIChcbiAgICAgICAgPFJlc3VtZUVycm9yXG4gICAgICAgICAgbWVzc2FnZT17bWVzc2FnZX1cbiAgICAgICAgICBhcmdzPXthcmd9XG4gICAgICAgICAgb25Eb25lPXsoKSA9PiBvbkRvbmUobWVzc2FnZSl9XG4gICAgICAgIC8+XG4gICAgICApXG4gICAgfVxuICB9XG5cbiAgLy8gTm8gbWF0Y2ggZm91bmQgLSBzaG93IGVycm9yXG4gIGNvbnN0IG1lc3NhZ2UgPSByZXN1bWVIZWxwTWVzc2FnZSh7IHJlc3VsdFR5cGU6ICdzZXNzaW9uTm90Rm91bmQnLCBhcmcgfSlcbiAgcmV0dXJuIChcbiAgICA8UmVzdW1lRXJyb3IgbWVzc2FnZT17bWVzc2FnZX0gYXJncz17YXJnfSBvbkRvbmU9eygpID0+IG9uRG9uZShtZXNzYWdlKX0gLz5cbiAgKVxufVxuIl0sIm1hcHBpbmdzIjoiO0FBQUEsT0FBT0EsS0FBSyxNQUFNLE9BQU87QUFDekIsY0FBY0MsSUFBSSxRQUFRLFFBQVE7QUFDbEMsT0FBT0MsT0FBTyxNQUFNLFNBQVM7QUFDN0IsT0FBTyxLQUFLQyxLQUFLLE1BQU0sT0FBTztBQUM5QixTQUFTQyxjQUFjLEVBQUVDLFlBQVksUUFBUSwwQkFBMEI7QUFDdkUsY0FBY0Msb0JBQW9CLEVBQUVDLGdCQUFnQixRQUFRLG1CQUFtQjtBQUMvRSxTQUFTQyxXQUFXLFFBQVEsaUNBQWlDO0FBQzdELFNBQVNDLGVBQWUsUUFBUSxxQ0FBcUM7QUFDckUsU0FBU0MsT0FBTyxRQUFRLDZCQUE2QjtBQUNyRCxTQUFTQyxnQkFBZ0IsUUFBUSwrQkFBK0I7QUFDaEUsU0FBU0MsZUFBZSxR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

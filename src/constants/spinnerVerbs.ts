@@ -1,18 +1,28 @@
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../utils/settings/settings.js'
 
+// getSpinnerVerbs 封装spinnerVerbs的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getSpinnerVerbs(): string[] {
+  // settings 集合读取`getInitialSettings`，供spinner Verbs后续处理使用。
   const settings = getInitialSettings()
+  // 配置保存`settings.spinnerVerbs`，供后续判断或组装使用。
   const config = settings.spinnerVerbs
+  // 配置缺失时提前走兜底路径，避免spinner Verbs继续依赖无效输入。
   if (!config) {
+    // 返回 `SPINNER_VERBS`，作为spinner Verbs这次计算的结果。
     return SPINNER_VERBS
   }
+  // 当 `config.mode` 匹配 `'replace'` 时，spinner Verbs执行对应分支。
   if (config.mode === 'replace') {
+    // 返回 `config.verbs.length > 0 ? config.verbs : SPINNER_VERBS`，作为spinner Verbs这次计算的结果。
     return config.verbs.length > 0 ? config.verbs : SPINNER_VERBS
   }
+  // 返回列表结果，保留spinner Verbs已经排好的条目顺序。
   return [...SPINNER_VERBS, ...config.verbs]
 }
 
 // Spinner verbs for loading messages
+// SPINNER_VERBS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const SPINNER_VERBS = [
   'Accomplishing',
   'Actioning',

@@ -1,12 +1,17 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 import { EXIT_PLAN_MODE_TOOL_NAME } from '../ExitPlanModeTool/constants.js'
 
+// ASK_USER_QUESTION_TOOL_NAME保存`'AskUserQuestion'`，作为后续固定文本处理的输入。
 export const ASK_USER_QUESTION_TOOL_NAME = 'AskUserQuestion'
 
+// ASK_USER_QUESTION_TOOL_CHIP_WIDTH 命名 `12`，让后续代码直接表达这个值的用途。
 export const ASK_USER_QUESTION_TOOL_CHIP_WIDTH = 12
 
+// DESCRIPTION 先占位，稍后的条件分支会根据实际输入补齐它。
 export const DESCRIPTION =
   'Asks the user multiple choice questions to gather information, clarify ambiguity, understand preferences, make decisions or offer them choices.'
 
+// PREVIEW_FEATURE_PROMPT集中保存工具实现 prompt要一起传递的字段。
 export const PREVIEW_FEATURE_PROMPT = {
   markdown: `
 Preview feature:
@@ -29,6 +34,7 @@ Preview content must be a self-contained HTML fragment (no <html>/<body> wrapper
 `,
 } as const
 
+// ASK_USER_QUESTION_TOOL_PROMPT固定为 ``Use this tool when you need to ask the user questions du...`，作为工具实现 prompt后续展示或比较的基准。
 export const ASK_USER_QUESTION_TOOL_PROMPT = `Use this tool when you need to ask the user questions during execution. This allows you to:
 1. Gather user preferences or requirements
 2. Clarify ambiguous instructions

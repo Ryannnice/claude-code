@@ -1,16 +1,30 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 homedir，将 node:os 中已经封装好的能力接到本文件流程里。
 import { homedir } from 'node:os';
+// 引入 join，将 node:path 中已经封装好的能力接到本文件流程里。
 import { join } from 'node:path';
+// 引入 React、useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useEffect, useState } from 'react';
+// 类型依赖 { CommandResultDisplay } 来自 src/commands.js，用于校准命令处理的数据契约。
 import type { CommandResultDisplay } from 'src/commands.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
+// 复用 StatusIcon 终端界面组件，避免在这里重复拼装显示逻辑。
 import { StatusIcon } from '../components/design-system/StatusIcon.js';
+// 引入 Box、render、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, render, Text } from '../ink.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 env 工具函数，把通用处理留在 ../utils/env.js 中维护。
 import { env } from '../utils/env.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../utils/errors.js 中维护。
 import { errorMessage } from '../utils/errors.js';
+// 复用 checkInstall、cleanupNpmInstallations、cleanupShellAliases、installLatest 工具函数，把通用处理留在 ../utils/nativeInstaller/index.js 中维护。
 import { checkInstall, cleanupNpmInstallations, cleanupShellAliases, installLatest } from '../utils/nativeInstaller/index.js';
+// 复用 getInitialSettings、updateSettingsForSource 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getInitialSettings, updateSettingsForSource } from '../utils/settings/settings.js';
+// InstallProps 描述命令处理需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface InstallProps {
   onDone: (result: string, options?: {
     display?: CommandResultDisplay;
@@ -18,6 +32,7 @@ interface InstallProps {
   force?: boolean;
   target?: string; // 'latest', 'stable', or version like '1.0.34'
 }
+// InstallState 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type InstallState = {
   type: 'checking';
 } | {
@@ -39,156 +54,231 @@ type InstallState = {
   message: string;
   warnings?: string[];
 };
+// getInstallationPath 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getInstallationPath(): string {
+  // isWindows 集合标记命令处理斜杠命令 install是否启用对应路径。
   const isWindows = env.platform === 'win32';
+  // homeDir保存`homedir`，供命令处理后续处理使用。
   const homeDir = homedir();
+  // 满足 `isWindows` 时，命令处理执行该分支。
   if (isWindows) {
     // Convert to Windows-style path
+    // windowsPath 路径数据格式化`join`，供命令处理后续处理使用。
     const windowsPath = join(homeDir, '.local', 'bin', 'claude.exe');
     // Replace forward slashes with backslashes for Windows display
+    // 返回 `windowsPath.replace(/\//g, '\\')`，作为命令处理这次计算的结果。
     return windowsPath.replace(/\//g, '\\');
   }
+  // 返回 `'~/.local/bin/claude'`，作为命令处理这次计算的结果。
   return '~/.local/bin/claude';
 }
+// SetupNotes 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function SetupNotes(t0) {
+  // $保存`_c`，供命令处理后续处理使用。
   const $ = _c(5);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     messages
   } = t0;
+  // 对话消息为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
   if (messages.length === 0) {
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
+  // t1 暂存 `<Box><Text color="warning"><StatusIcon status="warning" w...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `<Box><Text color="warning"><StatusIcon status="warning" w...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <Box><Text color="warning"><StatusIcon status="warning" withSpace={true} />Setup notes:</Text></Box>;
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // t2 暂存 `messages.map(_temp)` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== messages) {
+    // t2 暂存 `messages.map(_temp)` 生成的渲染片段，后续返回路径直接复用。
     t2 = messages.map(_temp);
+    // $[1] 缓存 `messages`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = messages;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // t3 暂存 `<Box flexDirection="column" gap={0} marginBottom={1}>{t1}...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== t2) {
+    // t3 暂存 `<Box flexDirection="column" gap={0} marginBottom={1}>{t1}...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Box flexDirection="column" gap={0} marginBottom={1}>{t1}{t2}</Box>;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
+    // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[4];
   }
+  // 返回 `t3`，作为命令处理这次计算的结果。
   return t3;
 }
+// _temp 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(message, index) {
+  // 返回 `<Box key={index} marginLeft={2}><Text dimColor={true}>• {message}</Text...`，作为命令处理这次计算的结果。
   return <Box key={index} marginLeft={2}><Text dimColor={true}>• {message}</Text></Box>;
 }
+// Install 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function Install({
   onDone,
   force,
   target
 }: InstallProps): React.ReactNode {
+  // 从 `useState<InstallState>({` 按位置拆出 state、setState，让斜杠命令 install分别处理这些返回值。
   const [state, setState] = useState<InstallState>({
     type: 'checking'
   });
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // run 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function run() {
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 记录命令处理运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Install: Starting installation process (force=${force}, target=${target})`);
 
         // Install native build first
+        // channelOrVersion读取`getInitialSettings`，供命令处理后续处理使用。
         const channelOrVersion = target || getInitialSettings()?.autoUpdatesChannel || 'latest';
+        // setState 写入新的状态值，使命令处理后续读取保持一致。
         setState({
           type: 'installing',
           version: channelOrVersion
         });
 
         // Pass force flag to trigger reinstall even if up to date
+        // 记录命令处理运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Install: Calling installLatest(channelOrVersion=${channelOrVersion}, forceReinstall=${force})`);
+        // 结果保存`installLatest`，供命令处理后续处理使用。
         const result = await installLatest(channelOrVersion, force);
+        // 记录命令处理运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Install: installLatest returned version=${result.latestVersion}, wasUpdated=${result.wasUpdated}, lockFailed=${result.lockFailed}`);
 
         // Check specifically for lock failure
+        // 满足 `result.lockFailed` 时，命令处理执行该分支。
         if (result.lockFailed) {
+          // 抛出 new Error('Could not install - another process is currently installing Claude. Please try…，阻止命令处理在无效状态下继续运行。
           throw new Error('Could not install - another process is currently installing Claude. Please try again in a moment.');
         }
 
         // If we couldn't get the version, there might be an issue
+        // result.latestVersion缺失时直接走兜底路径，避免命令处理使用无效输入。
         if (!result.latestVersion) {
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging('Install: Failed to retrieve version information during install', {
             level: 'error'
           });
         }
+        // result.wasUpdated缺失时直接走兜底路径，避免命令处理使用无效输入。
         if (!result.wasUpdated) {
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging('Install: Already up to date');
         }
 
         // Set up launcher and shell integration
+        // setState 写入新的状态值，使命令处理后续读取保持一致。
         setState({
           type: 'setting-up'
         });
+        // setupMessages 消息数据读取`checkInstall`，供命令处理后续处理使用。
         const setupMessages = await checkInstall(true);
+        // 记录命令处理运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Install: Setup launcher completed with ${setupMessages.length} messages`);
+        // 满足 `setupMessages.length > 0` 时，命令处理执行该分支。
         if (setupMessages.length > 0) {
+          // 调用 setupMessages.forEach，触发命令处理此处需要的副作用。
           setupMessages.forEach(msg => logForDebugging(`Install: Setup message: ${msg.message}`));
         }
 
         // Now that native installation succeeded, clean up old npm installations
+        // 记录命令处理运行诊断，方便排查异常路径或性能问题。
         logForDebugging('Install: Cleaning up npm installations after successful install');
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           removed,
           errors,
           warnings
         } = await cleanupNpmInstallations();
+        // 满足 `removed > 0` 时，命令处理执行该分支。
         if (removed > 0) {
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Cleaned up ${removed} npm installation(s)`);
         }
+        // 满足 `errors.length > 0` 时，命令处理执行该分支。
         if (errors.length > 0) {
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Cleanup errors: ${errors.join(', ')}`);
           // Continue despite cleanup errors - native install already succeeded
         }
 
         // Clean up old shell aliases
+        // aliasMessages 消息数据保存`cleanupShellAliases`，供命令处理后续处理使用。
         const aliasMessages = await cleanupShellAliases();
+        // 满足 `aliasMessages.length > 0` 时，命令处理执行该分支。
         if (aliasMessages.length > 0) {
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Shell alias cleanup: ${aliasMessages.map(m => m.message).join('; ')}`);
         }
 
         // Log success event
+        // 记录命令处理运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_claude_install_command', {
           has_version: result.latestVersion ? 1 : 0,
           forced: force ? 1 : 0
         });
 
         // If user explicitly specified a channel, save it to settings
+        // 当 `target` 匹配 `'latest' || target === 'sta...` 时，命令处理执行对应分支。
         if (target === 'latest' || target === 'stable') {
+          // 调用 updateSettingsForSource，触发命令处理此处需要的副作用。
           updateSettingsForSource('userSettings', {
             autoUpdatesChannel: target
           });
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Install: Saved autoUpdatesChannel=${target} to user settings`);
         }
 
         // Combine all warning/info messages (convert SetupMessage to string)
+        // allWarnings 警告信息派生`aliasMessages.map`，供命令处理后续处理使用。
         const allWarnings = [...warnings, ...aliasMessages.map(m_0 => m_0.message)];
 
         // Check if there were any setup errors or notes
+        // 满足 `setupMessages.length > 0` 时，命令处理执行该分支。
         if (setupMessages.length > 0) {
+          // setState 写入新的状态值，使命令处理后续读取保持一致。
           setState({
             type: 'set-up',
+            // 这个回调绑定到 messages: setupMessages.map(m_1 => m_1.message)，负责命令处理在该局部场景下的响应。
             messages: setupMessages.map(m_1 => m_1.message)
           });
           // Still mark as success but show both setup messages and cleanup warnings
+          // setTimeout 写入新的状态值，使命令处理后续读取保持一致。
           setTimeout(setState, 2000, {
             type: 'success' as const,
             version: result.latestVersion || 'current',
+            // 这个回调绑定到 setupMessages: [...setupMessages.map(m_2 => m_2.message), ...allWarnings]，负责命令处理在该局部场景下的响应。
             setupMessages: [...setupMessages.map(m_2 => m_2.message), ...allWarnings]
           });
         } else {
           // No setup messages, go straight to success (but still show cleanup warnings if any)
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging('Install: Shell PATH already configured');
+          // setState 写入新的状态值，使命令处理后续读取保持一致。
           setState({
             type: 'success',
             version: result.latestVersion || 'current',
@@ -196,30 +286,39 @@ function Install({
           });
         }
       } catch (error) {
+        // 记录命令处理运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Install command failed: ${error}`, {
           level: 'error'
         });
+        // setState 写入新的状态值，使命令处理后续读取保持一致。
         setState({
           type: 'error',
           message: errorMessage(error)
         });
       }
     }
+    // 显式忽略 `run()` 的返回值，只保留它触发的副作用。
     void run();
   }, [force, target]);
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 当 `state.type` 匹配 `'success'` 时，命令处理执行对应分支。
     if (state.type === 'success') {
       // Give success message time to render before exiting
+      // setTimeout 写入新的状态值，使命令处理后续读取保持一致。
       setTimeout(onDone, 2000, 'Claude Code installation completed successfully', {
         display: 'system' as const
       });
+    // 斜杠命令 install在这里处理 `} else if (state.type === 'error') {`，完成这一小步状态转换。
     } else if (state.type === 'error') {
       // Give error message time to render before exiting
+      // setTimeout 写入新的状态值，使命令处理后续读取保持一致。
       setTimeout(onDone, 3000, 'Claude Code installation failed', {
         display: 'system' as const
       });
     }
   }, [state, onDone]);
+  // 返回 `<Box flexDirection="column" marginTop={1}>`，作为命令处理这次计算的结果。
   return <Box flexDirection="column" marginTop={1}>
       {state.type === 'checking' && <Text color="claude">Checking installation status...</Text>}
 
@@ -276,23 +375,32 @@ function Install({
 }
 
 // This is only used from cli.tsx, not as a slash command
+// install 集中保存命令处理斜杠命令 install要一起传递的字段。
 export const install = {
   type: 'local-jsx' as const,
   name: 'install',
   description: 'Install Claude Code native build',
   argumentHint: '[options]',
+  // 斜杠命令 install在这里处理 `async call(onDone: (result: string, options?: {`，完成这一小步状态转换。
   async call(onDone: (result: string, options?: {
     display?: CommandResultDisplay;
   }) => void, _context: unknown, args: string[]) {
     // Parse arguments
+    // force筛选`args.includes`，供命令处理后续处理使用。
     const force = args.includes('--force');
+    // nonFlagArgs 集合筛选`args.filter`，供命令处理后续处理使用。
     const nonFlagArgs = args.filter(arg => !arg.startsWith('--'));
+    // target 命名 `nonFlagArgs[0]; // 'latest', 'stable', or version like '1...`，让后续代码直接表达这个值的用途。
     const target = nonFlagArgs[0]; // 'latest', 'stable', or version like '1.0.34'
 
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       unmount
+    // 这个回调绑定到 } = await render(<Install onDone={(result, options) => {，负责命令处理在该局部场景下的响应。
     } = await render(<Install onDone={(result, options) => {
+      // 调用 unmount，触发命令处理此处需要的副作用。
       unmount();
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone(result, options);
     }} force={force} target={target} />);
   }

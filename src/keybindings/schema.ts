@@ -3,12 +3,15 @@
  * Used for validation and JSON schema generation.
  */
 
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 复用 lazySchema 工具函数，把通用处理留在 ../utils/lazySchema.js 中维护。
 import { lazySchema } from '../utils/lazySchema.js'
 
 /**
  * Valid context names where keybindings can be applied.
  */
+// KEYBINDING_CONTEXTS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const KEYBINDING_CONTEXTS = [
   'Global',
   'Chat',
@@ -34,6 +37,7 @@ export const KEYBINDING_CONTEXTS = [
 /**
  * Human-readable descriptions for each keybinding context.
  */
+// KEYBINDING_CONTEXT_DESCRIPTIONS 集合 先占位，稍后的条件分支会根据实际输入补齐它。
 export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<
   (typeof KEYBINDING_CONTEXTS)[number],
   string
@@ -61,6 +65,7 @@ export const KEYBINDING_CONTEXT_DESCRIPTIONS: Record<
 /**
  * All valid keybinding action identifiers.
  */
+// KEYBINDING_ACTIONS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const KEYBINDING_ACTIONS = [
   // App-level actions (Global context)
   'app:interrupt',
@@ -174,6 +179,7 @@ export const KEYBINDING_ACTIONS = [
 /**
  * Schema for a single keybinding block.
  */
+// KeybindingBlockSchema保存`lazySchema`，供schema后续处理使用。
 export const KeybindingBlockSchema = lazySchema(() =>
   z
     .object({
@@ -211,6 +217,7 @@ export const KeybindingBlockSchema = lazySchema(() =>
  * Schema for the entire keybindings.json file.
  * Uses object wrapper format with optional $schema and $docs metadata.
  */
+// KeybindingsSchema保存`lazySchema`，供schema后续处理使用。
 export const KeybindingsSchema = lazySchema(() =>
   z
     .object({
@@ -231,6 +238,7 @@ export const KeybindingsSchema = lazySchema(() =>
 /**
  * TypeScript types derived from the schema.
  */
+// KeybindingsSchemaType 固化schema里传递的数据形状，帮助调用方按同一结构读写字段。
 export type KeybindingsSchemaType = z.infer<
   ReturnType<typeof KeybindingsSchema>
 >

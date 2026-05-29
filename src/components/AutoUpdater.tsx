@@ -1,25 +1,43 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useRef, useState } from 'react';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 引入 useInterval，将 usehooks-ts 中已经封装好的能力接到本文件流程里。
 import { useInterval } from 'usehooks-ts';
+// 引入 useUpdateNotification，将 ../hooks/useUpdateNotification.js 中已经封装好的能力接到本文件流程里。
 import { useUpdateNotification } from '../hooks/useUpdateNotification.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 复用 AutoUpdaterResult、getLatestVersion、getMaxVersion、InstallStatus、installGlobalPackage、shouldSkipVersion 工具函数，把通用处理留在 ../utils/autoUpdater.js 中维护。
 import { type AutoUpdaterResult, getLatestVersion, getMaxVersion, type InstallStatus, installGlobalPackage, shouldSkipVersion } from '../utils/autoUpdater.js';
+// 复用 getGlobalConfig、isAutoUpdaterDisabled 工具函数，把通用处理留在 ../utils/config.js 中维护。
 import { getGlobalConfig, isAutoUpdaterDisabled } from '../utils/config.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 getCurrentInstallationType 工具函数，把通用处理留在 ../utils/doctorDiagnostic.js 中维护。
 import { getCurrentInstallationType } from '../utils/doctorDiagnostic.js';
+// 复用 installOrUpdateClaudePackage、localInstallationExists 工具函数，把通用处理留在 ../utils/localInstaller.js 中维护。
 import { installOrUpdateClaudePackage, localInstallationExists } from '../utils/localInstaller.js';
+// 复用 removeInstalledSymlink 工具函数，把通用处理留在 ../utils/nativeInstaller/index.js 中维护。
 import { removeInstalledSymlink } from '../utils/nativeInstaller/index.js';
+// 复用 gt、gte 工具函数，把通用处理留在 ../utils/semver.js 中维护。
 import { gt, gte } from '../utils/semver.js';
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../utils/settings/settings.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   isUpdating: boolean;
+  // 这个回调绑定到 onChangeIsUpdating: (isUpdating: boolean) => void;，负责终端渲染在该局部场景下的响应。
   onChangeIsUpdating: (isUpdating: boolean) => void;
+  // 这个回调绑定到 onAutoUpdaterResult: (autoUpdaterResult: AutoUpdaterResult) => void;，负责终端渲染在该局部场景下的响应。
   onAutoUpdaterResult: (autoUpdaterResult: AutoUpdaterResult) => void;
   autoUpdaterResult: AutoUpdaterResult | null;
   showSuccessMessage: boolean;
   verbose: boolean;
 };
+// AutoUpdater 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AutoUpdater({
   isUpdating,
   onChangeIsUpdating,
@@ -28,13 +46,18 @@ export function AutoUpdater({
   showSuccessMessage,
   verbose
 }: Props): React.ReactNode {
+  // 从 `useState<{` 按位置拆出 versions、setVersions，让终端 UI 组件 Auto Updater分别处理这些返回值。
   const [versions, setVersions] = useState<{
     global?: string | null;
     latest?: string | null;
   }>({});
+  // hasLocalInstall 由 React state 持有，setHasLocalInstall 会在用户操作或异步结果返回时触发刷新。
   const [hasLocalInstall, setHasLocalInstall] = useState(false);
+  // updateSemver保存`useUpdateNotification`，供终端渲染后续处理使用。
   const updateSemver = useUpdateNotification(autoUpdaterResult?.version);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 显式忽略 `localInstallationExists().then(setHasLocalInstall)` 的返回值，只保留它触发的副作用。
     void localInstallationExists().then(setHasLocalInstall);
   }, []);
 
@@ -43,94 +66,150 @@ export function AutoUpdater({
   // interval fires with a stale closure where isUpdating is false, allowing
   // a concurrent installGlobalPackage() to run while one is already in
   // progress.
+  // isUpdatingRef 引用记录 `useRef` 是否成立，终端渲染随后按该结果分支。
   const isUpdatingRef = useRef(isUpdating);
+  // current更新为 `isUpdating`，确保终端 UI后续读取最新状态。
   isUpdatingRef.current = isUpdating;
+  // checkForUpdates 集合保存`React.useCallback`，供终端渲染后续处理使用。
   const checkForUpdates = React.useCallback(async () => {
+    // 满足 `isUpdatingRef.current` 时，终端渲染执行该分支。
     if (isUpdatingRef.current) {
+      // 终端 UI 组件 Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 只有 `"production" === 'test' || "production" === 'deve` 满足时，终端渲染才执行该分支。
     if ("production" === 'test' || "production" === 'development') {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging('AutoUpdater: Skipping update check in test/dev environment');
+      // 终端 UI 组件 Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // currentVersion 命名 `MACRO.VERSION`，让后续代码直接表达这个值的用途。
     const currentVersion = MACRO.VERSION;
+    // channel读取`getInitialSettings`，供终端渲染后续处理使用。
     const channel = getInitialSettings()?.autoUpdatesChannel ?? 'latest';
+    // latestVersion读取`getLatestVersion`，供终端渲染后续处理使用。
     let latestVersion = await getLatestVersion(channel);
+    // isDisabled记录 `isAutoUpdaterDisabled` 是否成立，终端渲染随后按该结果分支。
     const isDisabled = isAutoUpdaterDisabled();
 
     // Check if max version is set (server-side kill switch for auto-updates)
+    // maxVersion读取`getMaxVersion`，供终端渲染后续处理使用。
     const maxVersion = await getMaxVersion();
+    // 只有 `maxVersion && latestVersion && gt(latestVersion, maxVersion)` 满足时，终端渲染才执行该分支。
     if (maxVersion && latestVersion && gt(latestVersion, maxVersion)) {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`AutoUpdater: maxVersion ${maxVersion} is set, capping update from ${latestVersion} to ${maxVersion}`);
+      // 满足 `gte(currentVersion, maxVersion)` 时，终端渲染执行该分支。
       if (gte(currentVersion, maxVersion)) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`AutoUpdater: current version ${currentVersion} is already at or above maxVersion ${maxVersion}, skipping update`);
+        // setVersions 写入新的状态值，使终端渲染后续读取保持一致。
         setVersions({
           global: currentVersion,
           latest: latestVersion
         });
+        // 终端 UI 组件 Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // latestVersion更新为 `maxVersion`，确保终端 UI后续读取最新状态。
       latestVersion = maxVersion;
     }
+    // setVersions 写入新的状态值，使终端渲染后续读取保持一致。
     setVersions({
       global: currentVersion,
       latest: latestVersion
     });
 
     // Check if update needed and perform update
+    // 只有 `!isDisabled && currentVersion && latestVersion && !gte(currentVersion, late...` 满足时，终端渲染才执行该分支。
     if (!isDisabled && currentVersion && latestVersion && !gte(currentVersion, latestVersion) && !shouldSkipVersion(latestVersion)) {
+      // startTime记录时间`Date.now`，供终端渲染后续处理使用。
       const startTime = Date.now();
+      // 调用 onChangeIsUpdating，触发终端渲染此处需要的副作用。
       onChangeIsUpdating(true);
 
       // Remove native installer symlink since we're using JS-based updates
       // But only if user hasn't migrated to native installation
+      // 配置读取`getGlobalConfig`，供终端渲染后续处理使用。
       const config = getGlobalConfig();
+      // `config.installMethod` 与 `'native'` 不一致时刷新派生状态，避免使用过期结果。
       if (config.installMethod !== 'native') {
+        // 等待 `removeInstalledSymlink()` 完成，再继续终端 UI 组件 Auto Updater的异步流程。
         await removeInstalledSymlink();
       }
 
       // Detect actual running installation type
+      // installationType读取`getCurrentInstallationType`，供终端渲染后续处理使用。
       const installationType = await getCurrentInstallationType();
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`AutoUpdater: Detected installation type: ${installationType}`);
 
       // Skip update for development builds
+      // 当 `installationType` 匹配 `'development'` 时，终端渲染执行对应分支。
       if (installationType === 'development') {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging('AutoUpdater: Cannot auto-update development build');
+        // 调用 onChangeIsUpdating，触发终端渲染此处需要的副作用。
         onChangeIsUpdating(false);
+        // 终端 UI 组件 Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
       // Choose the appropriate update method based on what's actually running
+      // installStatus 集合 先占位，稍后的条件分支会根据实际输入补齐它。
       let installStatus: InstallStatus;
+      // updateMethod 先占位，稍后的条件分支会根据实际输入补齐它。
       let updateMethod: 'local' | 'global';
+      // 当 `installationType` 匹配 `'npm-local'` 时，终端渲染执行对应分支。
       if (installationType === 'npm-local') {
         // Use local update for local installations
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging('AutoUpdater: Using local update method');
+        // updateMethod更新为 `'local'`，确保终端 UI后续读取最新状态。
         updateMethod = 'local';
+        // installStatus 集合更新为 `await installOrUpdateClaudePackage(channel)`，确保终端 UI后续读取最新状态。
         installStatus = await installOrUpdateClaudePackage(channel);
+      // 终端 UI 组件 Auto Updater在这里处理 `} else if (installationType === 'npm-global') {`，完成这一小步状态转换。
       } else if (installationType === 'npm-global') {
         // Use global update for global installations
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging('AutoUpdater: Using global update method');
+        // updateMethod更新为 `'global'`，确保终端 UI后续读取最新状态。
         updateMethod = 'global';
+        // installStatus 集合更新为 `await installGlobalPackage()`，确保终端 UI后续读取最新状态。
         installStatus = await installGlobalPackage();
+      // 终端 UI 组件 Auto Updater在这里处理 `} else if (installationType === 'native') {`，完成这一小步状态转换。
       } else if (installationType === 'native') {
         // This shouldn't happen - native should use NativeAutoUpdater
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging('AutoUpdater: Unexpected native installation in non-native updater');
+        // 调用 onChangeIsUpdating，触发终端渲染此处需要的副作用。
         onChangeIsUpdating(false);
+        // 终端 UI 组件 Auto Updater在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       } else {
         // Fallback to config-based detection for unknown types
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`AutoUpdater: Unknown installation type, falling back to config`);
+        // isMigrated标记终端 UI Auto Updater是否启用对应路径。
         const isMigrated = config.installMethod === 'local';
+        // updateMethod更新为 `isMigrated ? 'local' : 'global'`，确保终端 UI后续读取最新状态。
         updateMethod = isMigrated ? 'local' : 'global';
+        // 满足 `isMigrated` 时，终端渲染执行该分支。
         if (isMigrated) {
+          // installStatus 集合更新为 `await installOrUpdateClaudePackage(channel)`，确保终端 UI后续读取最新状态。
           installStatus = await installOrUpdateClaudePackage(channel);
         } else {
+          // installStatus 集合更新为 `await installGlobalPackage()`，确保终端 UI后续读取最新状态。
           installStatus = await installGlobalPackage();
         }
       }
+      // 调用 onChangeIsUpdating，触发终端渲染此处需要的副作用。
       onChangeIsUpdating(false);
+      // 当 `installStatus` 匹配 `'success'` 时，终端渲染执行对应分支。
       if (installStatus === 'success') {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_auto_updater_success', {
           fromVersion: currentVersion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           toVersion: latestVersion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -139,6 +218,7 @@ export function AutoUpdater({
           installationType: installationType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       } else {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_auto_updater_fail', {
           fromVersion: currentVersion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           attemptedVersion: latestVersion as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -148,6 +228,7 @@ export function AutoUpdater({
           installationType: installationType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
+      // 调用 onAutoUpdaterResult，触发终端渲染此处需要的副作用。
       onAutoUpdaterResult({
         version: latestVersion,
         status: installStatus
@@ -161,18 +242,26 @@ export function AutoUpdater({
   }, [onAutoUpdaterResult]);
 
   // Initial check
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 显式忽略 `checkForUpdates()` 的返回值，只保留它触发的副作用。
     void checkForUpdates();
   }, [checkForUpdates]);
 
   // Check every 30 minutes
+  // 调用 useInterval，触发终端渲染此处需要的副作用。
   useInterval(checkForUpdates, 30 * 60 * 1000);
+  // 只有 `!autoUpdaterResult?.version && (!versions.global || !versions.latest)` 满足时，终端渲染才执行该分支。
   if (!autoUpdaterResult?.version && (!versions.global || !versions.latest)) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 只有 `!autoUpdaterResult?.version && !isUpdating` 满足时，终端渲染才执行该分支。
   if (!autoUpdaterResult?.version && !isUpdating) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 返回 `<Box flexDirection="row" gap={1}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="row" gap={1}>
       {verbose && <Text dimColor wrap="truncate">
           globalVersion: {versions.global} &middot; latestVersion:{' '}

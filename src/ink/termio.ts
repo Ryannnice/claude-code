@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 /**
  * ANSI Parser Module
  *
@@ -21,8 +22,10 @@
  */
 
 // Parser
+// 重新导出这一组成员，让终端渲染的公共 API 保持集中入口。
 export { Parser } from './termio/parser.js'
 // Types
+// 导出类型定义，让其他模块沿用Ink 渲染层 termio的数据契约。
 export type {
   Action,
   Color,
@@ -39,4 +42,5 @@ export type {
   TitleAction,
   UnderlineStyle,
 } from './termio/types.js'
+// 重新导出这一组成员，让终端渲染的公共 API 保持集中入口。
 export { colorsEqual, defaultStyle, stylesEqual } from './termio/types.js'

@@ -1,27 +1,47 @@
+// 使用 Node/Bun 的 fs 能力处理本地运行时资源。
 import { readFileSync } from 'fs';
+// 引入 REMOTE_CONTROL_DISCONNECTED_MSG，将 ../bridge/types.js 中已经封装好的能力接到本文件流程里。
 import { REMOTE_CONTROL_DISCONNECTED_MSG } from '../bridge/types.js';
+// 类型依赖 { Command } 来自 ../commands.js，用于校准命令处理的数据契约。
 import type { Command } from '../commands.js';
+// 引入 DIAMOND_OPEN，将 ../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { DIAMOND_OPEN } from '../constants/figures.js';
+// 引入 getRemoteSessionUrl，将 ../constants/product.js 中已经封装好的能力接到本文件流程里。
 import { getRemoteSessionUrl } from '../constants/product.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 ../services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../services/analytics/index.js';
+// 类型依赖 { AppState } 来自 ../state/AppStateStore.js，用于校准命令处理的数据契约。
 import type { AppState } from '../state/AppStateStore.js';
+// 引入 checkRemoteAgentEligibility、formatPreconditionError、RemoteAgentTask、RemoteAgentTaskState、registerRemoteAgentTask，将 ../tasks/RemoteAgentTask/RemoteAgentTask.js 中已经封装好的能力接到本文件流程里。
 import { checkRemoteAgentEligibility, formatPreconditionError, RemoteAgentTask, type RemoteAgentTaskState, registerRemoteAgentTask } from '../tasks/RemoteAgentTask/RemoteAgentTask.js';
+// 类型依赖 { LocalJSXCommandCall } 来自 ../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandCall } from '../types/command.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../utils/errors.js 中维护。
 import { errorMessage } from '../utils/errors.js';
+// 复用 logError 工具函数，把通用处理留在 ../utils/log.js 中维护。
 import { logError } from '../utils/log.js';
+// 复用 enqueuePendingNotification 工具函数，把通用处理留在 ../utils/messageQueueManager.js 中维护。
 import { enqueuePendingNotification } from '../utils/messageQueueManager.js';
+// 复用 ALL_MODEL_CONFIGS 工具函数，把通用处理留在 ../utils/model/configs.js 中维护。
 import { ALL_MODEL_CONFIGS } from '../utils/model/configs.js';
+// 复用 updateTaskState 工具函数，把通用处理留在 ../utils/task/framework.js 中维护。
 import { updateTaskState } from '../utils/task/framework.js';
+// 复用 archiveRemoteSession、teleportToRemote 工具函数，把通用处理留在 ../utils/teleport.js 中维护。
 import { archiveRemoteSession, teleportToRemote } from '../utils/teleport.js';
+// 复用 pollForApprovedExitPlanMode、UltraplanPollError 工具函数，把通用处理留在 ../utils/ultraplan/ccrSession.js 中维护。
 import { pollForApprovedExitPlanMode, UltraplanPollError } from '../utils/ultraplan/ccrSession.js';
 
 // TODO(prod-hardening): OAuth token may go stale over the 30min poll;
 // consider refresh.
 
 // Multi-agent exploration is slow; 30min timeout.
+// ULTRAPLAN_TIMEOUT_MS 集合 命名 `30 * 60 * 1000`，让后续代码直接表达这个值的用途。
 const ULTRAPLAN_TIMEOUT_MS = 30 * 60 * 1000;
+// CCR_TERMS_URL 命名 `'https://code.claude.com/docs/en/claude-code-on-the-web'`，让后续代码直接表达这个值的用途。
 export const CCR_TERMS_URL = 'https://code.claude.com/docs/en/claude-code-on-the-web';
 
 // CCR runs against the first-party API — use the canonical ID, not the
@@ -29,7 +49,9 @@ export const CCR_TERMS_URL = 'https://code.claude.com/docs/en/claude-code-on-the
 // Bedrock ARN or Vertex ID on the local CLI). Read at call time, not module
 // load: the GrowthBook cache is empty at import and `/config` Gates can flip
 // it between invocations.
+// getUltraplanModel 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getUltraplanModel(): string {
+  // 返回 `getFeatureValue_CACHED_MAY_BE_STALE('tengu_ultraplan_model', ALL_MODEL_...`，作为命令处理这次计算的结果。
   return getFeatureValue_CACHED_MAY_BE_STALE('tengu_ultraplan_model', ALL_MODEL_CONFIGS.opus46.firstParty);
 }
 
@@ -43,8 +65,10 @@ function getUltraplanModel(): string {
 //
 // Bundler inlines .txt as a string; the test runner wraps it as {default}.
 /* eslint-disable @typescript-eslint/no-require-imports */
+// _rawPrompt保存`require`，供命令处理后续处理使用。
 const _rawPrompt = require('../utils/ultraplan/prompt.txt');
 /* eslint-enable @typescript-eslint/no-require-imports */
+// DEFAULT_INSTRUCTIONS 集合标记斜杠命令 ultraplan是否启用对应路径。
 const DEFAULT_INSTRUCTIONS: string = (typeof _rawPrompt === 'string' ? _rawPrompt : _rawPrompt.default).trimEnd();
 
 // Dev-only prompt override resolved eagerly at module load.
@@ -53,6 +77,7 @@ const DEFAULT_INSTRUCTIONS: string = (typeof _rawPrompt === 'string' ? _rawPromp
 // Shell-set env only, so top-level process.env read is fine
 // — settings.env never injects this.
 /* eslint-disable custom-rules/no-process-env-top-level, custom-rules/no-sync-fs -- ant-only dev override; eager top-level read is the point (crash at startup, not silently inside the slash-command try/catch) */
+// ULTRAPLAN_INSTRUCTIONS 集合 来自环境变量默认值，运行参数仍可在入口处覆盖。
 const ULTRAPLAN_INSTRUCTIONS: string = "external" === 'ant' && process.env.ULTRAPLAN_PROMPT_FILE ? readFileSync(process.env.ULTRAPLAN_PROMPT_FILE, 'utf8').trimEnd() : DEFAULT_INSTRUCTIONS;
 /* eslint-enable custom-rules/no-process-env-top-level, custom-rules/no-sync-fs */
 
@@ -60,60 +85,88 @@ const ULTRAPLAN_INSTRUCTIONS: string = "external" === 'ant' && process.env.ULTRA
  * Assemble the initial CCR user message. seedPlan and blurb stay outside the
  * system-reminder so the browser renders them; scaffolding is hidden.
  */
+// buildUltraplanPrompt 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildUltraplanPrompt(blurb: string, seedPlan?: string): string {
+  // 片段列表 从空数组开始收集，后续循环会按处理顺序追加条目。
   const parts: string[] = [];
+  // 满足 `seedPlan` 时，命令处理执行该分支。
   if (seedPlan) {
+    // 片段列表追加新条目，保持收集顺序与输入顺序一致。
     parts.push('Here is a draft plan to refine:', '', seedPlan, '');
   }
+  // 片段列表追加新条目，保持收集顺序与输入顺序一致。
   parts.push(ULTRAPLAN_INSTRUCTIONS);
+  // 满足 `blurb` 时，命令处理执行该分支。
   if (blurb) {
+    // 片段列表追加新条目，保持收集顺序与输入顺序一致。
     parts.push('', blurb);
   }
+  // 返回 `parts.join('\n')`，作为命令处理这次计算的结果。
   return parts.join('\n');
 }
+// startDetachedPoll 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function startDetachedPoll(taskId: string, sessionId: string, url: string, getAppState: () => AppState, setAppState: (f: (prev: AppState) => AppState) => void): void {
+  // started记录时间`Date.now`，供命令处理后续处理使用。
   const started = Date.now();
+  // failed标记命令处理斜杠命令 ultraplan是否启用对应路径。
   let failed = false;
+  // 调用 void，触发命令处理此处需要的副作用。
   void (async () => {
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         plan,
         rejectCount,
         executionTarget
+      // 这个回调绑定到 } = await pollForApprovedExitPlanMode(sessionId, ULTRAPLAN_TIMEOUT_MS, phase => {，负责命令处理在该局部场景下的响应。
       } = await pollForApprovedExitPlanMode(sessionId, ULTRAPLAN_TIMEOUT_MS, phase => {
+        // 满足 `phase === 'needs_input') logEvent('tengu_ultraplan_awaiting_input', {}` 时，命令处理执行该分支。
         if (phase === 'needs_input') logEvent('tengu_ultraplan_awaiting_input', {});
+        // 这个回调绑定到 updateTaskState<RemoteAgentTaskState>(taskId, setAppState, t => {，负责命令处理在该局部场景下的响应。
         updateTaskState<RemoteAgentTaskState>(taskId, setAppState, t => {
+          // `t.status` 与 `'running'` 不一致时刷新派生状态，避免使用过期结果。
           if (t.status !== 'running') return t;
+          // next标记命令处理斜杠命令 ultraplan是否启用对应路径。
           const next = phase === 'running' ? undefined : phase;
+          // 返回 `t.ultraplanPhase === next ? t : {`，作为命令处理这次计算的结果。
           return t.ultraplanPhase === next ? t : {
             ...t,
             ultraplanPhase: next
           };
         });
+      // 这个回调绑定到 }, () => getAppState().tasks?.[taskId]?.status !== 'running');，负责命令处理在该局部场景下的响应。
       }, () => getAppState().tasks?.[taskId]?.status !== 'running');
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_ultraplan_approved', {
         duration_ms: Date.now() - started,
         plan_length: plan.length,
         reject_count: rejectCount,
         execution_target: executionTarget as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 当 `executionTarget` 匹配 `'remote'` 时，命令处理执行对应分支。
       if (executionTarget === 'remote') {
         // User chose "execute in CCR" in the browser PlanModal — the remote
         // session is now coding. Skip archive (ARCHIVE has no running-check,
         // would kill mid-execution) and skip the choice dialog (already chose).
         // Guard on task status so a poll that resolves after stopUltraplan
         // doesn't notify for a killed session.
+        // task读取`getAppState`，供命令处理后续处理使用。
         const task = getAppState().tasks?.[taskId];
+        // `task?.status` 与 `'running'` 不一致时刷新派生状态，避免使用过期结果。
         if (task?.status !== 'running') return;
+        // 这个回调绑定到 updateTaskState<RemoteAgentTaskState>(taskId, setAppState, t => t.status !== 'runnin…，负责命令处理在该局部场景下的响应。
         updateTaskState<RemoteAgentTaskState>(taskId, setAppState, t => t.status !== 'running' ? t : {
           ...t,
           status: 'completed',
           endTime: Date.now()
         });
+        // setAppState 写入新的状态值，使命令处理后续读取保持一致。
         setAppState(prev => prev.ultraplanSessionUrl === url ? {
           ...prev,
           ultraplanSessionUrl: undefined
         } : prev);
+        // 调用 enqueuePendingNotification，触发命令处理此处需要的副作用。
         enqueuePendingNotification({
           value: [`Ultraplan approved — executing in Claude Code on the web. Follow along at: ${url}`, '', 'Results will land as a pull request when the remote session finishes. There is nothing to do here.'].join('\n'),
           mode: 'task-notification'
@@ -123,9 +176,13 @@ function startDetachedPoll(taskId: string, sessionId: string, url: string, getAp
         // The dialog owns archive + URL clear on choice. Guard on task status
         // so a poll that resolves after stopUltraplan doesn't resurrect the
         // dialog for a killed session.
+        // setAppState 写入新的状态值，使命令处理后续读取保持一致。
         setAppState(prev => {
+          // task读取 `prev.tasks?.[taskId]` 对应条目，后续围绕该成员继续处理。
           const task = prev.tasks?.[taskId];
+          // `!task || task.status` 与 `'running'` 不一致时刷新派生状态，避免使用过期结果。
           if (!task || task.status !== 'running') return prev;
+          // 返回结构化结果，集中表达命令处理已经整理出的状态。
           return {
             ...prev,
             ultraplanPendingChoice: {
@@ -140,21 +197,28 @@ function startDetachedPoll(taskId: string, sessionId: string, url: string, getAp
       // If the task was stopped (stopUltraplan sets status=killed), the poll
       // erroring is expected — skip the failure notification and cleanup
       // (kill() already archived; stopUltraplan cleared the URL).
+      // task读取`getAppState`，供命令处理后续处理使用。
       const task = getAppState().tasks?.[taskId];
+      // `task?.status` 与 `'running'` 不一致时刷新派生状态，避免使用过期结果。
       if (task?.status !== 'running') return;
+      // failed更新为 `true`，确保斜杠命令后续读取最新状态。
       failed = true;
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_ultraplan_failed', {
         duration_ms: Date.now() - started,
         reason: (e instanceof UltraplanPollError ? e.reason : 'network_or_unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         reject_count: e instanceof UltraplanPollError ? e.rejectCount : undefined
       });
+      // 调用 enqueuePendingNotification，触发命令处理此处需要的副作用。
       enqueuePendingNotification({
         value: `Ultraplan failed: ${errorMessage(e)}\n\nSession: ${url}`,
         mode: 'task-notification'
       });
       // Error path owns cleanup; teleport path defers to the dialog; remote
       // path handled its own cleanup above.
+      // 这个回调绑定到 void archiveRemoteSession(sessionId).catch(e => logForDebugging(`ultraplan archive f…，负责命令处理在该局部场景下的响应。
       void archiveRemoteSession(sessionId).catch(e => logForDebugging(`ultraplan archive failed: ${String(e)}`));
+      // setAppState 写入新的状态值，使命令处理后续读取保持一致。
       setAppState(prev =>
       // Compare against this poll's URL so a newer relaunched session's
       // URL isn't cleared by a stale poll erroring out.
@@ -169,7 +233,9 @@ function startDetachedPoll(taskId: string, sessionId: string, url: string, getAp
       // choice. Setting completed here would filter the task out of
       // isBackgroundTask before the pill can render the phase state.
       // Failure path has no dialog, so it owns the status transition here.
+      // 满足 `failed` 时，命令处理执行该分支。
       if (failed) {
+        // 这个回调绑定到 updateTaskState<RemoteAgentTaskState>(taskId, setAppState, t => t.status !== 'runnin…，负责命令处理在该局部场景下的响应。
         updateTaskState<RemoteAgentTaskState>(taskId, setAppState, t => t.status !== 'running' ? t : {
           ...t,
           status: 'failed',
@@ -182,14 +248,21 @@ function startDetachedPoll(taskId: string, sessionId: string, url: string, getAp
 
 // Renders immediately so the terminal doesn't appear hung during the
 // multi-second teleportToRemote round-trip.
+// buildLaunchMessage 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildLaunchMessage(disconnectedBridge?: boolean): string {
+  // prefix 命名 `disconnectedBridge ? `${REMOTE_CONTROL_DISCONNECTED_MSG} ...`，让后续代码直接表达这个值的用途。
   const prefix = disconnectedBridge ? `${REMOTE_CONTROL_DISCONNECTED_MSG} ` : '';
+  // 返回 ``${DIAMOND_OPEN} ultraplan\n${prefix}Starting Claude Code on the web…``，作为命令处理这次计算的结果。
   return `${DIAMOND_OPEN} ultraplan\n${prefix}Starting Claude Code on the web…`;
 }
+// buildSessionReadyMessage 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildSessionReadyMessage(url: string): string {
+  // 返回 ``${DIAMOND_OPEN} ultraplan · Monitor progress in Claude Code on the web...`，作为命令处理这次计算的结果。
   return `${DIAMOND_OPEN} ultraplan · Monitor progress in Claude Code on the web ${url}\nYou can continue working — when the ${DIAMOND_OPEN} fills, press ↓ to view results`;
 }
+// buildAlreadyActiveMessage 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function buildAlreadyActiveMessage(url: string | undefined): string {
+  // 返回 `url ? `ultraplan: already polling. Open ${url} to check status, or wait...`，作为命令处理这次计算的结果。
   return url ? `ultraplan: already polling. Open ${url} to check status, or wait for the plan to land here.` : 'ultraplan: already launching. Please wait for the session to start.';
 }
 
@@ -200,21 +273,27 @@ function buildAlreadyActiveMessage(url: string | undefined): string {
  * shouldStop callback sees the killed status on its next tick and throws;
  * the catch block early-returns when status !== 'running'.
  */
+// stopUltraplan 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function stopUltraplan(taskId: string, sessionId: string, setAppState: (f: (prev: AppState) => AppState) => void): Promise<void> {
   // RemoteAgentTask.kill archives the session (with .catch) — no separate
   // archive call needed here.
+  // 等待 `RemoteAgentTask.kill(taskId, setAppState)` 完成，再继续斜杠命令 ultraplan的异步流程。
   await RemoteAgentTask.kill(taskId, setAppState);
+  // setAppState 写入新的状态值，使命令处理后续读取保持一致。
   setAppState(prev => prev.ultraplanSessionUrl || prev.ultraplanPendingChoice || prev.ultraplanLaunching ? {
     ...prev,
     ultraplanSessionUrl: undefined,
     ultraplanPendingChoice: undefined,
     ultraplanLaunching: undefined
   } : prev);
+  // URL读取`getRemoteSessionUrl`，供命令处理后续处理使用。
   const url = getRemoteSessionUrl(sessionId, process.env.SESSION_INGRESS_URL);
+  // 调用 enqueuePendingNotification，触发命令处理此处需要的副作用。
   enqueuePendingNotification({
     value: `Ultraplan stopped.\n\nSession: ${url}`,
     mode: 'task-notification'
   });
+  // 调用 enqueuePendingNotification，触发命令处理此处需要的副作用。
   enqueuePendingNotification({
     value: 'The user stopped the ultraplan session above. Do not respond to the stop notification — wait for their next message.',
     mode: 'task-notification',
@@ -231,10 +310,13 @@ export async function stopUltraplan(taskId: string, sessionId: string, setAppSta
  * session creation, and task registration run detached and failures surface via
  * enqueuePendingNotification.
  */
+// launchUltraplan 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchUltraplan(opts: {
   blurb: string;
   seedPlan?: string;
+  // 这个回调绑定到 getAppState: () => AppState;，负责命令处理在该局部场景下的响应。
   getAppState: () => AppState;
+  // 这个回调绑定到 setAppState: (f: (prev: AppState) => AppState) => void;，负责命令处理在该局部场景下的响应。
   setAppState: (f: (prev: AppState) => AppState) => void;
   signal: AbortSignal;
   /** True if the caller disconnected Remote Control before launching. */
@@ -246,8 +328,10 @@ export async function launchUltraplan(opts: {
    * transcript access (ExitPlanModePermissionRequest) omit this — the pill
    * still shows live status.
    */
+  // 这个回调绑定到 onSessionReady?: (msg: string) => void;，负责命令处理在该局部场景下的响应。
   onSessionReady?: (msg: string) => void;
 }): Promise<string> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     blurb,
     seedPlan,
@@ -257,18 +341,24 @@ export async function launchUltraplan(opts: {
     disconnectedBridge,
     onSessionReady
   } = opts;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     ultraplanSessionUrl: active,
     ultraplanLaunching
   } = getAppState();
+  // 只有 `active || ultraplanLaunching` 满足时，命令处理才执行该分支。
   if (active || ultraplanLaunching) {
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_ultraplan_create_failed', {
       reason: (active ? 'already_polling' : 'already_launching') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 返回 `buildAlreadyActiveMessage(active)`，作为命令处理这次计算的结果。
     return buildAlreadyActiveMessage(active);
   }
+  // 只有 `!blurb && !seedPlan` 满足时，命令处理才执行该分支。
   if (!blurb && !seedPlan) {
     // No event — bare /ultraplan is a usage query, not an attempt.
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [
     // Rendered via <Markdown>; raw <message> is tokenized as HTML
     // and dropped. Backslash-escape the brackets.
@@ -277,10 +367,12 @@ export async function launchUltraplan(opts: {
 
   // Set synchronously before the detached flow to prevent duplicate launches
   // during the teleportToRemote window.
+  // setAppState 写入新的状态值，使命令处理后续读取保持一致。
   setAppState(prev => prev.ultraplanLaunching ? prev : {
     ...prev,
     ultraplanLaunching: true
   });
+  // 显式忽略 `launchDetached({` 的返回值，只保留它触发的副作用。
   void launchDetached({
     blurb,
     seedPlan,
@@ -289,16 +381,21 @@ export async function launchUltraplan(opts: {
     signal,
     onSessionReady
   });
+  // 返回 `buildLaunchMessage(disconnectedBridge)`，作为命令处理这次计算的结果。
   return buildLaunchMessage(disconnectedBridge);
 }
+// launchDetached 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function launchDetached(opts: {
   blurb: string;
   seedPlan?: string;
+  // 这个回调绑定到 getAppState: () => AppState;，负责命令处理在该局部场景下的响应。
   getAppState: () => AppState;
+  // 这个回调绑定到 setAppState: (f: (prev: AppState) => AppState) => void;，负责命令处理在该局部场景下的响应。
   setAppState: (f: (prev: AppState) => AppState) => void;
   signal: AbortSignal;
   onSessionReady?: (msg: string) => void;
 }): Promise<void> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     blurb,
     seedPlan,
@@ -309,24 +406,37 @@ async function launchDetached(opts: {
   } = opts;
   // Hoisted so the catch block can archive the remote session if an error
   // occurs after teleportToRemote succeeds (avoids 30min orphan).
+  // sessionId 会话数据 先占位，稍后的条件分支会根据实际输入补齐它。
   let sessionId: string | undefined;
+  // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
   try {
+    // 模型名称读取`getUltraplanModel`，供命令处理后续处理使用。
     const model = getUltraplanModel();
+    // eligibility读取`checkRemoteAgentEligibility`，供命令处理后续处理使用。
     const eligibility = await checkRemoteAgentEligibility();
+    // eligibility.eligible缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!eligibility.eligible) {
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_ultraplan_create_failed', {
         reason: 'precondition' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        // 这个回调绑定到 precondition_errors: eligibility.errors.map(e => e.type).join(',') as AnalyticsMetad…，负责命令处理在该局部场景下的响应。
         precondition_errors: eligibility.errors.map(e => e.type).join(',') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // reasons 集合派生`errors.map`，供命令处理后续处理使用。
       const reasons = eligibility.errors.map(formatPreconditionError).join('\n');
+      // 调用 enqueuePendingNotification，触发命令处理此处需要的副作用。
       enqueuePendingNotification({
         value: `ultraplan: cannot launch remote session —\n${reasons}`,
         mode: 'task-notification'
       });
+      // 斜杠命令 ultraplan在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 提示词构建`buildUltraplanPrompt`，供命令处理后续处理使用。
     const prompt = buildUltraplanPrompt(blurb, seedPlan);
+    // bundleFailMsg 先占位，稍后的条件分支会根据实际输入补齐它。
     let bundleFailMsg: string | undefined;
+    // session 会话数据保存`teleportToRemote`，供命令处理后续处理使用。
     const session = await teleportToRemote({
       initialMessage: prompt,
       description: blurb || 'Refine local plan',
@@ -335,34 +445,46 @@ async function launchDetached(opts: {
       ultraplan: true,
       signal,
       useDefaultEnvironment: true,
+      // 这个回调绑定到 onBundleFail: msg => {，负责命令处理在该局部场景下的响应。
       onBundleFail: msg => {
+        // bundleFailMsg更新为 `msg`，确保斜杠命令后续读取最新状态。
         bundleFailMsg = msg;
       }
     });
+    // session 会话数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!session) {
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_ultraplan_create_failed', {
         reason: (bundleFailMsg ? 'bundle_fail' : 'teleport_null') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 调用 enqueuePendingNotification，触发命令处理此处需要的副作用。
       enqueuePendingNotification({
         value: `ultraplan: session creation failed${bundleFailMsg ? ` — ${bundleFailMsg}` : ''}. See --debug for details.`,
         mode: 'task-notification'
       });
+      // 斜杠命令 ultraplan在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // sessionId 会话数据更新为 `session.id`，确保斜杠命令后续读取最新状态。
     sessionId = session.id;
+    // URL读取`getRemoteSessionUrl`，供命令处理后续处理使用。
     const url = getRemoteSessionUrl(session.id, process.env.SESSION_INGRESS_URL);
+    // setAppState 写入新的状态值，使命令处理后续读取保持一致。
     setAppState(prev => ({
       ...prev,
       ultraplanSessionUrl: url,
       ultraplanLaunching: undefined
     }));
+    // 调用 onSessionReady?.(buildSessionReadyMessage(url));，完成这一处局部操作。
     onSessionReady?.(buildSessionReadyMessage(url));
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_ultraplan_launched', {
       has_seed_plan: Boolean(seedPlan),
       model: model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
     // TODO(#23985): replace registerRemoteAgentTask + startDetachedPoll with
     // ExitPlanModeScanner inside startRemoteSessionPolling.
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       taskId
     } = registerRemoteAgentTask({
@@ -379,22 +501,29 @@ async function launchDetached(opts: {
       },
       isUltraplan: true
     });
+    // 调用 startDetachedPoll，触发命令处理此处需要的副作用。
     startDetachedPoll(taskId, session.id, url, getAppState, setAppState);
   } catch (e) {
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logError(e);
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_ultraplan_create_failed', {
       reason: 'unexpected_error' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 调用 enqueuePendingNotification，触发命令处理此处需要的副作用。
     enqueuePendingNotification({
       value: `ultraplan: unexpected error — ${errorMessage(e)}`,
       mode: 'task-notification'
     });
+    // 满足 `sessionId` 时，命令处理执行该分支。
     if (sessionId) {
       // Error after teleport succeeded — archive so the remote doesn't sit
       // running for 30min with nobody polling it.
+      // 这个回调绑定到 void archiveRemoteSession(sessionId).catch(err => logForDebugging('ultraplan: failed…，负责命令处理在该局部场景下的响应。
       void archiveRemoteSession(sessionId).catch(err => logForDebugging('ultraplan: failed to archive orphaned session', err));
       // ultraplanSessionUrl may have been set before the throw; clear it so
       // the "already polling" guard doesn't block future launches.
+      // setAppState 写入新的状态值，使命令处理后续读取保持一致。
       setAppState(prev => prev.ultraplanSessionUrl ? {
         ...prev,
         ultraplanSessionUrl: undefined
@@ -402,49 +531,62 @@ async function launchDetached(opts: {
     }
   } finally {
     // No-op on success: the url-setting setAppState already cleared this.
+    // setAppState 写入新的状态值，使命令处理后续读取保持一致。
     setAppState(prev => prev.ultraplanLaunching ? {
       ...prev,
       ultraplanLaunching: undefined
     } : prev);
   }
 }
+// 这个回调绑定到 const call: LocalJSXCommandCall = async (onDone, context, args) => {，负责命令处理在该局部场景下的响应。
 const call: LocalJSXCommandCall = async (onDone, context, args) => {
+  // blurb格式化`args.trim`，供命令处理后续处理使用。
   const blurb = args.trim();
 
   // Bare /ultraplan (no args, no seed plan) just shows usage — no dialog.
+  // blurb缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!blurb) {
+    // 消息保存`launchUltraplan`，供命令处理后续处理使用。
     const msg = await launchUltraplan({
       blurb,
       getAppState: context.getAppState,
       setAppState: context.setAppState,
       signal: context.abortController.signal
     });
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(msg, {
       display: 'system'
     });
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
 
   // Guard matches launchUltraplan's own check — showing the dialog when a
   // session is already active or launching would waste the user's click and set
   // hasSeenUltraplanTerms before the launch fails.
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     ultraplanSessionUrl: active,
     ultraplanLaunching
   } = context.getAppState();
+  // 只有 `active || ultraplanLaunching` 满足时，命令处理才执行该分支。
   if (active || ultraplanLaunching) {
+    // 记录命令处理运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_ultraplan_create_failed', {
       reason: (active ? 'already_polling' : 'already_launching') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(buildAlreadyActiveMessage(active), {
       display: 'system'
     });
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
 
   // Mount the pre-launch dialog via focusedInputDialog (bottom region, like
   // permission dialogs) rather than returning JSX (transcript area, anchors
   // at top of scrollback). REPL.tsx handles launch/clear/cancel on choice.
+  // context.setAppState 写入新的状态值，使命令处理后续读取保持一致。
   context.setAppState(prev => ({
     ...prev,
     ultraplanLaunchPending: {
@@ -453,9 +595,11 @@ const call: LocalJSXCommandCall = async (onDone, context, args) => {
   }));
   // 'skip' suppresses the (no content) echo — the dialog's choice handler
   // adds the real /ultraplan echo + launch confirmation.
+  // 调用 onDone，触发命令处理此处需要的副作用。
   onDone(undefined, {
     display: 'skip'
   });
+  // 返回 `null`，作为命令处理这次计算的结果。
   return null;
 };
 export default {
@@ -463,7 +607,9 @@ export default {
   name: 'ultraplan',
   description: `~10–30 min · Claude Code on the web drafts an advanced plan you can edit and approve. See ${CCR_TERMS_URL}`,
   argumentHint: '<prompt>',
+  // 这个回调绑定到 isEnabled: () => "external" === 'ant',，负责命令处理在该局部场景下的响应。
   isEnabled: () => "external" === 'ant',
+  // 这个回调绑定到 load: () => Promise.resolve({，负责命令处理在该局部场景下的响应。
   load: () => Promise.resolve({
     call
   })

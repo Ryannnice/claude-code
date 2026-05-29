@@ -1,4 +1,6 @@
+// 类型依赖 { Attachment } 来自 src/utils/attachments.js，用于校准终端渲染的数据契约。
 import type { Attachment } from 'src/utils/attachments.js'
+// 类型依赖 { Message, NormalizedMessage } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message, NormalizedMessage } from '../../types/message.js'
 
 /**
@@ -11,6 +13,7 @@ import type { Message, NormalizedMessage } from '../../types/message.js'
  * asserts `attachment.type satisfies NullRenderingAttachmentType`. Adding a new
  * Attachment type without either a case or an entry here will fail typecheck.
  */
+// NULL_RENDERING_TYPES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const NULL_RENDERING_TYPES = [
   'hook_success',
   'hook_additional_context',
@@ -48,8 +51,10 @@ const NULL_RENDERING_TYPES = [
   'date_change',
 ] as const satisfies readonly Attachment['type'][]
 
+// NullRenderingAttachmentType 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type NullRenderingAttachmentType = (typeof NULL_RENDERING_TYPES)[number]
 
+// NULL_RENDERING_ATTACHMENT_TYPES 集合 先占位，稍后的条件分支会根据实际输入补齐它。
 const NULL_RENDERING_ATTACHMENT_TYPES: ReadonlySet<Attachment['type']> =
   new Set(NULL_RENDERING_TYPES)
 
@@ -60,9 +65,11 @@ const NULL_RENDERING_ATTACHMENT_TYPES: ReadonlySet<Attachment['type']> =
  * attachments (hook_success, hook_additional_context, hook_cancelled) don't
  * inflate the "N messages" count or eat into the render budget (CC-724).
  */
+// isNullRenderingAttachment 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isNullRenderingAttachment(
   msg: Message | NormalizedMessage,
 ): boolean {
+  // 返回 `(`，作为终端渲染这次计算的结果。
   return (
     msg.type === 'attachment' &&
     NULL_RENDERING_ATTACHMENT_TYPES.has(msg.attachment.type)

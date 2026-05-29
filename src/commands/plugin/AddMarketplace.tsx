@@ -1,31 +1,53 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useRef, useState } from 'react';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 复用 ConfigurableShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
+// 复用 Byline 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Byline } from '../../components/design-system/Byline.js';
+// 复用 KeyboardShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js';
+// 复用 Spinner 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Spinner } from '../../components/Spinner.js';
+// 复用 TextInput 终端界面组件，避免在这里重复拼装显示逻辑。
 import TextInput from '../../components/TextInput.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 复用 toError 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { toError } from '../../utils/errors.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 clearAllCaches 工具函数，把通用处理留在 ../../utils/plugins/cacheUtils.js 中维护。
 import { clearAllCaches } from '../../utils/plugins/cacheUtils.js';
+// 复用 addMarketplaceSource、saveMarketplaceToSettings 工具函数，把通用处理留在 ../../utils/plugins/marketplaceManager.js 中维护。
 import { addMarketplaceSource, saveMarketplaceToSettings } from '../../utils/plugins/marketplaceManager.js';
+// 复用 parseMarketplaceInput 工具函数，把通用处理留在 ../../utils/plugins/parseMarketplaceInput.js 中维护。
 import { parseMarketplaceInput } from '../../utils/plugins/parseMarketplaceInput.js';
+// 类型依赖 { ViewState } 来自 ./types.js，用于校准命令处理的数据契约。
 import type { ViewState } from './types.js';
+// Props 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   inputValue: string;
+  // 这个回调绑定到 setInputValue: (value: string) => void;，负责命令处理在该局部场景下的响应。
   setInputValue: (value: string) => void;
   cursorOffset: number;
+  // 这个回调绑定到 setCursorOffset: (offset: number) => void;，负责命令处理在该局部场景下的响应。
   setCursorOffset: (offset: number) => void;
   error: string | null;
+  // 这个回调绑定到 setError: (error: string | null) => void;，负责命令处理在该局部场景下的响应。
   setError: (error: string | null) => void;
   result: string | null;
+  // 这个回调绑定到 setResult: (result: string | null) => void;，负责命令处理在该局部场景下的响应。
   setResult: (result: string | null) => void;
+  // 这个回调绑定到 setViewState: (state: ViewState) => void;，负责命令处理在该局部场景下的响应。
   setViewState: (state: ViewState) => void;
   onAddComplete?: () => void | Promise<void>;
   cliMode?: boolean;
 };
+// AddMarketplace 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AddMarketplace({
   inputValue,
   setInputValue,
@@ -39,87 +61,135 @@ export function AddMarketplace({
   onAddComplete,
   cliMode = false
 }: Props): React.ReactNode {
+  // hasAttemptedAutoAdd记录 `useRef` 是否成立，命令处理随后按该结果分支。
   const hasAttemptedAutoAdd = useRef(false);
+  // isLoading 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [isLoading, setLoading] = useState(false);
+  // progressMessage 消息数据 由 React state 持有，setProgressMessage 会在用户操作或异步结果返回时触发刷新。
   const [progressMessage, setProgressMessage] = useState<string>('');
+  // handleAdd保存`async`，供命令处理后续处理使用。
   const handleAdd = async () => {
+    // 用户输入格式化`inputValue.trim`，供命令处理后续处理使用。
     const input = inputValue.trim();
+    // 用户输入缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!input) {
+      // setError 写入新的状态值，使命令处理后续读取保持一致。
       setError('Please enter a marketplace source');
+      // 插件命令界面 Add Marketplace在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 解析结果解析`parseMarketplaceInput`，供命令处理后续处理使用。
     const parsed = await parseMarketplaceInput(input);
+    // 解析结果缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!parsed) {
+      // setError 写入新的状态值，使命令处理后续读取保持一致。
       setError('Invalid marketplace source format. Try: owner/repo, https://..., or ./path');
+      // 插件命令界面 Add Marketplace在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Check if parseMarketplaceInput returned an error
+    // 满足 `'error' in parsed` 时，命令处理执行该分支。
     if ('error' in parsed) {
+      // setError 写入新的状态值，使命令处理后续读取保持一致。
       setError(parsed.error);
+      // 插件命令界面 Add Marketplace在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setError 写入新的状态值，使命令处理后续读取保持一致。
     setError(null);
+    // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
     try {
+      // setLoading 写入新的状态值，使命令处理后续读取保持一致。
       setLoading(true);
+      // setProgressMessage 写入新的状态值，使命令处理后续读取保持一致。
       setProgressMessage('');
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         name,
         resolvedSource
+      // 这个回调绑定到 } = await addMarketplaceSource(parsed, message => {，负责命令处理在该局部场景下的响应。
       } = await addMarketplaceSource(parsed, message => {
+        // setProgressMessage 写入新的状态值，使命令处理后续读取保持一致。
         setProgressMessage(message);
       });
+      // 调用 saveMarketplaceToSettings，触发命令处理此处需要的副作用。
       saveMarketplaceToSettings(name, {
         source: resolvedSource
       });
+      // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
       clearAllCaches();
+      // sourceType解析`parsed.source`，供后续判断或组装使用。
       let sourceType = parsed.source;
+      // 当 `parsed.source` 匹配 `'github'` 时，命令处理执行对应分支。
       if (parsed.source === 'github') {
+        // sourceType更新为 `parsed.repo as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_C...`，确保插件命令界面后续读取最新状态。
         sourceType = parsed.repo as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
       }
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_marketplace_added', {
         source_type: sourceType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 满足 `onAddComplete` 时，命令处理执行该分支。
       if (onAddComplete) {
+        // 等待 `onAddComplete()` 完成，再继续插件命令界面 Add Marketplace的异步流程。
         await onAddComplete();
       }
+      // setProgressMessage 写入新的状态值，使命令处理后续读取保持一致。
       setProgressMessage('');
+      // setLoading 写入新的状态值，使命令处理后续读取保持一致。
       setLoading(false);
+      // 满足 `cliMode` 时，命令处理执行该分支。
       if (cliMode) {
         // In CLI mode, set result to trigger completion
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult(`Successfully added marketplace: ${name}`);
       } else {
         // In interactive mode, switch to browse view
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState({
           type: 'browse-marketplace',
           targetMarketplace: name
         });
       }
     } catch (err) {
+      // 错误保存`toError`，供命令处理后续处理使用。
       const error = toError(err);
+      // 记录命令处理运行诊断，方便排查异常路径或性能问题。
       logError(error);
+      // setError 写入新的状态值，使命令处理后续读取保持一致。
       setError(error.message);
+      // setProgressMessage 写入新的状态值，使命令处理后续读取保持一致。
       setProgressMessage('');
+      // setLoading 写入新的状态值，使命令处理后续读取保持一致。
       setLoading(false);
+      // 满足 `cliMode` 时，命令处理执行该分支。
       if (cliMode) {
         // In CLI mode, set result with error to trigger completion
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult(`Error: ${error.message}`);
       } else {
+        // setResult 写入新的状态值，使命令处理后续读取保持一致。
         setResult(null);
       }
     }
   };
 
   // Auto-add if inputValue is provided
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 只有 `inputValue && !hasAttemptedAutoAdd.current && !er` 满足时，命令处理才执行该分支。
     if (inputValue && !hasAttemptedAutoAdd.current && !error && !result) {
+      // current更新为 `true`，确保插件命令界面后续读取最新状态。
       hasAttemptedAutoAdd.current = true;
+      // 显式忽略 `handleAdd()` 的返回值，只保留它触发的副作用。
       void handleAdd();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   }, []); // Only run once on mount
 
+  // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
   return <Box flexDirection="column">
       <Box flexDirection="column" paddingX={1} borderStyle="round">
         <Box marginBottom={1}>

@@ -1,29 +1,47 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 引入 Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../../ink.js';
+// 复用 jsonParse 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonParse } from '../../utils/slowOperations.js';
+// 类型依赖 { Input, SendMessageToolOutput } 来自 ./SendMessageTool.js，用于校准工具调用的数据契约。
 import type { Input, SendMessageToolOutput } from './SendMessageTool.js';
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
+  // `typeof input.message` 与 `'object' || input.messag` 不一致时刷新派生状态，避免使用过期结果。
   if (typeof input.message !== 'object' || input.message === null) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 当 `input.message.type` 匹配 `'plan_approval_response'` 时，工具调用执行对应分支。
   if (input.message.type === 'plan_approval_response') {
+    // 返回 `input.message.approve ? `approve plan from: ${input.to}` : `reject plan...`，作为工具调用这次计算的结果。
     return input.message.approve ? `approve plan from: ${input.to}` : `reject plan from: ${input.to}`;
   }
+  // 返回 `null`，作为工具调用这次计算的结果。
   return null;
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(content: SendMessageToolOutput | string, _progressMessages: unknown, {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // 结果标记工具实现 UI是否启用对应路径。
   const result: SendMessageToolOutput = typeof content === 'string' ? jsonParse(content) : content;
+  // 只有 `'routing' in result && result.routing` 满足时，工具调用才执行该分支。
   if ('routing' in result && result.routing) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 只有 `'request_id' in result && 'target' in result` 满足时，工具调用才执行该分支。
   if ('request_id' in result && 'target' in result) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Text dimColor>{result.message}</Text>
     </MessageResponse>;

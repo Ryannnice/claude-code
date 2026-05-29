@@ -1,137 +1,237 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { ToolResultBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准工具调用的数据契约。
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 类型依赖 { StructuredPatchHunk } 来自 diff，用于校准工具调用的数据契约。
 import type { StructuredPatchHunk } from 'diff';
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { isAbsolute, relative, resolve } from 'path';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Suspense、use、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { Suspense, use, useState } from 'react';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from 'src/components/MessageResponse.js';
+// 复用 extractTag 工具函数，把通用处理留在 src/utils/messages.js 中维护。
 import { extractTag } from 'src/utils/messages.js';
+// 复用 CtrlOToExpand 终端界面组件，避免在这里重复拼装显示逻辑。
 import { CtrlOToExpand } from '../../components/CtrlOToExpand.js';
+// 复用 FallbackToolUseErrorMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
+// 复用 FileEditToolUpdatedMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage.js';
+// 复用 FileEditToolUseRejectedMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FileEditToolUseRejectedMessage } from '../../components/FileEditToolUseRejectedMessage.js';
+// 复用 FilePathLink 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FilePathLink } from '../../components/FilePathLink.js';
+// 复用 HighlightedCode 终端界面组件，避免在这里重复拼装显示逻辑。
 import { HighlightedCode } from '../../components/HighlightedCode.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { ToolProgressData } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolProgressData } from '../../Tool.js';
+// 类型依赖 { ProgressMessage } 来自 ../../types/message.js，用于校准工具调用的数据契约。
 import type { ProgressMessage } from '../../types/message.js';
+// 复用 getCwd 工具函数，把通用处理留在 ../../utils/cwd.js 中维护。
 import { getCwd } from '../../utils/cwd.js';
+// 复用 getPatchForDisplay 工具函数，把通用处理留在 ../../utils/diff.js 中维护。
 import { getPatchForDisplay } from '../../utils/diff.js';
+// 复用 getDisplayPath 工具函数，把通用处理留在 ../../utils/file.js 中维护。
 import { getDisplayPath } from '../../utils/file.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 getPlansDirectory 工具函数，把通用处理留在 ../../utils/plans.js 中维护。
 import { getPlansDirectory } from '../../utils/plans.js';
+// 复用 openForScan、readCapped 工具函数，把通用处理留在 ../../utils/readEditContext.js 中维护。
 import { openForScan, readCapped } from '../../utils/readEditContext.js';
+// 类型依赖 { Output } 来自 ./FileWriteTool.js，用于校准工具调用的数据契约。
 import type { Output } from './FileWriteTool.js';
+// MAX_LINES_TO_RENDER保存`10`，供后续判断或组装使用。
 const MAX_LINES_TO_RENDER = 10;
 // Model output uses \n regardless of platform, so always split on \n.
 // os.EOL is \r\n on Windows, which would give numLines=1 for all files.
+// EOL 命名 `'\n'`，让后续代码直接表达这个值的用途。
 const EOL = '\n';
 
 /**
  * Count visible lines in file content. A trailing newline is treated as a
  * line terminator (not a new empty line), matching editor line numbering.
  */
+// countLines 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function countLines(content: string): number {
+  // 片段列表格式化`content.split`，供工具调用后续处理使用。
   const parts = content.split(EOL);
+  // 返回 `content.endsWith(EOL) ? parts.length - 1 : parts.length`，作为工具调用这次计算的结果。
   return content.endsWith(EOL) ? parts.length - 1 : parts.length;
 }
+// FileWriteToolCreatedMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function FileWriteToolCreatedMessage(t0) {
+  // $保存`_c`，供工具调用后续处理使用。
   const $ = _c(25);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     filePath,
     content,
     verbose
   } = t0;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns
   } = useTerminalSize();
+  // contentWithFallback标记工具实现 UI是否启用对应路径。
   const contentWithFallback = content || "(No content)";
+  // numLines 集合统计`countLines`，供工具调用后续处理使用。
   const numLines = countLines(content);
+  // plusLines 集合保存`numLines - MAX_LINES_TO_RENDER`，供工具实现 UI后续判断或输出使用。
   const plusLines = numLines - MAX_LINES_TO_RENDER;
+  // t1 暂存 `<Text bold={true}>{numLines}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== numLines) {
+    // t1 暂存 `<Text bold={true}>{numLines}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t1 = <Text bold={true}>{numLines}</Text>;
+    // $[0] 缓存 `numLines`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = numLines;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // t2 暂存 `verbose ? filePath : relative(getCwd(), filePath)` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== filePath || $[3] !== verbose) {
+    // t2 暂存 `verbose ? filePath : relative(getCwd(), filePath)` 生成的渲染片段，后续返回路径直接复用。
     t2 = verbose ? filePath : relative(getCwd(), filePath);
+    // $[2] 缓存 `filePath`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = filePath;
+    // $[3] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = verbose;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[4];
   }
+  // t3 暂存 `<Text bold={true}>{t2}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== t2) {
+    // t3 暂存 `<Text bold={true}>{t2}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text bold={true}>{t2}</Text>;
+    // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t2;
+    // $[6] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[6];
   }
+  // t4 暂存 `<Text>Wrote {t1} lines to{" "}{t3}</Text>` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== t1 || $[8] !== t3) {
+    // t4 暂存 `<Text>Wrote {t1} lines to{" "}{t3}</Text>` 生成的渲染片段，后续返回路径直接复用。
     t4 = <Text>Wrote {t1} lines to{" "}{t3}</Text>;
+    // $[7] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t1;
+    // $[8] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t3;
+    // $[9] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[9];
   }
+  // t5 暂存 `verbose ? contentWithFallback : contentWithFallback.split...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[10] !== contentWithFallback || $[11] !== verbose) {
+    // t5 暂存 `verbose ? contentWithFallback : contentWithFallback.split...` 生成的渲染片段，后续返回路径直接复用。
     t5 = verbose ? contentWithFallback : contentWithFallback.split("\n").slice(0, MAX_LINES_TO_RENDER).join("\n");
+    // $[10] 缓存 `contentWithFallback`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = contentWithFallback;
+    // $[11] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = verbose;
+    // $[12] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[12];
   }
+  // 临时值 t6 命名 `columns - 12`，让后续代码直接表达这个值的用途。
   const t6 = columns - 12;
+  // t7 暂存 `<Box flexDirection="column"><HighlightedCode code={t5} fi...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[13] !== filePath || $[14] !== t5 || $[15] !== t6) {
+    // t7 暂存 `<Box flexDirection="column"><HighlightedCode code={t5} fi...` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Box flexDirection="column"><HighlightedCode code={t5} filePath={filePath} width={t6} /></Box>;
+    // $[13] 缓存 `filePath`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = filePath;
+    // $[14] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t5;
+    // $[15] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t6;
+    // $[16] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[16];
   }
+  // t8 暂存 `!verbose && plusLines > 0 && <Text dimColor={true}>… +{pl...` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[17] !== numLines || $[18] !== plusLines || $[19] !== verbose) {
+    // t8 暂存 `!verbose && plusLines > 0 && <Text dimColor={true}>… +{pl...` 生成的渲染片段，后续返回路径直接复用。
     t8 = !verbose && plusLines > 0 && <Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"}{" "}{numLines > 0 && <CtrlOToExpand />}</Text>;
+    // $[17] 缓存 `numLines`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = numLines;
+    // $[18] 缓存 `plusLines`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = plusLines;
+    // $[19] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = verbose;
+    // $[20] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[20] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[20];
   }
+  // t9 暂存 `<MessageResponse><Box flexDirection="column">{t4}{t7}{t8}...` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[21] !== t4 || $[22] !== t7 || $[23] !== t8) {
+    // t9 暂存 `<MessageResponse><Box flexDirection="column">{t4}{t7}{t8}...` 生成的渲染片段，后续返回路径直接复用。
     t9 = <MessageResponse><Box flexDirection="column">{t4}{t7}{t8}</Box></MessageResponse>;
+    // $[21] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t4;
+    // $[22] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t7;
+    // $[23] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = t8;
+    // $[24] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[24] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[24];
   }
+  // 返回 `t9`，作为工具调用这次计算的结果。
   return t9;
 }
+// userFacingName 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function userFacingName(input: Partial<{
   file_path: string;
   content: string;
 }> | undefined): string {
+  // 满足 `input?.file_path?.startsWith(getPlansDirectory())` 时，工具调用执行该分支。
   if (input?.file_path?.startsWith(getPlansDirectory())) {
+    // 返回 `'Updated plan'`，作为工具调用这次计算的结果。
     return 'Updated plan';
   }
+  // 返回 `'Write'`，作为工具调用这次计算的结果。
   return 'Write';
 }
 
@@ -139,29 +239,42 @@ export function userFacingName(input: Partial<{
  *  MAX_LINES_TO_RENDER); `update` renders the full diff regardless of verbose.
  *  Called per visible message on hover/scroll, so early-exit after finding the
  *  (MAX+1)th line instead of splitting the whole (possibly huge) content. */
+// isResultTruncated 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isResultTruncated({
   type,
   content
 }: Output): boolean {
+  // `type` 与 `'create'` 不一致时刷新派生状态，避免使用过期结果。
   if (type !== 'create') return false;
+  // pos 集合 命名 `0`，让后续代码直接表达这个值的用途。
   let pos = 0;
+  // 按索引扫描 `MAX_LINES_TO_RENDER`，需要消费相邻参数时可以精确移动游标。
   for (let i = 0; i < MAX_LINES_TO_RENDER; i++) {
+    // pos 集合更新为 `content.indexOf(EOL, pos)`，确保工具调用后续读取最新状态。
     pos = content.indexOf(EOL, pos);
+    // 满足 `pos === -1` 时，工具调用执行该分支。
     if (pos === -1) return false;
+    // 工具实现 UI在这里处理 `pos++`，完成这一小步状态转换。
     pos++;
   }
   // countLines treats a trailing EOL as a terminator, not a new line
+  // 返回 `pos < content.length`，作为工具调用这次计算的结果。
   return pos < content.length;
 }
+// getToolUseSummary 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getToolUseSummary(input: Partial<{
   file_path: string;
   content: string;
 }> | undefined): string | null {
+  // 满足 `!input?.file_path` 时，工具调用执行该分支。
   if (!input?.file_path) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 返回 `getDisplayPath(input.file_path)`，作为工具调用这次计算的结果。
   return getDisplayPath(input.file_path);
 }
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(input: Partial<{
   file_path: string;
   content: string;
@@ -170,17 +283,23 @@ export function renderToolUseMessage(input: Partial<{
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // input.file_path 路径数据缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!input.file_path) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
   // For plan files, path is already in userFacingName
+  // 满足 `input.file_path.startsWith(getPlansDirectory())` 时，工具调用执行该分支。
   if (input.file_path.startsWith(getPlansDirectory())) {
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return '';
   }
+  // 返回 `<FilePathLink filePath={input.file_path}>`，作为工具调用这次计算的结果。
   return <FilePathLink filePath={input.file_path}>
       {verbose ? input.file_path : getDisplayPath(input.file_path)}
     </FilePathLink>;
 }
+// renderToolUseRejectedMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseRejectedMessage({
   file_path,
   content
@@ -194,8 +313,10 @@ export function renderToolUseRejectedMessage({
   style?: 'condensed';
   verbose: boolean;
 }): React.ReactNode {
+  // 返回 `<WriteRejectionDiff filePath={file_path} content={content} style={style...`，作为工具调用这次计算的结果。
   return <WriteRejectionDiff filePath={file_path} content={content} style={style} verbose={verbose} />;
 }
+// RejectionDiffData 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type RejectionDiffData = {
   type: 'create';
 } | {
@@ -205,71 +326,121 @@ type RejectionDiffData = {
 } | {
   type: 'error';
 };
+// WriteRejectionDiff 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function WriteRejectionDiff(t0) {
+  // $保存`_c`，供工具调用后续处理使用。
   const $ = _c(20);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     filePath,
     content,
     style,
     verbose
   } = t0;
+  // t1 暂存 `() => loadRejectionDiff(filePath, content)` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== content || $[1] !== filePath) {
+    // t1 暂存 `() => loadRejectionDiff(filePath, content)` 生成的渲染片段，后续返回路径直接复用。
     t1 = () => loadRejectionDiff(filePath, content);
+    // $[0] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = content;
+    // $[1] 缓存 `filePath`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = filePath;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // dataPromise 异步任务 由 React state 持有，setter 会在用户操作或异步结果返回时触发刷新。
   const [dataPromise] = useState(t1);
+  // t2 暂存 `content.split("\n")[0] ?? null` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== content) {
+    // t2 暂存 `content.split("\n")[0] ?? null` 生成的渲染片段，后续返回路径直接复用。
     t2 = content.split("\n")[0] ?? null;
+    // $[3] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = content;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[4];
   }
+  // firstLine 命名 `t2`，让后续代码直接表达这个值的用途。
   const firstLine = t2;
+  // t3 暂存 `<FileEditToolUseRejectedMessage file_path={filePath} oper...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== content || $[6] !== filePath || $[7] !== firstLine || $[8] !== verbose) {
+    // t3 暂存 `<FileEditToolUseRejectedMessage file_path={filePath} oper...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <FileEditToolUseRejectedMessage file_path={filePath} operation="write" content={content} firstLine={firstLine} verbose={verbose} />;
+    // $[5] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = content;
+    // $[6] 缓存 `filePath`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = filePath;
+    // $[7] 缓存 `firstLine`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = firstLine;
+    // $[8] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = verbose;
+    // $[9] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[9];
   }
+  // createFallback沿用 `t3` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const createFallback = t3;
+  // t4 暂存 `<WriteRejectionBody promise={dataPromise} filePath={fileP...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[10] !== createFallback || $[11] !== dataPromise || $[12] !== filePath || $[13] !== firstLine || $[14] !== style || $[15] !== verbose) {
+    // t4 暂存 `<WriteRejectionBody promise={dataPromise} filePath={fileP...` 生成的渲染片段，后续返回路径直接复用。
     t4 = <WriteRejectionBody promise={dataPromise} filePath={filePath} firstLine={firstLine} createFallback={createFallback} style={style} verbose={verbose} />;
+    // $[10] 缓存 `createFallback`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = createFallback;
+    // $[11] 缓存 `dataPromise`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = dataPromise;
+    // $[12] 缓存 `filePath`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = filePath;
+    // $[13] 缓存 `firstLine`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = firstLine;
+    // $[14] 缓存 `style`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = style;
+    // $[15] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = verbose;
+    // $[16] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[16];
   }
+  // t5 暂存 `<Suspense fallback={createFallback}>{t4}</Suspense>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[17] !== createFallback || $[18] !== t4) {
+    // t5 暂存 `<Suspense fallback={createFallback}>{t4}</Suspense>` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Suspense fallback={createFallback}>{t4}</Suspense>;
+    // $[17] 缓存 `createFallback`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = createFallback;
+    // $[18] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t4;
+    // $[19] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[19];
   }
+  // 返回 `t5`，作为工具调用这次计算的结果。
   return t5;
 }
+// WriteRejectionBody 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function WriteRejectionBody(t0) {
+  // $保存`_c`，供工具调用后续处理使用。
   const $ = _c(8);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     promise,
     filePath,
@@ -278,53 +449,86 @@ function WriteRejectionBody(t0) {
     style,
     verbose
   } = t0;
+  // data保存`use`，供工具调用后续处理使用。
   const data = use(promise);
+  // 当 `data.type` 匹配 `"create"` 时，工具调用执行对应分支。
   if (data.type === "create") {
+    // 返回 `createFallback`，作为工具调用这次计算的结果。
     return createFallback;
   }
+  // 当 `data.type` 匹配 `"error"` 时，工具调用执行对应分支。
   if (data.type === "error") {
+    // t1 暂存 `<MessageResponse><Text>(No changes)</Text></MessageRespon...` 的派生结果，便于缓存命中时直接复用。
     let t1;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+      // t1 暂存 `<MessageResponse><Text>(No changes)</Text></MessageRespon...` 生成的渲染片段，后续返回路径直接复用。
       t1 = <MessageResponse><Text>(No changes)</Text></MessageResponse>;
+      // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
       $[0] = t1;
     } else {
+      // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
       t1 = $[0];
     }
+    // 返回 `t1`，作为工具调用这次计算的结果。
     return t1;
   }
+  // t1 暂存 `<FileEditToolUseRejectedMessage file_path={filePath} oper...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== data.oldContent || $[2] !== data.patch || $[3] !== filePath || $[4] !== firstLine || $[5] !== style || $[6] !== verbose) {
+    // t1 暂存 `<FileEditToolUseRejectedMessage file_path={filePath} oper...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <FileEditToolUseRejectedMessage file_path={filePath} operation="update" patch={data.patch} firstLine={firstLine} fileContent={data.oldContent} style={style} verbose={verbose} />;
+    // $[1] 缓存 `data.oldContent`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = data.oldContent;
+    // $[2] 缓存 `data.patch`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = data.patch;
+    // $[3] 缓存 `filePath`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = filePath;
+    // $[4] 缓存 `firstLine`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = firstLine;
+    // $[5] 缓存 `style`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = style;
+    // $[6] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = verbose;
+    // $[7] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[7];
   }
+  // 返回 `t1`，作为工具调用这次计算的结果。
   return t1;
 }
+// loadRejectionDiff 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function loadRejectionDiff(filePath: string, content: string): Promise<RejectionDiffData> {
+  // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
   try {
+    // fullFilePath 路径数据保存`isAbsolute`，供工具调用后续处理使用。
     const fullFilePath = isAbsolute(filePath) ? filePath : resolve(getCwd(), filePath);
+    // handle保存`openForScan`，供工具调用后续处理使用。
     const handle = await openForScan(fullFilePath);
+    // 满足 `handle === null` 时，工具调用执行该分支。
     if (handle === null) return {
       type: 'create'
     };
+    // 原始内容 先占位，稍后的条件分支会根据实际输入补齐它。
     let oldContent: string | null;
+    // 保护这一段可能失败的工具调用操作，确保异常能进入相邻错误处理。
     try {
+      // 原始内容更新为 `await readCapped(handle)`，确保工具调用后续读取最新状态。
       oldContent = await readCapped(handle);
     } finally {
+      // 等待 `handle.close()` 完成，再继续工具实现 UI的异步流程。
       await handle.close();
     }
     // File exceeds MAX_SCAN_BYTES — fall back to the create view rather than
     // OOMing on a diff of a multi-GB file.
+    // 满足 `oldContent === null` 时，工具调用执行该分支。
     if (oldContent === null) return {
       type: 'create'
     };
+    // patch读取`getPatchForDisplay`，供工具调用后续处理使用。
     const patch = getPatchForDisplay({
       filePath,
       fileContents: oldContent,
@@ -334,6 +538,7 @@ async function loadRejectionDiff(filePath: string, content: string): Promise<Rej
         replace_all: false
       }]
     });
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       type: 'update',
       patch,
@@ -341,24 +546,31 @@ async function loadRejectionDiff(filePath: string, content: string): Promise<Rej
     };
   } catch (e) {
     // User may have manually applied the change while the diff was shown.
+    // 记录工具调用运行诊断，方便排查异常路径或性能问题。
     logError(e as Error);
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       type: 'error'
     };
   }
 }
+// renderToolUseErrorMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // 只有 `!verbose && typeof result === 'string' && extractTag(result, 'tool_use_erro...` 满足时，工具调用才执行该分支。
   if (!verbose && typeof result === 'string' && extractTag(result, 'tool_use_error')) {
+    // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
     return <MessageResponse>
         <Text color="error">Error writing file</Text>
       </MessageResponse>;
   }
+  // 返回 `<FallbackToolUseErrorMessage result={result} verbose={verbose} />`，作为工具调用这次计算的结果。
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage({
   filePath,
   content,
@@ -372,32 +584,43 @@ export function renderToolResultMessage({
   style?: 'condensed';
   verbose: boolean;
 }): React.ReactNode {
+  // 按照 type 的取值选择工具调用的具体处理分支。
   switch (type) {
     case 'create':
       {
+        // isPlanFile 文件数据记录 `filePath.startsWith` 是否成立，工具调用随后按该结果分支。
         const isPlanFile = filePath.startsWith(getPlansDirectory());
 
         // Plan files: invert condensed behavior
         // - Regular mode: just show hint (user can type /plan to see full content)
         // - Condensed mode (subagent view): show full content
+        // 只有 `isPlanFile && !verbose` 满足时，工具调用才执行该分支。
         if (isPlanFile && !verbose) {
+          // `style` 与 `'condensed'` 不一致时刷新派生状态，避免使用过期结果。
           if (style !== 'condensed') {
+            // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
             return <MessageResponse>
               <Text dimColor>/plan to preview</Text>
             </MessageResponse>;
           }
+        // 工具实现 UI在这里处理 `} else if (style === 'condensed' && !verbose) {`，完成这一小步状态转换。
         } else if (style === 'condensed' && !verbose) {
+          // numLines 集合统计`countLines`，供工具调用后续处理使用。
           const numLines = countLines(content);
+          // 返回 `<Text>`，作为工具调用这次计算的结果。
           return <Text>
             Wrote <Text bold>{numLines}</Text> lines to{' '}
             <Text bold>{relative(getCwd(), filePath)}</Text>
           </Text>;
         }
+        // 返回 `<FileWriteToolCreatedMessage filePath={filePath} content={content} verb...`，作为工具调用这次计算的结果。
         return <FileWriteToolCreatedMessage filePath={filePath} content={content} verbose={verbose} />;
       }
     case 'update':
       {
+        // isPlanFile 文件数据记录 `filePath.startsWith` 是否成立，工具调用随后按该结果分支。
         const isPlanFile = filePath.startsWith(getPlansDirectory());
+        // 返回 `<FileEditToolUpdatedMessage filePath={filePath} structuredPatch={struct...`，作为工具调用这次计算的结果。
         return <FileEditToolUpdatedMessage filePath={filePath} structuredPatch={structuredPatch} firstLine={content.split('\n')[0] ?? null} fileContent={originalFile ?? undefined} style={style} verbose={verbose} previewHint={isPlanFile ? '/plan to preview' : undefined} />;
       }
   }

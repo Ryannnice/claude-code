@@ -1,10 +1,17 @@
+// 类型依赖 { UUID } 来自 crypto，用于校准logs的数据契约。
 import type { UUID } from 'crypto'
+// 类型依赖 { FileHistorySnapshot } 来自 src/utils/fileHistory.js，用于校准logs的数据契约。
 import type { FileHistorySnapshot } from 'src/utils/fileHistory.js'
+// 类型依赖 { ContentReplacementRecord } 来自 src/utils/toolResultStorage.js，用于校准logs的数据契约。
 import type { ContentReplacementRecord } from 'src/utils/toolResultStorage.js'
+// 类型依赖 { AgentId } 来自 ./ids.js，用于校准logs的数据契约。
 import type { AgentId } from './ids.js'
+// 类型依赖 { Message } 来自 ./message.js，用于校准logs的数据契约。
 import type { Message } from './message.js'
+// 类型依赖 { QueueOperationMessage } 来自 ./messageQueueTypes.js，用于校准logs的数据契约。
 import type { QueueOperationMessage } from './messageQueueTypes.js'
 
+// SerializedMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SerializedMessage = Message & {
   cwd: string
   userType: string
@@ -16,6 +23,7 @@ export type SerializedMessage = Message & {
   slug?: string // Session slug for files like plans (used for resume)
 }
 
+// LogOption 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LogOption = {
   date: string
   messages: SerializedMessage[]
@@ -52,12 +60,14 @@ export type LogOption = {
   contentReplacements?: ContentReplacementRecord[] // Replacement decisions for resume reconstruction
 }
 
+// SummaryMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SummaryMessage = {
   type: 'summary'
   leafUuid: UUID
   summary: string
 }
 
+// CustomTitleMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CustomTitleMessage = {
   type: 'custom-title'
   sessionId: UUID
@@ -72,12 +82,14 @@ export type CustomTitleMessage = {
  * - VS Code's onlyIfNoCustomTitle CAS check only matches user titles,
  *   allowing AI to overwrite its own previous AI title but not user titles
  */
+// AiTitleMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AiTitleMessage = {
   type: 'ai-title'
   sessionId: UUID
   aiTitle: string
 }
 
+// LastPromptMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type LastPromptMessage = {
   type: 'last-prompt'
   sessionId: UUID
@@ -90,6 +102,7 @@ export type LastPromptMessage = {
  * `claude ps` can show something more useful than the last user prompt
  * (which is often "ok go" or "fix it").
  */
+// TaskSummaryMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TaskSummaryMessage = {
   type: 'task-summary'
   sessionId: UUID
@@ -97,24 +110,28 @@ export type TaskSummaryMessage = {
   timestamp: string
 }
 
+// TagMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TagMessage = {
   type: 'tag'
   sessionId: UUID
   tag: string
 }
 
+// AgentNameMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AgentNameMessage = {
   type: 'agent-name'
   sessionId: UUID
   agentName: string
 }
 
+// AgentColorMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AgentColorMessage = {
   type: 'agent-color'
   sessionId: UUID
   agentColor: string
 }
 
+// AgentSettingMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AgentSettingMessage = {
   type: 'agent-setting'
   sessionId: UUID
@@ -125,6 +142,7 @@ export type AgentSettingMessage = {
  * PR link message stored in session transcript.
  * Links a session to a GitHub pull request for tracking and navigation.
  */
+// PRLinkMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PRLinkMessage = {
   type: 'pr-link'
   sessionId: UUID
@@ -134,6 +152,7 @@ export type PRLinkMessage = {
   timestamp: string // ISO timestamp when linked
 }
 
+// ModeEntry 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ModeEntry = {
   type: 'mode'
   sessionId: UUID
@@ -146,6 +165,7 @@ export type ModeEntry = {
  * fields (creationDurationMs, usedSparsePaths) that are only used for
  * first-run analytics.
  */
+// PersistedWorktreeSession 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PersistedWorktreeSession = {
   originalCwd: string
   worktreePath: string
@@ -164,6 +184,7 @@ export type PersistedWorktreeSession = {
  * an exit writes null. On --resume, restored only if the worktreePath
  * still exists on disk (the /exit dialog may have removed it).
  */
+// WorktreeStateEntry 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type WorktreeStateEntry = {
   type: 'worktree-state'
   sessionId: UUID
@@ -178,6 +199,7 @@ export type WorktreeStateEntry = {
  * sidechain (AgentTool resume reads these); when absent, it's main-thread
  * (/resume reads these).
  */
+// ContentReplacementEntry 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ContentReplacementEntry = {
   type: 'content-replacement'
   sessionId: UUID
@@ -185,6 +207,7 @@ export type ContentReplacementEntry = {
   replacements: ContentReplacementRecord[]
 }
 
+// FileHistorySnapshotMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type FileHistorySnapshotMessage = {
   type: 'file-history-snapshot'
   messageId: UUID
@@ -195,6 +218,7 @@ export type FileHistorySnapshotMessage = {
 /**
  * Per-file attribution state tracking Claude's character contributions.
  */
+// FileAttributionState 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type FileAttributionState = {
   contentHash: string // SHA-256 hash of file content
   claudeContribution: number // Characters written by Claude
@@ -205,6 +229,7 @@ export type FileAttributionState = {
  * Attribution snapshot message stored in session transcript.
  * Tracks character-level contributions by Claude for commit attribution.
  */
+// AttributionSnapshotMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type AttributionSnapshotMessage = {
   type: 'attribution-snapshot'
   messageId: UUID
@@ -218,6 +243,7 @@ export type AttributionSnapshotMessage = {
   escapeCountAtLastCommit?: number // ESC presses at last commit
 }
 
+// TranscriptMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TranscriptMessage = SerializedMessage & {
   parentUuid: UUID | null
   logicalParentUuid?: UUID | null // Preserves logical parent when parentUuid is nullified for session breaks
@@ -230,6 +256,7 @@ export type TranscriptMessage = SerializedMessage & {
   promptId?: string // Correlates with OTel prompt.id for user prompt messages
 }
 
+// SpeculationAcceptMessage 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SpeculationAcceptMessage = {
   type: 'speculation-accept'
   timestamp: string
@@ -252,6 +279,7 @@ export type SpeculationAcceptMessage = {
  * via the appendEntry dispatch / loadTranscriptFile parser even though
  * nothing in an external build ever writes or reads this entry.
  */
+// ContextCollapseCommitEntry 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ContextCollapseCommitEntry = {
   type: 'marble-origami-commit'
   sessionId: UUID
@@ -279,6 +307,7 @@ export type ContextCollapseCommitEntry = {
  * collapse IDs for those messages on the next decorate/display, but the
  * span itself resolves correctly.
  */
+// ContextCollapseSnapshotEntry 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type ContextCollapseSnapshotEntry = {
   type: 'marble-origami-snapshot'
   sessionId: UUID
@@ -294,6 +323,7 @@ export type ContextCollapseSnapshotEntry = {
   lastSpawnTokens: number
 }
 
+// Entry 固化logs里传递的数据形状，帮助调用方按同一结构读写字段。
 export type Entry =
   | TranscriptMessage
   | SummaryMessage
@@ -316,15 +346,21 @@ export type Entry =
   | ContextCollapseCommitEntry
   | ContextCollapseSnapshotEntry
 
+// sortLogs 封装logs的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function sortLogs(logs: LogOption[]): LogOption[] {
+  // 返回 `logs.sort((a, b) => {`，作为logs这次计算的结果。
   return logs.sort((a, b) => {
     // Sort by modified date (newest first)
+    // modifiedDiff读取`modified.getTime`，供logs后续处理使用。
     const modifiedDiff = b.modified.getTime() - a.modified.getTime()
+    // `modifiedDiff` 与 `0` 不一致时刷新派生状态，避免使用过期结果。
     if (modifiedDiff !== 0) {
+      // 返回 `modifiedDiff`，作为logs这次计算的结果。
       return modifiedDiff
     }
 
     // If modified dates are equal, sort by created date (newest first)
+    // 返回 `b.created.getTime() - a.created.getTime()`，作为logs这次计算的结果。
     return b.created.getTime() - a.created.getTime()
   })
 }

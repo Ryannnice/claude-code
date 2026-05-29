@@ -1,23 +1,44 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { ToolUseBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准终端渲染的数据契约。
 import type { ToolUseBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 引入 React、useMemo，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useMemo } from 'react';
+// 引入 useTerminalSize，将 src/hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from 'src/hooks/useTerminalSize.js';
+// 类型依赖 { ThemeName } 来自 src/utils/theme.js，用于校准终端渲染的数据契约。
 import type { ThemeName } from 'src/utils/theme.js';
+// 类型依赖 { Command } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { Command } from '../../commands.js';
+// 引入 BLACK_CIRCLE，将 ../../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { BLACK_CIRCLE } from '../../constants/figures.js';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../ink/stringWidth.js';
+// 引入 Box、Text、useTheme，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useTheme } from '../../ink.js';
+// 引入 useAppStateMaybeOutsideOfProvider，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppStateMaybeOutsideOfProvider } from '../../state/AppState.js';
+// 引入 findToolByName、Tool、ToolProgressData、Tools，将 ../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { findToolByName, type Tool, type ToolProgressData, type Tools } from '../../Tool.js';
+// 类型依赖 { ProgressMessage } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { ProgressMessage } from '../../types/message.js';
+// 复用 useIsClassifierChecking 工具函数，把通用处理留在 ../../utils/classifierApprovalsHook.js 中维护。
 import { useIsClassifierChecking } from '../../utils/classifierApprovalsHook.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 类型依赖 { buildMessageLookups } 来自 ../../utils/messages.js，用于校准终端渲染的数据契约。
 import type { buildMessageLookups } from '../../utils/messages.js';
+// 引入 MessageResponse，将 ../MessageResponse.js 中已经封装好的能力接到本文件流程里。
 import { MessageResponse } from '../MessageResponse.js';
+// 引入 useSelectedMessageBg，将 ../messageActions.js 中已经封装好的能力接到本文件流程里。
 import { useSelectedMessageBg } from '../messageActions.js';
+// 引入 SentryErrorBoundary，将 ../SentryErrorBoundary.js 中已经封装好的能力接到本文件流程里。
 import { SentryErrorBoundary } from '../SentryErrorBoundary.js';
+// 引入 ToolUseLoader，将 ../ToolUseLoader.js 中已经封装好的能力接到本文件流程里。
 import { ToolUseLoader } from '../ToolUseLoader.js';
+// 引入 HookProgressMessage，将 ./HookProgressMessage.js 中已经封装好的能力接到本文件流程里。
 import { HookProgressMessage } from './HookProgressMessage.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   param: ToolUseBlockParam;
   addMargin: boolean;
@@ -32,8 +53,11 @@ type Props = {
   lookups: ReturnType<typeof buildMessageLookups>;
   isTranscriptMode?: boolean;
 };
+// AssistantToolUseMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AssistantToolUseMessage(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(81);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     param,
     addMargin,
@@ -48,29 +72,51 @@ export function AssistantToolUseMessage(t0) {
     lookups,
     isTranscriptMode
   } = t0;
+  // terminalSize保存`useTerminalSize`，供终端渲染后续处理使用。
   const terminalSize = useTerminalSize();
+  // 从 `useTheme()` 按位置拆出 theme，让终端 UI 组件 Assistant Tool Use Message分别处理这些返回值。
   const [theme] = useTheme();
+  // bg保存`useSelectedMessageBg`，供终端渲染后续处理使用。
   const bg = useSelectedMessageBg();
+  // pendingWorkerRequest 请求数据保存`useAppStateMaybeOutsideOfProvider`，供终端渲染后续处理使用。
   const pendingWorkerRequest = useAppStateMaybeOutsideOfProvider(_temp);
+  // isClassifierCheckingRaw记录 `useIsClassifierChecking` 是否成立，终端渲染随后按该结果分支。
   const isClassifierCheckingRaw = useIsClassifierChecking(param.id);
+  // permissionMode 权限数据保存`useAppStateMaybeOutsideOfProvider`，供终端渲染后续处理使用。
   const permissionMode = useAppStateMaybeOutsideOfProvider(_temp2);
+  // hasStrippedRules 集合记录 `useAppStateMaybeOutsideOfProvider` 是否成立，终端渲染随后按该结果分支。
   const hasStrippedRules = useAppStateMaybeOutsideOfProvider(_temp3);
+  // isAutoClassifier标记终端 UI Assistant Tool Use M...是否启用对应路径。
   const isAutoClassifier = permissionMode === "auto" || permissionMode === "plan" && hasStrippedRules;
+  // isClassifierChecking标记终端 UI Assistant Tool Use M...是否启用对应路径。
   const isClassifierChecking = false && isClassifierCheckingRaw && permissionMode !== "auto";
+  // t1 暂存 `null` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== param.input || $[1] !== param.name || $[2] !== tools) {
+    // 终端 UI 组件 Assistant Tool Use Message在这里处理 `bb0: {`，完成这一小步状态转换。
     bb0: {
+      // tools 集合缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!tools) {
+        // t1 暂存 `null` 生成的渲染片段，后续返回路径直接复用。
         t1 = null;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb0;
       }
+      // 工具筛选`findToolByName`，供终端渲染后续处理使用。
       const tool = findToolByName(tools, param.name);
+      // 工具缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!tool) {
+        // t1 暂存 `null` 生成的渲染片段，后续返回路径直接复用。
         t1 = null;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb0;
       }
+      // 用户输入保存`inputSchema.safeParse`，供终端渲染后续处理使用。
       const input = tool.inputSchema.safeParse(param.input);
+      // data 命名 `input.success ? input.data : undefined`，让后续代码直接表达这个值的用途。
       const data = input.success ? input.data : undefined;
+      // t1 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
       t1 = {
         tool,
         input,
@@ -79,18 +125,28 @@ export function AssistantToolUseMessage(t0) {
         isTransparentWrapper: tool.isTransparentWrapper?.() ?? false
       };
     }
+    // $[0] 缓存 `param.input`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = param.input;
+    // $[1] 缓存 `param.name`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = param.name;
+    // $[2] 缓存 `tools`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = tools;
+    // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[3];
   }
+  // 解析结果保存`t1`，作为后续临时缓存值处理的输入。
   const parsed = t1;
+  // 解析结果缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!parsed) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(new Error(tools ? `Tool ${param.name} not found` : `Tools array is undefined for tool ${param.name}`));
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     tool: tool_0,
     input: input_0,
@@ -98,209 +154,365 @@ export function AssistantToolUseMessage(t0) {
     userFacingToolNameBackgroundColor,
     isTransparentWrapper
   } = parsed;
+  // t2 暂存 `lookups.resolvedToolUseIDs.has(param.id)` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== lookups.resolvedToolUseIDs || $[5] !== param.id) {
+    // t2 暂存 `lookups.resolvedToolUseIDs.has(param.id)` 生成的渲染片段，后续返回路径直接复用。
     t2 = lookups.resolvedToolUseIDs.has(param.id);
+    // $[4] 缓存 `lookups.resolvedToolUseIDs`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = lookups.resolvedToolUseIDs;
+    // $[5] 缓存 `param.id`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = param.id;
+    // $[6] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[6];
   }
+  // isResolved标记终端 UI Assistant Tool Use M...是否启用对应路径。
   const isResolved = t2;
+  // t3 暂存 `!inProgressToolUseIDs.has(param.id) && !isResolved` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== inProgressToolUseIDs || $[8] !== isResolved || $[9] !== param.id) {
+    // t3 暂存 `!inProgressToolUseIDs.has(param.id) && !isResolved` 生成的渲染片段，后续返回路径直接复用。
     t3 = !inProgressToolUseIDs.has(param.id) && !isResolved;
+    // $[7] 缓存 `inProgressToolUseIDs`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = inProgressToolUseIDs;
+    // $[8] 缓存 `isResolved`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = isResolved;
+    // $[9] 缓存 `param.id`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = param.id;
+    // $[10] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[10];
   }
+  // isQueued标记终端 UI Assistant Tool Use M...是否启用对应路径。
   const isQueued = t3;
+  // isWaitingForPermission 权限数据标记终端 UI Assistant Tool Use M...是否启用对应路径。
   const isWaitingForPermission = pendingWorkerRequest?.toolUseId === param.id;
+  // 满足 `isTransparentWrapper` 时，终端渲染执行该分支。
   if (isTransparentWrapper) {
+    // 只有 `isQueued || isResolved` 满足时，终端渲染才执行该分支。
     if (isQueued || isResolved) {
+      // 返回 `null`，作为终端渲染这次计算的结果。
       return null;
     }
+    // t4 暂存 `renderToolUseProgressMessage(tool_0, tools, lookups, para...` 的派生结果，便于缓存命中时直接复用。
     let t4;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[11] !== inProgressToolCallCount || $[12] !== isTranscriptMode || $[13] !== lookups || $[14] !== param.id || $[15] !== progressMessagesForMessage || $[16] !== terminalSize || $[17] !== tool_0 || $[18] !== tools || $[19] !== verbose) {
+      // t4 暂存 `renderToolUseProgressMessage(tool_0, tools, lookups, para...` 生成的渲染片段，后续返回路径直接复用。
       t4 = renderToolUseProgressMessage(tool_0, tools, lookups, param.id, progressMessagesForMessage, {
         verbose,
         inProgressToolCallCount,
         isTranscriptMode
       }, terminalSize);
+      // $[11] 缓存 `inProgressToolCallCount`，下次依赖未变时 React 编译产物可直接复用。
       $[11] = inProgressToolCallCount;
+      // $[12] 缓存 `isTranscriptMode`，下次依赖未变时 React 编译产物可直接复用。
       $[12] = isTranscriptMode;
+      // $[13] 缓存 `lookups`，下次依赖未变时 React 编译产物可直接复用。
       $[13] = lookups;
+      // $[14] 缓存 `param.id`，下次依赖未变时 React 编译产物可直接复用。
       $[14] = param.id;
+      // $[15] 缓存 `progressMessagesForMessage`，下次依赖未变时 React 编译产物可直接复用。
       $[15] = progressMessagesForMessage;
+      // $[16] 缓存 `terminalSize`，下次依赖未变时 React 编译产物可直接复用。
       $[16] = terminalSize;
+      // $[17] 缓存 `tool_0`，下次依赖未变时 React 编译产物可直接复用。
       $[17] = tool_0;
+      // $[18] 缓存 `tools`，下次依赖未变时 React 编译产物可直接复用。
       $[18] = tools;
+      // $[19] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
       $[19] = verbose;
+      // $[20] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[20] = t4;
     } else {
+      // t4 从 React 编译缓存槽 $[20] 取回渲染片段，避免依赖未变时重建 JSX。
       t4 = $[20];
     }
+    // t5 暂存 `<Box flexDirection="column" width="100%" backgroundColor=...` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[21] !== bg || $[22] !== t4) {
+      // t5 暂存 `<Box flexDirection="column" width="100%" backgroundColor=...` 生成的渲染片段，后续返回路径直接复用。
       t5 = <Box flexDirection="column" width="100%" backgroundColor={bg}>{t4}</Box>;
+      // $[21] 缓存 `bg`，下次依赖未变时 React 编译产物可直接复用。
       $[21] = bg;
+      // $[22] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[22] = t4;
+      // $[23] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[23] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[23] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[23];
     }
+    // 返回 `t5`，作为终端渲染这次计算的结果。
     return t5;
   }
+  // 满足 `userFacingToolName === ""` 时，终端渲染执行该分支。
   if (userFacingToolName === "") {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // t4 暂存 `input_0.success ? renderToolUseMessage(tool_0, input_0.da...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[24] !== commands || $[25] !== input_0.data || $[26] !== input_0.success || $[27] !== theme || $[28] !== tool_0 || $[29] !== verbose) {
+    // t4 暂存 `input_0.success ? renderToolUseMessage(tool_0, input_0.da...` 生成的渲染片段，后续返回路径直接复用。
     t4 = input_0.success ? renderToolUseMessage(tool_0, input_0.data, {
       theme,
       verbose,
       commands
     }) : null;
+    // $[24] 缓存 `commands`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = commands;
+    // $[25] 缓存 `input_0.data`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = input_0.data;
+    // $[26] 缓存 `input_0.success`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = input_0.success;
+    // $[27] 缓存 `theme`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = theme;
+    // $[28] 缓存 `tool_0`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = tool_0;
+    // $[29] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = verbose;
+    // $[30] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[30] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[30];
   }
+  // renderedToolUseMessage 消息数据沿用 `t4` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const renderedToolUseMessage = t4;
+  // 满足 `renderedToolUseMessage === null` 时，终端渲染执行该分支。
   if (renderedToolUseMessage === null) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // t5保存`addMargin ? 1 : 0`，供后续判断或组装使用。
   const t5 = addMargin ? 1 : 0;
+  // 临时值 t6保存`stringWidth`，供终端渲染后续处理使用。
   const t6 = stringWidth(userFacingToolName) + (shouldShowDot ? 2 : 0);
+  // t7 暂存 `shouldShowDot && (isQueued ? <Box minWidth={2}><Text dimC...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[31] !== isQueued || $[32] !== isResolved || $[33] !== lookups.erroredToolUseIDs || $[34] !== param.id || $[35] !== shouldAnimate || $[36] !== shouldShowDot) {
+    // t7 暂存 `shouldShowDot && (isQueued ? <Box minWidth={2}><Text dimC...` 生成的渲染片段，后续返回路径直接复用。
     t7 = shouldShowDot && (isQueued ? <Box minWidth={2}><Text dimColor={isQueued}>{BLACK_CIRCLE}</Text></Box> : <ToolUseLoader shouldAnimate={shouldAnimate} isUnresolved={!isResolved} isError={lookups.erroredToolUseIDs.has(param.id)} />);
+    // $[31] 缓存 `isQueued`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = isQueued;
+    // $[32] 缓存 `isResolved`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = isResolved;
+    // $[33] 缓存 `lookups.erroredToolUseIDs`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = lookups.erroredToolUseIDs;
+    // $[34] 缓存 `param.id`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = param.id;
+    // $[35] 缓存 `shouldAnimate`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = shouldAnimate;
+    // $[36] 缓存 `shouldShowDot`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = shouldShowDot;
+    // $[37] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[37] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[37];
   }
+  // 临时值 t8 命名 `userFacingToolNameBackgroundColor ? "inverseText" : undef...`，让后续代码直接表达这个值的用途。
   const t8 = userFacingToolNameBackgroundColor ? "inverseText" : undefined;
+  // t9 暂存 `<Box flexShrink={0}><Text bold={true} wrap="truncate-end"...` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[38] !== t8 || $[39] !== userFacingToolName || $[40] !== userFacingToolNameBackgroundColor) {
+    // t9 暂存 `<Box flexShrink={0}><Text bold={true} wrap="truncate-end"...` 生成的渲染片段，后续返回路径直接复用。
     t9 = <Box flexShrink={0}><Text bold={true} wrap="truncate-end" backgroundColor={userFacingToolNameBackgroundColor} color={t8}>{userFacingToolName}</Text></Box>;
+    // $[38] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = t8;
+    // $[39] 缓存 `userFacingToolName`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = userFacingToolName;
+    // $[40] 缓存 `userFacingToolNameBackgroundColor`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = userFacingToolNameBackgroundColor;
+    // $[41] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[41];
   }
+  // t10 暂存 `renderedToolUseMessage !== "" && <Box flexWrap="nowrap"><...` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[42] !== renderedToolUseMessage) {
+    // t10 暂存 `renderedToolUseMessage !== "" && <Box flexWrap="nowrap"><...` 生成的渲染片段，后续返回路径直接复用。
     t10 = renderedToolUseMessage !== "" && <Box flexWrap="nowrap"><Text>({renderedToolUseMessage})</Text></Box>;
+    // $[42] 缓存 `renderedToolUseMessage`，下次依赖未变时 React 编译产物可直接复用。
     $[42] = renderedToolUseMessage;
+    // $[43] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[43] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[43] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[43];
   }
+  // t11 暂存 `input_0.success && tool_0.renderToolUseTag && tool_0.rend...` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[44] !== input_0.data || $[45] !== input_0.success || $[46] !== tool_0) {
+    // t11 暂存 `input_0.success && tool_0.renderToolUseTag && tool_0.rend...` 生成的渲染片段，后续返回路径直接复用。
     t11 = input_0.success && tool_0.renderToolUseTag && tool_0.renderToolUseTag(input_0.data);
+    // $[44] 缓存 `input_0.data`，下次依赖未变时 React 编译产物可直接复用。
     $[44] = input_0.data;
+    // $[45] 缓存 `input_0.success`，下次依赖未变时 React 编译产物可直接复用。
     $[45] = input_0.success;
+    // $[46] 缓存 `tool_0`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = tool_0;
+    // $[47] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[47];
   }
+  // t12 暂存 `<Box flexDirection="row" flexWrap="nowrap" minWidth={t6}>...` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[48] !== t10 || $[49] !== t11 || $[50] !== t6 || $[51] !== t7 || $[52] !== t9) {
+    // t12 暂存 `<Box flexDirection="row" flexWrap="nowrap" minWidth={t6}>...` 生成的渲染片段，后续返回路径直接复用。
     t12 = <Box flexDirection="row" flexWrap="nowrap" minWidth={t6}>{t7}{t9}{t10}{t11}</Box>;
+    // $[48] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = t10;
+    // $[49] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = t11;
+    // $[50] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = t6;
+    // $[51] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = t7;
+    // $[52] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = t9;
+    // $[53] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = t12;
   } else {
+    // t12 从 React 编译缓存槽 $[53] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[53];
   }
+  // t13 暂存 `!isResolved && !isQueued && (isClassifierChecking ? <Mess...` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[54] !== inProgressToolCallCount || $[55] !== isAutoClassifier || $[56] !== isClassifierChecking || $[57] !== isQueued || $[58] !== isResolved || $[59] !== isTranscriptMode || $[60] !== isWaitingForPermission || $[61] !== lookups || $[62] !== param.id || $[63] !== progressMessagesForMessage || $[64] !== terminalSize || $[65] !== tool_0 || $[66] !== tools || $[67] !== verbose) {
+    // t13 暂存 `!isResolved && !isQueued && (isClassifierChecking ? <Mess...` 生成的渲染片段，后续返回路径直接复用。
     t13 = !isResolved && !isQueued && (isClassifierChecking ? <MessageResponse height={1}><Text dimColor={true}>{isAutoClassifier ? "Auto classifier checking\u2026" : "Bash classifier checking\u2026"}</Text></MessageResponse> : isWaitingForPermission ? <MessageResponse height={1}><Text dimColor={true}>Waiting for permission…</Text></MessageResponse> : renderToolUseProgressMessage(tool_0, tools, lookups, param.id, progressMessagesForMessage, {
       verbose,
       inProgressToolCallCount,
       isTranscriptMode
     }, terminalSize));
+    // $[54] 缓存 `inProgressToolCallCount`，下次依赖未变时 React 编译产物可直接复用。
     $[54] = inProgressToolCallCount;
+    // $[55] 缓存 `isAutoClassifier`，下次依赖未变时 React 编译产物可直接复用。
     $[55] = isAutoClassifier;
+    // $[56] 缓存 `isClassifierChecking`，下次依赖未变时 React 编译产物可直接复用。
     $[56] = isClassifierChecking;
+    // $[57] 缓存 `isQueued`，下次依赖未变时 React 编译产物可直接复用。
     $[57] = isQueued;
+    // $[58] 缓存 `isResolved`，下次依赖未变时 React 编译产物可直接复用。
     $[58] = isResolved;
+    // $[59] 缓存 `isTranscriptMode`，下次依赖未变时 React 编译产物可直接复用。
     $[59] = isTranscriptMode;
+    // $[60] 缓存 `isWaitingForPermission`，下次依赖未变时 React 编译产物可直接复用。
     $[60] = isWaitingForPermission;
+    // $[61] 缓存 `lookups`，下次依赖未变时 React 编译产物可直接复用。
     $[61] = lookups;
+    // $[62] 缓存 `param.id`，下次依赖未变时 React 编译产物可直接复用。
     $[62] = param.id;
+    // $[63] 缓存 `progressMessagesForMessage`，下次依赖未变时 React 编译产物可直接复用。
     $[63] = progressMessagesForMessage;
+    // $[64] 缓存 `terminalSize`，下次依赖未变时 React 编译产物可直接复用。
     $[64] = terminalSize;
+    // $[65] 缓存 `tool_0`，下次依赖未变时 React 编译产物可直接复用。
     $[65] = tool_0;
+    // $[66] 缓存 `tools`，下次依赖未变时 React 编译产物可直接复用。
     $[66] = tools;
+    // $[67] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
     $[67] = verbose;
+    // $[68] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[68] = t13;
   } else {
+    // t13 从 React 编译缓存槽 $[68] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[68];
   }
+  // t14 暂存 `!isResolved && isQueued && renderToolUseQueuedMessage(too...` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[69] !== isQueued || $[70] !== isResolved || $[71] !== tool_0) {
+    // t14 暂存 `!isResolved && isQueued && renderToolUseQueuedMessage(too...` 生成的渲染片段，后续返回路径直接复用。
     t14 = !isResolved && isQueued && renderToolUseQueuedMessage(tool_0);
+    // $[69] 缓存 `isQueued`，下次依赖未变时 React 编译产物可直接复用。
     $[69] = isQueued;
+    // $[70] 缓存 `isResolved`，下次依赖未变时 React 编译产物可直接复用。
     $[70] = isResolved;
+    // $[71] 缓存 `tool_0`，下次依赖未变时 React 编译产物可直接复用。
     $[71] = tool_0;
+    // $[72] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[72] = t14;
   } else {
+    // t14 从 React 编译缓存槽 $[72] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[72];
   }
+  // t15 暂存 `<Box flexDirection="column">{t12}{t13}{t14}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t15;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[73] !== t12 || $[74] !== t13 || $[75] !== t14) {
+    // t15 暂存 `<Box flexDirection="column">{t12}{t13}{t14}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t15 = <Box flexDirection="column">{t12}{t13}{t14}</Box>;
+    // $[73] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[73] = t12;
+    // $[74] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[74] = t13;
+    // $[75] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[75] = t14;
+    // $[76] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[76] = t15;
   } else {
+    // t15 从 React 编译缓存槽 $[76] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[76];
   }
+  // t16 暂存 `<Box flexDirection="row" justifyContent="space-between" m...` 的派生结果，便于缓存命中时直接复用。
   let t16;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[77] !== bg || $[78] !== t15 || $[79] !== t5) {
+    // t16 暂存 `<Box flexDirection="row" justifyContent="space-between" m...` 生成的渲染片段，后续返回路径直接复用。
     t16 = <Box flexDirection="row" justifyContent="space-between" marginTop={t5} width="100%" backgroundColor={bg}>{t15}</Box>;
+    // $[77] 缓存 `bg`，下次依赖未变时 React 编译产物可直接复用。
     $[77] = bg;
+    // $[78] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[78] = t15;
+    // $[79] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[79] = t5;
+    // $[80] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[80] = t16;
   } else {
+    // t16 从 React 编译缓存槽 $[80] 取回渲染片段，避免依赖未变时重建 JSX。
     t16 = $[80];
   }
+  // 返回 `t16`，作为终端渲染这次计算的结果。
   return t16;
 }
+// _temp3 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp3(state_1) {
+  // 返回 `!!state_1.toolPermissionContext.strippedDangerousRules`，作为终端渲染这次计算的结果。
   return !!state_1.toolPermissionContext.strippedDangerousRules;
 }
+// _temp2 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(state_0) {
+  // 返回 `state_0.toolPermissionContext.mode`，作为终端渲染这次计算的结果。
   return state_0.toolPermissionContext.mode;
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(state) {
+  // 返回 `state.pendingWorkerRequest`，作为终端渲染这次计算的结果。
   return state.pendingWorkerRequest;
 }
+// renderToolUseMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function renderToolUseMessage(tool: Tool, input: unknown, {
   theme,
   verbose,
@@ -310,21 +522,29 @@ function renderToolUseMessage(tool: Tool, input: unknown, {
   verbose: boolean;
   commands: Command[];
 }): React.ReactNode {
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // 解析结果保存`inputSchema.safeParse`，供终端渲染后续处理使用。
     const parsed = tool.inputSchema.safeParse(input);
+    // parsed.success 集合缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!parsed.success) {
+      // 返回空字符串表示没有可用文本，调用方会按空输入处理。
       return '';
     }
+    // 返回 `tool.renderToolUseMessage(parsed.data, {`，作为终端渲染这次计算的结果。
     return tool.renderToolUseMessage(parsed.data, {
       theme,
       verbose,
       commands
     });
   } catch (error) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(new Error(`Error rendering tool use message for ${tool.name}: ${error}`));
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return '';
   }
 }
+// renderToolUseProgressMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function renderToolUseProgressMessage(tool: Tool, tools: Tools, lookups: ReturnType<typeof buildMessageLookups>, toolUseID: string, progressMessagesForMessage: ProgressMessage[], {
   verbose,
   inProgressToolCallCount,
@@ -337,8 +557,11 @@ function renderToolUseProgressMessage(tool: Tool, tools: Tools, lookups: ReturnT
   columns: number;
   rows: number;
 }): React.ReactNode {
+  // toolProgressMessages 消息数据筛选`progressMessagesForMessage.filter`，供终端渲染后续处理使用。
   const toolProgressMessages = progressMessagesForMessage.filter((msg): msg is ProgressMessage<ToolProgressData> => msg.data.type !== 'hook_progress');
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // toolMessages 消息数据保存`tool.renderToolUseProgressMessage?.(toolProgressMessages,...`，供终端 UI Assistant Tool Use M...后续判断或输出使用。
     const toolMessages = tool.renderToolUseProgressMessage?.(toolProgressMessages, {
       tools,
       verbose,
@@ -346,6 +569,7 @@ function renderToolUseProgressMessage(tool: Tool, tools: Tools, lookups: ReturnT
       inProgressToolCallCount: inProgressToolCallCount ?? 1,
       isTranscriptMode
     }) ?? null;
+    // 返回 `<>`，作为终端渲染这次计算的结果。
     return <>
         <SentryErrorBoundary>
           <HookProgressMessage hookEvent="PreToolUse" lookups={lookups} toolUseID={toolUseID} verbose={verbose} isTranscriptMode={isTranscriptMode} />
@@ -353,15 +577,22 @@ function renderToolUseProgressMessage(tool: Tool, tools: Tools, lookups: ReturnT
         {toolMessages}
       </>;
   } catch (error) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(new Error(`Error rendering tool use progress message for ${tool.name}: ${error}`));
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 }
+// renderToolUseQueuedMessage 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function renderToolUseQueuedMessage(tool: Tool): React.ReactNode {
+  // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
   try {
+    // 返回 `tool.renderToolUseQueuedMessage?.()`，作为终端渲染这次计算的结果。
     return tool.renderToolUseQueuedMessage?.();
   } catch (error) {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logError(new Error(`Error rendering tool use queued message for ${tool.name}: ${error}`));
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 }

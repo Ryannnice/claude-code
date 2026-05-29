@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 /**
  * Error IDs for tracking error sources in production.
  * These IDs are obfuscated identifiers that help us trace
@@ -12,4 +13,5 @@
  * Next ID: 346
  */
 
+// E_TOOL_USE_SUMMARY_GENERATION_FAILED 命名 `344`，让后续代码直接表达这个值的用途。
 export const E_TOOL_USE_SUMMARY_GENERATION_FAILED = 344

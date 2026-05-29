@@ -1,47 +1,92 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 类型依赖 { UUID } 来自 crypto，用于校准终端渲染的数据契约。
 import type { UUID } from 'crypto';
+// 类型依赖 { RefObject } 来自 react，用于校准终端渲染的数据契约。
 import type { RefObject } from 'react';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 复用 every 工具函数，把通用处理留在 src/utils/set.js 中维护。
 import { every } from 'src/utils/set.js';
+// 引入 getIsRemoteMode，将 ../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getIsRemoteMode } from '../bootstrap/state.js';
+// 类型依赖 { Command } 来自 ../commands.js，用于校准终端渲染的数据契约。
 import type { Command } from '../commands.js';
+// 引入 BLACK_CIRCLE，将 ../constants/figures.js 中已经封装好的能力接到本文件流程里。
 import { BLACK_CIRCLE } from '../constants/figures.js';
+// 引入 useTerminalSize，将 ../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+// 类型依赖 { ScrollBoxHandle } 来自 ../ink/components/ScrollBox.js，用于校准终端渲染的数据契约。
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js';
+// 复用 useTerminalNotification 终端界面组件，避免在这里重复拼装显示逻辑。
 import { useTerminalNotification } from '../ink/useTerminalNotification.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 引入 useShortcutDisplay，将 ../keybindings/useShortcutDisplay.js 中已经封装好的能力接到本文件流程里。
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
+// 类型依赖 { Screen } 来自 ../screens/REPL.js，用于校准终端渲染的数据契约。
 import type { Screen } from '../screens/REPL.js';
+// 类型依赖 { Tools } 来自 ../Tool.js，用于校准终端渲染的数据契约。
 import type { Tools } from '../Tool.js';
+// 引入 findToolByName，将 ../Tool.js 中已经封装好的能力接到本文件流程里。
 import { findToolByName } from '../Tool.js';
+// 类型依赖 { AgentDefinitionsResult } 来自 ../tools/AgentTool/loadAgentsDir.js，用于校准终端渲染的数据契约。
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js';
+// 类型依赖 { Message as MessageType, NormalizedMessage, ProgressMessag… 来自 ../types/message.js，用于校准终端渲染的数据契约。
 import type { Message as MessageType, NormalizedMessage, ProgressMessage as ProgressMessageType, RenderableMessage } from '../types/message.js';
+// 复用 AdvisorBlock、isAdvisorBlock 工具函数，把通用处理留在 ../utils/advisor.js 中维护。
 import { type AdvisorBlock, isAdvisorBlock } from '../utils/advisor.js';
+// 复用 collapseBackgroundBashNotifications 工具函数，把通用处理留在 ../utils/collapseBackgroundBashNotifications.js 中维护。
 import { collapseBackgroundBashNotifications } from '../utils/collapseBackgroundBashNotifications.js';
+// 复用 collapseHookSummaries 工具函数，把通用处理留在 ../utils/collapseHookSummaries.js 中维护。
 import { collapseHookSummaries } from '../utils/collapseHookSummaries.js';
+// 复用 collapseReadSearchGroups 工具函数，把通用处理留在 ../utils/collapseReadSearch.js 中维护。
 import { collapseReadSearchGroups } from '../utils/collapseReadSearch.js';
+// 复用 collapseTeammateShutdowns 工具函数，把通用处理留在 ../utils/collapseTeammateShutdowns.js 中维护。
 import { collapseTeammateShutdowns } from '../utils/collapseTeammateShutdowns.js';
+// 复用 getGlobalConfig 工具函数，把通用处理留在 ../utils/config.js 中维护。
 import { getGlobalConfig } from '../utils/config.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../utils/envUtils.js';
+// 复用 isFullscreenEnvEnabled 工具函数，把通用处理留在 ../utils/fullscreen.js 中维护。
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js';
+// 复用 applyGrouping 工具函数，把通用处理留在 ../utils/groupToolUses.js 中维护。
 import { applyGrouping } from '../utils/groupToolUses.js';
+// 复用 buildMessageLookups、createAssistantMessage、deriveUUID、getMessagesAfterCompactBoundary、getToolUseID、getToolUseIDs、hasUnresolvedHooksFromLookup、isNotEmptyMessage、normalizeMessages、reorderMessagesInUI、StreamingThinking、StreamingToolUse、shouldShowUserMessage 工具函数，把通用处理留在 ../utils/messages.js 中维护。
 import { buildMessageLookups, createAssistantMessage, deriveUUID, getMessagesAfterCompactBoundary, getToolUseID, getToolUseIDs, hasUnresolvedHooksFromLookup, isNotEmptyMessage, normalizeMessages, reorderMessagesInUI, type StreamingThinking, type StreamingToolUse, shouldShowUserMessage } from '../utils/messages.js';
+// 复用 plural 工具函数，把通用处理留在 ../utils/stringUtils.js 中维护。
 import { plural } from '../utils/stringUtils.js';
+// 复用 renderableSearchText 工具函数，把通用处理留在 ../utils/transcriptSearch.js 中维护。
 import { renderableSearchText } from '../utils/transcriptSearch.js';
+// 引入 Divider，将 ./design-system/Divider.js 中已经封装好的能力接到本文件流程里。
 import { Divider } from './design-system/Divider.js';
+// 类型依赖 { UnseenDivider } 来自 ./FullscreenLayout.js，用于校准终端渲染的数据契约。
 import type { UnseenDivider } from './FullscreenLayout.js';
+// 引入 LogoV2，将 ./LogoV2/LogoV2.js 中已经封装好的能力接到本文件流程里。
 import { LogoV2 } from './LogoV2/LogoV2.js';
+// 引入 StreamingMarkdown，将 ./Markdown.js 中已经封装好的能力接到本文件流程里。
 import { StreamingMarkdown } from './Markdown.js';
+// 引入 hasContentAfterIndex、MessageRow，将 ./MessageRow.js 中已经封装好的能力接到本文件流程里。
 import { hasContentAfterIndex, MessageRow } from './MessageRow.js';
+// 引入 InVirtualListContext、MessageActionsNav、MessageActionsSelectedContext、MessageActionsState，将 ./messageActions.js 中已经封装好的能力接到本文件流程里。
 import { InVirtualListContext, type MessageActionsNav, MessageActionsSelectedContext, type MessageActionsState } from './messageActions.js';
+// 引入 AssistantThinkingMessage，将 ./messages/AssistantThinkingMessage.js 中已经封装好的能力接到本文件流程里。
 import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js';
+// 引入 isNullRenderingAttachment，将 ./messages/nullRenderingAttachments.js 中已经封装好的能力接到本文件流程里。
 import { isNullRenderingAttachment } from './messages/nullRenderingAttachments.js';
+// 引入 OffscreenFreeze，将 ./OffscreenFreeze.js 中已经封装好的能力接到本文件流程里。
 import { OffscreenFreeze } from './OffscreenFreeze.js';
+// 类型依赖 { ToolUseConfirm } 来自 ./permissions/PermissionRequest.js，用于校准终端渲染的数据契约。
 import type { ToolUseConfirm } from './permissions/PermissionRequest.js';
+// 引入 StatusNotices，将 ./StatusNotices.js 中已经封装好的能力接到本文件流程里。
 import { StatusNotices } from './StatusNotices.js';
+// 类型依赖 { JumpHandle } 来自 ./VirtualMessageList.js，用于校准终端渲染的数据契约。
 import type { JumpHandle } from './VirtualMessageList.js';
 
 // Memoed logo header: this box is the FIRST sibling before all MessageRows
@@ -52,36 +97,55 @@ import type { JumpHandle } from './VirtualMessageList.js';
 // and pegs CPU at 100%. Memo on agentDefinitions so a new messages array
 // doesn't invalidate the logo subtree. LogoV2/StatusNotices internally
 // subscribe to useAppState/useSettings for their own updates.
+// LogoHeader保存`React.memo`，供终端渲染后续处理使用。
 const LogoHeader = React.memo(function LogoHeader(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(3);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     agentDefinitions
   } = t0;
+  // t1 暂存 `<LogoV2 />` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `<LogoV2 />` 生成的渲染片段，后续返回路径直接复用。
     t1 = <LogoV2 />;
+    // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[0];
   }
+  // t2 暂存 `<OffscreenFreeze><Box flexDirection="column" gap={1}>{t1}...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== agentDefinitions) {
+    // t2 暂存 `<OffscreenFreeze><Box flexDirection="column" gap={1}>{t1}...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <OffscreenFreeze><Box flexDirection="column" gap={1}>{t1}<React.Suspense fallback={null}><StatusNotices agentDefinitions={agentDefinitions} /></React.Suspense></Box></OffscreenFreeze>;
+    // $[1] 缓存 `agentDefinitions`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = agentDefinitions;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // 返回 `t2`，作为终端渲染这次计算的结果。
   return t2;
 });
 
 // Dead code elimination: conditional import for proactive mode
 /* eslint-disable @typescript-eslint/no-require-imports */
+// proactiveModule保存`feature`，供终端渲染后续处理使用。
 const proactiveModule = feature('PROACTIVE') || feature('KAIROS') ? require('../proactive/index.js') : null;
+// BRIEF_TOOL_NAME 通过懒加载取得，避免终端 UI 组件 Messages在启动阶段加载暂时用不到的实现。
 const BRIEF_TOOL_NAME: string | null = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js')).BRIEF_TOOL_NAME : null;
+// SEND_USER_FILE_TOOL_NAME 文件数据 通过懒加载取得，避免终端 UI 组件 Messages在启动阶段加载暂时用不到的实现。
 const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS') ? (require('../tools/SendUserFileTool/prompt.js') as typeof import('../tools/SendUserFileTool/prompt.js')).SEND_USER_FILE_TOOL_NAME : null;
 
 /* eslint-enable @typescript-eslint/no-require-imports */
+// 引入 VirtualMessageList，将 ./VirtualMessageList.js 中已经封装好的能力接到本文件流程里。
 import { VirtualMessageList } from './VirtualMessageList.js';
 
 /**
@@ -90,6 +154,7 @@ import { VirtualMessageList } from './VirtualMessageList.js';
  * if the model forgets to call Brief, the user sees nothing for that turn.
  * That's on the model to get right; the filter does not second-guess it.
  */
+// filterForBriefTool 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function filterForBriefTool<T extends {
   type: string;
   subtype?: string;
@@ -109,40 +174,57 @@ export function filterForBriefTool<T extends {
     commandMode?: string;
   };
 }>(messages: T[], briefToolNames: string[]): T[] {
+  // nameSet保存`Set`，供终端渲染后续处理使用。
   const nameSet = new Set(briefToolNames);
   // tool_use always precedes its tool_result in the array, so we can collect
   // IDs and match against them in a single pass.
+  // briefToolUseIDs 集合 命名 `new Set<string>()`，让后续代码直接表达这个值的用途。
   const briefToolUseIDs = new Set<string>();
+  // 返回 `messages.filter(msg => {`，作为终端渲染这次计算的结果。
   return messages.filter(msg => {
     // System messages (attach confirmation, remote errors, compact boundaries)
     // must stay visible — dropping them leaves the viewer with no feedback.
     // Exception: api_metrics is per-turn debug noise (TTFT, config writes,
     // hook timing) that defeats the point of brief mode. Still visible in
     // transcript mode (ctrl+o) which bypasses this filter.
+    // 当 `msg.type` 匹配 `'system'` 时，终端渲染执行对应分支。
     if (msg.type === 'system') return msg.subtype !== 'api_metrics';
+    // block读取 `msg.message?.content[0]` 对应条目，后续围绕该成员继续处理。
     const block = msg.message?.content[0];
+    // 当 `msg.type` 匹配 `'assistant'` 时，终端渲染执行对应分支。
     if (msg.type === 'assistant') {
       // API error messages (auth failures, rate limits, etc.) must stay visible
+      // 满足 `msg.isApiErrorMessage` 时，终端渲染执行该分支。
       if (msg.isApiErrorMessage) return true;
       // Keep Brief tool_use blocks (renders with standard tool call chrome,
       // and must be in the list so buildMessageLookups can resolve tool results)
+      // 只有 `block?.type === 'tool_use' && block.name && nameSet.has(block.name)` 满足时，终端渲染才执行该分支。
       if (block?.type === 'tool_use' && block.name && nameSet.has(block.name)) {
+        // 满足 `'id' in block` 时，终端渲染执行该分支。
         if ('id' in block) {
+          // 调用 briefToolUseIDs.add，触发终端渲染此处需要的副作用。
           briefToolUseIDs.add((block as {
             id: string;
           }).id);
         }
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true;
       }
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 当 `msg.type` 匹配 `'user'` 时，终端渲染执行对应分支。
     if (msg.type === 'user') {
+      // 当 `block?.type` 匹配 `'tool_result'` 时，终端渲染执行对应分支。
       if (block?.type === 'tool_result') {
+        // 返回 `block.tool_use_id !== undefined && briefToolUseIDs.has(block.tool_use_i...`，作为终端渲染这次计算的结果。
         return block.tool_use_id !== undefined && briefToolUseIDs.has(block.tool_use_id);
       }
       // Real user input only — drop meta/tick messages.
+      // 返回 `!msg.isMeta`，作为终端渲染这次计算的结果。
       return !msg.isMeta;
     }
+    // 当 `msg.type` 匹配 `'attachment'` 时，终端渲染执行对应分支。
     if (msg.type === 'attachment') {
       // Human input drained mid-turn arrives as a queued_command attachment
       // (query.ts mid-chain drain → getQueuedCommandAttachments). Keep it —
@@ -150,9 +232,12 @@ export function filterForBriefTool<T extends {
       // identifies human-typed input; task-notification callers set
       // mode: 'task-notification' but not origin/isMeta, so the positive
       // commandMode check is required to exclude them.
+      // att保存`msg.attachment`，供终端 UI Messages后续判断或输出使用。
       const att = msg.attachment;
+      // 返回 `att?.type === 'queued_command' && att.commandMode === 'prompt' && !att....`，作为终端渲染这次计算的结果。
       return att?.type === 'queued_command' && att.commandMode === 'prompt' && !att.isMeta && att.origin === undefined;
     }
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   });
 }
@@ -166,6 +251,7 @@ export function filterForBriefTool<T extends {
  * Per-turn: only drops text in turns that actually called Brief. If the
  * model forgets, text still shows — otherwise the user would see nothing.
  */
+// dropTextInBriefTurns 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function dropTextInBriefTurns<T extends {
   type: string;
   isMeta?: boolean;
@@ -176,34 +262,54 @@ export function dropTextInBriefTurns<T extends {
     }>;
   };
 }>(messages: T[], briefToolNames: string[]): T[] {
+  // nameSet保存`Set`，供终端渲染后续处理使用。
   const nameSet = new Set(briefToolNames);
   // First pass: find which turns (bounded by non-meta user messages) contain
   // a Brief tool_use. Tag each assistant text block with its turn index.
+  // turnsWithBrief 命名 `new Set<number>()`，让后续代码直接表达这个值的用途。
   const turnsWithBrief = new Set<number>();
+  // textIndexToTurn 索引 从空数组开始收集，后续循环会按处理顺序追加条目。
   const textIndexToTurn: number[] = [];
+  // turn 命名 `0`，让后续代码直接表达这个值的用途。
   let turn = 0;
+  // 按索引扫描 `messages.length`，需要消费相邻参数时可以精确移动游标。
   for (let i = 0; i < messages.length; i++) {
+    // 消息保存`messages[i]!`，供终端 UI Messages后续判断或输出使用。
     const msg = messages[i]!;
+    // block读取 `msg.message?.content[0]` 对应条目，后续围绕该成员继续处理。
     const block = msg.message?.content[0];
+    // `msg.type === 'user' && block?.type` 与 `'tool_resu` 不一致时刷新派生状态，避免使用过期结果。
     if (msg.type === 'user' && block?.type !== 'tool_result' && !msg.isMeta) {
+      // 终端 UI 组件 Messages在这里处理 `turn++`，完成这一小步状态转换。
       turn++;
+      // 跳过当前项，继续处理终端渲染中的下一轮循环。
       continue;
     }
+    // 当 `msg.type` 匹配 `'assistant'` 时，终端渲染执行对应分支。
     if (msg.type === 'assistant') {
+      // 当 `block?.type` 匹配 `'text'` 时，终端渲染执行对应分支。
       if (block?.type === 'text') {
+        // textIndexToTurn[i 索引更新为 `turn`，确保终端 UI 组件 Messages后续读取最新状态。
         textIndexToTurn[i] = turn;
+      // 终端 UI 组件 Messages在这里处理 `} else if (block?.type === 'tool_use' && block.name && nameSet.has(bloc...`，完成这一小步状态转换。
       } else if (block?.type === 'tool_use' && block.name && nameSet.has(block.name)) {
+        // 调用 turnsWithBrief.add，触发终端渲染此处需要的副作用。
         turnsWithBrief.add(turn);
       }
     }
   }
+  // 满足 `turnsWithBrief.size === 0` 时，终端渲染执行该分支。
   if (turnsWithBrief.size === 0) return messages;
   // Second pass: drop text blocks whose turn called Brief.
+  // 返回 `messages.filter((_, i) => {`，作为终端渲染这次计算的结果。
   return messages.filter((_, i) => {
+    // t读取 `textIndexToTurn[i]` 对应条目，后续围绕该成员继续处理。
     const t = textIndexToTurn[i];
+    // 返回 `t === undefined || !turnsWithBrief.has(t)`，作为终端渲染这次计算的结果。
     return t === undefined || !turnsWithBrief.has(t);
   });
 }
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   messages: MessageType[];
   tools: Tools;
@@ -222,6 +328,7 @@ type Props = {
   streamingToolUses: StreamingToolUse[];
   showAllInTranscript?: boolean;
   agentDefinitions?: AgentDefinitionsResult;
+  // 这个回调绑定到 onOpenRateLimitOptions?: () => void;，负责终端渲染在该局部场景下的响应。
   onOpenRateLimitOptions?: () => void;
   /** Hide the logo/header - used for subagent zoom view */
   hideLogo?: boolean;
@@ -245,12 +352,15 @@ type Props = {
   /** Transcript search: jump-to-index + setSearchQuery/nextMatch/prevMatch. */
   jumpRef?: RefObject<JumpHandle | null>;
   /** Transcript search: fires when match count/position changes. */
+  // 这个回调绑定到 onSearchMatchesChange?: (count: number, current: number) => void;，负责终端渲染在该局部场景下的响应。
   onSearchMatchesChange?: (count: number, current: number) => void;
   /** Paint an existing DOM subtree to fresh Screen, scan. Element comes
    *  from the main tree (all real providers). Message-relative positions. */
+  // 这个回调绑定到 scanElement?: (el: import('../ink/dom.js').DOMElement) => import('../ink/render-to-s…，负责终端渲染在该局部场景下的响应。
   scanElement?: (el: import('../ink/dom.js').DOMElement) => import('../ink/render-to-screen.js').MatchPosition[];
   /** Position-based CURRENT highlight. positions stable (msg-relative),
    *  rowOffset tracks scroll. null clears. */
+  // 终端 UI 组件 Messages在这里处理 `setPositions?: (state: {`，完成这一小步状态转换。
   setPositions?: (state: {
     positions: import('../ink/render-to-screen.js').MatchPosition[];
     rowOffset: number;
@@ -262,6 +372,7 @@ type Props = {
   disableRenderCap?: boolean;
   /** In-transcript cursor; expanded overrides verbose for selected message. */
   cursor?: MessageActionsState | null;
+  // 这个回调绑定到 setCursor?: (cursor: MessageActionsState | null) => void;，负责终端渲染在该局部场景下的响应。
   setCursor?: (cursor: MessageActionsState | null) => void;
   /** Passed through to VirtualMessageList (heightCache owns visibility). */
   cursorNavRef?: React.Ref<MessageActionsNav>;
@@ -273,6 +384,7 @@ type Props = {
    *  Measured Mar 2026: 538-msg session, 20 slices → −55% plateau RSS. */
   renderRange?: readonly [start: number, end: number];
 };
+// MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE 消息数据保存`30`，供后续判断或组装使用。
 const MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE = 30;
 
 // Safety cap for the non-virtualized render path (fullscreen off or
@@ -304,40 +416,56 @@ const MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE = 30;
 // slice roughly where it was instead of resetting to 0 — which would
 // jump from ~200 rendered messages to the full history, orphaning
 // in-progress badge snapshots in scrollback.
+// MAX_MESSAGES_WITHOUT_VIRTUALIZATION 消息数据保存`200`，供后续判断或组装使用。
 const MAX_MESSAGES_WITHOUT_VIRTUALIZATION = 200;
+// MESSAGE_CAP_STEP 消息数据保存`50`，供后续判断或组装使用。
 const MESSAGE_CAP_STEP = 50;
+// SliceAnchor 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SliceAnchor = {
   uuid: string;
   idx: number;
 } | null;
 
 /** Exported for testing. Mutates anchorRef when the window needs to advance. */
+// computeSliceStart 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function computeSliceStart(collapsed: ReadonlyArray<{
   uuid: string;
 }>, anchorRef: {
   current: SliceAnchor;
 }, cap = MAX_MESSAGES_WITHOUT_VIRTUALIZATION, step = MESSAGE_CAP_STEP): number {
+  // anchor保存`anchorRef.current`，供终端 UI Messages后续判断或输出使用。
   const anchor = anchorRef.current;
+  // anchorIdx筛选`collapsed.findIndex`，供终端渲染后续处理使用。
   const anchorIdx = anchor ? collapsed.findIndex(m => m.uuid === anchor.uuid) : -1;
   // Anchor found → use it. Anchor lost → fall back to stored index
   // (clamped) so collapse-regrouping uuid churn doesn't reset to 0.
+  // start保存`Math.min`，供终端渲染后续处理使用。
   let start = anchorIdx >= 0 ? anchorIdx : anchor ? Math.min(anchor.idx, Math.max(0, collapsed.length - cap)) : 0;
+  // 满足 `collapsed.length - start > cap + step` 时，终端渲染执行该分支。
   if (collapsed.length - start > cap + step) {
+    // start更新为 `collapsed.length - cap`，确保终端 UI后续读取最新状态。
     start = collapsed.length - cap;
   }
   // Refresh anchor from whatever lives at the current start — heals a
   // stale uuid after fallback and captures a new one after advancement.
+  // msgAtStart 命名 `collapsed[start]`，让后续代码直接表达这个值的用途。
   const msgAtStart = collapsed[start];
+  // `msgAtStart && (anchor?.uuid` 与 `msgAtStart.uuid || anchor.idx !...` 不一致时刷新派生状态，避免使用过期结果。
   if (msgAtStart && (anchor?.uuid !== msgAtStart.uuid || anchor.idx !== start)) {
+    // current更新为 `{`，确保终端 UI后续读取最新状态。
     anchorRef.current = {
       uuid: msgAtStart.uuid,
       idx: start
     };
+  // 终端 UI 组件 Messages在这里处理 `} else if (!msgAtStart && anchor) {`，完成这一小步状态转换。
   } else if (!msgAtStart && anchor) {
+    // current更新为 `null`，确保终端 UI后续读取最新状态。
     anchorRef.current = null;
   }
+  // 返回 `start`，作为终端渲染这次计算的结果。
   return start;
 }
+// MessagesImpl 消息数据 命名 `({`，让后续代码直接表达这个值的用途。
 const MessagesImpl = ({
   messages,
   tools,
@@ -372,19 +500,28 @@ const MessagesImpl = ({
   cursorNavRef,
   renderRange
 }: Props): React.ReactNode => {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns
   } = useTerminalSize();
+  // toggleShowAllShortcut保存`useShortcutDisplay`，供终端渲染后续处理使用。
   const toggleShowAllShortcut = useShortcutDisplay('transcript:toggleShowAll', 'Transcript', 'Ctrl+E');
+  // normalizedMessages 消息数据保存`useMemo`，供终端渲染后续处理使用。
   const normalizedMessages = useMemo(() => normalizeMessages(messages).filter(isNotEmptyMessage), [messages]);
 
   // Check if streaming thinking should be visible (streaming or within 30s timeout)
+  // isStreamingThinkingVisible记录 `useMemo` 是否成立，终端渲染随后按该结果分支。
   const isStreamingThinkingVisible = useMemo(() => {
+    // streamingThinking缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!streamingThinking) return false;
+    // 满足 `streamingThinking.isStreaming` 时，终端渲染执行该分支。
     if (streamingThinking.isStreaming) return true;
+    // 满足 `streamingThinking.streamingEndedAt` 时，终端渲染执行该分支。
     if (streamingThinking.streamingEndedAt) {
+      // 返回 `Date.now() - streamingThinking.streamingEndedAt < 30000`，作为终端渲染这次计算的结果。
       return Date.now() - streamingThinking.streamingEndedAt < 30000;
     }
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }, [streamingThinking]);
 
@@ -392,59 +529,89 @@ const MessagesImpl = ({
   // When streaming thinking is visible, use a special ID that won't match any completed thinking block
   // With adaptive thinking, only consider thinking blocks from the current turn and stop searching once we
   // hit the last user message.
+  // lastThinkingBlockId保存`useMemo`，供终端渲染后续处理使用。
   const lastThinkingBlockId = useMemo(() => {
+    // hidePastThinking缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!hidePastThinking) return null;
     // If streaming thinking is visible, hide all completed thinking blocks by using a non-matching ID
+    // 满足 `isStreamingThinkingVisible` 时，终端渲染执行该分支。
     if (isStreamingThinkingVisible) return 'streaming';
     // Iterate backwards to find the last message with a thinking block
+    // 循环处理 `let i = normalizedMessages.length - 1; i >= 0; i--`，让终端渲染逐项把同类条目按顺序走完。
     for (let i = normalizedMessages.length - 1; i >= 0; i--) {
+      // 消息 命名 `normalizedMessages[i]`，让后续代码直接表达这个值的用途。
       const msg = normalizedMessages[i];
+      // 当 `msg?.type` 匹配 `'assistant'` 时，终端渲染执行对应分支。
       if (msg?.type === 'assistant') {
+        // 文本内容保存`msg.message.content`，供后续判断或组装使用。
         const content = msg.message.content;
         // Find the last thinking block in this message
+        // 循环处理 `let j = content.length - 1; j >= 0; j--`，让终端渲染逐项把同类条目按顺序走完。
         for (let j = content.length - 1; j >= 0; j--) {
+          // 当 `content[j]?.type` 匹配 `'thinking'` 时，终端渲染执行对应分支。
           if (content[j]?.type === 'thinking') {
+            // 返回 ``${msg.uuid}:${j}``，作为终端渲染这次计算的结果。
             return `${msg.uuid}:${j}`;
           }
         }
+      // 终端 UI 组件 Messages在这里处理 `} else if (msg?.type === 'user') {`，完成这一小步状态转换。
       } else if (msg?.type === 'user') {
+        // hasToolResult记录 `content.some` 是否成立，终端渲染随后按该结果分支。
         const hasToolResult = msg.message.content.some(block => block.type === 'tool_result');
+        // hasToolResult缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!hasToolResult) {
           // Reached a previous user turn so don't show stale thinking from before
+          // 返回 `'no-thinking'`，作为终端渲染这次计算的结果。
           return 'no-thinking';
         }
       }
     }
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }, [normalizedMessages, hidePastThinking, isStreamingThinkingVisible]);
 
   // Find the latest user bash output message (from ! commands)
   // This allows us to show full output for the most recent bash command
+  // latestBashOutputUUID保存`useMemo`，供终端渲染后续处理使用。
   const latestBashOutputUUID = useMemo(() => {
     // Iterate backwards to find the last user message with bash output
+    // 循环处理 `let i_0 = normalizedMessages.length - 1; i_0 >= 0`，让终端渲染逐项把同类条目按顺序走完。
     for (let i_0 = normalizedMessages.length - 1; i_0 >= 0; i_0--) {
+      // msg_0保存`normalizedMessages[i_0]`，供终端 UI Messages后续判断或输出使用。
       const msg_0 = normalizedMessages[i_0];
+      // 当 `msg_0?.type` 匹配 `'user'` 时，终端渲染执行对应分支。
       if (msg_0?.type === 'user') {
+        // content_0保存`msg_0.message.content`，供终端 UI Messages后续判断或输出使用。
         const content_0 = msg_0.message.content;
         // Check if any text content is bash output
+        // 按顺序遍历 `content_0` 中的block_0，逐个交给终端渲染处理。
         for (const block_0 of content_0) {
+          // 当 `block_0.type` 匹配 `'text'` 时，终端渲染执行对应分支。
           if (block_0.type === 'text') {
+            // 文本 命名 `block_0.text`，让后续代码直接表达这个值的用途。
             const text = block_0.text;
+            // 只有 `text.startsWith('<bash-stdout') || text.startsWith('<bash-stderr')` 满足时，终端渲染才执行该分支。
             if (text.startsWith('<bash-stdout') || text.startsWith('<bash-stderr')) {
+              // 返回 `msg_0.uuid`，作为终端渲染这次计算的结果。
               return msg_0.uuid;
             }
           }
         }
       }
     }
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }, [normalizedMessages]);
 
   // streamingToolUses updates on every input_json_delta while normalizedMessages
   // stays stable — precompute the Set so the filter is O(k) not O(n×k) per chunk.
+  // normalizedToolUseIDs 集合保存`useMemo`，供终端渲染后续处理使用。
   const normalizedToolUseIDs = useMemo(() => getToolUseIDs(normalizedMessages), [normalizedMessages]);
+  // streamingToolUsesWithoutInProgress 集合保存`useMemo`，供终端渲染后续处理使用。
   const streamingToolUsesWithoutInProgress = useMemo(() => streamingToolUses.filter(stu => !inProgressToolUseIDs.has(stu.contentBlock.id) && !normalizedToolUseIDs.has(stu.contentBlock.id)), [streamingToolUses, inProgressToolUseIDs, normalizedToolUseIDs]);
+  // syntheticStreamingToolUseMessages 消息数据保存`useMemo`，供终端渲染后续处理使用。
   const syntheticStreamingToolUseMessages = useMemo(() => streamingToolUsesWithoutInProgress.flatMap(streamingToolUse => {
+    // msg_1构建`createAssistantMessage`，供终端渲染后续处理使用。
     const msg_1 = createAssistantMessage({
       content: [streamingToolUse.contentBlock]
     });
@@ -453,23 +620,30 @@ const MessagesImpl = ({
     // Same class of bug fixed in normalizeMessages (commit 383326e613):
     // fresh randomUUID → unstable React keys → component remounts →
     // Ink rendering corruption (overlapping text from stale DOM nodes).
+    // uuid更新为 `deriveUUID(streamingToolUse.contentBlock.id as UUID, 0)`，确保终端 UI后续读取最新状态。
     msg_1.uuid = deriveUUID(streamingToolUse.contentBlock.id as UUID, 0);
+    // 返回 `normalizeMessages([msg_1])`，作为终端渲染这次计算的结果。
     return normalizeMessages([msg_1]);
   }), [streamingToolUsesWithoutInProgress]);
+  // isTranscriptMode标记终端 UI Messages是否启用对应路径。
   const isTranscriptMode = screen === 'transcript';
   // Hoisted to mount-time — this component re-renders on every scroll.
+  // disableVirtualScroll保存`useMemo`，供终端渲染后续处理使用。
   const disableVirtualScroll = useMemo(() => isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_VIRTUAL_SCROLL), []);
   // Virtual scroll replaces the transcript cap: everything is scrollable and
   // memory is bounded by the mounted-item count, not the total. scrollRef is
   // only passed when isFullscreenEnvEnabled() is true (REPL.tsx gates it),
   // so scrollRef's presence is the signal.
+  // virtualScrollRuntimeGate标记终端 UI Messages是否启用对应路径。
   const virtualScrollRuntimeGate = scrollRef != null && !disableVirtualScroll;
+  // shouldTruncate标记终端 UI Messages是否启用对应路径。
   const shouldTruncate = isTranscriptMode && !showAllInTranscript && !virtualScrollRuntimeGate;
 
   // Anchor for the first rendered message in the non-virtualized cap slice.
   // Monotonic advance only — mutation during render is idempotent (safe
   // under StrictMode double-render). See MAX_MESSAGES_WITHOUT_VIRTUALIZATION
   // comment above for why this replaced count-based slicing.
+  // sliceAnchorRef 引用保存 hook 状态，让终端 UI Messages跨渲染复用同一个容器。
   const sliceAnchorRef = useRef<SliceAnchor>(null);
 
   // Expensive message transforms — filter, reorder, group, collapse, lookups.
@@ -478,11 +652,13 @@ const MessagesImpl = ({
   // useMemo included renderRange → every scroll rebuilt 6 Maps over 27k
   // messages + 4 filter/map passes = ~50ms alloc per scroll → GC pressure →
   // 100-173ms stop-the-world pauses on the 1GB heap.
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     collapsed: collapsed_0,
     lookups: lookups_0,
     hasTruncatedMessages: hasTruncatedMessages_0,
     hiddenMessageCount: hiddenMessageCount_0
+  // 这个回调绑定到 } = useMemo(() => {，负责终端渲染在该局部场景下的响应。
   } = useMemo(() => {
     // In fullscreen mode the alt buffer has no native scrollback, so the
     // compact-boundary filter just hides history the ScrollBox could
@@ -493,33 +669,46 @@ const MessagesImpl = ({
     // (this PR's core goal — full history in UI, filter only for the model).
     // Also avoids a UUID mismatch: normalizeMessages derives new UUIDs, so
     // projectSnippedView's check against original removedUuids would fail.
+    // compactAwareMessages 消息数据保存`isFullscreenEnvEnabled`，供终端渲染后续处理使用。
     const compactAwareMessages = verbose || isFullscreenEnvEnabled() ? normalizedMessages : getMessagesAfterCompactBoundary(normalizedMessages, {
       includeSnipped: true
     });
+    // messagesToShowNotTruncated 消息数据保存`reorderMessagesInUI`，供终端渲染后续处理使用。
     const messagesToShowNotTruncated = reorderMessagesInUI(compactAwareMessages.filter((msg_2): msg_2 is Exclude<NormalizedMessage, ProgressMessageType> => msg_2.type !== 'progress')
     // CC-724: drop attachment messages that AttachmentMessage renders as
     // null (hook_success, hook_additional_context, hook_cancelled, etc.)
     // BEFORE counting/slicing so they don't inflate the "N messages"
     // count in ctrl-o or consume slots in the 200-message render cap.
+    // 链式调用 filter，继续加工上一行在终端渲染中产生的数据。
     .filter(msg_3 => !isNullRenderingAttachment(msg_3)).filter(_ => shouldShowUserMessage(_, isTranscriptMode)), syntheticStreamingToolUseMessages);
     // Three-tier filtering. Transcript mode (ctrl+o screen) is truly unfiltered.
     // Brief-only: SendUserMessage + user input only. Default: drop redundant
     // assistant text in turns where SendUserMessage was called (the model's
     // text is working-notes that duplicate the SendUserMessage content).
+    // briefToolNames 集合筛选`filter`，供终端渲染后续处理使用。
     const briefToolNames = [BRIEF_TOOL_NAME, SEND_USER_FILE_TOOL_NAME].filter((n): n is string => n !== null);
     // dropTextInBriefTurns should only trigger on SendUserMessage turns —
     // SendUserFile delivers a file without replacement text, so dropping
     // assistant text for file-only turns would leave the user with no context.
+    // dropTextToolNames 集合筛选`filter`，供终端渲染后续处理使用。
     const dropTextToolNames = [BRIEF_TOOL_NAME].filter((n_0): n_0 is string => n_0 !== null);
+    // briefFiltered筛选`filterForBriefTool`，供终端渲染后续处理使用。
     const briefFiltered = briefToolNames.length > 0 && !isTranscriptMode ? isBriefOnly ? filterForBriefTool(messagesToShowNotTruncated, briefToolNames) : dropTextToolNames.length > 0 ? dropTextInBriefTurns(messagesToShowNotTruncated, dropTextToolNames) : messagesToShowNotTruncated : messagesToShowNotTruncated;
+    // messagesToShow 消息数据格式化`briefFiltered.slice`，供终端渲染后续处理使用。
     const messagesToShow = shouldTruncate ? briefFiltered.slice(-MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE) : briefFiltered;
+    // hasTruncatedMessages 消息数据标记终端 UI Messages是否启用对应路径。
     const hasTruncatedMessages = shouldTruncate && briefFiltered.length > MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       messages: groupedMessages
     } = applyGrouping(messagesToShow, tools, verbose);
+    // collapsed保存`collapseBackgroundBashNotifications`，供终端渲染后续处理使用。
     const collapsed = collapseBackgroundBashNotifications(collapseHookSummaries(collapseTeammateShutdowns(collapseReadSearchGroups(groupedMessages, tools))), verbose);
+    // lookups 集合构建`buildMessageLookups`，供终端渲染后续处理使用。
     const lookups = buildMessageLookups(normalizedMessages, messagesToShow);
+    // hiddenMessageCount 消息数据保存 `messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_...` 的判断结果，供终端 UI Messages后续分支直接复用。
     const hiddenMessageCount = messagesToShowNotTruncated.length - MAX_MESSAGES_TO_SHOW_IN_TRANSCRIPT_MODE;
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       collapsed,
       lookups,
@@ -529,6 +718,7 @@ const MessagesImpl = ({
   }, [verbose, normalizedMessages, isTranscriptMode, syntheticStreamingToolUseMessages, shouldTruncate, tools, isBriefOnly]);
 
   // Cheap slice — only runs when scroll range or slice config changes.
+  // renderableMessages 消息数据保存`useMemo`，供终端渲染后续处理使用。
   const renderableMessages = useMemo(() => {
     // Safety cap for the non-virtualized render path. Applied here (not at
     // the JSX site) so renderMessageRow's index-based lookups and
@@ -537,22 +727,33 @@ const MessagesImpl = ({
     // component's lifetime (scrollRef is either always passed or never).
     // renderRange is first: the chunked export path slices the
     // post-grouping array so each chunk gets correct tool-call grouping.
+    // capApplies 集合标记终端 UI Messages是否启用对应路径。
     const capApplies = !virtualScrollRuntimeGate && !disableRenderCap;
+    // sliceStart保存`computeSliceStart`，供终端渲染后续处理使用。
     const sliceStart = capApplies ? computeSliceStart(collapsed_0, sliceAnchorRef) : 0;
+    // 返回 `renderRange ? collapsed_0.slice(renderRange[0], renderRange[1]) : slice...`，作为终端渲染这次计算的结果。
     return renderRange ? collapsed_0.slice(renderRange[0], renderRange[1]) : sliceStart > 0 ? collapsed_0.slice(sliceStart) : collapsed_0;
   }, [collapsed_0, renderRange, virtualScrollRuntimeGate, disableRenderCap]);
+  // streamingToolUseIDs 集合保存`useMemo`，供终端渲染后续处理使用。
   const streamingToolUseIDs = useMemo(() => new Set(streamingToolUses.map(__0 => __0.contentBlock.id)), [streamingToolUses]);
 
   // Divider insertion point: first renderableMessage whose uuid shares the
   // 24-char prefix with firstUnseenUuid (deriveUUID keeps the first 24
   // chars of the source message uuid, so this matches any block from it).
+  // dividerBeforeIndex 索引保存`useMemo`，供终端渲染后续处理使用。
   const dividerBeforeIndex = useMemo(() => {
+    // unseenDivider缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!unseenDivider) return -1;
+    // prefix格式化`firstUnseenUuid.slice`，供终端渲染后续处理使用。
     const prefix = unseenDivider.firstUnseenUuid.slice(0, 24);
+    // 返回 `renderableMessages.findIndex(m => m.uuid.slice(0, 24) === prefix)`，作为终端渲染这次计算的结果。
     return renderableMessages.findIndex(m => m.uuid.slice(0, 24) === prefix);
   }, [unseenDivider, renderableMessages]);
+  // selectedIdx保存`useMemo`，供终端渲染后续处理使用。
   const selectedIdx = useMemo(() => {
+    // cursor缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!cursor) return -1;
+    // 返回 `renderableMessages.findIndex(m_0 => m_0.uuid === cursor.uuid)`，作为终端渲染这次计算的结果。
     return renderableMessages.findIndex(m_0 => m_0.uuid === cursor.uuid);
   }, [cursor, renderableMessages]);
 
@@ -560,15 +761,23 @@ const MessagesImpl = ({
   // tool_use_id where available so a tool_use and its tool_result (separate
   // rows) expand together; falls back to uuid for groups/thinking. Stale keys
   // are harmless — they never match anything in renderableMessages.
+  // 这个回调绑定到 const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(() => new Set(…，负责终端渲染在该局部场景下的响应。
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(() => new Set());
+  // onItemClick保存`useCallback`，供终端渲染后续处理使用。
   const onItemClick = useCallback((msg_4: RenderableMessage) => {
+    // k保存`expandKey`，供终端渲染后续处理使用。
     const k = expandKey(msg_4);
+    // setExpandedKeys 写入新的状态值，使终端渲染后续读取保持一致。
     setExpandedKeys(prev => {
+      // next保存`Set`，供终端渲染后续处理使用。
       const next = new Set(prev);
+      // 满足 `next.has(k)) next.delete(k);else next.add(k` 时，终端渲染执行该分支。
       if (next.has(k)) next.delete(k);else next.add(k);
+      // 返回 `next`，作为终端渲染这次计算的结果。
       return next;
     });
   }, []);
+  // isItemExpanded记录 `useCallback` 是否成立，终端渲染随后按该结果分支。
   const isItemExpanded = useCallback((msg_5: RenderableMessage) => expandedKeys.size > 0 && expandedKeys.has(expandKey(msg_5)), [expandedKeys]);
   // Only hover/click messages where the verbose toggle reveals more:
   // collapsed read/search groups, or tool results that self-report truncation
@@ -577,62 +786,98 @@ const MessagesImpl = ({
   // attaches after the mouse is already inside → hover never fires. tools is
   // session-stable; lookups is read via ref so the callback doesn't churn on
   // every new message.
+  // lookupsRef 引用保存`useRef`，供终端渲染后续处理使用。
   const lookupsRef = useRef(lookups_0);
+  // current更新为 `lookups_0`，确保终端 UI后续读取最新状态。
   lookupsRef.current = lookups_0;
+  // isItemClickable记录 `useCallback` 是否成立，终端渲染随后按该结果分支。
   const isItemClickable = useCallback((msg_6: RenderableMessage): boolean => {
+    // 当 `msg_6.type` 匹配 `'collapsed_read_search'` 时，终端渲染执行对应分支。
     if (msg_6.type === 'collapsed_read_search') return true;
+    // 当 `msg_6.type` 匹配 `'assistant'` 时，终端渲染执行对应分支。
     if (msg_6.type === 'assistant') {
+      // b读取 `msg_6.message.content[0] as unknown as AdvisorBlock | und...` 对应条目，后续围绕该成员继续处理。
       const b = msg_6.message.content[0] as unknown as AdvisorBlock | undefined;
+      // 返回 `b != null && isAdvisorBlock(b) && b.type === 'advisor_tool_result' && b...`，作为终端渲染这次计算的结果。
       return b != null && isAdvisorBlock(b) && b.type === 'advisor_tool_result' && b.content.type === 'advisor_result';
     }
+    // `msg_6.type` 与 `'user'` 不一致时刷新派生状态，避免使用过期结果。
     if (msg_6.type !== 'user') return false;
+    // b_0 命名 `msg_6.message.content[0]`，让后续代码直接表达这个值的用途。
     const b_0 = msg_6.message.content[0];
+    // `b_0?.type` 与 `'tool_result' || b_0.is_error |...` 不一致时刷新派生状态，避免使用过期结果。
     if (b_0?.type !== 'tool_result' || b_0.is_error || !msg_6.toolUseResult) return false;
+    // 名称读取`toolUseByToolUseID.get`，供终端渲染后续处理使用。
     const name = lookupsRef.current.toolUseByToolUseID.get(b_0.tool_use_id)?.name;
+    // 工具筛选`findToolByName`，供终端渲染后续处理使用。
     const tool = name ? findToolByName(tools, name) : undefined;
+    // 返回 `tool?.isResultTruncated?.(msg_6.toolUseResult as never) ?? false`，作为终端渲染这次计算的结果。
     return tool?.isResultTruncated?.(msg_6.toolUseResult as never) ?? false;
   }, [tools]);
+  // canAnimate标记终端 UI Messages是否启用对应路径。
   const canAnimate = (!toolJSX || !!toolJSX.shouldContinueAnimation) && !toolUseConfirmQueue.length && !isMessageSelectorVisible;
+  // hasToolsInProgress 集合标记终端 UI Messages是否启用对应路径。
   const hasToolsInProgress = inProgressToolUseIDs.size > 0;
 
   // Report progress to terminal (for terminals that support OSC 9;4)
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     progress
   } = useTerminalNotification();
+  // prevProgressState 状态读取 hook 状态，供终端 UI Messages本轮渲染使用。
   const prevProgressState = useRef<string | null>(null);
+  // progressEnabled读取`getGlobalConfig`，供终端渲染后续处理使用。
   const progressEnabled = getGlobalConfig().terminalProgressBarEnabled && !getIsRemoteMode() && !(proactiveModule?.isProactiveActive() ?? false);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 状态保存`progressEnabled ? hasToolsInProgress ? 'indeterminate' : ...`，供后续判断或组装使用。
     const state = progressEnabled ? hasToolsInProgress ? 'indeterminate' : 'completed' : null;
+    // 满足 `prevProgressState.current === state` 时，终端渲染执行该分支。
     if (prevProgressState.current === state) return;
+    // current更新为 `state`，确保终端 UI后续读取最新状态。
     prevProgressState.current = state;
+    // 调用 progress，触发终端渲染此处需要的副作用。
     progress(state);
   }, [progress, progressEnabled, hasToolsInProgress]);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 返回 `() => progress(null)`，作为终端渲染这次计算的结果。
     return () => progress(null);
   }, [progress]);
+  // messageKey 消息数据保存`useCallback`，供终端渲染后续处理使用。
   const messageKey = useCallback((msg_7: RenderableMessage) => `${msg_7.uuid}-${conversationId}`, [conversationId]);
+  // renderMessageRow 消息数据封装成回调，供终端 UI Messages在事件触发或异步步骤中调用。
   const renderMessageRow = (msg_8: RenderableMessage, index: number) => {
+    // prevType 命名 `index > 0 ? renderableMessages[index - 1]?.type : undefin...`，让后续代码直接表达这个值的用途。
     const prevType = index > 0 ? renderableMessages[index - 1]?.type : undefined;
+    // isUserContinuation标记终端 UI Messages是否启用对应路径。
     const isUserContinuation = msg_8.type === 'user' && prevType === 'user';
     // hasContentAfter is only consumed for collapsed_read_search groups;
     // skip the scan for everything else. streamingText is rendered as a
     // sibling after this map, so it's never in renderableMessages — OR it
     // in explicitly so the group flips to past tense as soon as text starts
     // streaming instead of waiting for the block to finalize.
+    // hasContentAfter记录 `hasContentAfterIndex` 是否成立，终端渲染随后按该结果分支。
     const hasContentAfter = msg_8.type === 'collapsed_read_search' && (!!streamingText || hasContentAfterIndex(renderableMessages, index, tools, streamingToolUseIDs));
+    // k_0保存`messageKey`，供终端渲染后续处理使用。
     const k_0 = messageKey(msg_8);
+    // row保存`isItemExpanded`，供终端渲染后续处理使用。
     const row = <MessageRow key={k_0} message={msg_8} isUserContinuation={isUserContinuation} hasContentAfter={hasContentAfter} tools={tools} commands={commands} verbose={verbose || isItemExpanded(msg_8) || cursor?.expanded === true && index === selectedIdx} inProgressToolUseIDs={inProgressToolUseIDs} streamingToolUseIDs={streamingToolUseIDs} screen={screen} canAnimate={canAnimate} onOpenRateLimitOptions={onOpenRateLimitOptions} lastThinkingBlockId={lastThinkingBlockId} latestBashOutputUUID={latestBashOutputUUID} columns={columns} isLoading={isLoading} lookups={lookups_0} />;
 
     // Per-row Provider — only 2 rows re-render on selection change.
     // Wrapped BEFORE divider branch so both return paths get it.
+    // wrapped标记终端 UI Messages是否启用对应路径。
     const wrapped = <MessageActionsSelectedContext.Provider key={k_0} value={index === selectedIdx}>
         {row}
       </MessageActionsSelectedContext.Provider>;
+    // 只有 `unseenDivider && index === dividerBeforeIndex` 满足时，终端渲染才执行该分支。
     if (unseenDivider && index === dividerBeforeIndex) {
+      // 返回列表结果，保留终端渲染已经排好的条目顺序。
       return [<Box key="unseen-divider" marginTop={1}>
           <Divider title={`${unseenDivider.count} new ${plural(unseenDivider.count, 'message')}`} width={columns} color="inactive" />
         </Box>, wrapped];
     }
+    // 返回 `wrapped`，作为终端渲染这次计算的结果。
     return wrapped;
   };
 
@@ -646,22 +891,34 @@ const MessagesImpl = ({
   // A second-React-root reconcile approach was tried and ruled out
   // (measured 3.1ms/msg, growing — flushSyncWork processes all roots;
   // component hooks mutate shared state → main root accumulates updates).
+  // searchTextCache 缓存保存`useRef`，供终端渲染后续处理使用。
   const searchTextCache = useRef(new WeakMap<RenderableMessage, string>());
+  // extractSearchText保存`useCallback`，供终端渲染后续处理使用。
   const extractSearchText = useCallback((msg_9: RenderableMessage): string => {
+    // cached 缓存读取`current.get`，供终端渲染后续处理使用。
     const cached = searchTextCache.current.get(msg_9);
+    // `cached` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (cached !== undefined) return cached;
+    // text_0保存`renderableSearchText`，供终端渲染后续处理使用。
     let text_0 = renderableSearchText(msg_9);
     // If this is a tool_result message and the tool implements
     // extractSearchText, prefer that — it's precise (tool-owned)
     // vs renderableSearchText's field-name heuristic.
+    // 只有 `msg_9.type === 'user' && msg_9.toolUseResult && Array.isArray(msg_9.message...` 满足时，终端渲染才执行该分支。
     if (msg_9.type === 'user' && msg_9.toolUseResult && Array.isArray(msg_9.message.content)) {
+      // tr筛选`content.find`，供终端渲染后续处理使用。
       const tr = msg_9.message.content.find(b_1 => b_1.type === 'tool_result');
+      // 只有 `tr && 'tool_use_id' in tr` 满足时，终端渲染才执行该分支。
       if (tr && 'tool_use_id' in tr) {
+        // tu读取`toolUseByToolUseID.get`，供终端渲染后续处理使用。
         const tu = lookups_0.toolUseByToolUseID.get(tr.tool_use_id);
+        // tool_0筛选`findToolByName`，供终端渲染后续处理使用。
         const tool_0 = tu && findToolByName(tools, tu.name);
+        // extracted保存`tool_0?.extractSearchText?.(msg_9.toolUseResult as never)`，供后续判断或组装使用。
         const extracted = tool_0?.extractSearchText?.(msg_9.toolUseResult as never);
         // undefined = tool didn't implement → keep heuristic. Empty
         // string = tool says "nothing to index" → respect that.
+        // `extracted` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
         if (extracted !== undefined) text_0 = extracted;
       }
     }
@@ -670,10 +927,14 @@ const MessagesImpl = ({
     // ~same steady-state memory for zero per-keystroke alloc. Cache
     // GC's with messages on transcript exit. Tool methods return raw;
     // renderableSearchText already lowercases (redundant but cheap).
+    // lowered保存`text_0.toLowerCase`，供终端渲染后续处理使用。
     const lowered = text_0.toLowerCase();
+    // searchTextCache.current.set 写入新的状态值，使终端渲染后续读取保持一致。
     searchTextCache.current.set(msg_9, lowered);
+    // 返回 `lowered`，作为终端渲染这次计算的结果。
     return lowered;
   }, [tools, lookups_0]);
+  // 返回 `<>`，作为终端渲染这次计算的结果。
   return <>
       {/* Logo */}
       {!hideLogo && !(renderRange && renderRange[0] > 0) && <LogoHeader agentDefinitions={agentDefinitions} />}
@@ -722,7 +983,9 @@ const MessagesImpl = ({
 
 /** Key for click-to-expand: tool_use_id where available (so tool_use + its
  *  tool_result expand together), else uuid for groups/thinking. */
+// expandKey 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function expandKey(msg: RenderableMessage): string {
+  // return 使用 msg.type === 'assistant' || msg.type === 'user' ?… 完成终端渲染里的对应操作。
   return (msg.type === 'assistant' || msg.type === 'user' ? getToolUseID(msg) : null) ?? msg.uuid;
 }
 
@@ -731,102 +994,156 @@ function expandKey(msg: RenderableMessage): string {
 // 1. onOpenRateLimitOptions callback is recreated (doesn't affect render output)
 // 2. streamingToolUses array is recreated on every delta, but only contentBlock matters for rendering
 // 3. streamingThinking changes on every delta - we DO want to re-render for this
+// setsEqual 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function setsEqual<T>(a: Set<T>, b: Set<T>): boolean {
+  // `a.size` 与 `b.size` 不一致时刷新派生状态，避免使用过期结果。
   if (a.size !== b.size) return false;
+  // 按顺序遍历 `a` 中的item，逐个交给终端渲染处理。
   for (const item of a) {
+    // 满足 `!b.has(item)` 时，终端渲染执行该分支。
     if (!b.has(item)) return false;
   }
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
+// Messages 消息数据保存`React.memo`，供终端渲染后续处理使用。
 export const Messages = React.memo(MessagesImpl, (prev, next) => {
+  // keys 集合派生`Object.keys`，供终端渲染后续处理使用。
   const keys = Object.keys(prev) as (keyof typeof prev)[];
+  // 按顺序遍历 `keys` 中的key，逐个交给终端渲染处理。
   for (const key of keys) {
+    // 只有 `key === 'onOpenRateLimitOptions' || key === 'scrollRef' || key === 'trackSt...` 满足时，终端渲染才执行该分支。
     if (key === 'onOpenRateLimitOptions' || key === 'scrollRef' || key === 'trackStickyPrompt' || key === 'setCursor' || key === 'cursorNavRef' || key === 'jumpRef' || key === 'onSearchMatchesChange' || key === 'scanElement' || key === 'setPositions') continue;
+    // `prev[key]` 与 `next[key]` 不一致时刷新派生状态，避免使用过期结果。
     if (prev[key] !== next[key]) {
+      // 当 `key` 匹配 `'streamingToolUses'` 时，终端渲染执行对应分支。
       if (key === 'streamingToolUses') {
+        // p保存`prev.streamingToolUses`，供后续判断或组装使用。
         const p = prev.streamingToolUses;
+        // n保存`next.streamingToolUses`，供终端 UI Messages后续判断或输出使用。
         const n = next.streamingToolUses;
+        // 只有 `p.length === n.length && p.every((item, i) => item.contentBlock === n[i]?.c...` 满足时，终端渲染才执行该分支。
         if (p.length === n.length && p.every((item, i) => item.contentBlock === n[i]?.contentBlock)) {
+          // 跳过当前项，继续处理终端渲染中的下一轮循环。
           continue;
         }
       }
+      // 当 `key` 匹配 `'inProgressToolUseIDs'` 时，终端渲染执行对应分支。
       if (key === 'inProgressToolUseIDs') {
+        // 满足 `setsEqual(prev.inProgressToolUseIDs, next.inProgressToolUseIDs)` 时，终端渲染执行该分支。
         if (setsEqual(prev.inProgressToolUseIDs, next.inProgressToolUseIDs)) {
+          // 跳过当前项，继续处理终端渲染中的下一轮循环。
           continue;
         }
       }
+      // 当 `key` 匹配 `'unseenDivider'` 时，终端渲染执行对应分支。
       if (key === 'unseenDivider') {
+        // p保存`prev.unseenDivider`，供终端 UI Messages后续判断或输出使用。
         const p = prev.unseenDivider;
+        // n 命名 `next.unseenDivider`，让后续代码直接表达这个值的用途。
         const n = next.unseenDivider;
+        // 只有 `p?.firstUnseenUuid === n?.firstUnseenUuid && p?.c` 满足时，终端渲染才执行该分支。
         if (p?.firstUnseenUuid === n?.firstUnseenUuid && p?.count === n?.count) {
+          // 跳过当前项，继续处理终端渲染中的下一轮循环。
           continue;
         }
       }
+      // 当 `key` 匹配 `'tools'` 时，终端渲染执行对应分支。
       if (key === 'tools') {
+        // p保存`prev.tools`，供后续判断或组装使用。
         const p = prev.tools;
+        // n保存`next.tools`，供后续判断或组装使用。
         const n = next.tools;
+        // 只有 `p.length === n.length && p.every((tool, i) => tool.name === n[i]?.name)` 满足时，终端渲染才执行该分支。
         if (p.length === n.length && p.every((tool, i) => tool.name === n[i]?.name)) {
+          // 跳过当前项，继续处理终端渲染中的下一轮循环。
           continue;
         }
       }
       // streamingThinking changes frequently - always re-render when it changes
       // (no special handling needed, default behavior is correct)
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
   }
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 });
+// shouldRenderStatically 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function shouldRenderStatically(message: RenderableMessage, streamingToolUseIDs: Set<string>, inProgressToolUseIDs: Set<string>, siblingToolUseIDs: ReadonlySet<string>, screen: Screen, lookups: ReturnType<typeof buildMessageLookups>): boolean {
+  // 当 `screen` 匹配 `'transcript'` 时，终端渲染执行对应分支。
   if (screen === 'transcript') {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   }
+  // 按照 message.type 的取值选择终端渲染的具体处理分支。
   switch (message.type) {
     case 'attachment':
     case 'user':
     case 'assistant':
       {
+        // 当 `message.type` 匹配 `'assistant'` 时，终端渲染执行对应分支。
         if (message.type === 'assistant') {
+          // block读取 `message.message.content[0]` 对应条目，后续围绕该成员继续处理。
           const block = message.message.content[0];
+          // 当 `block?.type` 匹配 `'server_tool_use'` 时，终端渲染执行对应分支。
           if (block?.type === 'server_tool_use') {
+            // 返回 `lookups.resolvedToolUseIDs.has(block.id)`，作为终端渲染这次计算的结果。
             return lookups.resolvedToolUseIDs.has(block.id);
           }
         }
+        // toolUseID读取`getToolUseID`，供终端渲染后续处理使用。
         const toolUseID = getToolUseID(message);
+        // toolUseID缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!toolUseID) {
+          // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
           return true;
         }
+        // 满足 `streamingToolUseIDs.has(toolUseID)` 时，终端渲染执行该分支。
         if (streamingToolUseIDs.has(toolUseID)) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false;
         }
+        // 满足 `inProgressToolUseIDs.has(toolUseID)` 时，终端渲染执行该分支。
         if (inProgressToolUseIDs.has(toolUseID)) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false;
         }
 
         // Check if there are any unresolved PostToolUse hooks for this tool use
         // If so, keep the message transient so the HookProgressMessage can update
+        // 满足 `hasUnresolvedHooksFromLookup(toolUseID, 'PostToolUse', lookups)` 时，终端渲染执行该分支。
         if (hasUnresolvedHooksFromLookup(toolUseID, 'PostToolUse', lookups)) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false;
         }
+        // 返回 `every(siblingToolUseIDs, lookups.resolvedToolUseIDs)`，作为终端渲染这次计算的结果。
         return every(siblingToolUseIDs, lookups.resolvedToolUseIDs);
       }
     case 'system':
       {
         // api errors always render dynamically, since we hide
         // them as soon as we see another non-error message.
+        // 返回 `message.subtype !== 'api_error'`，作为终端渲染这次计算的结果。
         return message.subtype !== 'api_error';
       }
     case 'grouped_tool_use':
       {
+        // allResolved筛选`messages.every`，供终端渲染后续处理使用。
         const allResolved = message.messages.every(msg => {
+          // 文本内容 命名 `msg.message.content[0]`，让后续代码直接表达这个值的用途。
           const content = msg.message.content[0];
+          // 返回 `content?.type === 'tool_use' && lookups.resolvedToolUseIDs.has(content....`，作为终端渲染这次计算的结果。
           return content?.type === 'tool_use' && lookups.resolvedToolUseIDs.has(content.id);
         });
+        // 返回 `allResolved`，作为终端渲染这次计算的结果。
         return allResolved;
       }
     case 'collapsed_read_search':
       {
         // In prompt mode, never mark as static to prevent flicker between API turns
         // (In transcript mode, we already returned true at the top of this function)
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
   }

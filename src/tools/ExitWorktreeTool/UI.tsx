@@ -1,16 +1,27 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { ToolProgressData } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolProgressData } from '../../Tool.js';
+// 类型依赖 { ProgressMessage } 来自 ../../types/message.js，用于校准工具调用的数据契约。
 import type { ProgressMessage } from '../../types/message.js';
+// 类型依赖 { ThemeName } 来自 ../../utils/theme.js，用于校准工具调用的数据契约。
 import type { ThemeName } from '../../utils/theme.js';
+// 类型依赖 { Output } 来自 ./ExitWorktreeTool.js，用于校准工具调用的数据契约。
 import type { Output } from './ExitWorktreeTool.js';
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(): React.ReactNode {
+  // 返回 `'Exiting worktree…'`，作为工具调用这次计算的结果。
   return 'Exiting worktree…';
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: Output, _progressMessagesForMessage: ProgressMessage<ToolProgressData>[], _options: {
   theme: ThemeName;
 }): React.ReactNode {
+  // actionLabel标记工具实现 UI是否启用对应路径。
   const actionLabel = output.action === 'keep' ? 'Kept worktree' : 'Removed worktree';
+  // 返回 `<Box flexDirection="column">`，作为工具调用这次计算的结果。
   return <Box flexDirection="column">
       <Text>
         {actionLabel}

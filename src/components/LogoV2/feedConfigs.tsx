@@ -1,22 +1,38 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 homedir，将 os 中已经封装好的能力接到本文件流程里。
 import { homedir } from 'os';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { Step } 来自 ../../projectOnboardingState.js，用于校准终端渲染的数据契约。
 import type { Step } from '../../projectOnboardingState.js';
+// 接入 formatCreditAmount、getCachedReferrerReward 服务层能力，把外部通信或共享状态交给 ../../services/api/referral.js 处理。
 import { formatCreditAmount, getCachedReferrerReward } from '../../services/api/referral.js';
+// 类型依赖 { LogOption } 来自 ../../types/logs.js，用于校准终端渲染的数据契约。
 import type { LogOption } from '../../types/logs.js';
+// 复用 getCwd 工具函数，把通用处理留在 ../../utils/cwd.js 中维护。
 import { getCwd } from '../../utils/cwd.js';
+// 复用 formatRelativeTimeAgo 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { formatRelativeTimeAgo } from '../../utils/format.js';
+// 类型依赖 { FeedConfig, FeedLine } 来自 ./Feed.js，用于校准终端渲染的数据契约。
 import type { FeedConfig, FeedLine } from './Feed.js';
+// createRecentActivityFeed 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
+  // 这个回调绑定到 const lines: FeedLine[] = activities.map(log => {，负责终端渲染在该局部场景下的响应。
   const lines: FeedLine[] = activities.map(log => {
+    // time格式化`formatRelativeTimeAgo`，供终端渲染后续处理使用。
     const time = formatRelativeTimeAgo(log.modified);
+    // description标记终端 UI feed Configs是否启用对应路径。
     const description = log.summary && log.summary !== 'No prompt' ? log.summary : log.firstPrompt;
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       text: description || '',
       timestamp: time
     };
   });
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     title: 'Recent activity',
     lines,
@@ -24,22 +40,31 @@ export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
     emptyMessage: 'No recent activity'
   };
 }
+// createWhatsNewFeed 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
+  // 这个回调绑定到 const lines: FeedLine[] = releaseNotes.map(note => {，负责终端渲染在该局部场景下的响应。
   const lines: FeedLine[] = releaseNotes.map(note => {
+    // 当 `"external"` 匹配 `'ant'` 时，终端渲染执行对应分支。
     if ("external" === 'ant') {
+      // match匹配`note.match`，供终端渲染后续处理使用。
       const match = note.match(/^(\d+\s+\w+\s+ago)\s+(.+)$/);
+      // 满足 `match` 时，终端渲染执行该分支。
       if (match) {
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           timestamp: match[1],
           text: match[2] || ''
         };
       }
     }
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       text: note
     };
   });
+  // emptyMessage 消息数据标记终端 UI feed Configs是否启用对应路径。
   const emptyMessage = "external" === 'ant' ? 'Unable to fetch latest claude-cli-internal commits' : 'Check the Claude Code changelog for updates';
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     title: "external" === 'ant' ? "What's new [ANT-ONLY: Latest CC commits]" : "What's new",
     lines,
@@ -47,33 +72,46 @@ export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
     emptyMessage
   };
 }
+// createProjectOnboardingFeed 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
+  // enabledSteps 集合筛选`steps.filter`，供终端渲染后续处理使用。
   const enabledSteps = steps.filter(({
     isEnabled
   }) => isEnabled).sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
+  // 文本行派生`enabledSteps.map(({` 得到集合派生结果，供终端 UI 组件 feed Configs后续步骤使用。
   const lines: FeedLine[] = enabledSteps.map(({
     text,
     isComplete
   }) => {
+    // checkmark保存`isComplete ? `${figures.tick} ` : ''`，供终端 UI feed Configs后续判断或输出使用。
     const checkmark = isComplete ? `${figures.tick} ` : '';
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       text: `${checkmark}${text}`
     };
   });
+  // warningText 警告信息读取`getCwd`，供终端渲染后续处理使用。
   const warningText = getCwd() === homedir() ? 'Note: You have launched claude in your home directory. For the best experience, launch it in a project directory instead.' : undefined;
+  // 满足 `warningText` 时，终端渲染执行该分支。
   if (warningText) {
+    // 文本行追加新条目，保持收集顺序与输入顺序一致。
     lines.push({
       text: warningText
     });
   }
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     title: 'Tips for getting started',
     lines
   };
 }
+// createGuestPassesFeed 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function createGuestPassesFeed(): FeedConfig {
+  // reward读取`getCachedReferrerReward`，供终端渲染后续处理使用。
   const reward = getCachedReferrerReward();
+  // subtitle 标题格式化`formatCreditAmount`，供终端渲染后续处理使用。
   const subtitle = reward ? `Share Claude Code and earn ${formatCreditAmount(reward)} of extra usage` : 'Share Claude Code with friends';
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     title: '3 guest passes',
     lines: [],

@@ -1,3 +1,4 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
 /**
  * Shared helper functions and types for plugin details views
@@ -5,15 +6,21 @@ import { c as _c } from "react/compiler-runtime";
  * Used by both DiscoverPlugins and BrowseMarketplace components.
  */
 
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 ConfigurableShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
+// 复用 Byline 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Byline } from '../../components/design-system/Byline.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { PluginMarketplaceEntry } 来自 ../../utils/plugins/schemas.js，用于校准命令处理的数据契约。
 import type { PluginMarketplaceEntry } from '../../utils/plugins/schemas.js';
 
 /**
  * Represents a plugin available for installation from a marketplace
  */
+// InstallablePlugin 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InstallablePlugin = {
   entry: PluginMarketplaceEntry;
   marketplaceName: string;
@@ -24,6 +31,7 @@ export type InstallablePlugin = {
 /**
  * Menu option for plugin details view
  */
+// PluginDetailsMenuOption 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginDetailsMenuOption = {
   label: string;
   action: string;
@@ -32,18 +40,25 @@ export type PluginDetailsMenuOption = {
 /**
  * Extract GitHub repo info from a plugin's source
  */
+// extractGitHubRepo 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function extractGitHubRepo(plugin: InstallablePlugin): string | null {
+  // isGitHub标记插件命令界面 plugin Details Helpers是否启用对应路径。
   const isGitHub = plugin.entry.source && typeof plugin.entry.source === 'object' && 'source' in plugin.entry.source && plugin.entry.source.source === 'github';
+  // 只有 `isGitHub && typeof plugin.entry.source === 'objec` 满足时，命令处理才执行该分支。
   if (isGitHub && typeof plugin.entry.source === 'object' && 'repo' in plugin.entry.source) {
+    // 返回 `plugin.entry.source.repo`，作为命令处理这次计算的结果。
     return plugin.entry.source.repo;
   }
+  // 返回 `null`，作为命令处理这次计算的结果。
   return null;
 }
 
 /**
  * Build menu options for plugin details view with scoped installation options
  */
+// buildPluginDetailsMenuOptions 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function buildPluginDetailsMenuOptions(hasHomepage: string | undefined, githubRepo: string | null): PluginDetailsMenuOption[] {
+  // 选项 聚合成有序列表，保持后续遍历顺序稳定。
   const options: PluginDetailsMenuOption[] = [{
     label: 'Install for you (user scope)',
     action: 'install-user'
@@ -54,64 +69,99 @@ export function buildPluginDetailsMenuOptions(hasHomepage: string | undefined, g
     label: 'Install for you, in this repo only (local scope)',
     action: 'install-local'
   }];
+  // 满足 `hasHomepage` 时，命令处理执行该分支。
   if (hasHomepage) {
+    // 选项追加新条目，保持收集顺序与输入顺序一致。
     options.push({
       label: 'Open homepage',
       action: 'homepage'
     });
   }
+  // 满足 `githubRepo` 时，命令处理执行该分支。
   if (githubRepo) {
+    // 选项追加新条目，保持收集顺序与输入顺序一致。
     options.push({
       label: 'View on GitHub',
       action: 'github'
     });
   }
+  // 选项追加新条目，保持收集顺序与输入顺序一致。
   options.push({
     label: 'Back to plugin list',
     action: 'back'
   });
+  // 返回 `options`，作为命令处理这次计算的结果。
   return options;
 }
 
 /**
  * Key hint component for plugin selection screens
  */
+// PluginSelectionKeyHint 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function PluginSelectionKeyHint(t0) {
+  // $保存`_c`，供命令处理后续处理使用。
   const $ = _c(7);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     hasSelection
   } = t0;
+  // t1 暂存 `hasSelection && <ConfigurableShortcutHint action="plugin:...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== hasSelection) {
+    // t1 暂存 `hasSelection && <ConfigurableShortcutHint action="plugin:...` 生成的渲染片段，后续返回路径直接复用。
     t1 = hasSelection && <ConfigurableShortcutHint action="plugin:install" context="Plugin" fallback="i" description="install" bold={true} />;
+    // $[0] 缓存 `hasSelection`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = hasSelection;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // t2 暂存 `<ConfigurableShortcutHint action="plugin:toggle" context=...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // t3 暂存 `<ConfigurableShortcutHint action="select:accept" context=...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // t4 暂存 `<ConfigurableShortcutHint action="confirm:no" context="Co...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    // t2 暂存 `<ConfigurableShortcutHint action="plugin:toggle" context=...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <ConfigurableShortcutHint action="plugin:toggle" context="Plugin" fallback="Space" description="toggle" />;
+    // t3 暂存 `<ConfigurableShortcutHint action="select:accept" context=...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <ConfigurableShortcutHint action="select:accept" context="Select" fallback="Enter" description="details" />;
+    // t4 暂存 `<ConfigurableShortcutHint action="confirm:no" context="Co...` 生成的渲染片段，后续返回路径直接复用。
     t4 = <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
+    // $[3] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t3;
+    // $[4] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t4;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
+    // t3 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[3];
+    // t4 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[4];
   }
+  // t5 暂存 `<Box marginTop={1}><Text dimColor={true} italic={true}><B...` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== t1) {
+    // t5 暂存 `<Box marginTop={1}><Text dimColor={true} italic={true}><B...` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Box marginTop={1}><Text dimColor={true} italic={true}><Byline>{t1}{t2}{t3}{t4}</Byline></Text></Box>;
+    // $[5] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t1;
+    // $[6] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[6];
   }
+  // 返回 `t5`，作为命令处理这次计算的结果。
   return t5;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIkNvbmZpZ3VyYWJsZVNob3J0Y3V0SGludCIsIkJ5bGluZSIsIkJveCIsIlRleHQiLCJQbHVnaW5NYXJrZXRwbGFjZUVudHJ5IiwiSW5zdGFsbGFibGVQbHVnaW4iLCJlbnRyeSIsIm1hcmtldHBsYWNlTmFtZSIsInBsdWdpbklkIiwiaXNJbnN0YWxsZWQiLCJQbHVnaW5EZXRhaWxzTWVudU9wdGlvbiIsImxhYmVsIiwiYWN0aW9uIiwiZXh0cmFjdEdpdEh1YlJlcG8iLCJwbHVnaW4iLCJpc0dpdEh1YiIsInNvdXJjZSIsInJlcG8iLCJidWlsZFBsdWdpbkRldGFpbHNNZW51T3B0aW9ucyIsImhhc0hvbWVwYWdlIiwiZ2l0aHViUmVwbyIsIm9wdGlvbnMiLCJwdXNoIiwiUGx1Z2luU2VsZWN0aW9uS2V5SGludCIsInQwIiwiJCIsIl9jIiwiaGFzU2VsZWN0aW9uIiwidDEiLCJ0MiIsInQzIiwidDQiLCJTeW1ib2wiLCJmb3IiLCJ0NSJdLCJzb3VyY2VzIjpbInBsdWdpbkRldGFpbHNIZWxwZXJzLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIFNoYXJlZCBoZWxwZXIgZnVuY3Rpb25zIGFuZCB0eXBlcyBmb3IgcGx1Z2luIGRldGFpbHMgdmlld3NcbiAqXG4gKiBVc2VkIGJ5IGJvdGggRGlzY292ZXJQbHVnaW5zIGFuZCBCcm93c2VNYXJrZXRwbGFjZSBjb21wb25lbnRzLlxuICovXG5cbmltcG9ydCAqIGFzIFJlYWN0IGZyb20gJ3JlYWN0J1xuaW1wb3J0IHsgQ29uZmlndXJhYmxlU2hvcnRjdXRIaW50IH0gZnJvbSAnLi4vLi4vY29tcG9uZW50cy9Db25maWd1cmFibGVTaG9ydGN1dEhpbnQuanMnXG5pbXBvcnQgeyBCeWxpbmUgfSBmcm9tICcuLi8uLi9jb21wb25lbnRzL2Rlc2lnbi1zeXN0ZW0vQnlsaW5lLmpzJ1xuaW1wb3J0IHsgQm94LCBUZXh0IH0gZnJvbSAnLi4vLi4vaW5rLmpzJ1xuaW1wb3J0IHR5cGUgeyBQbHVnaW5NYXJrZXRwbGFjZUVudHJ5IH0gZnJvbSAnLi4vLi4vdXRpbHMvcGx1Z2lucy9zY2hlbWFzLmpzJ1xuXG4vKipcbiAqIFJlcHJlc2VudHMgYSBwbHVnaW4gYXZhaWxhYmxlIGZvciBpbnN0YWxsYXRpb24gZnJvbSBhIG1hcmtldHBsYWNlXG4gKi9cbmV4cG9ydCB0eXBlIEluc3RhbGxhYmxlUGx1Z2luID0ge1xuICBlbnRyeTogUGx1Z2luTWFya2V0cGxhY2VFbnRyeVxuICBtYXJrZXRwbGFjZU5hbWU6IHN0cmluZ1xuICBwbHVnaW5JZDogc3RyaW5nXG4gIGlzSW5zdGFsbGVkOiBib29sZWFuXG59XG5cbi8qKlxuICogTWVudSBvcHRpb24gZm9yIHBsdWdpbiBkZXRhaWxzIHZpZXdcbiAqL1xuZXhwb3J0IHR5cGUgUGx1Z2luRGV0YWlsc01lbnVPcHRpb24gPSB7XG4gIGxhYmVsOiBzdHJpbmdcbiAgYWN0aW9uOiBzdHJpbmdcbn1cblxuLyoqXG4gKiBFeHRyYWN0IEdpdEh1YiByZXBvIGluZm8gZnJvbSBhIHBsdWdpbidzIHNvdXJjZVxuICovXG5leHBvcnQgZnVuY3Rpb24gZXh0cmFjdEdpdEh1YlJlcG8ocGx1Z2luOiBJbnN0YWxsYWJsZVBsdWdpbik6IHN0cmluZyB8IG51bGwge1xuICBjb25zdCBpc0dpdEh1YiA9XG4gICAgcGx1Z2luLmVudHJ5LnNvdXJjZSAmJlxuICAgIHR5cGVvZiBwbHVnaW4uZW50cnkuc291cmNlID09PSAnb2JqZWN0JyAmJlxuICAgICdzb3VyY2UnIGluIHBsdWdpbi5lbnRyeS5zb3VyY2UgJiZcbiAgICBwbHVnaW4uZW50cnkuc291cmNlLnNvdXJjZSA9PT0gJ2dpdGh1YidcblxuICBpZiAoXG4gICAgaXNHaXRIdWIgJiZcbiAgICB0eXBlb2YgcGx1Z2luLmVudHJ5LnNvdXJjZSA9PT0gJ29iamVjdCcgJiZcbiAgICAncmVwbycgaW4gcGx1Z2luLmVudHJ5LnNvdXJjZVxuICApIHtcbiAgICByZXR1cm4gcGx1Z2luLmVudHJ5LnNvdXJjZS5yZXBvXG4gIH1cblxuICByZXR1cm4gbnVsbFxufVxuXG4vKipcbiAqIEJ1aWxkIG1lbnUgb3B0aW9ucyBmb3IgcGx1Z2luIGRldGFpbHMgdmlldyB3aXRoIHNjb3BlZCBpbnN0YWxsYXRpb24gb3B0aW9uc1xuICovXG5leHBvcnQgZnVuY3Rpb24gYnVpbGRQbHVnaW5EZXRhaWxzTWVudU9wdGlvbnMoXG4gIGhhc0hvbWVwYWdlOiBzdHJpbmcgfCB1bmRlZmluZWQsXG4gIGdpdGh1YlJlcG86IHN0cmluZyB8IG51bGwsXG4pOiBQbHVnaW5EZXRhaWxzTWVudU9wdGlvbltdIHtcbiAgY29uc3Qgb3B0aW9uczogUGx1Z2luRGV0YWlsc01lbnVPcHRpb25bXSA9IFtcbiAgICB7IGxhYmVsOiAnSW5zdGFsbCBmb3IgeW91ICh1c2VyIHNjb3BlKScsIGFjdGlvbjogJ2luc3RhbGwtdXNlcicgfSxcbiAgICB7XG4gICAgICBsYWJlbDogJ0luc3RhbGwgZm9yIGFsbCBjb2xsYWJvcmF0b3JzIG9uIHRoaXMgcmVwb3NpdG9yeSAocHJvamVjdCBzY29wZSknLFxuICAgICAgYWN0aW9uOiAnaW5zdGFsbC1wcm9qZWN0JyxcbiAgICB9LFxuICAgIHtcbiAgICAgIGxhYmVsOiAnSW5zdGFsbCBmb3IgeW91LCBpbiB0aGlzIHJlcG8gb25seSAobG9jYWwgc2NvcGUpJyxcbiAgICAgIGFjdGlvbjogJ2luc3RhbGwtbG9jYWwnLFxuICAgIH0sXG4gIF1cbiAgaWYgKGhhc0hvbWVwYWdlKSB7XG4gICAgb3B0aW9ucy5wdXNoKHsgbGFiZWw6ICdPcGVuIGhvbWVwYWdlJywgYWN0aW9uOiAnaG9tZXBhZ2UnIH0pXG4gIH1cbiAgaWYgKGdpdGh1YlJlcG8pIHtcbiAgICBvcHRpb25zLnB1c2goeyBsYWJlbDogJ1ZpZXcgb24gR2l0SHViJywgYWN0aW9uOiAnZ2l0aHViJyB9KVxuICB9XG4gIG9wdGlvbnMucHVzaCh7IGxhYmVsOiAnQmFjayB0byBwbHVnaW4gbGlzdCcsIGFjdGlvbjogJ2JhY2snIH0pXG4gIHJldHVybiBvcHRpb25zXG59XG5cbi8qKlxuICogS2V5IGhpbnQgY29tcG9uZW50IGZvciBwbHVnaW4gc2VsZWN0aW9uIHNjcmVlbnNcbiAqL1xuZXhwb3J0IGZ1bmN0aW9uIFBsdWdpblNlbGVjdGlvbktleUhpbnQoe1xuICBoYXNTZWxlY3Rpb24sXG59OiB7XG4gIGhhc1NlbGVjdGlvbjogYm9vbGVhblxufSk6IFJlYWN0LlJlYWN0Tm9kZSB7XG4gIHJldHVybiAoXG4gICAgPEJveCBtYXJnaW5Ub3A9ezF9PlxuICAgICAgPFRleHQgZGltQ29sb3IgaXRhbGljPlxuICAgICAgICA8QnlsaW5lPlxuICAgICAgICAgIHtoYXNTZWxlY3Rpb24gJiYgKFxuICAgICAgICAgICAgPENvbmZpZ3VyYWJsZVNob3J0Y3V0SGludFxuICAgICAgICAgICAgICBhY3Rpb249XCJwbHVnaW46aW5zdGFsbFwiXG4gICAgICAgICAgICAgIGNvbnRleHQ9XCJQbHVnaW5cIlxuICAgICAgICAgICAgICBmYWxsYmFjaz1cImlcIlxuICAgICAgICAgICAgICBkZXNjcmlwdGlvbj1cImluc3RhbGxcIlxuICAgICAgICAgICAgICBib2xkXG4gICAgICAgICAgICAvPlxuICAgICAgICAgICl9XG4gICAgICAgICAgPENvbmZpZ3VyYWJsZVNob3J0Y3V0SGludFxuICAgICAgICAgICAgYWN0aW9uPVwicGx1Z2luOnRvZ2dsZVwiXG4gICAgICAgICAgICBjb250ZXh0PVwiUGx1Z2luXCJcbiAgICAgICAgICAgIGZhbGxiYWNrPVwiU3BhY2VcIlxuICAgICAgICAgICAgZGVzY3JpcHRpb249XCJ0b2dnbGVcIlxuICAgICAgICAgIC8+XG4gICAgICAgICAgPENvbmZpZ3VyYWJsZVNob3J0Y3V0SGludFxuICAgICAgICAgICAgYWN0aW9uPVwic2VsZWN0OmFjY2VwdFwiXG4gICAgICAgICAgICBjb250ZXh0PVwiU2VsZWN0XCJcbiAgICAgICAgICAgIGZhbGxiYWNrPVwiRW50ZXJcIlxuICAgICAgICAgICAgZGVzY3JpcHRpb249XCJkZXRhaWxzXCJcbiAgICAgICAgICAvPlxuICAgICAgICAgIDxDb25maWd1cmFibGVTaG9ydGN1dEhpbnRcbiAgICAgICAgICAgIGFjdGlvbj1cImNvbmZpcm06bm9cIlxuICAgICAgICAgICAgY29udGV4dD1cIkNvbmZpcm1hdGlvblwiXG4gICAgICAgICAgICBmYWxsYmFjaz1cIkVzY1wiXG4gICAgICAgICAgICBkZXNjcmlwdGlvbj1cImJhY2tcIlxuICAgICAgICAgIC8+XG4gICAgICAgIDwvQnlsaW5lPlxuICAgICAgPC9UZXh0PlxuICAgIDwvQm94PlxuICApXG59XG4iXSwibWFwcGluZ3MiOiI7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUVBLE9BQU8sS0FBS0EsS0FBSyxNQUFNLE9BQU87QUFDOUIsU0FBU0Msd0JBQXdCLFFBQVEsOENBQThDO0FBQ3ZGLFNBQVNDLE1BQU0sUUFBUSwwQ0FBMEM7QUFDakUsU0FBU0MsR0FBRyxFQUFFQyxJQUFJLFFBQVEsY0FBYztBQUN4QyxjQUFjQyxzQkFBc0IsUUFBUSxnQ0FBZ0M7O0FBRTVFO0FBQ0E7QUFDQTtBQUNBLE9BQU8sS0FBS0MsaUJBQWlCLEdBQUc7RUFDOUJDLEtBQUssRUFBRUYsc0JBQXNCO0VBQzdCRyxlQUFlLEVBQUUsTUFBTTtFQUN2QkMsUUFBUSxFQUFFLE1BQU07RUFDaEJDLFdBQVcsRUFBRSxPQUFPO0FBQ3RCLENBQUM7O0FBRUQ7QUFDQTtBQUNBO0FBQ0EsT0FBTyxLQUFLQyx1QkFBdUIsR0FBRztFQUNwQ0MsS0FBSyxFQUFFLE1BQU07RUFDYkMsTUFBTSxFQUFFLE1BQU07QUFDaEIsQ0FBQzs7QUFFRDtBQUNBO0FBQ0E7QUFDQSxPQUFPLFNBQVNDLGlCQUFpQkEsQ0FBQ0MsTUFBTSxFQUFFVCxpQkFBaUIsQ0FBQyxFQUFFLE1BQU0sR0FBRyxJQUFJLENBQUM7RUFDMUUsTUFBTVUsUUFBUSxHQUNaRCxNQUFNLENBQUNSLEtBQUssQ0FBQ1UsTUFBTSxJQUNuQixPQUFPRixNQUFNLENBQUNSLEtBQUssQ0FBQ1UsTUFBTSxLQUFLLFFBQVEsSUFDdkMsUUFBUSxJQUFJRixNQUFN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

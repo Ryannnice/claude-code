@@ -7,8 +7,11 @@
  *    malicious hooks.
  */
 
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { basename, posix, resolve, sep } from 'path'
+// 复用 getCwd 工具函数，把通用处理留在 ../../utils/cwd.js 中维护。
 import { getCwd } from '../../utils/cwd.js'
+// 复用 PS_TOKENIZER_DASH_CHARS 工具函数，把通用处理留在 ../../utils/powershell/parser.js 中维护。
 import { PS_TOKENIZER_DASH_CHARS } from '../../utils/powershell/parser.js'
 
 /**
@@ -20,20 +23,30 @@ import { PS_TOKENIZER_DASH_CHARS } from '../../utils/powershell/parser.js'
  * Check/use divergence: validator sees `../project/hooks`, PowerShell
  * resolves against cwd to `hooks`.
  */
+// resolveCwdReentry 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function resolveCwdReentry(normalized: string): string {
+  // 满足 `!normalized.startsWith('../')` 时，工具调用执行该分支。
   if (!normalized.startsWith('../')) return normalized
+  // cwdBase保存`basename`，供工具调用后续处理使用。
   const cwdBase = basename(getCwd()).toLowerCase()
+  // cwdBase缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!cwdBase) return normalized
   // Iteratively strip `../<cwd-basename>/` pairs (handles `../../p/p/hooks`
   // when cwd has repeated basename segments is unlikely, but one-level is
   // the common attack).
+  // prefix保存`'../' + cwdBase + '/'`，作为后续固定文本处理的输入。
   const prefix = '../' + cwdBase + '/'
+  // s 集合保存`normalized`，供工具实现 git Safety后续判断或输出使用。
   let s = normalized
+  // 只要 s.startsWith(prefix) 成立，就持续推进工具调用中的循环处理。
   while (s.startsWith(prefix)) {
+    // s 集合更新为 `s.slice(prefix.length)`，确保工具调用后续读取最新状态。
     s = s.slice(prefix.length)
   }
   // Also handle exact `../<cwd-basename>` (no trailing slash)
+  // 满足 `s === '../' + cwdBase` 时，工具调用执行该分支。
   if (s === '../' + cwdBase) return '.'
+  // 返回 `s`，作为工具调用这次计算的结果。
   return s
 }
 
@@ -45,15 +58,22 @@ function resolveCwdReentry(normalized: string): string {
  * after space-strip), then posix.normalize (resolves `..`, `.`, `//`),
  * then case-fold.
  */
+// normalizeGitPathArg 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function normalizeGitPathArg(arg: string): string {
+  // s 集合保存`arg`，供后续判断或组装使用。
   let s = arg
   // Normalize parameter prefixes: dash chars (–, —, ―) and forward-slash
   // (PS 5.1). /Path:hooks/pre-commit → extract colon-bound value. (bug #28)
+  // 只有 `s.length > 0 && (PS_TOKENIZER_DASH_CHARS.has(s[0]!) || s[0] === '/')` 满足时，工具调用才执行该分支。
   if (s.length > 0 && (PS_TOKENIZER_DASH_CHARS.has(s[0]!) || s[0] === '/')) {
+    // c保存`s.indexOf`，供工具调用后续处理使用。
     const c = s.indexOf(':', 1)
+    // 满足 `c > 0) s = s.slice(c + 1` 时，工具调用执行该分支。
     if (c > 0) s = s.slice(c + 1)
   }
+  // s 集合更新为 `s.replace(/^['"]|['"]$/g, '')`，确保工具调用后续读取最新状态。
   s = s.replace(/^['"]|['"]$/g, '')
+  // s 集合更新为 `s.replace(/`/g, '')`，确保工具调用后续读取最新状态。
   s = s.replace(/`/g, '')
   // PS provider-qualified path: FileSystem::hooks/pre-commit → hooks/pre-commit
   // Also handles fully-qualified form: Microsoft.PowerShell.Core\FileSystem::path
@@ -71,6 +91,7 @@ function normalizeGitPathArg(arg: string): string {
     .split('/')
     .map(c => {
       if (c === '') return c
+      // prev 的赋值跨多行展开，先保留变量名再读取后续表达式。
       let prev
       do {
         prev = c

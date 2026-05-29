@@ -1,74 +1,130 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useEffect，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useEffect } from 'react';
+// 引入 getAdditionalDirectoriesForClaudeMd、setAdditionalDirectoriesForClaudeMd，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getAdditionalDirectoriesForClaudeMd, setAdditionalDirectoriesForClaudeMd } from '../../bootstrap/state.js';
+// 类型依赖 { LocalJSXCommandContext } 来自 ../../commands.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandContext } from '../../commands.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 复用 AddWorkspaceDirectory 终端界面组件，避免在这里重复拼装显示逻辑。
 import { AddWorkspaceDirectory } from '../../components/permissions/rules/AddWorkspaceDirectory.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// 复用 applyPermissionUpdate、persistPermissionUpdate 工具函数，把通用处理留在 ../../utils/permissions/PermissionUpdate.js 中维护。
 import { applyPermissionUpdate, persistPermissionUpdate } from '../../utils/permissions/PermissionUpdate.js';
+// 类型依赖 { PermissionUpdateDestination } 来自 ../../utils/permissions/PermissionUpdateSchema.js，用于校准命令处理的数据契约。
 import type { PermissionUpdateDestination } from '../../utils/permissions/PermissionUpdateSchema.js';
+// 复用 SandboxManager 工具函数，把通用处理留在 ../../utils/sandbox/sandbox-adapter.js 中维护。
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js';
+// 引入 addDirHelpMessage、validateDirectoryForWorkspace，将 ./validation.js 中已经封装好的能力接到本文件流程里。
 import { addDirHelpMessage, validateDirectoryForWorkspace } from './validation.js';
+// AddDirError 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function AddDirError(t0) {
+  // $保存`_c`，供命令处理后续处理使用。
   const $ = _c(10);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     message,
     args,
     onDone
   } = t0;
+  // t1 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // t2 暂存 `[onDone]` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== onDone) {
+    // t1 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t1 = () => {
+      // timer保存`setTimeout`，供命令处理后续处理使用。
       const timer = setTimeout(onDone, 0);
+      // 返回 `() => clearTimeout(timer)`，作为命令处理这次计算的结果。
       return () => clearTimeout(timer);
     };
+    // t2 暂存 `[onDone]` 生成的渲染片段，后续返回路径直接复用。
     t2 = [onDone];
+    // $[0] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = onDone;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(t1, t2);
+  // t3 暂存 `<Text dimColor={true}>{figures.pointer} /add-dir {args}</...` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== args) {
+    // t3 暂存 `<Text dimColor={true}>{figures.pointer} /add-dir {args}</...` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text dimColor={true}>{figures.pointer} /add-dir {args}</Text>;
+    // $[3] 缓存 `args`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = args;
+    // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[4];
   }
+  // t4 暂存 `<MessageResponse><Text>{message}</Text></MessageResponse>` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== message) {
+    // t4 暂存 `<MessageResponse><Text>{message}</Text></MessageResponse>` 生成的渲染片段，后续返回路径直接复用。
     t4 = <MessageResponse><Text>{message}</Text></MessageResponse>;
+    // $[5] 缓存 `message`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = message;
+    // $[6] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[6];
   }
+  // t5 暂存 `<Box flexDirection="column">{t3}{t4}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== t3 || $[8] !== t4) {
+    // t5 暂存 `<Box flexDirection="column">{t3}{t4}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Box flexDirection="column">{t3}{t4}</Box>;
+    // $[7] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t3;
+    // $[8] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t4;
+    // $[9] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[9];
   }
+  // 返回 `t5`，作为命令处理这次计算的结果。
   return t5;
 }
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext, args?: string): Promise<React.ReactNode> {
+  // directoryPath 路径数据格式化`trim`，供命令处理后续处理使用。
   const directoryPath = (args ?? '').trim();
+  // appState 状态读取`context.getAppState`，供命令处理后续处理使用。
   const appState = context.getAppState();
 
   // Helper to handle adding a directory (shared by both with-path and no-path cases)
+  // handleAddDirectory保存`async`，供命令处理后续处理使用。
   const handleAddDirectory = async (path: string, remember = false) => {
+    // destination保存`remember ? 'localSettings' : 'session'`，供后续判断或组装使用。
     const destination: PermissionUpdateDestination = remember ? 'localSettings' : 'session';
+    // permissionUpdate 权限数据 集中保存命令处理斜杠命令 add dir要一起传递的字段。
     const permissionUpdate = {
       type: 'addDirectories' as const,
       directories: [path],
@@ -76,8 +132,11 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     };
 
     // Apply to session context
+    // latestAppState 状态读取`context.getAppState`，供命令处理后续处理使用。
     const latestAppState = context.getAppState();
+    // updatedContext保存`applyPermissionUpdate`，供命令处理后续处理使用。
     const updatedContext = applyPermissionUpdate(latestAppState.toolPermissionContext, permissionUpdate);
+    // context.setAppState 写入新的状态值，使命令处理后续读取保持一致。
     context.setAppState(prev => ({
       ...prev,
       toolPermissionContext: updatedContext
@@ -87,39 +146,61 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     // Bootstrap state is the source of truth for session-only dirs; persisted
     // dirs are picked up via the settings subscription, but we refresh
     // eagerly here to avoid a race when the user acts immediately.
+    // currentDirs 集合读取`getAdditionalDirectoriesForClaudeMd`，供命令处理后续处理使用。
     const currentDirs = getAdditionalDirectoriesForClaudeMd();
+    // 满足 `!currentDirs.includes(path)` 时，命令处理执行该分支。
     if (!currentDirs.includes(path)) {
+      // setAdditionalDirectoriesForClaudeMd 写入新的状态值，使命令处理后续读取保持一致。
       setAdditionalDirectoriesForClaudeMd([...currentDirs, path]);
     }
+    // 调用 SandboxManager.refreshConfig，触发命令处理此处需要的副作用。
     SandboxManager.refreshConfig();
+    // 消息 先占位，稍后的条件分支会根据实际输入补齐它。
     let message: string;
+    // 满足 `remember` 时，命令处理执行该分支。
     if (remember) {
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 调用 persistPermissionUpdate，触发命令处理此处需要的副作用。
         persistPermissionUpdate(permissionUpdate);
+        // 消息更新为 ``Added ${chalk.bold(path)} as a working directory and sav...`，确保斜杠命令后续读取最新状态。
         message = `Added ${chalk.bold(path)} as a working directory and saved to local settings`;
       } catch (error) {
+        // 消息更新为 ``Added ${chalk.bold(path)} as a working directory. Failed...`，确保斜杠命令后续读取最新状态。
         message = `Added ${chalk.bold(path)} as a working directory. Failed to save to local settings: ${error instanceof Error ? error.message : 'Unknown error'}`;
       }
     } else {
+      // 消息更新为 ``Added ${chalk.bold(path)} as a working directory for thi...`，确保斜杠命令后续读取最新状态。
       message = `Added ${chalk.bold(path)} as a working directory for this session`;
     }
+    // messageWithHint 消息数据保存`chalk.dim`，供命令处理后续处理使用。
     const messageWithHint = `${message} ${chalk.dim('· /permissions to manage')}`;
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(messageWithHint);
   };
 
   // When no path is provided, show AddWorkspaceDirectory input form directly
   // and return to REPL after confirmation
+  // directoryPath 路径数据缺失时直接走兜底路径，避免命令处理使用无效输入。
   if (!directoryPath) {
+    // 返回 `<AddWorkspaceDirectory permissionContext={appState.toolPermissionContex...`，作为命令处理这次计算的结果。
     return <AddWorkspaceDirectory permissionContext={appState.toolPermissionContext} onAddDirectory={handleAddDirectory} onCancel={() => {
+      // 调用 onDone，触发命令处理此处需要的副作用。
       onDone('Did not add a working directory.');
     }} />;
   }
+  // 结果读取`validateDirectoryForWorkspace`，供命令处理后续处理使用。
   const result = await validateDirectoryForWorkspace(directoryPath, appState.toolPermissionContext);
+  // `result.resultType` 与 `'success'` 不一致时刷新派生状态，避免使用过期结果。
   if (result.resultType !== 'success') {
+    // 消息保存`addDirHelpMessage`，供命令处理后续处理使用。
     const message = addDirHelpMessage(result);
+    // 返回 `<AddDirError message={message} args={args ?? ''} onDone={() => onDone(m...`，作为命令处理这次计算的结果。
     return <AddDirError message={message} args={args ?? ''} onDone={() => onDone(message)} />;
   }
+  // 返回 `<AddWorkspaceDirectory directoryPath={result.absolutePath} permissionCo...`，作为命令处理这次计算的结果。
   return <AddWorkspaceDirectory directoryPath={result.absolutePath} permissionContext={appState.toolPermissionContext} onAddDirectory={handleAddDirectory} onCancel={() => {
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(`Did not add ${chalk.bold(result.absolutePath)} as a working directory.`);
   }} />;
 }

@@ -1,161 +1,277 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 envDynamic 工具函数，把通用处理留在 src/utils/envDynamic.js 中维护。
 import { envDynamic } from 'src/utils/envDynamic.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 引入 useKeybindings，将 ../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybindings } from '../keybindings/useKeybinding.js';
+// 复用 getGlobalConfig、saveGlobalConfig 工具函数，把通用处理留在 ../utils/config.js 中维护。
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
+// 复用 env 工具函数，把通用处理留在 ../utils/env.js 中维护。
 import { env } from '../utils/env.js';
+// 复用 getTerminalIdeType、IDEExtensionInstallationStatus、isJetBrainsIde、toIDEDisplayName 工具函数，把通用处理留在 ../utils/ide.js 中维护。
 import { getTerminalIdeType, type IDEExtensionInstallationStatus, isJetBrainsIde, toIDEDisplayName } from '../utils/ide.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// Props 描述终端渲染需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface Props {
+  // 这个回调绑定到 onDone: () => void;，负责终端渲染在该局部场景下的响应。
   onDone: () => void;
   installationStatus: IDEExtensionInstallationStatus | null;
 }
+// IdeOnboardingDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function IdeOnboardingDialog(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(23);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     onDone,
     installationStatus
   } = t0;
+  // 调用 markDialogAsShown，触发终端渲染此处需要的副作用。
   markDialogAsShown();
+  // t1 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== onDone) {
+    // t1 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t1 = {
       "confirm:yes": onDone,
       "confirm:no": onDone
     };
+    // $[0] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = onDone;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // t2 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    // t2 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t2 = {
       context: "Confirmation"
     };
+    // $[2] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[2];
   }
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings(t1, t2);
+  // t3 暂存 `installationStatus?.ideType ?? getTerminalIdeType()` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== installationStatus?.ideType) {
+    // t3 暂存 `installationStatus?.ideType ?? getTerminalIdeType()` 生成的渲染片段，后续返回路径直接复用。
     t3 = installationStatus?.ideType ?? getTerminalIdeType();
+    // $[3] 缓存 `installationStatus?.ideType`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = installationStatus?.ideType;
+    // $[4] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[4];
   }
+  // ideType保存`t3`，作为后续临时缓存值处理的输入。
   const ideType = t3;
+  // isJetBrains 集合记录 `isJetBrainsIde` 是否成立，终端渲染随后按该结果分支。
   const isJetBrains = isJetBrainsIde(ideType);
+  // t4 暂存 `toIDEDisplayName(ideType)` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== ideType) {
+    // t4 暂存 `toIDEDisplayName(ideType)` 生成的渲染片段，后续返回路径直接复用。
     t4 = toIDEDisplayName(ideType);
+    // $[5] 缓存 `ideType`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = ideType;
+    // $[6] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[6];
   }
+  // ideName沿用 `t4` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const ideName = t4;
+  // installedVersion保存`installationStatus?.installedVersion`，供后续判断或组装使用。
   const installedVersion = installationStatus?.installedVersion;
+  // pluginOrExtension 插件数据保存`isJetBrains ? "plugin" : "extension"`，供终端 UI Ide Onboarding Dialog后续判断或输出使用。
   const pluginOrExtension = isJetBrains ? "plugin" : "extension";
+  // mentionShortcut标记终端 UI Ide Onboarding Dialog是否启用对应路径。
   const mentionShortcut = env.platform === "darwin" ? "Cmd+Option+K" : "Ctrl+Alt+K";
+  // t5 暂存 `<Text color="claude">✻ </Text>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+    // t5 暂存 `<Text color="claude">✻ </Text>` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Text color="claude">✻ </Text>;
+    // $[7] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[7];
   }
+  // t6 暂存 `<>{t5}<Text>Welcome to Claude Code for {ideName}</Text></>` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[8] !== ideName) {
+    // t6 暂存 `<>{t5}<Text>Welcome to Claude Code for {ideName}</Text></>` 生成的渲染片段，后续返回路径直接复用。
     t6 = <>{t5}<Text>Welcome to Claude Code for {ideName}</Text></>;
+    // $[8] 缓存 `ideName`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = ideName;
+    // $[9] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[9];
   }
+  // 临时值 t7 命名 `installedVersion ? `installed ${pluginOrExtension} v${ins...`，让后续代码直接表达这个值的用途。
   const t7 = installedVersion ? `installed ${pluginOrExtension} v${installedVersion}` : undefined;
+  // t8 暂存 `<Text color="suggestion">⧉ open files</Text>` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
+    // t8 暂存 `<Text color="suggestion">⧉ open files</Text>` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Text color="suggestion">⧉ open files</Text>;
+    // $[10] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[10];
   }
+  // t9 暂存 `<Text>• Claude has context of {t8}{" "}and <Text color="s...` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
+    // t9 暂存 `<Text>• Claude has context of {t8}{" "}and <Text color="s...` 生成的渲染片段，后续返回路径直接复用。
     t9 = <Text>• Claude has context of {t8}{" "}and <Text color="suggestion">⧉ selected lines</Text></Text>;
+    // $[11] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[11];
   }
+  // t10 暂存 `<Text color="diffAddedWord">+11</Text>` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+    // t10 暂存 `<Text color="diffAddedWord">+11</Text>` 生成的渲染片段，后续返回路径直接复用。
     t10 = <Text color="diffAddedWord">+11</Text>;
+    // $[12] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[12] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[12];
   }
+  // t11 暂存 `<Text>• Review Claude Code's changes{" "}{t10}{" "}<Text ...` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
+    // t11 暂存 `<Text>• Review Claude Code's changes{" "}{t10}{" "}<Text ...` 生成的渲染片段，后续返回路径直接复用。
     t11 = <Text>• Review Claude Code's changes{" "}{t10}{" "}<Text color="diffRemovedWord">-22</Text> in the comfort of your IDE</Text>;
+    // $[13] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t11;
   } else {
+    // t11从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[13];
   }
+  // t12暂存 `<Text>• Cmd+Esc<Text dimColor={true}> for Quick Launch</T...` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // 判断 $[14] === Symbol.for("react.memo_cache_sentinel")，将终端渲染分流到只适用于该条件的处理路径。
   if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
+    // t12暂存 `<Text>• Cmd+Esc<Text dimColor={true}> for Quick Launch</T...` 生成的渲染片段，后续返回路径直接复用。
     t12 = <Text>• Cmd+Esc<Text dimColor={true}> for Quick Launch</Text></Text>;
+    // $[14] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t12;
   } else {
+    // t12从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[14];
   }
+  // t13暂存 `<Box flexDirection="column" gap={1}>{t9}{t11}{t12}<Text>•...` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // 判断 $[15] === Symbol.for("react.memo_cache_sentinel")，将终端渲染分流到只适用于该条件的处理路径。
   if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
+    // t13暂存 `<Box flexDirection="column" gap={1}>{t9}{t11}{t12}<Text>•...` 生成的渲染片段，后续返回路径直接复用。
     t13 = <Box flexDirection="column" gap={1}>{t9}{t11}{t12}<Text>• {mentionShortcut}<Text dimColor={true}> to reference files or lines in your input</Text></Text></Box>;
+    // $[15] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t13;
   } else {
+    // t13从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[15];
   }
+  // t14暂存 `<Dialog title={t6} subtitle={t7} color="ide" onCancel={on...` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[16] !== onDone || $[17] !== t6 || $[18] !== t7) {
+    // t14暂存 `<Dialog title={t6} subtitle={t7} color="ide" onCancel={on...` 生成的渲染片段，后续返回路径直接复用。
     t14 = <Dialog title={t6} subtitle={t7} color="ide" onCancel={onDone} hideInputGuide={true}>{t13}</Dialog>;
+    // $[16] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = onDone;
+    // $[17] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t6;
+    // $[18] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t7;
+    // $[19] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t14;
   } else {
+    // t14从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[19];
   }
+  // t15暂存 `<Box paddingX={1}><Text dimColor={true} italic={true}>Pre...` 的派生结果，便于缓存命中时直接复用。
   let t15;
+  // 判断 $[20] === Symbol.for("react.memo_cache_sentinel")，将终端渲染分流到只适用于该条件的处理路径。
   if ($[20] === Symbol.for("react.memo_cache_sentinel")) {
+    // t15暂存 `<Box paddingX={1}><Text dimColor={true} italic={true}>Pre...` 生成的渲染片段，后续返回路径直接复用。
     t15 = <Box paddingX={1}><Text dimColor={true} italic={true}>Press Enter to continue</Text></Box>;
+    // $[20] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t15;
   } else {
+    // t15从 React 编译缓存槽 $[20] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[20];
   }
+  // t16暂存 `<>{t14}{t15}</>` 的派生结果，便于缓存命中时直接复用。
   let t16;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[21] !== t14) {
+    // t16暂存 `<>{t14}{t15}</>` 生成的渲染片段，后续返回路径直接复用。
     t16 = <>{t14}{t15}</>;
+    // $[21] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t14;
+    // $[22] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t16;
   } else {
+    // t16从 React 编译缓存槽 $[22] 取回渲染片段，避免依赖未变时重建 JSX。
     t16 = $[22];
   }
+  // 返回 t16，把终端渲染这个分支的结果交还调用方。
   return t16;
 }
+// hasIdeOnboardingDialogBeenShown 承担终端渲染中的独立步骤，串起终端 UI 组件 Ide Onboarding Dialog需要的输入整理、状态更新和结果输出。
 export function hasIdeOnboardingDialogBeenShown(): boolean {
+  // 配置读取`getGlobalConfig`，供终端渲染后续处理使用。
   const config = getGlobalConfig();
+  // 终端名称记录当前扫描状态，终端 UI Ide Onboarding Dia...随后按该状态分支。
   const terminal = envDynamic.terminal || 'unknown';
+  // 返回 config.hasIdeOnboardingBeenShown?.[terminal] === true，把终端渲染这个分支的结果交还调用方。
   return config.hasIdeOnboardingBeenShown?.[terminal] === true;
 }
+// markDialogAsShown 承担终端渲染中的独立步骤，串起终端 UI 组件 Ide Onboarding Dialog需要的输入整理、状态更新和结果输出。
 function markDialogAsShown(): void {
+  // 判断 hasIdeOnboardingDialogBeenShown()，将终端渲染分流到只适用于该条件的处理路径。
   if (hasIdeOnboardingDialogBeenShown()) {
+    // 终端 UI 组件 Ide Onboarding Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
+  // 终端名称记录当前扫描状态，终端 UI Ide Onboarding Dia...随后按该状态分支。
   const terminal = envDynamic.terminal || 'unknown';
+  // saveGlobalConfig执行终端渲染在此处需要的副作用或外部交互。
   saveGlobalConfig(current => ({
     ...current,
     hasIdeOnboardingBeenShown: {

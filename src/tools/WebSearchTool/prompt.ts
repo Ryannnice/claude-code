@@ -1,9 +1,14 @@
+// 引入 getLocalMonthYear，将 src/constants/common.js 中已经封装好的能力接到本文件流程里。
 import { getLocalMonthYear } from 'src/constants/common.js'
 
+// WEB_SEARCH_TOOL_NAME 命名 `'WebSearch'`，让后续代码直接表达这个值的用途。
 export const WEB_SEARCH_TOOL_NAME = 'WebSearch'
 
+// getWebSearchPrompt 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getWebSearchPrompt(): string {
+  // currentMonthYear读取`getLocalMonthYear`，供工具调用后续处理使用。
   const currentMonthYear = getLocalMonthYear()
+  // 返回 ```，作为工具调用这次计算的结果。
   return `
 - Allows Claude to search the web and use the results to inform responses
 - Provides up-to-date information for current events and recent data

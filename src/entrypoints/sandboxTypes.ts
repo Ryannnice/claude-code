@@ -5,12 +5,15 @@
  * Both the SDK and the settings validation import from here.
  */
 
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 复用 lazySchema 工具函数，把通用处理留在 ../utils/lazySchema.js 中维护。
 import { lazySchema } from '../utils/lazySchema.js'
 
 /**
  * Network configuration schema for sandbox.
  */
+// SandboxNetworkConfigSchema 配置保存`lazySchema`，供sandbox Types后续处理使用。
 export const SandboxNetworkConfigSchema = lazySchema(() =>
   z
     .object({
@@ -44,6 +47,7 @@ export const SandboxNetworkConfigSchema = lazySchema(() =>
 /**
  * Filesystem configuration schema for sandbox.
  */
+// SandboxFilesystemConfigSchema 文件数据保存`lazySchema`，供sandbox Types后续处理使用。
 export const SandboxFilesystemConfigSchema = lazySchema(() =>
   z
     .object({
@@ -88,6 +92,7 @@ export const SandboxFilesystemConfigSchema = lazySchema(() =>
 /**
  * Sandbox settings schema.
  */
+// SandboxSettingsSchema保存`lazySchema`，供sandbox Types后续处理使用。
 export const SandboxSettingsSchema = lazySchema(() =>
   z
     .object({
@@ -144,13 +149,17 @@ export const SandboxSettingsSchema = lazySchema(() =>
 )
 
 // Inferred types from schemas
+// SandboxSettings 固化sandbox Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SandboxSettings = z.infer<ReturnType<typeof SandboxSettingsSchema>>
+// SandboxNetworkConfig 固化sandbox Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SandboxNetworkConfig = NonNullable<
   z.infer<ReturnType<typeof SandboxNetworkConfigSchema>>
 >
+// SandboxFilesystemConfig 固化sandbox Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SandboxFilesystemConfig = NonNullable<
   z.infer<ReturnType<typeof SandboxFilesystemConfigSchema>>
 >
+// SandboxIgnoreViolations 固化sandbox Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SandboxIgnoreViolations = NonNullable<
   SandboxSettings['ignoreViolations']
 >

@@ -1,61 +1,99 @@
+// 引入 APIUserAbortError，将 @anthropic-ai/sdk 中已经封装好的能力接到本文件流程里。
 import { APIUserAbortError } from '@anthropic-ai/sdk';
+// 引入 React、ReactNode、useCallback、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { type ReactNode, useCallback, useRef, useState } from 'react';
+// 引入 useMainLoopModel，将 ../../../../hooks/useMainLoopModel.js 中已经封装好的能力接到本文件流程里。
 import { useMainLoopModel } from '../../../../hooks/useMainLoopModel.js';
+// 引入 Box、Text，将 ../../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../../../ink.js';
+// 引入 useKeybinding，将 ../../../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
+// 复用 createAbortController 工具函数，把通用处理留在 ../../../../utils/abortController.js 中维护。
 import { createAbortController } from '../../../../utils/abortController.js';
+// 复用 editPromptInEditor 工具函数，把通用处理留在 ../../../../utils/promptEditor.js 中维护。
 import { editPromptInEditor } from '../../../../utils/promptEditor.js';
+// 引入 ConfigurableShortcutHint，将 ../../../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
+// 引入 Byline，将 ../../../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../../../design-system/Byline.js';
+// 引入 Spinner，将 ../../../Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from '../../../Spinner.js';
+// 引入 TextInput，将 ../../../TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from '../../../TextInput.js';
+// 引入 useWizard，将 ../../../wizard/index.js 中已经封装好的能力接到本文件流程里。
 import { useWizard } from '../../../wizard/index.js';
+// 引入 WizardDialogLayout，将 ../../../wizard/WizardDialogLayout.js 中已经封装好的能力接到本文件流程里。
 import { WizardDialogLayout } from '../../../wizard/WizardDialogLayout.js';
+// 引入 generateAgent，将 ../../generateAgent.js 中已经封装好的能力接到本文件流程里。
 import { generateAgent } from '../../generateAgent.js';
+// 类型依赖 { AgentWizardData } 来自 ../types.js，用于校准终端渲染的数据契约。
 import type { AgentWizardData } from '../types.js';
+// GenerateStep 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function GenerateStep(): ReactNode {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     updateWizardData,
     goBack,
     goToStep,
     wizardData
   } = useWizard<AgentWizardData>();
+  // 提示词 由 React state 持有，setPrompt 会在用户操作或异步结果返回时触发刷新。
   const [prompt, setPrompt] = useState(wizardData.generationPrompt || '');
+  // isGenerating 由 React state 持有，setIsGenerating 会在用户操作或异步结果返回时触发刷新。
   const [isGenerating, setIsGenerating] = useState(false);
+  // 错误 由 React state 持有，setError 会在用户操作或异步结果返回时触发刷新。
   const [error, setError] = useState<string | null>(null);
+  // 光标偏移 由 React state 持有，setCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [cursorOffset, setCursorOffset] = useState(prompt.length);
+  // 模型名称保存`useMainLoopModel`，供终端渲染后续处理使用。
   const model = useMainLoopModel();
+  // abortControllerRef 引用保存 hook 状态，让终端 UI Generate Step跨渲染复用同一个容器。
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Cancel generation when escape pressed during generation
+  // handleCancelGeneration保存`useCallback`，供终端渲染后续处理使用。
   const handleCancelGeneration = useCallback(() => {
+    // 满足 `abortControllerRef.current` 时，终端渲染执行该分支。
     if (abortControllerRef.current) {
+      // 触发取消信号，通知终端渲染中仍在等待的异步任务尽快停止。
       abortControllerRef.current.abort();
+      // current更新为 `null`，确保Agent 配置界面后续读取最新状态。
       abortControllerRef.current = null;
+      // setIsGenerating 写入新的状态值，使终端渲染后续读取保持一致。
       setIsGenerating(false);
+      // setError 写入新的状态值，使终端渲染后续读取保持一致。
       setError('Generation cancelled');
     }
   }, []);
 
   // Use Settings context so 'n' key doesn't cancel (allows typing 'n' in prompt input)
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleCancelGeneration, {
     context: 'Settings',
     isActive: isGenerating
   });
+  // handleExternalEditor保存`useCallback`，供终端渲染后续处理使用。
   const handleExternalEditor = useCallback(async () => {
+    // 结果保存`editPromptInEditor`，供终端渲染后续处理使用。
     const result = await editPromptInEditor(prompt);
+    // `result.content` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
     if (result.content !== null) {
+      // setPrompt 写入新的状态值，使终端渲染后续读取保持一致。
       setPrompt(result.content);
+      // setCursorOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorOffset(result.content.length);
     }
   }, [prompt]);
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('chat:externalEditor', handleExternalEditor, {
     context: 'Chat',
     isActive: !isGenerating
   });
 
   // Go back when escape pressed while not generating
+  // handleGoBack保存`useCallback`，供终端渲染后续处理使用。
   const handleGoBack = useCallback(() => {
+    // 调用 updateWizardData，触发终端渲染此处需要的副作用。
     updateWizardData({
       generationPrompt: '',
       agentType: '',
@@ -64,34 +102,51 @@ export function GenerateStep(): ReactNode {
       generatedAgent: undefined,
       wasGenerated: false
     });
+    // setPrompt 写入新的状态值，使终端渲染后续读取保持一致。
     setPrompt('');
+    // setError 写入新的状态值，使终端渲染后续读取保持一致。
     setError(null);
+    // 调用 goBack，触发终端渲染此处需要的副作用。
     goBack();
   }, [updateWizardData, goBack]);
 
   // Use Settings context so 'n' key doesn't cancel (allows typing 'n' in prompt input)
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleGoBack, {
     context: 'Settings',
     isActive: !isGenerating
   });
+  // handleGenerate保存`async`，供终端渲染后续处理使用。
   const handleGenerate = async (): Promise<void> => {
+    // trimmedPrompt格式化`prompt.trim`，供终端渲染后续处理使用。
     const trimmedPrompt = prompt.trim();
+    // trimmedPrompt缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!trimmedPrompt) {
+      // setError 写入新的状态值，使终端渲染后续读取保持一致。
       setError('Please describe what the agent should do');
+      // 终端 UI 组件 Generate Step在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setError 写入新的状态值，使终端渲染后续读取保持一致。
     setError(null);
+    // setIsGenerating 写入新的状态值，使终端渲染后续读取保持一致。
     setIsGenerating(true);
+    // 调用 updateWizardData，触发终端渲染此处需要的副作用。
     updateWizardData({
       generationPrompt: trimmedPrompt,
       isGenerating: true
     });
 
     // Create abort controller for this generation
+    // controller构建`createAbortController`，供终端渲染后续处理使用。
     const controller = createAbortController();
+    // current更新为 `controller`，确保Agent 配置界面后续读取最新状态。
     abortControllerRef.current = controller;
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // generated保存`generateAgent`，供终端渲染后续处理使用。
       const generated = await generateAgent(trimmedPrompt, model, [], controller.signal);
+      // 调用 updateWizardData，触发终端渲染此处需要的副作用。
       updateWizardData({
         agentType: generated.identifier,
         whenToUse: generated.whenToUse,
@@ -102,24 +157,34 @@ export function GenerateStep(): ReactNode {
       });
 
       // Skip directly to ToolsStep (index 6) - matching original flow
+      // 调用 goToStep，触发终端渲染此处需要的副作用。
       goToStep(6);
     } catch (err) {
       // Don't show error if it was cancelled (already set in escape handler)
+      // 满足 `err instanceof APIUserAbortError` 时，终端渲染执行该分支。
       if (err instanceof APIUserAbortError) {
         // User cancelled - no error to show
+      // 终端 UI 组件 Generate Step在这里处理 `} else if (err instanceof Error && !err.message.includes('No assistant ...`，完成这一小步状态转换。
       } else if (err instanceof Error && !err.message.includes('No assistant message found')) {
+        // setError 写入新的状态值，使终端渲染后续读取保持一致。
         setError(err.message || 'Failed to generate agent');
       }
+      // 调用 updateWizardData，触发终端渲染此处需要的副作用。
       updateWizardData({
         isGenerating: false
       });
     } finally {
+      // setIsGenerating 写入新的状态值，使终端渲染后续读取保持一致。
       setIsGenerating(false);
+      // current更新为 `null`，确保Agent 配置界面后续读取最新状态。
       abortControllerRef.current = null;
     }
   };
+  // subtitle 标题保存`used`，供终端渲染后续处理使用。
   const subtitle = 'Describe what this agent should do and when it should be used (be comprehensive for best results)';
+  // 满足 `isGenerating` 时，终端渲染执行该分支。
   if (isGenerating) {
+    // 返回 `<WizardDialogLayout subtitle={subtitle} footerText={<ConfigurableShortc...`，作为终端渲染这次计算的结果。
     return <WizardDialogLayout subtitle={subtitle} footerText={<ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />}>
         <Box flexDirection="row" alignItems="center">
           <Spinner />
@@ -127,6 +192,7 @@ export function GenerateStep(): ReactNode {
         </Box>
       </WizardDialogLayout>;
   }
+  // 返回 `<WizardDialogLayout subtitle={subtitle} footerText={<Byline>`，作为终端渲染这次计算的结果。
   return <WizardDialogLayout subtitle={subtitle} footerText={<Byline>
           <ConfigurableShortcutHint action="confirm:yes" context="Confirmation" fallback="Enter" description="submit" />
           <ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description="open in editor" />

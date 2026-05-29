@@ -1,73 +1,120 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useEffect, useState } from 'react';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 类型依赖 { GitFileStatus } 来自 ../utils/git.js，用于校准终端渲染的数据契约。
 import type { GitFileStatus } from '../utils/git.js';
+// 复用 getFileStatus、stashToCleanState 工具函数，把通用处理留在 ../utils/git.js 中维护。
 import { getFileStatus, stashToCleanState } from '../utils/git.js';
+// 引入 Select，将 ./CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from './CustomSelect/index.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// 引入 Spinner，将 ./Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from './Spinner.js';
+// TeleportStashProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type TeleportStashProps = {
+  // 这个回调绑定到 onStashAndContinue: () => void;，负责终端渲染在该局部场景下的响应。
   onStashAndContinue: () => void;
+  // 这个回调绑定到 onCancel: () => void;，负责终端渲染在该局部场景下的响应。
   onCancel: () => void;
 };
+// TeleportStash 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function TeleportStash({
   onStashAndContinue,
   onCancel
 }: TeleportStashProps): React.ReactNode {
+  // gitFileStatus 文件数据 由 React state 持有，setGitFileStatus 会在用户操作或异步结果返回时触发刷新。
   const [gitFileStatus, setGitFileStatus] = useState<GitFileStatus | null>(null);
+  // changedFiles 文件数据标记终端 UI Teleport Stash是否启用对应路径。
   const changedFiles = gitFileStatus !== null ? [...gitFileStatus.tracked, ...gitFileStatus.untracked] : [];
+  // 加载状态 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [loading, setLoading] = useState(true);
+  // stashing 由 React state 持有，setStashing 会在用户操作或异步结果返回时触发刷新。
   const [stashing, setStashing] = useState(false);
+  // 错误 由 React state 持有，setError 会在用户操作或异步结果返回时触发刷新。
   const [error, setError] = useState<string | null>(null);
 
   // Load changed files on mount
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // loadChangedFiles 文件数据保存`async`，供终端渲染后续处理使用。
     const loadChangedFiles = async () => {
+      // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
       try {
+        // fileStatus 文件数据读取`getFileStatus`，供终端渲染后续处理使用。
         const fileStatus = await getFileStatus();
+        // setGitFileStatus 写入新的状态值，使终端渲染后续读取保持一致。
         setGitFileStatus(fileStatus);
       } catch (err) {
+        // errorMessage 消息数据保存`String`，供终端渲染后续处理使用。
         const errorMessage = err instanceof Error ? err.message : String(err);
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Error getting changed files: ${errorMessage}`, {
           level: 'error'
         });
+        // setError 写入新的状态值，使终端渲染后续读取保持一致。
         setError('Failed to get changed files');
       } finally {
+        // setLoading 写入新的状态值，使终端渲染后续读取保持一致。
         setLoading(false);
       }
     };
+    // 显式忽略 `loadChangedFiles()` 的返回值，只保留它触发的副作用。
     void loadChangedFiles();
   }, []);
+  // handleStash保存`async`，供终端渲染后续处理使用。
   const handleStash = async () => {
+    // setStashing 写入新的状态值，使终端渲染后续读取保持一致。
     setStashing(true);
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging('Stashing changes before teleport...');
+      // success 集合保存`stashToCleanState`，供终端渲染后续处理使用。
       const success = await stashToCleanState('Teleport auto-stash');
+      // 满足 `success` 时，终端渲染执行该分支。
       if (success) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging('Successfully stashed changes');
+        // 调用 onStashAndContinue，触发终端渲染此处需要的副作用。
         onStashAndContinue();
       } else {
+        // setError 写入新的状态值，使终端渲染后续读取保持一致。
         setError('Failed to stash changes');
       }
     } catch (err_0) {
+      // errorMessage_0 消息数据保存`String`，供终端渲染后续处理使用。
       const errorMessage_0 = err_0 instanceof Error ? err_0.message : String(err_0);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Error stashing changes: ${errorMessage_0}`, {
         level: 'error'
       });
+      // setError 写入新的状态值，使终端渲染后续读取保持一致。
       setError('Failed to stash changes');
     } finally {
+      // setStashing 写入新的状态值，使终端渲染后续读取保持一致。
       setStashing(false);
     }
   };
+  // handleSelectChange封装成回调，供终端 UI Teleport Stash在事件触发或异步步骤中调用。
   const handleSelectChange = (value: string) => {
+    // 当 `value` 匹配 `'stash'` 时，终端渲染执行对应分支。
     if (value === 'stash') {
+      // 显式忽略 `handleStash()` 的返回值，只保留它触发的副作用。
       void handleStash();
     } else {
+      // 调用 onCancel，触发终端渲染此处需要的副作用。
       onCancel();
     }
   };
+  // 满足 `loading` 时，终端渲染执行该分支。
   if (loading) {
+    // 返回 `<Box flexDirection="column" padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" padding={1}>
         <Box marginBottom={1}>
           <Spinner />
@@ -75,7 +122,9 @@ export function TeleportStash({
         </Box>
       </Box>;
   }
+  // 满足 `error` 时，终端渲染执行该分支。
   if (error) {
+    // 返回 `<Box flexDirection="column" padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" padding={1}>
         <Text bold color="error">
           Error: {error}
@@ -87,13 +136,16 @@ export function TeleportStash({
         </Box>
       </Box>;
   }
+  // showFileCount 文件数据记录 `changedFiles.length > 8` 是否成立，下一步按该结果分支。
   const showFileCount = changedFiles.length > 8;
+  // 返回 `<Dialog title="Working Directory Has Changes" onCancel={onCancel}>`，作为终端渲染这次计算的结果。
   return <Dialog title="Working Directory Has Changes" onCancel={onCancel}>
       <Text>
         Teleport will switch git branches. The following changes were found:
       </Text>
 
       <Box flexDirection="column" paddingLeft={2}>
+        {/* 这个回调绑定到 {changedFiles.length > 0 ? showFileCount ? <Text>{changedFiles.length} files changed…，负责终端渲染在该局部场景下的响应。 */}
         {changedFiles.length > 0 ? showFileCount ? <Text>{changedFiles.length} files changed</Text> : changedFiles.map((file: string, index: number) => <Text key={index}>{file}</Text>) : <Text dimColor>No changes detected</Text>}
       </Box>
 

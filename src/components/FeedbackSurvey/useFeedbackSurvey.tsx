@@ -1,19 +1,36 @@
+// 引入 useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 引入 useDynamicConfig，将 src/hooks/useDynamicConfig.js 中已经封装好的能力接到本文件流程里。
 import { useDynamicConfig } from 'src/hooks/useDynamicConfig.js';
+// 接入 isFeedbackSurveyDisabled 服务层能力，把外部通信或共享状态交给 src/services/analytics/config.js 处理。
 import { isFeedbackSurveyDisabled } from 'src/services/analytics/config.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 接入 isPolicyAllowed 服务层能力，把外部通信或共享状态交给 ../../services/policyLimits/index.js 处理。
 import { isPolicyAllowed } from '../../services/policyLimits/index.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../../types/message.js';
+// 复用 getGlobalConfig、saveGlobalConfig 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js';
+// 复用 getLastAssistantMessage 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { getLastAssistantMessage } from '../../utils/messages.js';
+// 复用 getMainLoopModel 工具函数，把通用处理留在 ../../utils/model/model.js 中维护。
 import { getMainLoopModel } from '../../utils/model/model.js';
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../../utils/settings/settings.js';
+// 复用 logOTelEvent 工具函数，把通用处理留在 ../../utils/telemetry/events.js 中维护。
 import { logOTelEvent } from '../../utils/telemetry/events.js';
+// 引入 submitTranscriptShare、TranscriptShareTrigger，将 ./submitTranscriptShare.js 中已经封装好的能力接到本文件流程里。
 import { submitTranscriptShare, type TranscriptShareTrigger } from './submitTranscriptShare.js';
+// 类型依赖 { TranscriptShareResponse } 来自 ./TranscriptSharePrompt.js，用于校准终端渲染的数据契约。
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js';
+// 引入 useSurveyState，将 ./useSurveyState.js 中已经封装好的能力接到本文件流程里。
 import { useSurveyState } from './useSurveyState.js';
+// 类型依赖 { FeedbackSurveyResponse, FeedbackSurveyType } 来自 ./utils.js，用于校准终端渲染的数据契约。
 import type { FeedbackSurveyResponse, FeedbackSurveyType } from './utils.js';
+// FeedbackSurveyConfig 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type FeedbackSurveyConfig = {
   minTimeBeforeFeedbackMs: number;
   minTimeBetweenFeedbackMs: number;
@@ -24,9 +41,11 @@ type FeedbackSurveyConfig = {
   onForModels: string[];
   probability: number;
 };
+// TranscriptAskConfig 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type TranscriptAskConfig = {
   probability: number;
 };
+// DEFAULT_FEEDBACK_SURVEY_CONFIG 配置 集中保存终端 UI 组件 use Feedback Survey要一起传递的字段。
 const DEFAULT_FEEDBACK_SURVEY_CONFIG: FeedbackSurveyConfig = {
   minTimeBeforeFeedbackMs: 600000,
   minTimeBetweenFeedbackMs: 3600000,
@@ -37,52 +56,79 @@ const DEFAULT_FEEDBACK_SURVEY_CONFIG: FeedbackSurveyConfig = {
   onForModels: ['*'],
   probability: 0.005
 };
+// DEFAULT_TRANSCRIPT_ASK_CONFIG 配置 集中保存终端 UI 组件 use Feedback Survey要一起传递的字段。
 const DEFAULT_TRANSCRIPT_ASK_CONFIG: TranscriptAskConfig = {
   probability: 0
 };
+// useFeedbackSurvey 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submitCount: number, surveyType: FeedbackSurveyType = 'session', hasActivePrompt: boolean = false): {
   state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted';
   lastResponse: FeedbackSurveyResponse | null;
+  // 这个回调绑定到 handleSelect: (selected: FeedbackSurveyResponse) => boolean;，负责终端渲染在该局部场景下的响应。
   handleSelect: (selected: FeedbackSurveyResponse) => boolean;
+  // 这个回调绑定到 handleTranscriptSelect: (selected: TranscriptShareResponse) => void;，负责终端渲染在该局部场景下的响应。
   handleTranscriptSelect: (selected: TranscriptShareResponse) => void;
 } {
+  // lastAssistantMessageIdRef 引用保存`useRef`，供终端渲染后续处理使用。
   const lastAssistantMessageIdRef = useRef('unknown');
+  // current更新为 `getLastAssistantMessage(messages)?.message?.id || 'unknow...`，确保终端 UI后续读取最新状态。
   lastAssistantMessageIdRef.current = getLastAssistantMessage(messages)?.message?.id || 'unknown';
+  // 从 `useState<{` 按位置拆出 feedbackSurvey、setFeedbackSurvey，让终端 UI 组件 use Feedback Survey分别处理这些返回值。
   const [feedbackSurvey, setFeedbackSurvey] = useState<{
     timeLastShown: number | null;
     submitCountAtLastAppearance: number | null;
+  // 这个回调绑定到 }>(() => ({，负责终端渲染在该局部场景下的响应。
   }>(() => ({
     timeLastShown: null,
     submitCountAtLastAppearance: null
   }));
+  // 配置读取 hook 状态，供终端 UI use Feedback Survey本轮渲染使用。
   const config = useDynamicConfig<FeedbackSurveyConfig>('tengu_feedback_survey_config', DEFAULT_FEEDBACK_SURVEY_CONFIG);
+  // badTranscriptAskConfig 配置读取 hook 状态，供终端 UI use Feedback Survey本轮渲染使用。
   const badTranscriptAskConfig = useDynamicConfig<TranscriptAskConfig>('tengu_bad_survey_transcript_ask_config', DEFAULT_TRANSCRIPT_ASK_CONFIG);
+  // goodTranscriptAskConfig 配置读取 hook 状态，供终端 UI use Feedback Survey本轮渲染使用。
   const goodTranscriptAskConfig = useDynamicConfig<TranscriptAskConfig>('tengu_good_survey_transcript_ask_config', DEFAULT_TRANSCRIPT_ASK_CONFIG);
+  // settingsRate读取`getInitialSettings`，供终端渲染后续处理使用。
   const settingsRate = getInitialSettings().feedbackSurveyRate;
+  // sessionStartTime 会话数据保存`useRef`，供终端渲染后续处理使用。
   const sessionStartTime = useRef(Date.now());
+  // submitCountAtSessionStart 会话数据保存`useRef`，供终端渲染后续处理使用。
   const submitCountAtSessionStart = useRef(submitCount);
+  // submitCountRef 引用保存`useRef`，供终端渲染后续处理使用。
   const submitCountRef = useRef(submitCount);
+  // current更新为 `submitCount`，确保终端 UI后续读取最新状态。
   submitCountRef.current = submitCount;
+  // messagesRef 引用保存`useRef`，供终端渲染后续处理使用。
   const messagesRef = useRef(messages);
+  // current更新为 `messages`，确保终端 UI后续读取最新状态。
   messagesRef.current = messages;
   // Probability gate: roll once when eligibility conditions are met, not on every
   // useMemo re-evaluation. Without this, each dependency change (submitCount,
   // isLoading toggle, etc.) re-rolls Math.random(), making the survey almost
   // certain to appear after enough renders.
+  // probabilityPassedRef 引用保存`useRef`，供终端渲染后续处理使用。
   const probabilityPassedRef = useRef(false);
+  // lastEligibleSubmitCountRef 引用保存 hook 状态，让终端 UI use Feedback Survey跨渲染复用同一个容器。
   const lastEligibleSubmitCountRef = useRef<number | null>(null);
+  // updateLastShownTime保存`useCallback`，供终端渲染后续处理使用。
   const updateLastShownTime = useCallback((timestamp: number, submitCountValue: number) => {
+    // setFeedbackSurvey 写入新的状态值，使终端渲染后续读取保持一致。
     setFeedbackSurvey(prev => {
+      // 只有 `prev.timeLastShown === timestamp && prev.submitCo` 满足时，终端渲染才执行该分支。
       if (prev.timeLastShown === timestamp && prev.submitCountAtLastAppearance === submitCountValue) {
+        // 返回 `prev`，作为终端渲染这次计算的结果。
         return prev;
       }
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         timeLastShown: timestamp,
         submitCountAtLastAppearance: submitCountValue
       };
     });
     // Persist cross-session pacing state (previously done by onChangeAppState observer)
+    // `getGlobalConfig().feedbackSurveyState?.last...` 与 `timestamp` 不一致时刷新派生状态，避免使用过期结果。
     if (getGlobalConfig().feedbackSurveyState?.lastShownTime !== timestamp) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current => ({
         ...current,
         feedbackSurveyState: {
@@ -91,22 +137,29 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
       }));
     }
   }, []);
+  // onOpen保存`useCallback`，供终端渲染后续处理使用。
   const onOpen = useCallback((appearanceId: string) => {
+    // 调用 updateLastShownTime，触发终端渲染此处需要的副作用。
     updateLastShownTime(Date.now(), submitCountRef.current);
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_feedback_survey_event', {
       event_type: 'appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       last_assistant_message_id: lastAssistantMessageIdRef.current as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       survey_type: surveyType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 显式忽略 `logOTelEvent('feedback_survey', {` 的返回值，只保留它触发的副作用。
     void logOTelEvent('feedback_survey', {
       event_type: 'appeared',
       appearance_id: appearanceId,
       survey_type: surveyType
     });
   }, [updateLastShownTime, surveyType]);
+  // onSelect保存`useCallback`，供终端渲染后续处理使用。
   const onSelect = useCallback((appearanceId_0: string, selected: FeedbackSurveyResponse) => {
+    // 调用 updateLastShownTime，触发终端渲染此处需要的副作用。
     updateLastShownTime(Date.now(), submitCountRef.current);
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_feedback_survey_event', {
       event_type: 'responded' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -114,6 +167,7 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
       last_assistant_message_id: lastAssistantMessageIdRef.current as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       survey_type: surveyType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 显式忽略 `logOTelEvent('feedback_survey', {` 的返回值，只保留它触发的副作用。
     void logOTelEvent('feedback_survey', {
       event_type: 'responded',
       appearance_id: appearanceId_0,
@@ -121,28 +175,40 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
       survey_type: surveyType
     });
   }, [updateLastShownTime, surveyType]);
+  // shouldShowTranscriptPrompt记录 `useCallback` 是否成立，终端渲染随后按该结果分支。
   const shouldShowTranscriptPrompt = useCallback((selected_0: FeedbackSurveyResponse) => {
     // Only bad and good ratings trigger the transcript ask
+    // `selected_0` 与 `'bad' && selected_0 !== 'good'` 不一致时刷新派生状态，避免使用过期结果。
     if (selected_0 !== 'bad' && selected_0 !== 'good') {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Don't show if user previously chose "Don't ask again"
+    // 满足 `getGlobalConfig().transcriptShareDismissed` 时，终端渲染执行该分支。
     if (getGlobalConfig().transcriptShareDismissed) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Don't show if product feedback is blocked by org policy (ZDR)
+    // 满足 `!isPolicyAllowed('allow_product_feedback')` 时，终端渲染执行该分支。
     if (!isPolicyAllowed('allow_product_feedback')) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Probability gate from GrowthBook config (separate per rating)
+    // probability标记终端 UI use Feedback Survey是否启用对应路径。
     const probability = selected_0 === 'bad' ? badTranscriptAskConfig.probability : goodTranscriptAskConfig.probability;
+    // 返回 `Math.random() <= probability`，作为终端渲染这次计算的结果。
     return Math.random() <= probability;
   }, [badTranscriptAskConfig.probability, goodTranscriptAskConfig.probability]);
+  // onTranscriptPromptShown保存`useCallback`，供终端渲染后续处理使用。
   const onTranscriptPromptShown = useCallback((appearanceId_1: string, surveyResponse: FeedbackSurveyResponse) => {
+    // trigger标记终端 UI 组件 use Feedback Survey是否启用对应路径。
     const trigger: TranscriptShareTrigger = surveyResponse === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey';
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_feedback_survey_event', {
       event_type: 'transcript_prompt_appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -150,14 +216,18 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
       survey_type: surveyType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       trigger: trigger as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 显式忽略 `logOTelEvent('feedback_survey', {` 的返回值，只保留它触发的副作用。
     void logOTelEvent('feedback_survey', {
       event_type: 'transcript_prompt_appeared',
       appearance_id: appearanceId_1,
       survey_type: surveyType
     });
   }, [surveyType]);
+  // onTranscriptSelect保存`useCallback`，供终端渲染后续处理使用。
   const onTranscriptSelect = useCallback(async (appearanceId_2: string, selected_1: TranscriptShareResponse, surveyResponse_0: FeedbackSurveyResponse | null): Promise<boolean> => {
+    // trigger_0标记终端 UI 组件 use Feedback Survey是否启用对应路径。
     const trigger_0: TranscriptShareTrigger = surveyResponse_0 === 'good' ? 'good_feedback_survey' : 'bad_feedback_survey';
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_feedback_survey_event', {
       event_type: `transcript_share_${selected_1}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -165,23 +235,31 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
       survey_type: surveyType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       trigger: trigger_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 当 `selected_1` 匹配 `'dont_ask_again'` 时，终端渲染执行对应分支。
     if (selected_1 === 'dont_ask_again') {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_0 => ({
         ...current_0,
         transcriptShareDismissed: true
       }));
     }
+    // 当 `selected_1` 匹配 `'yes'` 时，终端渲染执行对应分支。
     if (selected_1 === 'yes') {
+      // 结果保存`submitTranscriptShare`，供终端渲染后续处理使用。
       const result = await submitTranscriptShare(messagesRef.current, trigger_0, appearanceId_2);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_feedback_survey_event', {
         event_type: (result.success ? 'transcript_share_submitted' : 'transcript_share_failed') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         appearance_id: appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         trigger: trigger_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 返回 `result.success`，作为终端渲染这次计算的结果。
       return result.success;
     }
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }, [surveyType]);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     state,
     lastResponse,
@@ -196,96 +274,146 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
     onTranscriptPromptShown,
     onTranscriptSelect
   });
+  // currentModel读取`getMainLoopModel`，供终端渲染后续处理使用。
   const currentModel = getMainLoopModel();
+  // isModelAllowed记录 `useMemo` 是否成立，终端渲染随后按该结果分支。
   const isModelAllowed = useMemo(() => {
+    // config.onForModels 配置为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
     if (config.onForModels.length === 0) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 满足 `config.onForModels.includes('*')` 时，终端渲染执行该分支。
     if (config.onForModels.includes('*')) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     }
+    // 返回 `config.onForModels.includes(currentModel)`，作为终端渲染这次计算的结果。
     return config.onForModels.includes(currentModel);
   }, [config.onForModels, currentModel]);
+  // shouldOpen记录 `useMemo` 是否成立，终端渲染随后按该结果分支。
   const shouldOpen = useMemo(() => {
+    // `state` 与 `'closed'` 不一致时刷新派生状态，避免使用过期结果。
     if (state !== 'closed') {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 满足 `isLoading` 时，终端渲染执行该分支。
     if (isLoading) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Don't show survey when permission or ask question prompts are visible
+    // 满足 `hasActivePrompt` 时，终端渲染执行该分支。
     if (hasActivePrompt) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Force display for testing
+    // 只有 `process.env.CLAUDE_FORCE_DISPLAY_SURVEY && !feedb` 满足时，终端渲染才执行该分支。
     if (process.env.CLAUDE_FORCE_DISPLAY_SURVEY && !feedbackSurvey.timeLastShown) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     }
+    // isModelAllowed缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isModelAllowed) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY)` 时，终端渲染执行该分支。
     if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY)) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 满足 `isFeedbackSurveyDisabled()` 时，终端渲染执行该分支。
     if (isFeedbackSurveyDisabled()) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Check if product feedback is allowed by org policy
+    // 满足 `!isPolicyAllowed('allow_product_feedback')` 时，终端渲染执行该分支。
     if (!isPolicyAllowed('allow_product_feedback')) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Check session-local pacing
+    // 满足 `feedbackSurvey.timeLastShown` 时，终端渲染执行该分支。
     if (feedbackSurvey.timeLastShown) {
       // Check time elapsed since last appearance in this session
+      // timeSinceLastShown记录时间`Date.now`，供终端渲染后续处理使用。
       const timeSinceLastShown = Date.now() - feedbackSurvey.timeLastShown;
+      // 满足 `timeSinceLastShown < config.minTimeBetweenFeedbac` 时，终端渲染执行该分支。
       if (timeSinceLastShown < config.minTimeBetweenFeedbackMs) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
       // Check user turn requirement for subsequent appearances
+      // `feedbackSurvey.submitCountAtLastAppearance` 与 `nu` 不一致时刷新派生状态，避免使用过期结果。
       if (feedbackSurvey.submitCountAtLastAppearance !== null && submitCount < feedbackSurvey.submitCountAtLastAppearance + config.minUserTurnsBetweenFeedback) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
     } else {
       // First appearance in this session
+      // timeSinceSessionStart 会话数据记录时间`Date.now`，供终端渲染后续处理使用。
       const timeSinceSessionStart = Date.now() - sessionStartTime.current;
+      // 满足 `timeSinceSessionStart < config.minTimeBeforeFeedb` 时，终端渲染执行该分支。
       if (timeSinceSessionStart < config.minTimeBeforeFeedbackMs) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
+      // 满足 `submitCount < submitCountAtSessionStart.current +` 时，终端渲染执行该分支。
       if (submitCount < submitCountAtSessionStart.current + config.minUserTurnsBeforeFeedback) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
     }
 
     // Probability check: roll once per eligibility window to avoid re-rolling
     // on every useMemo re-evaluation (which would make triggering near-certain).
+    // `lastEligibleSubmitCountRef.current` 与 `submitCount` 不一致时刷新派生状态，避免使用过期结果。
     if (lastEligibleSubmitCountRef.current !== submitCount) {
+      // current更新为 `submitCount`，确保终端 UI后续读取最新状态。
       lastEligibleSubmitCountRef.current = submitCount;
+      // current更新为 `Math.random() <= (settingsRate ?? config.probability)`，确保终端 UI后续读取最新状态。
       probabilityPassedRef.current = Math.random() <= (settingsRate ?? config.probability);
     }
+    // probabilityPassedRef.current缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!probabilityPassedRef.current) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
 
     // Check global pacing (across all sessions)
     // Leave this till last because it reads from the filesystem which is expensive.
+    // globalFeedbackState 状态读取`getGlobalConfig`，供终端渲染后续处理使用。
     const globalFeedbackState = getGlobalConfig().feedbackSurveyState;
+    // 满足 `globalFeedbackState?.lastShownTime` 时，终端渲染执行该分支。
     if (globalFeedbackState?.lastShownTime) {
+      // timeSinceGlobalLastShown记录时间`Date.now`，供终端渲染后续处理使用。
       const timeSinceGlobalLastShown = Date.now() - globalFeedbackState.lastShownTime;
+      // 满足 `timeSinceGlobalLastShown < config.minTimeBetweenG` 时，终端渲染执行该分支。
       if (timeSinceGlobalLastShown < config.minTimeBetweenGlobalFeedbackMs) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false;
       }
     }
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   }, [state, isLoading, hasActivePrompt, isModelAllowed, feedbackSurvey.timeLastShown, feedbackSurvey.submitCountAtLastAppearance, submitCount, config.minTimeBetweenFeedbackMs, config.minTimeBetweenGlobalFeedbackMs, config.minUserTurnsBetweenFeedback, config.minTimeBeforeFeedbackMs, config.minUserTurnsBeforeFeedback, config.probability, settingsRate]);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 满足 `shouldOpen` 时，终端渲染执行该分支。
     if (shouldOpen) {
+      // 调用 open，触发终端渲染此处需要的副作用。
       open();
     }
   }, [shouldOpen, open]);
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     state,
     lastResponse,

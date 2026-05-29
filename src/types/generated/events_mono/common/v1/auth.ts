@@ -7,18 +7,24 @@
 /* eslint-disable */
 
 /** PublicApiAuth contains authentication context automatically injected by the API */
+// PublicApiAuth 描述auth需要实现的字段和回调，避免跨模块交互时契约漂移。
 export interface PublicApiAuth {
   account_id?: number | undefined
   organization_uuid?: string | undefined
   account_uuid?: string | undefined
 }
 
+// createBasePublicApiAuth 封装auth的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function createBasePublicApiAuth(): PublicApiAuth {
+  // 返回结构化结果，集中表达auth已经整理出的状态。
   return { account_id: 0, organization_uuid: '', account_uuid: '' }
 }
 
+// PublicApiAuth 集中保存auth要一起传递的字段。
 export const PublicApiAuth: MessageFns<PublicApiAuth> = {
+  // fromJSON 使用 object: any 完成auth里的对应操作。
   fromJSON(object: any): PublicApiAuth {
+    // 返回结构化结果，集中表达auth已经整理出的状态。
     return {
       account_id: isSet(object.account_id)
         ? globalThis.Number(object.account_id)
@@ -32,36 +38,54 @@ export const PublicApiAuth: MessageFns<PublicApiAuth> = {
     }
   },
 
+  // toJSON 使用 message: PublicApiAuth 完成auth里的对应操作。
   toJSON(message: PublicApiAuth): unknown {
+    // obj 从空对象开始收集键值，后续按名称补齐内容。
     const obj: any = {}
+    // `message.account_id` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.account_id !== undefined) {
+      // account_id 数量更新为 `Math.round(message.account_id)`，确保auth后续读取最新状态。
       obj.account_id = Math.round(message.account_id)
     }
+    // `message.organization_uuid` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.organization_uuid !== undefined) {
+      // organization_uuid更新为 `message.organization_uuid`，确保auth后续读取最新状态。
       obj.organization_uuid = message.organization_uuid
     }
+    // `message.account_uuid` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
     if (message.account_uuid !== undefined) {
+      // account_uuid 数量更新为 `message.account_uuid`，确保auth后续读取最新状态。
       obj.account_uuid = message.account_uuid
     }
+    // 返回 `obj`，作为auth这次计算的结果。
     return obj
   },
 
+  // auth在这里处理 `create<I extends Exact<DeepPartial<PublicApiAuth>, I>>(`，完成这一小步状态转换。
   create<I extends Exact<DeepPartial<PublicApiAuth>, I>>(
     base?: I,
   ): PublicApiAuth {
+    // 返回 `PublicApiAuth.fromPartial(base ?? ({} as any))`，作为auth这次计算的结果。
     return PublicApiAuth.fromPartial(base ?? ({} as any))
   },
+  // auth在这里处理 `fromPartial<I extends Exact<DeepPartial<PublicApiAuth>, I>>(`，完成这一小步状态转换。
   fromPartial<I extends Exact<DeepPartial<PublicApiAuth>, I>>(
     object: I,
   ): PublicApiAuth {
+    // 消息构建`createBasePublicApiAuth`，供auth后续处理使用。
     const message = createBasePublicApiAuth()
+    // account_id 数量更新为 `object.account_id ?? 0`，确保auth后续读取最新状态。
     message.account_id = object.account_id ?? 0
+    // organization_uuid更新为 `object.organization_uuid ?? ''`，确保auth后续读取最新状态。
     message.organization_uuid = object.organization_uuid ?? ''
+    // account_uuid 数量更新为 `object.account_uuid ?? ''`，确保auth后续读取最新状态。
     message.account_uuid = object.account_uuid ?? ''
+    // 返回 `message`，作为auth这次计算的结果。
     return message
   },
 }
 
+// Builtin 固化auth里传递的数据形状，帮助调用方按同一结构读写字段。
 type Builtin =
   | Date
   | Function
@@ -71,6 +95,7 @@ type Builtin =
   | boolean
   | undefined
 
+// DeepPartial 固化auth里传递的数据形状，帮助调用方按同一结构读写字段。
 type DeepPartial<T> = T extends Builtin
   ? T
   : T extends globalThis.Array<infer U>
@@ -81,17 +106,22 @@ type DeepPartial<T> = T extends Builtin
         ? { [K in keyof T]?: DeepPartial<T[K]> }
         : Partial<T>
 
+// KeysOfUnion 固化auth里传递的数据形状，帮助调用方按同一结构读写字段。
 type KeysOfUnion<T> = T extends T ? keyof T : never
+// Exact 固化auth里传递的数据形状，帮助调用方按同一结构读写字段。
 type Exact<P, I extends P> = P extends Builtin
   ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
       [K in Exclude<keyof I, KeysOfUnion<P>>]: never
     }
 
+// isSet 封装auth的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isSet(value: any): boolean {
+  // 返回 `value !== null && value !== undefined`，作为auth这次计算的结果。
   return value !== null && value !== undefined
 }
 
+// MessageFns 描述auth需要实现的字段和回调，避免跨模块交互时契约漂移。
 interface MessageFns<T> {
   fromJSON(object: any): T
   toJSON(message: T): unknown

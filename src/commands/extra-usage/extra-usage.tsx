@@ -1,16 +1,29 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 类型依赖 { LocalJSXCommandContext } 来自 ../../commands.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandContext } from '../../commands.js';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// 引入 Login，将 ../login/login.js 中已经封装好的能力接到本文件流程里。
 import { Login } from '../login/login.js';
+// 引入 runExtraUsage，将 ./extra-usage-core.js 中已经封装好的能力接到本文件流程里。
 import { runExtraUsage } from './extra-usage-core.js';
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode | null> {
+  // 结果保存`runExtraUsage`，供命令处理后续处理使用。
   const result = await runExtraUsage();
+  // 当 `result.type` 匹配 `'message'` 时，命令处理执行对应分支。
   if (result.type === 'message') {
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(result.value);
+    // 返回 `null`，作为命令处理这次计算的结果。
     return null;
   }
+  // 返回 `<Login startingMessage={'Starting new login following /extra-usage. Exi...`，作为命令处理这次计算的结果。
   return <Login startingMessage={'Starting new login following /extra-usage. Exit with Ctrl-C to use existing account.'} onDone={success => {
+    // 调用 context.onChangeAPIKey，触发命令处理此处需要的副作用。
     context.onChangeAPIKey();
+    // 调用 onDone，触发命令处理此处需要的副作用。
     onDone(success ? 'Login successful' : 'Login interrupted');
   }} />;
 }

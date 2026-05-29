@@ -1,15 +1,25 @@
+// 类型依赖 { z } 来自 zod/v4，用于校准工具调用的数据契约。
 import type { z } from 'zod/v4'
+// 引入 getOriginalCwd，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getOriginalCwd } from '../../bootstrap/state.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   extractOutputRedirections,
   splitCommand_DEPRECATED,
 } from '../../utils/bash/commands.js'
+// 复用 tryParseShellCommand 工具函数，把通用处理留在 ../../utils/bash/shellQuote.js 中维护。
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
+// 复用 getCwd 工具函数，把通用处理留在 ../../utils/cwd.js 中维护。
 import { getCwd } from '../../utils/cwd.js'
+// 复用 isCurrentDirectoryBareGitRepo 工具函数，把通用处理留在 ../../utils/git.js 中维护。
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
+// 类型依赖 { PermissionResult } 来自 ../../utils/permissions/PermissionResult.js，用于校准工具调用的数据契约。
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+// 复用 getPlatform 工具函数，把通用处理留在 ../../utils/platform.js 中维护。
 import { getPlatform } from '../../utils/platform.js'
+// 复用 SandboxManager 工具函数，把通用处理留在 ../../utils/sandbox/sandbox-adapter.js 中维护。
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   containsVulnerableUncPath,
   DOCKER_READ_ONLY_COMMANDS,
@@ -21,17 +31,23 @@ import {
   RIPGREP_READ_ONLY_COMMANDS,
   validateFlags,
 } from '../../utils/shell/readOnlyCommandValidation.js'
+// 类型依赖 { BashTool } 来自 ./BashTool.js，用于校准工具调用的数据契约。
 import type { BashTool } from './BashTool.js'
+// 引入 isNormalizedGitCommand，将 ./bashPermissions.js 中已经封装好的能力接到本文件流程里。
 import { isNormalizedGitCommand } from './bashPermissions.js'
+// 引入 bashCommandIsSafe_DEPRECATED，将 ./bashSecurity.js 中已经封装好的能力接到本文件流程里。
 import { bashCommandIsSafe_DEPRECATED } from './bashSecurity.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   COMMAND_OPERATION_TYPE,
   PATH_EXTRACTORS,
   type PathCommand,
 } from './pathValidation.js'
+// 引入 sedCommandIsAllowedByAllowlist，将 ./sedValidation.js 中已经封装好的能力接到本文件流程里。
 import { sedCommandIsAllowedByAllowlist } from './sedValidation.js'
 
 // Unified command validation configuration system
+// CommandConfig 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type CommandConfig = {
   // A Record mapping from the command (e.g. `xargs` or `git diff`) to its safe flags and the values they accept
   safeFlags: Record<string, FlagArgType>
@@ -39,6 +55,7 @@ type CommandConfig = {
   regex?: RegExp
   // An optional callback for additional custom validation logic. Returns true if the command is dangerous,
   // false if it appears to be safe. Meant to be used in conjunction with the safeFlags-based validation.
+  // Bash 工具 read Only Validation在这里处理 `additionalCommandIsDangerousCallback?: (`，完成这一小步状态转换。
   additionalCommandIsDangerousCallback?: (
     rawCommand: string,
     args: string[],
@@ -52,6 +69,7 @@ type CommandConfig = {
 // Shared safe flags for fd and fdfind (Debian/Ubuntu package name)
 // SECURITY: -x/--exec and -X/--exec-batch are deliberately excluded —
 // they execute arbitrary commands for each search result.
+// FD_SAFE_FLAGS 集合 集中保存Bash 工具 read Only Validation要一起传递的字段。
 const FD_SAFE_FLAGS: Record<string, FlagArgType> = {
   '-h': 'none',
   '--help': 'none',
@@ -125,6 +143,7 @@ const FD_SAFE_FLAGS: Record<string, FlagArgType> = {
 // Central configuration for allowlist-based command validation
 // All commands and flags here should only allow reading files. They should not
 // allow writing to files, executing code, or creating network requests.
+// COMMAND_ALLOWLIST 命令数据 集中保存Bash 工具 read Only Validation要一起传递的字段。
 const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
   xargs: {
     safeFlags: {
@@ -239,6 +258,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--help': 'none',
       '--version': 'none',
     },
+    // Bash 工具 read Only Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       rawCommand: string,
       _args: string[],
@@ -417,13 +437,16 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     },
     // Block BSD-style 'e' modifier which shows environment variables
     // BSD options are letter-only tokens without a leading dash
+    // Bash 工具 read Only Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
     ) => {
       // Check for BSD-style 'e' in letter-only tokens (not -e which is UNIX-style)
       // A BSD-style option is a token of only letters (no leading dash) containing 'e'
+      // 返回 `args.some(`，作为工具调用这次计算的结果。
       return args.some(
+        // a更新为 `> !a.startsWith('-') && /^[a-zA-Z]*e[a-zA-Z]*$/.test(a)`，确保Bash 工具后续读取最新状态。
         a => !a.startsWith('-') && /^[a-zA-Z]*e[a-zA-Z]*$/.test(a),
       )
     },
@@ -753,12 +776,14 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     // -f / --file - reads dates from file (can be used to set time in batch)
     // CRITICAL: date positional args in format MMDDhhmm[[CC]YY][.ss] set system time
     // Use callback to verify positional args start with + (format strings like +"%Y-%m-%d")
+    // Bash 工具 read Only Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
     ) => {
       // args are already parsed tokens after "date"
       // Flags that require an argument
+      // flagsWithArgs 集合保存`Set`，供工具调用后续处理使用。
       const flagsWithArgs = new Set([
         '-d',
         '--date',
@@ -767,29 +792,42 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
         '--iso-8601',
         '--rfc-3339',
       ])
+      // i 命名 `0`，让后续代码直接表达这个值的用途。
       let i = 0
+      // while 使用 i < args.length 完成工具调用里的对应操作。
       while (i < args.length) {
+        // token 命名 `args[i]!`，让后续代码直接表达这个值的用途。
         const token = args[i]!
         // Skip flags and their arguments
+        // 只有 `token.startsWith('--') && token.includes('=')` 满足时，工具调用才执行该分支。
         if (token.startsWith('--') && token.includes('=')) {
           // Long flag with =value, already consumed
+          // Bash 工具 read Only Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+        // Bash 工具 read Only Validation在这里处理 `} else if (token.startsWith('-')) {`，完成这一小步状态转换。
         } else if (token.startsWith('-')) {
           // Flag - check if it takes an argument
+          // 满足 `flagsWithArgs.has(token)` 时，工具调用执行该分支。
           if (flagsWithArgs.has(token)) {
+            // Bash 工具 read Only Validation在这里处理 `i += 2 // Skip flag and its argument`，完成这一小步状态转换。
             i += 2 // Skip flag and its argument
           } else {
+            // Bash 工具 read Only Validation在这里处理 `i++ // Just skip the flag`，完成这一小步状态转换。
             i++ // Just skip the flag
           }
         } else {
           // Positional argument - must start with + for format strings
           // Anything else (like MMDDhhmm) could set system time
+          // 满足 `!token.startsWith('+')` 时，工具调用执行该分支。
           if (!token.startsWith('+')) {
+            // 返回 `true // Dangerous`，作为工具调用这次计算的结果。
             return true // Dangerous
           }
+          // Bash 工具 read Only Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
         }
       }
+      // 返回 `false // Safe`，作为工具调用这次计算的结果。
       return false // Safe
     },
   },
@@ -905,6 +943,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     // +prefix flags are treated as positional args by validateFlags,
     // so we must catch them here. lsof accepts +m<path> (attached path, no space)
     // with both absolute (+m/tmp/evil) and relative (+mfoo, +m.evil) paths.
+    // 这个回调绑定到 additionalCommandIsDangerousCallback: (_rawCommand, args) =>，负责工具调用在该局部场景下的响应。
     additionalCommandIsDangerousCallback: (_rawCommand, args) =>
       args.some(a => a === '+m' || a.startsWith('+m')),
   },
@@ -975,6 +1014,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       // from safeFlags ensures validateFlags rejects it (bundled or not) before
       // the callback runs. The callback's -S check is defense-in-depth.
     },
+    // Bash 工具 read Only Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
@@ -987,6 +1027,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       // (redirect output to printer device). smcup/rmcup manipulate screen buffer.
       // pfkey/pfloc/pfx/pfxl program function keys — pfloc executes strings locally.
       // rf is reset file (analogous to if/init_file).
+      // DANGEROUS_CAPABILITIES 集合保存`Set`，供工具调用后续处理使用。
       const DANGEROUS_CAPABILITIES = new Set([
         'init',
         'reset',
@@ -1013,34 +1054,52 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
         'smcup',
         'rmcup',
       ])
+      // flagsWithArgs 集合保存`Set`，供工具调用后续处理使用。
       const flagsWithArgs = new Set(['-T'])
+      // i 命名 `0`，让后续代码直接表达这个值的用途。
       let i = 0
+      // afterDoubleDash标记Bash 工具 read Only Validation是否启用对应路径。
       let afterDoubleDash = false
+      // while 使用 i < args.length 完成工具调用里的对应操作。
       while (i < args.length) {
+        // token 命名 `args[i]!`，让后续代码直接表达这个值的用途。
         const token = args[i]!
+        // 当 `token` 匹配 `'--'` 时，工具调用执行对应分支。
         if (token === '--') {
+          // afterDoubleDash更新为 `true`，确保Bash 工具后续读取最新状态。
           afterDoubleDash = true
+          // Bash 工具 read Only Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
+        // Bash 工具 read Only Validation在这里处理 `} else if (!afterDoubleDash && token.startsWith('-')) {`，完成这一小步状态转换。
         } else if (!afterDoubleDash && token.startsWith('-')) {
           // Defense-in-depth: block -S even if it somehow passes validateFlags
+          // 当 `token` 匹配 `'-S'` 时，工具调用执行对应分支。
           if (token === '-S') return true
           // Also check for -S bundled with other flags (e.g., -xS)
+          // 工具调用在这里按实际状态进入对应分支。
           if (
             !token.startsWith('--') &&
             token.length > 2 &&
             token.includes('S')
           )
+            // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
             return true
+          // 满足 `flagsWithArgs.has(token)` 时，工具调用执行该分支。
           if (flagsWithArgs.has(token)) {
+            // Bash 工具 read Only Validation在这里处理 `i += 2`，完成这一小步状态转换。
             i += 2
           } else {
+            // Bash 工具 read Only Validation在这里处理 `i++`，完成这一小步状态转换。
             i++
           }
         } else {
+          // 满足 `DANGEROUS_CAPABILITIES.has(token)` 时，工具调用执行该分支。
           if (DANGEROUS_CAPABILITIES.has(token)) return true
+          // Bash 工具 read Only Validation在这里处理 `i++`，完成这一小步状态转换。
           i++
         }
       }
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     },
   },
@@ -1138,6 +1197,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
 
 // gh commands are ant-only since they make network requests, which goes against
 // the read-only validation principle of no network access
+// ANT_ONLY_COMMAND_ALLOWLIST 命令数据 集中保存Bash 工具 read Only Validation要一起传递的字段。
 const ANT_ONLY_COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
   // All gh read-only commands from shared validation map
   ...GH_READ_ONLY_COMMANDS,
@@ -1198,19 +1258,27 @@ const ANT_ONLY_COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
   },
 }
 
+// getCommandAllowlist 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getCommandAllowlist(): Record<string, CommandConfig> {
+  // allowlist 集合保存`COMMAND_ALLOWLIST`，供Bash 工具 read Only Validation后续判断或输出使用。
   let allowlist: Record<string, CommandConfig> = COMMAND_ALLOWLIST
   // On Windows, xargs can be used as a data-to-code bridge: if a file contains
   // a UNC path, `cat file | xargs cat` feeds that path to cat, triggering SMB
   // resolution. Since the UNC path is in file contents (not the command string),
   // regex-based detection cannot catch this.
+  // 当 `getPlatform()` 匹配 `'windows'` 时，工具调用执行对应分支。
   if (getPlatform() === 'windows') {
+    // 从 `allowlist` 解构 xargs、其余 rest，减少Bash 工具 read Only Validation对同一对象的重复访问。
     const { xargs: _, ...rest } = allowlist
+    // allowlist 集合更新为 `rest`，确保Bash 工具后续读取最新状态。
     allowlist = rest
   }
+  // 当 `process.env.USER_TYPE` 匹配 `'ant'` 时，工具调用执行对应分支。
   if (process.env.USER_TYPE === 'ant') {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return { ...allowlist, ...ANT_ONLY_COMMAND_ALLOWLIST }
   }
+  // 返回 `allowlist`，作为工具调用这次计算的结果。
   return allowlist
 }
 
@@ -1229,6 +1297,7 @@ function getCommandAllowlist(): Record<string, CommandConfig> {
  *
  * Each command was verified by checking its man page for dangerous capabilities.
  */
+// SAFE_TARGET_COMMANDS_FOR_XARGS 命令数据 聚合成有序列表，保持后续遍历顺序稳定。
 const SAFE_TARGET_COMMANDS_FOR_XARGS = [
   'echo', // Output only, no dangerous flags
   'printf', // xargs runs /usr/bin/printf (binary), not bash builtin — no -v support
@@ -1243,82 +1312,124 @@ const SAFE_TARGET_COMMANDS_FOR_XARGS = [
  * Uses declarative configuration from COMMAND_ALLOWLIST to validate commands and their flags.
  * Handles combined flags, argument validation, and shell quoting bypass detection.
  */
+// isCommandSafeViaFlagParsing 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isCommandSafeViaFlagParsing(command: string): boolean {
   // Parse the command to get individual tokens using shell-quote for accuracy
   // Handle glob operators by converting them to strings, they don't matter from the perspective
   // of this function
+  // parseResult保存`tryParseShellCommand`，供工具调用后续处理使用。
   const parseResult = tryParseShellCommand(command, env => `$${env}`)
+  // parseResult.success 集合缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!parseResult.success) return false
 
+  // 解析结果派生`tokens.map`，供工具调用后续处理使用。
   const parsed = parseResult.tokens.map(token => {
+    // `typeof token` 与 `'string'` 不一致时刷新派生状态，避免使用过期结果。
     if (typeof token !== 'string') {
+      // token更新为 `token as { op: 'glob'; pattern: string }`，确保Bash 工具后续读取最新状态。
       token = token as { op: 'glob'; pattern: string }
+      // 当 `token.op` 匹配 `'glob'` 时，工具调用执行对应分支。
       if (token.op === 'glob') {
+        // 返回 `token.pattern`，作为工具调用这次计算的结果。
         return token.pattern
       }
     }
+    // 返回 `token`，作为工具调用这次计算的结果。
     return token
   })
 
   // If there are operators (pipes, redirects, etc.), it's not a simple command.
   // Breaking commands down into their constituent parts is handled upstream of
   // this function, so we reject anything with operators here.
+  // hasOperators 集合记录 `parsed.some` 是否成立，工具调用随后按该结果分支。
   const hasOperators = parsed.some(token => typeof token !== 'string')
+  // 满足 `hasOperators` 时，工具调用执行该分支。
   if (hasOperators) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // Now we know all tokens are strings
+  // token 列表解析`parsed as string[]`，供后续判断或组装使用。
   const tokens = parsed as string[]
 
+  // token 列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (tokens.length === 0) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // Find matching command configuration
+  // commandConfig 命令数据 先占位，稍后的条件分支会根据实际输入补齐它。
   let commandConfig: CommandConfig | undefined
+  // commandTokens 命令数据保存`0`，供Bash 工具 read Only Validation后续判断或输出使用。
   let commandTokens: number = 0
 
   // Check for multi-word commands first (e.g., "git diff", "git stash list")
+  // allowlist 集合读取`getCommandAllowlist`，供工具调用后续处理使用。
   const allowlist = getCommandAllowlist()
+  // 循环处理 `const [cmdPattern] of Object.entries(allowlist)`，让工具调用把同类条目按顺序走完。
   for (const [cmdPattern] of Object.entries(allowlist)) {
+    // cmdTokens 命令数据格式化`cmdPattern.split`，供工具调用后续处理使用。
     const cmdTokens = cmdPattern.split(' ')
+    // 满足 `tokens.length >= cmdTokens.length` 时，工具调用执行该分支。
     if (tokens.length >= cmdTokens.length) {
+      // matches 集合标记Bash 工具 read Only Validation是否启用对应路径。
       let matches = true
+      // 按索引扫描 `cmdTokens.length`，需要消费相邻参数时可以精确移动游标。
       for (let i = 0; i < cmdTokens.length; i++) {
+        // `tokens[i]` 与 `cmdTokens[i]` 不一致时刷新派生状态，避免使用过期结果。
         if (tokens[i] !== cmdTokens[i]) {
+          // matches 集合更新为 `false`，确保Bash 工具后续读取最新状态。
           matches = false
+          // 结束这个分支或循环，避免工具调用继续落入后续路径。
           break
         }
       }
+      // 满足 `matches` 时，工具调用执行该分支。
       if (matches) {
+        // commandConfig 命令数据更新为 `allowlist[cmdPattern]`，确保Bash 工具后续读取最新状态。
         commandConfig = allowlist[cmdPattern]
+        // commandTokens 命令数据更新为 `cmdTokens.length`，确保Bash 工具后续读取最新状态。
         commandTokens = cmdTokens.length
+        // 结束这个分支或循环，避免工具调用继续落入后续路径。
         break
       }
     }
   }
 
+  // commandConfig 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!commandConfig) {
+    // 返回 `false // Command not in allowlist`，作为工具调用这次计算的结果。
     return false // Command not in allowlist
   }
 
   // Special handling for git ls-remote to reject URLs that could lead to data exfiltration
+  // 当 `tokens[0]` 匹配 `'git' && tokens[1] === 'ls-...` 时，工具调用执行对应分支。
   if (tokens[0] === 'git' && tokens[1] === 'ls-remote') {
     // Check if any argument looks like a URL or remote specification
+    // 循环处理 `let i = 2; i < tokens.length; i++`，让工具调用逐项把同类条目按顺序走完。
     for (let i = 2; i < tokens.length; i++) {
+      // token 命名 `tokens[i]`，让后续代码直接表达这个值的用途。
       const token = tokens[i]
+      // 只有 `token && !token.startsWith('-')` 满足时，工具调用才执行该分支。
       if (token && !token.startsWith('-')) {
         // Reject HTTP/HTTPS URLs
+        // 满足 `token.includes('://')` 时，工具调用执行该分支。
         if (token.includes('://')) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false
         }
         // Reject SSH URLs like git@github.com:user/repo.git
+        // 只有 `token.includes('@') || token.includes(':')` 满足时，工具调用才执行该分支。
         if (token.includes('@') || token.includes(':')) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false
         }
         // Reject variable references
+        // 满足 `token.includes('$')` 时，工具调用执行该分支。
         if (token.includes('$')) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false
         }
       }
@@ -1348,11 +1459,16 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   // We check ALL tokens after the command prefix. Any `$` means we cannot
   // determine the runtime token value, so we cannot verify read-only safety.
   // This check must run BEFORE validateFlags and BEFORE callbacks.
+  // 循环处理 `let i = commandTokens; i < tokens.length; i++`，让工具调用逐项把同类条目按顺序走完。
   for (let i = commandTokens; i < tokens.length; i++) {
+    // token 命名 `tokens[i]`，让后续代码直接表达这个值的用途。
     const token = tokens[i]
+    // token缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!token) continue
     // Reject any token containing $ (variable expansion)
+    // 满足 `token.includes('$')` 时，工具调用执行该分支。
     if (token.includes('$')) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
     // Reject tokens with BOTH `{` and `,` (brace expansion obfuscation).
@@ -1363,12 +1479,15 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
     // patterns: `stash@{0}` (git ref, has `{` no `,`), `{{.State}}` (Go
     // template, no `,`), `prefix-{}-suffix` (xargs, no `,`). Sequence form
     // `{1..5}` also needs checking (has `{` + `..`).
+    // 只有 `token.includes('{') && (token.includes(',') || token.includes('..'))` 满足时，工具调用才执行该分支。
     if (token.includes('{') && (token.includes(',') || token.includes('..'))) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
   }
 
   // Validate flags starting after the command tokens
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     !validateFlags(tokens, commandTokens, commandConfig, {
       commandName: tokens[0],
@@ -1377,12 +1496,16 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
         tokens[0] === 'xargs' ? SAFE_TARGET_COMMANDS_FOR_XARGS : undefined,
     })
   ) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
+  // 只有 `commandConfig.regex && !commandConfig.regex.test(command)` 满足时，工具调用才执行该分支。
   if (commandConfig.regex && !commandConfig.regex.test(command)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
+  // 只有 `!commandConfig.regex && /`/.test(command)` 满足时，工具调用才执行该分支。
   if (!commandConfig.regex && /`/.test(command)) {
     return false
   }
@@ -1421,6 +1544,7 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
  */
 function makeRegexForSafeCommand(command: string): RegExp {
   // Create regex pattern: /^command(?:\s|$)[^<>()$`|{}&;\n\r]*$/
+  // 返回 `new RegExp(`^${command}(?:\\s|$)[^<>()$\`|{}&;\\n\\r]*$`)`，作为工具调用这次计算的结果。
   return new RegExp(`^${command}(?:\\s|$)[^<>()$\`|{}&;\\n\\r]*$`)
 }
 
@@ -1429,6 +1553,7 @@ function makeRegexForSafeCommand(command: string): RegExp {
 // they are truly safe. This includes ensuring:
 // 1. That they don't have any flags that allow file writing or command execution
 // 2. Use makeRegexForSafeCommand() to ensure proper regex pattern creation
+// READONLY_COMMANDS 命令数据 聚合成有序列表，保持后续遍历顺序稳定。
 const READONLY_COMMANDS = [
   // Cross-platform commands from shared validation
   ...EXTERNAL_READONLY_COMMANDS,
@@ -1506,6 +1631,7 @@ const READONLY_COMMANDS = [
 // Warning: If possible, avoid adding new regexes here and prefer using COMMAND_ALLOWLIST
 // instead. This allowlist-based approach to CLI flags is more secure and avoids
 // vulns coming from gnu getopt_long.
+// READONLY_COMMAND_REGEXES 命令数据保存`Set`，供工具调用后续处理使用。
 const READONLY_COMMAND_REGEXES = new Set([
   // Convert simple commands to regex patterns using makeRegexForSafeCommand
   ...READONLY_COMMANDS.map(makeRegexForSafeCommand),
@@ -1597,18 +1723,27 @@ const READONLY_COMMAND_REGEXES = new Set([
  * @param command The command string to check
  * @returns true if the command contains unquoted glob or expandable `$`
  */
+// containsUnquotedExpansion 承担工具调用中的独立步骤，串起Bash 工具 read Only Validation需要的输入整理、状态更新和结果输出。
 function containsUnquotedExpansion(command: string): boolean {
   // Track quote state to avoid false positives for patterns inside quoted strings
+  // inSingleQuote记录当前扫描状态，Bash 工具 read Only Validation随后按该状态分支。
   let inSingleQuote = false
+  // inDoubleQuote记录当前扫描状态，Bash 工具 read Only Validation随后按该状态分支。
   let inDoubleQuote = false
+  // escaped记录当前扫描状态，Bash 工具 read Only Validation随后按该状态分支。
   let escaped = false
 
+  // 遍历 let i = 0; i < command.length; i++，让工具调用逐项完成同一类处理。
   for (let i = 0; i < command.length; i++) {
+    // currentChar保存`command[i]`，供Bash 工具 read Only Validation后续步骤使用。
     const currentChar = command[i]
 
     // Handle escape sequences
+    // 满足 `escaped` 时，工具调用执行该分支。
     if (escaped) {
+      // escaped更新为 `false`，确保Bash 工具后续读取最新状态。
       escaped = false
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue
     }
 
@@ -1623,48 +1758,68 @@ function containsUnquotedExpansion(command: string): boolean {
     // Defense-in-depth: hasShellQuoteSingleQuoteBug catches `'\'` patterns
     // before this function is reached, but we fix the tracker anyway for
     // consistency with the correct implementations in bashSecurity.ts.
+    // 只有 `currentChar === '\\' && !inSingleQuote` 满足时，工具调用才执行该分支。
     if (currentChar === '\\' && !inSingleQuote) {
+      // escaped更新为 `true`，确保Bash 工具后续读取最新状态。
       escaped = true
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue
     }
 
     // Update quote state
+    // 只有 `currentChar === "'" && !inDoubleQuote` 满足时，工具调用才执行该分支。
     if (currentChar === "'" && !inDoubleQuote) {
+      // inSingleQuote更新为 `!inSingleQuote`，确保Bash 工具后续读取最新状态。
       inSingleQuote = !inSingleQuote
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue
     }
 
+    // 只有 `currentChar === '"' && !inSingleQuote` 满足时，工具调用才执行该分支。
     if (currentChar === '"' && !inSingleQuote) {
+      // inDoubleQuote更新为 `!inDoubleQuote`，确保Bash 工具后续读取最新状态。
       inDoubleQuote = !inDoubleQuote
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue
     }
 
     // Inside single quotes: everything is literal. Skip.
+    // 满足 `inSingleQuote` 时，工具调用执行该分支。
     if (inSingleQuote) {
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue
     }
 
     // Check `$` followed by variable-name or special-parameter character.
     // `$` expands inside double quotes AND unquoted (only SQ makes it literal).
+    // 满足 `currentChar === '` 时，工具调用执行该分支。
     if (currentChar === '$') {
+      // next 命名 `command[i + 1]`，让后续代码直接表达这个值的用途。
       const next = command[i + 1]
+      // 只有 `next && /[A-Za-z_@*#?!$0-9-]/.test(next)` 满足时，工具调用才执行该分支。
       if (next && /[A-Za-z_@*#?!$0-9-]/.test(next)) {
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true
       }
     }
 
     // Globs are literal inside double quotes too. Only check unquoted.
+    // 满足 `inDoubleQuote` 时，工具调用执行该分支。
     if (inDoubleQuote) {
+      // 跳过当前项，继续处理工具调用中的下一轮循环。
       continue
     }
 
     // Check for glob characters outside all quotes.
     // These could expand to anything, including dangerous flags.
+    // 只有 `currentChar && /[?*[\]]/.test(currentChar)` 满足时，工具调用才执行该分支。
     if (currentChar && /[?*[\]]/.test(currentChar)) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
     }
   }
 
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -1675,19 +1830,25 @@ function containsUnquotedExpansion(command: string): boolean {
  * @param command The command string to check
  * @returns true if the command is read-only
  */
+// isCommandReadOnly 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isCommandReadOnly(command: string): boolean {
   // Handle common stderr-to-stdout redirection pattern
   // This handles both "command 2>&1" at the end of a full command
   // and "command 2>&1" as part of a pipeline component
+  // testCommand 命令数据格式化`command.trim`，供工具调用后续处理使用。
   let testCommand = command.trim()
+  // 满足 `testCommand.endsWith(' 2>&1')` 时，工具调用执行该分支。
   if (testCommand.endsWith(' 2>&1')) {
     // Remove the stderr redirection for pattern matching
+    // testCommand 命令数据更新为 `testCommand.slice(0, -5).trim()`，确保Bash 工具后续读取最新状态。
     testCommand = testCommand.slice(0, -5).trim()
   }
 
   // Check for Windows UNC paths that could be vulnerable to WebDAV attacks
   // Do this early to prevent any command with UNC paths from being marked as read-only
+  // 满足 `containsVulnerableUncPath(testCommand)` 时，工具调用执行该分支。
   if (containsVulnerableUncPath(testCommand)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
@@ -1703,7 +1864,9 @@ function isCommandReadOnly(command: string): boolean {
   // check inside isCommandSafeViaFlagParsing only covers COMMAND_ALLOWLIST
   // commands; hand-written regexes in READONLY_COMMAND_REGEXES (uniq, jq, cd)
   // have no such guard. See containsUnquotedExpansion for full analysis.
+  // 满足 `containsUnquotedExpansion(testCommand)` 时，工具调用执行该分支。
   if (containsUnquotedExpansion(testCommand)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
@@ -1712,42 +1875,54 @@ function isCommandReadOnly(command: string): boolean {
   // This requires defining a set of known safe flags. Claude can help with this,
   // but please look over it to ensure it didn't add any flags that allow file writes
   // code execution, or network requests.
+  // 满足 `isCommandSafeViaFlagParsing(testCommand)` 时，工具调用执行该分支。
   if (isCommandSafeViaFlagParsing(testCommand)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
+  // 按顺序遍历 `READONLY_COMMAND_REGEXES` 中的regex，逐个交给工具调用处理。
   for (const regex of READONLY_COMMAND_REGEXES) {
+    // 满足 `regex.test(testCommand)` 时，工具调用执行该分支。
     if (regex.test(testCommand)) {
       // Prevent git commands with -c flag to avoid config options that can lead to code execution
       // The -c flag allows setting arbitrary git config values inline, including dangerous ones like
       // core.fsmonitor, diff.external, core.gitProxy, etc. that can execute arbitrary commands
       // Check for -c preceded by whitespace and followed by whitespace or equals
       // Using regex to catch spaces, tabs, and other whitespace (not part of other flags like --cached)
+      // 只有 `testCommand.includes('git') && /\s-c[\s=]/.test(testCommand)` 满足时，工具调用才执行该分支。
       if (testCommand.includes('git') && /\s-c[\s=]/.test(testCommand)) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
 
       // Prevent git commands with --exec-path flag to avoid path manipulation that can lead to code execution
       // The --exec-path flag allows overriding the directory where git looks for executables
+      // 工具调用在这里按实际状态进入对应分支。
       if (
         testCommand.includes('git') &&
         /\s--exec-path[\s=]/.test(testCommand)
       ) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
 
       // Prevent git commands with --config-env flag to avoid config injection via environment variables
       // The --config-env flag allows setting git config values from environment variables, which can be
       // just as dangerous as -c flag (e.g., core.fsmonitor, diff.external, core.gitProxy)
+      // 工具调用在这里按实际状态进入对应分支。
       if (
         testCommand.includes('git') &&
         /\s--config-env[\s=]/.test(testCommand)
       ) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
     }
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -1757,7 +1932,9 @@ function isCommandReadOnly(command: string): boolean {
  * @param command The full command string to check
  * @returns true if any subcommand is a git command
  */
+// commandHasAnyGit 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function commandHasAnyGit(command: string): boolean {
+  // 返回 `splitCommand_DEPRECATED(command).some(subcmd =>`，作为工具调用这次计算的结果。
   return splitCommand_DEPRECATED(command).some(subcmd =>
     isNormalizedGitCommand(subcmd.trim()),
   )
@@ -1768,6 +1945,7 @@ function commandHasAnyGit(command: string): boolean {
  * If a command creates these files and then runs git, the git command
  * could execute malicious hooks from the created files.
  */
+// GIT_INTERNAL_PATTERNS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const GIT_INTERNAL_PATTERNS = [
   /^HEAD$/,
   /^objects(?:\/|$)/,
@@ -1778,13 +1956,17 @@ const GIT_INTERNAL_PATTERNS = [
 /**
  * Checks if a path is a git-internal path (HEAD, objects/, refs/, hooks/).
  */
+// isGitInternalPath 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isGitInternalPath(path: string): boolean {
   // Normalize path by removing leading ./ or /
+  // normalized格式化`path.replace`，供工具调用后续处理使用。
   const normalized = path.replace(/^\.?\//, '')
+  // 返回 `GIT_INTERNAL_PATTERNS.some(pattern => pattern.test(normalized))`，作为工具调用这次计算的结果。
   return GIT_INTERNAL_PATTERNS.some(pattern => pattern.test(normalized))
 }
 
 // Commands that only delete or modify in-place (don't create new files at new paths)
+// NON_CREATING_WRITE_COMMANDS 命令数据保存`Set`，供工具调用后续处理使用。
 const NON_CREATING_WRITE_COMMANDS = new Set(['rm', 'rmdir', 'sed'])
 
 /**
@@ -1792,33 +1974,49 @@ const NON_CREATING_WRITE_COMMANDS = new Set(['rm', 'rmdir', 'sed'])
  * Only returns paths for commands that can create new files/directories
  * (write/create operations excluding deletion and in-place modification).
  */
+// extractWritePathsFromSubcommand 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function extractWritePathsFromSubcommand(subcommand: string): string[] {
+  // parseResult保存`tryParseShellCommand`，供工具调用后续处理使用。
   const parseResult = tryParseShellCommand(subcommand, env => `$${env}`)
+  // parseResult.success 集合缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!parseResult.success) return []
 
+  // token 列表筛选`tokens.filter`，供工具调用后续处理使用。
   const tokens = parseResult.tokens.filter(
+    // 这个回调绑定到 (t): t is string => typeof t === 'string',，负责工具调用在该局部场景下的响应。
     (t): t is string => typeof t === 'string',
   )
+  // token 列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (tokens.length === 0) return []
 
+  // 基础命令 命名 `tokens[0]`，让后续代码直接表达这个值的用途。
   const baseCmd = tokens[0]
+  // 基础命令缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!baseCmd) return []
 
   // Only consider commands that can create files at target paths
+  // 满足 `!(baseCmd in COMMAND_OPERATION_TYPE)` 时，工具调用执行该分支。
   if (!(baseCmd in COMMAND_OPERATION_TYPE)) {
+    // 返回列表结果，保留工具调用已经排好的条目顺序。
     return []
   }
+  // opType 命名 `COMMAND_OPERATION_TYPE[baseCmd as PathCommand]`，让后续代码直接表达这个值的用途。
   const opType = COMMAND_OPERATION_TYPE[baseCmd as PathCommand]
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     (opType !== 'write' && opType !== 'create') ||
     NON_CREATING_WRITE_COMMANDS.has(baseCmd)
   ) {
+    // 返回列表结果，保留工具调用已经排好的条目顺序。
     return []
   }
 
+  // extractor保存`PATH_EXTRACTORS[baseCmd as PathCommand]`，供Bash 工具 read Only Validation后续判断或输出使用。
   const extractor = PATH_EXTRACTORS[baseCmd as PathCommand]
+  // extractor缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!extractor) return []
 
+  // 返回 `extractor(tokens.slice(1))`，作为工具调用这次计算的结果。
   return extractor(tokens.slice(1))
 }
 
@@ -1837,29 +2035,42 @@ function extractWritePathsFromSubcommand(subcommand: string): string[] {
  * @param command The full command string to check
  * @returns true if any subcommand writes to git-internal paths
  */
+// commandWritesToGitInternalPaths 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function commandWritesToGitInternalPaths(command: string): boolean {
+  // subcommands 命令数据格式化`splitCommand_DEPRECATED`，供工具调用后续处理使用。
   const subcommands = splitCommand_DEPRECATED(command)
 
+  // 按顺序遍历 `subcommands` 中的subcmd 命令数据，逐个交给工具调用处理。
   for (const subcmd of subcommands) {
+    // trimmed格式化`subcmd.trim`，供工具调用后续处理使用。
     const trimmed = subcmd.trim()
 
     // Check write paths from path-based commands (mkdir, touch, cp, mv)
+    // writePaths 路径数据保存`extractWritePathsFromSubcommand`，供工具调用后续处理使用。
     const writePaths = extractWritePathsFromSubcommand(trimmed)
+    // 按顺序遍历 `writePaths` 中的路径，逐个交给工具调用处理。
     for (const path of writePaths) {
+      // 满足 `isGitInternalPath(path)` 时，工具调用执行该分支。
       if (isGitInternalPath(path)) {
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true
       }
     }
 
     // Check output redirections (e.g., echo x > hooks/pre-commit)
+    // 从 `extractOutputRedirections(trimmed)` 解构 redirections，减少Bash 工具 read Only Validation对同一对象的重复访问。
     const { redirections } = extractOutputRedirections(trimmed)
+    // 循环处理 `const { target } of redirections`，让工具调用逐项把同类条目按顺序走完。
     for (const { target } of redirections) {
+      // 满足 `isGitInternalPath(target)` 时，工具调用执行该分支。
       if (isGitInternalPath(target)) {
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true
       }
     }
   }
 
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -1873,15 +2084,20 @@ function commandWritesToGitInternalPaths(command: string): boolean {
  *                              This is computed by commandHasAnyCd() and passed in to avoid duplicate computation.
  * @returns PermissionResult indicating whether the command is read-only
  */
+// checkReadOnlyConstraints 封装Bash 工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function checkReadOnlyConstraints(
   input: z.infer<typeof BashTool.inputSchema>,
   compoundCommandHasCd: boolean,
 ): PermissionResult {
+  // 从 `input` 解构 command，减少Bash 工具 read Only Validation对同一对象的重复访问。
   const { command } = input
 
   // Detect if the command is not parseable and return early
+  // 结果保存`tryParseShellCommand`，供工具调用后续处理使用。
   const result = tryParseShellCommand(command, env => `$${env}`)
+  // result.success 集合缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!result.success) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'passthrough',
       message: 'Command cannot be parsed, requires further permission checks',
@@ -1891,7 +2107,9 @@ export function checkReadOnlyConstraints(
   // Check the original command for safety before splitting
   // This is important because splitCommand_DEPRECATED may transform the command
   // (e.g., ${VAR} becomes $VAR)
+  // `bashCommandIsSafe_DEPRECATED(command).behav...` 与 `'passthrough'` 不一致时刷新派生状态，避免使用过期结果。
   if (bashCommandIsSafe_DEPRECATED(command).behavior !== 'passthrough') {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'passthrough',
       message: 'Command is not read-only, requires further permission checks',
@@ -1900,7 +2118,9 @@ export function checkReadOnlyConstraints(
 
   // Check for Windows UNC paths in the original command before transformation
   // This must be done before splitCommand_DEPRECATED because splitCommand_DEPRECATED may transform backslashes
+  // 满足 `containsVulnerableUncPath(command)` 时，工具调用执行该分支。
   if (containsVulnerableUncPath(command)) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'ask',
       message:
@@ -1909,12 +2129,15 @@ export function checkReadOnlyConstraints(
   }
 
   // Check once if any subcommand is a git command (used for multiple security checks below)
+  // hasGitCommand 命令数据记录 `commandHasAnyGit` 是否成立，工具调用随后按该结果分支。
   const hasGitCommand = commandHasAnyGit(command)
 
   // SECURITY: Block compound commands that have both cd AND git
   // This prevents sandbox escape via: cd /malicious/dir && git status
   // where the malicious directory contains fake git hooks that execute arbitrary code.
+  // 只有 `compoundCommandHasCd && hasGitCommand` 满足时，工具调用才执行该分支。
   if (compoundCommandHasCd && hasGitCommand) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'passthrough',
       message:
@@ -1927,7 +2150,9 @@ export function checkReadOnlyConstraints(
   // 1. Deleted .git/HEAD to invalidate the normal git directory
   // 2. Created hooks/pre-commit or other git-internal files in the current directory
   // Git would then treat the cwd as the git directory and execute malicious hooks.
+  // 只有 `hasGitCommand && isCurrentDirectoryBareGitRepo()` 满足时，工具调用才执行该分支。
   if (hasGitCommand && isCurrentDirectoryBareGitRepo()) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'passthrough',
       message:
@@ -1940,7 +2165,9 @@ export function checkReadOnlyConstraints(
   // (HEAD, objects/, refs/, hooks/) and then runs git, which would execute
   // malicious hooks from the newly created files.
   // Example attack: mkdir -p hooks && echo 'malicious' > hooks/pre-commit && git status
+  // 只有 `hasGitCommand && commandWritesToGitInternalPaths(command)` 满足时，工具调用才执行该分支。
   if (hasGitCommand && commandWritesToGitInternalPaths(command)) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'passthrough',
       message:
@@ -1953,11 +2180,13 @@ export function checkReadOnlyConstraints(
   // Race condition: a sandboxed command can create bare repo files in a subdirectory,
   // and a backgrounded git command (e.g. sleep 10 && git status) would pass the
   // isCurrentDirectoryBareGitRepo() check at evaluation time before the files exist.
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     hasGitCommand &&
     SandboxManager.isSandboxingEnabled() &&
     getCwd() !== getOriginalCwd()
   ) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'passthrough',
       message:
@@ -1966,16 +2195,23 @@ export function checkReadOnlyConstraints(
   }
 
   // Check if all subcommands are read-only
+  // allSubcommandsReadOnly 命令数据格式化`splitCommand_DEPRECATED`，供工具调用后续处理使用。
   const allSubcommandsReadOnly = splitCommand_DEPRECATED(command).every(
+    // subcmd 命令数据更新为 `> {`，确保Bash 工具后续读取最新状态。
     subcmd => {
+      // `bashCommandIsSafe_DEPRECATED(subcmd).behavi...` 与 `'passthrough'` 不一致时刷新派生状态，避免使用过期结果。
       if (bashCommandIsSafe_DEPRECATED(subcmd).behavior !== 'passthrough') {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
+      // 返回 `isCommandReadOnly(subcmd)`，作为工具调用这次计算的结果。
       return isCommandReadOnly(subcmd)
     },
   )
 
+  // 满足 `allSubcommandsReadOnly` 时，工具调用执行该分支。
   if (allSubcommandsReadOnly) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'allow',
       updatedInput: input,
@@ -1983,6 +2219,7 @@ export function checkReadOnlyConstraints(
   }
 
   // If not read-only, return passthrough to let other permission checks handle it
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     behavior: 'passthrough',
     message: 'Command is not read-only, requires further permission checks',

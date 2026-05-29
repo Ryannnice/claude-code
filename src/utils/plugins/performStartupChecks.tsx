@@ -1,9 +1,16 @@
+// 接入 performBackgroundPluginInstallations 服务层能力，把外部通信或共享状态交给 ../../services/plugins/PluginInstallationManager.js 处理。
 import { performBackgroundPluginInstallations } from '../../services/plugins/PluginInstallationManager.js';
+// 类型依赖 { AppState } 来自 ../../state/AppState.js，用于校准插件管理的数据契约。
 import type { AppState } from '../../state/AppState.js';
+// 引入 checkHasTrustDialogAccepted，将 ../config.js 中已经封装好的能力接到本文件流程里。
 import { checkHasTrustDialogAccepted } from '../config.js';
+// 引入 logForDebugging，将 ../debug.js 中已经封装好的能力接到本文件流程里。
 import { logForDebugging } from '../debug.js';
+// 引入 clearMarketplacesCache、registerSeedMarketplaces，将 ./marketplaceManager.js 中已经封装好的能力接到本文件流程里。
 import { clearMarketplacesCache, registerSeedMarketplaces } from './marketplaceManager.js';
+// 引入 clearPluginCache，将 ./pluginLoader.js 中已经封装好的能力接到本文件流程里。
 import { clearPluginCache } from './pluginLoader.js';
+// SetAppState 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 type SetAppState = (f: (prevState: AppState) => AppState) => void;
 
 /**
@@ -21,15 +28,22 @@ type SetAppState = (f: (prevState: AppState) => AppState) => void;
  *
  * @param setAppState Function to update app state with installation progress
  */
+// performStartupChecks 封装插件工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function performStartupChecks(setAppState: SetAppState): Promise<void> {
+  // 记录插件管理运行诊断，方便排查异常路径或性能问题。
   logForDebugging('performStartupChecks called');
 
   // Check if the current directory has been trusted
+  // 满足 `!checkHasTrustDialogAccepted()` 时，插件管理执行该分支。
   if (!checkHasTrustDialogAccepted()) {
+    // 记录插件管理运行诊断，方便排查异常路径或性能问题。
     logForDebugging('Trust not accepted for current directory - skipping plugin installations');
+    // 插件工具 perform Startup Checks在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
+  // 保护这一段可能失败的插件管理操作，确保异常能进入相邻错误处理。
   try {
+    // 记录插件管理运行诊断，方便排查异常路径或性能问题。
     logForDebugging('Starting background plugin installations');
 
     // Register seed marketplaces (CLAUDE_CODE_PLUGIN_SEED_DIR) before diffing.
@@ -39,16 +53,23 @@ export async function performStartupChecks(setAppState: SetAppState): Promise<vo
     // If registration changed state, clear caches so earlier plugin-load passes
     // (e.g. getAllMcpConfigs during REPL init) don't keep stale "marketplace
     // not found" results.
+    // seedChanged保存`registerSeedMarketplaces`，供插件管理后续处理使用。
     const seedChanged = await registerSeedMarketplaces();
+    // 满足 `seedChanged` 时，插件管理执行该分支。
     if (seedChanged) {
+      // 清理相关缓存，确保插件管理下一次读取时重新加载最新数据。
       clearMarketplacesCache();
+      // 清理相关缓存，确保插件管理下一次读取时重新加载最新数据。
       clearPluginCache('performStartupChecks: seed marketplaces changed');
       // Set needsRefresh so useManagePlugins notifies the user to run
       // /reload-plugins. Without this signal, the initial plugin-load
       // (which raced and cached "marketplace not found") would persist
       // until the user manually reloads.
+      // setAppState 写入新的状态值，使插件管理后续读取保持一致。
       setAppState(prev => {
+        // 满足 `prev.plugins.needsRefresh` 时，插件管理执行该分支。
         if (prev.plugins.needsRefresh) return prev;
+        // 返回结构化结果，集中表达插件管理已经整理出的状态。
         return {
           ...prev,
           plugins: {
@@ -61,9 +82,11 @@ export async function performStartupChecks(setAppState: SetAppState): Promise<vo
 
     // Start background installations without waiting
     // This will update AppState as installations progress
+    // 等待 `performBackgroundPluginInstallations(setAppState)` 完成，再继续插件工具 perform Startup Checks的异步流程。
     await performBackgroundPluginInstallations(setAppState);
   } catch (error) {
     // Even if something fails here, don't block startup
+    // 记录插件管理运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`Error initiating background plugin installations: ${error}`);
   }
 }

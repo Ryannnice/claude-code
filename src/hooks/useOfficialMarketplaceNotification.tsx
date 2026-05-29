@@ -1,22 +1,36 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { Notification } 来自 ../context/notifications.js，用于校准React hook 状态流的数据契约。
 import type { Notification } from '../context/notifications.js';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 checkAndInstallOfficialMarketplace 工具函数，把通用处理留在 ../utils/plugins/officialMarketplaceStartupCheck.js 中维护。
 import { checkAndInstallOfficialMarketplace } from '../utils/plugins/officialMarketplaceStartupCheck.js';
+// 引入 useStartupNotification，将 ./notifs/useStartupNotification.js 中已经封装好的能力接到本文件流程里。
 import { useStartupNotification } from './notifs/useStartupNotification.js';
 
 /**
  * Hook that handles official marketplace auto-installation and shows
  * notifications for success/failure in the bottom right of the REPL.
  */
+// useOfficialMarketplaceNotification 封装useOfficialMarketplaceNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useOfficialMarketplaceNotification() {
+  // 调用 useStartupNotification，触发React hook此处需要的副作用。
   useStartupNotification(_temp);
 }
+// _temp 封装useOfficialMarketplaceNotification的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function _temp() {
+  // 结果读取`checkAndInstallOfficialMarketplace`，供React hook后续处理使用。
   const result = await checkAndInstallOfficialMarketplace();
+  // notifs 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const notifs = [];
+  // 满足 `result.configSaveFailed` 时，React hook执行该分支。
   if (result.configSaveFailed) {
+    // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
     logForDebugging("Showing marketplace config save failure notification");
+    // notifs 集合追加新条目，保持收集顺序与输入顺序一致。
     notifs.push({
       key: "marketplace-config-save-failed",
       jsx: <Text color="error">Failed to save marketplace retry info · Check ~/.claude.json permissions</Text>,
@@ -24,8 +38,11 @@ async function _temp() {
       timeoutMs: 10000
     });
   }
+  // 满足 `result.installed` 时，React hook执行该分支。
   if (result.installed) {
+    // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
     logForDebugging("Showing marketplace installation success notification");
+    // notifs 集合追加新条目，保持收集顺序与输入顺序一致。
     notifs.push({
       key: "marketplace-installed",
       jsx: <Text color="success">✓ Anthropic marketplace installed · /plugin to see available plugins</Text>,
@@ -33,8 +50,11 @@ async function _temp() {
       timeoutMs: 7000
     });
   } else {
+    // 当 `result.skipped && result.reason` 匹配 `"unknown"` 时，React hook执行对应分支。
     if (result.skipped && result.reason === "unknown") {
+      // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
       logForDebugging("Showing marketplace installation failure notification");
+      // notifs 集合追加新条目，保持收集顺序与输入顺序一致。
       notifs.push({
         key: "marketplace-install-failed",
         jsx: <Text color="warning">Failed to install Anthropic marketplace · Will retry on next startup</Text>,
@@ -43,6 +63,7 @@ async function _temp() {
       });
     }
   }
+  // 返回 `notifs`，作为React hook 状态流这次计算的结果。
   return notifs;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIk5vdGlmaWNhdGlvbiIsIlRleHQiLCJsb2dGb3JEZWJ1Z2dpbmciLCJjaGVja0FuZEluc3RhbGxPZmZpY2lhbE1hcmtldHBsYWNlIiwidXNlU3RhcnR1cE5vdGlmaWNhdGlvbiIsInVzZU9mZmljaWFsTWFya2V0cGxhY2VOb3RpZmljYXRpb24iLCJfdGVtcCIsInJlc3VsdCIsIm5vdGlmcyIsImNvbmZpZ1NhdmVGYWlsZWQiLCJwdXNoIiwia2V5IiwianN4IiwicHJpb3JpdHkiLCJ0aW1lb3V0TXMiLCJpbnN0YWxsZWQiLCJza2lwcGVkIiwicmVhc29uIl0sInNvdXJjZXMiOlsidXNlT2ZmaWNpYWxNYXJrZXRwbGFjZU5vdGlmaWNhdGlvbi50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICogYXMgUmVhY3QgZnJvbSAncmVhY3QnXG5pbXBvcnQgdHlwZSB7IE5vdGlmaWNhdGlvbiB9IGZyb20gJy4uL2NvbnRleHQvbm90aWZpY2F0aW9ucy5qcydcbmltcG9ydCB7IFRleHQgfSBmcm9tICcuLi9pbmsuanMnXG5pbXBvcnQgeyBsb2dGb3JEZWJ1Z2dpbmcgfSBmcm9tICcuLi91dGlscy9kZWJ1Zy5qcydcbmltcG9ydCB7IGNoZWNrQW5kSW5zdGFsbE9mZmljaWFsTWFya2V0cGxhY2UgfSBmcm9tICcuLi91dGlscy9wbHVnaW5zL29mZmljaWFsTWFya2V0cGxhY2VTdGFydHVwQ2hlY2suanMnXG5pbXBvcnQgeyB1c2VTdGFydHVwTm90aWZpY2F0aW9uIH0gZnJvbSAnLi9ub3RpZnMvdXNlU3RhcnR1cE5vdGlmaWNhdGlvbi5qcydcblxuLyoqXG4gKiBIb29rIHRoYXQgaGFuZGxlcyBvZmZpY2lhbCBtYXJrZXRwbGFjZSBhdXRvLWluc3RhbGxhdGlvbiBhbmQgc2hvd3NcbiAqIG5vdGlmaWNhdGlvbnMgZm9yIHN1Y2Nlc3MvZmFpbHVyZSBpbiB0aGUgYm90dG9tIHJpZ2h0IG9mIHRoZSBSRVBMLlxuICovXG5leHBvcnQgZnVuY3Rpb24gdXNlT2ZmaWNpYWxNYXJrZXRwbGFjZU5vdGlmaWNhdGlvbigpOiB2b2lkIHtcbiAgdXNlU3RhcnR1cE5vdGlmaWNhdGlvbihhc3luYyAoKSA9PiB7XG4gICAgY29uc3QgcmVzdWx0ID0gYXdhaXQgY2hlY2tBbmRJbnN0YWxsT2ZmaWNpYWxNYXJrZXRwbGFjZSgpXG4gICAgY29uc3Qgbm90aWZzOiBOb3RpZmljYXRpb25bXSA9IFtdXG5cbiAgICAvLyBDaGVjayBmb3IgY29uZmlnIHNhdmUgZmFpbHVyZSBmaXJzdCAtIHRoaXMgaXMgY3JpdGljYWxcbiAgICBpZiAocmVzdWx0LmNvbmZpZ1NhdmVGYWlsZWQpIHtcbiAgICAgIGxvZ0ZvckRlYnVnZ2luZygnU2hvd2luZyBtYXJrZXRwbGFjZSBjb25maWcgc2F2ZSBmYWlsdXJlIG5vdGlmaWNhdGlvbicpXG4gICAgICBub3RpZnMucHVzaCh7XG4gICAgICAgIGtleTogJ21hcmtldHBsYWNlLWNvbmZpZy1zYXZlLWZhaWxlZCcsXG4gICAgICAgIGpzeDogKFxuICAgICAgICAgIDxUZXh0IGNvbG9yPVwiZXJyb3JcIj5cbiAgICAgICAgICAgIEZhaWxlZCB0byBzYXZlIG1hcmtldHBsYWNlIHJldHJ5IGluZm8gwrcgQ2hlY2sgfi8uY2xhdWRlLmpzb25cbiAgICAgICAgICAgIHBlcm1pc3Npb25zXG4gICAgICAgICAgPC9UZXh0PlxuICAgICAgICApLFxuICAgICAgICBwcmlvcml0eTogJ2ltbWVkaWF0ZScsXG4gICAgICAgIHRpbWVvdXRNczogMTAwMDAsXG4gICAgICB9KVxuICAgIH1cblxuICAgIGlmIChyZXN1bHQuaW5zdGFsbGVkKSB7XG4gICAgICBsb2dGb3JEZWJ1Z2dpbmcoJ1Nob3dpbmcgbWFya2V0cGxhY2UgaW5zdGFsbGF0aW9uIHN1Y2Nlc3Mgbm90aWZpY2F0aW9uJylcbiAgICAgIG5vdGlmcy5wdXNoKHtcbiAgICAgICAga2V5OiAnbWFya2V0cGxhY2UtaW5zdGFsbGVkJyxcbiAgICAgICAganN4OiAoXG4gICAgICAgICAgPFRleHQgY29sb3I9XCJzdWNjZXNzXCI+XG4gICAgICAgICAgICDinJMgQW50aHJvcGljIG1hcmtldHBsYWNlIGluc3RhbGxlZCDCtyAvcGx1Z2luIHRvIHNlZSBhdmFpbGFibGUgcGx1Z2luc1xuICAgICAgICAgIDwvVGV4dD5cbiAgICAgICAgKSxcbiAgICAgICAgcHJpb3JpdHk6ICdpbW1lZGlhdGUnLFxuICAgICAgICB0aW1lb3V0TXM6IDcwMDAsXG4gICAgICB9KVxuICAgIH0gZWxzZSBpZiAocmVzdWx0LnNraXBwZWQgJiYgcmVzdWx0LnJlYXNvbiA9PT0gJ3Vua25vd24nKSB7XG4gICAgICBsb2dGb3JEZWJ1Z2dpbmcoJ1Nob3dpbmcgbWFya2V0cGxhY2UgaW5zdGFsbGF0aW9uIGZhaWx1cmUgbm90aWZpY2F0aW9uJylcbiAgICAgIG5vdGlmcy5wdXNoKHtcbiAgICAgICAga2V5OiAnbWFya2V0cGxhY2UtaW5zdGFsbC1mYWlsZWQnLFxuICAgICAgICBqc3g6IChcbiAgICAgICAgICA8VGV4dCBjb2xvcj1cIndhcm5pbmdcIj5cbiAgICAgICAgICAgIEZhaWxlZCB0byBpbnN0YWxsIEFudGhyb3BpYyBtYXJrZXRwbGFjZSDCtyBXaWxsIHJldHJ5IG9uIG5leHQgc3RhcnR1cFxuICAgICAgICAgIDwvVGV4dD5cbiAgICAgICAgKSxcbiAgICAgICAgcHJpb3JpdHk6ICdpbW1lZGlhdGUnLFxuICAgICAgICB0aW1lb3V0TXM6IDgwMDAsXG4gICAgICB9KVxuICAgIH1cbiAgICAvLyBEb24ndCBzaG93IG5vdGlmaWNhdGlvbnMgZm9yOlxuICAgIC8vIC0gYWxyZWFkeV9pbnN0YWxsZWQgKHVzZXIgYWxyZWFkeSBoYXMgaXQpXG4gICAgLy8gLSBwb2xpY3lfYmxvY2tlZCAoZW50ZXJwcmlzZSBwb2xpY3ksIGRvbid0IG5hZylcbiAgICAvLyAtIGFscmVhZHlfYXR0ZW1wdGVkIChoYW5kbGVkIGJ5IHJldHJ5IGxvZ2ljIG5vdylcbiAgICAvLyAtIGdpdF91bmF2YWlsYWJsZSAobWFya2V0cGxhY2UgaXMgYSBuaWNlLXRvLWhhdmU7IGlmIGdpdCBpcyBtaXNzaW5nXG4gICAgLy8gICBvciBpcyBhIG5vbi1mdW5jdGlvbmFsIG1hY09TIHhjcnVuIHNoaW0sIHJldHJ5IHNpbGVudGx5IG9uIGJhY2tvZmZcbiAgICAvLyAgIHJhdGhlciB0aGFuIG5hZ2dpbmcg4oCUIHRoZSB1c2VyIHdpbGwgc29ydCBnaXQgb3V0IGZvciBvdGhlciByZWFzb25zKVxuICAgIHJldHVybiBub3RpZnNcbiAgfSlcbn1cbiJdLCJtYXBwaW5ncyI6IkFBQUEsT0FBTyxLQUFLQSxLQUFLLE1BQU0sT0FBTztBQUM5QixjQUFjQyxZQUFZLFFBQVEsNkJBQTZCO0FBQy9ELFNBQVNDLElBQUksUUFBUSxXQUFXO0FBQ2hDLFNBQVNDLGVBQWUsUUFBUSxtQkFBbUI7QUFDbkQsU0FBU0Msa0NBQWtDLFFBQVEscURBQXFEO0FBQ3hHLFNBQVNDLHNCQUFzQixRQUFRLG9DQUFvQzs7QUFFM0U7QUFDQTtBQUNBO0FBQ0E7QUFDQSxPQUFPLFNBQUFDLG1DQUFBO0VBQ0xELHNCQUFzQixDQUFDRSxLQXFEdEIsQ0FBQztBQUFBO0FBdERHLGVBQUFBLE1BQUE7RUFFSCxNQUFBQyxNQUFBLEdBQWUsTUFBTUosa0NBQWtDLENBQUMsQ0FBQztFQUN6RCxNQUFBSyxNQUFBLEdBQStCLEVBQUU7RUFHakMsSUFBSUQsTUFBTSxDQUFBRSxnQkFBaUI7SUFDekJQLGVBQWUsQ0FBQyxzREFBc0QsQ0FBQztJQUN2RU0sTUFBTSxDQUFBRSxJQUFLLENBQUM7TUFBQUMsR0FBQSxFQUNMLGdDQUFnQztNQUFBQyxHQUFBLEVBRW5DLENBQUMsSUFBSSxDQUFPLEtBQU8sQ0FBUCxPQUFPLENBQUMsd0VBR3BCLEVBSEMsSUFBSSxDQUdFO01BQUFDLFFBQUEsRUFFQyxXQUFXO01BQUFDLFNBQUEsRUFDVjtJQUNiLENBQUMsQ0FBQztFQUFBO0VBR0osSUFBSVAsTUFBTSxDQUFBUSxTQUFVO0lBQ2xCYixlQUFlLENBQUMsdURBQXVELENBQUM7SUFDeEVNLE1BQU0sQ0FBQUUsSUFBSyxDQUFDO01BQUFDLEdBQUEsRUFDTCx1QkFBdUI7TUFBQUMsR0FBQSxFQUUxQixDQUFDLElBQUksQ0FBTyxLQUFTLENBQVQsU0FBUyxDQUFDLG9FQUV0QixFQUZDLElBQUksQ0FFRTtNQUFBQyxRQUFBLEVBRUMsV0FBVztNQUFBQyxTQUFBLEVBQ1Y7SUFDYixDQUFDLENBQUM7RUFBQTtJQUNHLElBQUlQLE1BQU0sQ0FBQVMsT0FBdUMsSUFBM0JULE1BQU0sQ0FBQVUsTUFBTyxLQUFLLFNBQVM7TUFDdERmLGVBQWUsQ0FBQyx1REFBdUQsQ0FBQztNQUN4RU0sTUFBTSxDQUFBRSxJQUFLLENBQUM7UUFBQUMsR0FBQSxFQUNMLDRCQUE0QjtRQUFBQyxHQUFBLEVBRS9CLENBQUMsSUFBSSxDQUFPLEtBQVMsQ0FBVCxTQUFTLENBQUMsb0VBRXRCLEVBRkMsSUFBSSxDQUVFO1FBQUFDLFFBQUEsRUFFQyxXQUFXO1FBQUFDLFNBQUEsRUFDVjtNQUNiLENBQUMsQ0FBQztJQUFBO0VBQ0g7RUFBQSxPQVFNTixNQUFNO0FBQUEiLCJpZ25vcmVMaXN0IjpbXX0=

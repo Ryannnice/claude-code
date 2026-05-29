@@ -6,14 +6,19 @@
  * Follows the same patterns as BashTool/modeValidation.ts.
  */
 
+// 类型依赖 { ToolPermissionContext } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolPermissionContext } from '../../Tool.js'
+// 类型依赖 { PermissionResult } 来自 ../../utils/permissions/PermissionResult.js，用于校准工具调用的数据契约。
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
+// 类型依赖 { ParsedPowerShellCommand } 来自 ../../utils/powershell/parser.js，用于校准工具调用的数据契约。
 import type { ParsedPowerShellCommand } from '../../utils/powershell/parser.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   deriveSecurityFlags,
   getPipelineSegments,
   PS_TOKENIZER_DASH_CHARS,
 } from '../../utils/powershell/parser.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   argLeaksValue,
   isAllowlistedPipelineTail,
@@ -30,6 +35,7 @@ import {
  * 'ask'. Only simple write cmdlets (first positional = -Path) are auto-allowed
  * here, and they get path validation via CMDLET_PATH_CONFIG in pathValidation.ts.
  */
+// ACCEPT_EDITS_ALLOWED_CMDLETS 命令数据保存`Set`，供工具调用后续处理使用。
 const ACCEPT_EDITS_ALLOWED_CMDLETS = new Set([
   'set-content',
   'add-content',
@@ -37,12 +43,15 @@ const ACCEPT_EDITS_ALLOWED_CMDLETS = new Set([
   'clear-content',
 ])
 
+// isAcceptEditsAllowedCmdlet 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isAcceptEditsAllowedCmdlet(name: string): boolean {
   // resolveToCanonical handles aliases via COMMON_ALIASES, so e.g. 'rm' → 'remove-item',
   // 'ac' → 'add-content'. Any alias that resolves to an allowed cmdlet is automatically
   // allowed. Tier 3 cmdlets (new-item, copy-item, move-item, etc.) and their aliases
   // (mkdir, ni, cp, mv, etc.) resolve to cmdlets NOT in the set and fall through to 'ask'.
+  // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const canonical = resolveToCanonical(name)
+  // 返回 `ACCEPT_EDITS_ALLOWED_CMDLETS.has(canonical)`，作为工具调用这次计算的结果。
   return ACCEPT_EDITS_ALLOWED_CMDLETS.has(canonical)
 }
 
@@ -53,6 +62,7 @@ function isAcceptEditsAllowedCmdlet(name: string): boolean {
  * inode. Any of these let a later relative-path write land outside the
  * validator's view.
  */
+// LINK_ITEM_TYPES 集合保存`Set`，供工具调用后续处理使用。
 const LINK_ITEM_TYPES = new Set(['symboliclink', 'junction', 'hardlink'])
 
 /**
@@ -61,7 +71,9 @@ const LINK_ITEM_TYPES = new Set(['symboliclink', 'junction', 'hardlink'])
  * Min prefixes: `-it` (avoids ambiguity with other New-Item params), `-ty`
  * (avoids `-t` colliding with `-Target`).
  */
+// isItemTypeParamAbbrev 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isItemTypeParamAbbrev(p: string): boolean {
+  // 返回 `(`，作为工具调用这次计算的结果。
   return (
     (p.length >= 3 && '-itemtype'.startsWith(p)) ||
     (p.length >= 3 && '-type'.startsWith(p))
@@ -79,27 +91,38 @@ function isItemTypeParamAbbrev(p: string): boolean {
  * `-typ`, `-type`), unicode dash prefixes (en-dash/em-dash/horizontal-bar),
  * and colon-bound values (`-it:Junction`).
  */
+// isSymlinkCreatingCommand 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isSymlinkCreatingCommand(cmd: {
   name: string
   args: string[]
 }): boolean {
+  // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const canonical = resolveToCanonical(cmd.name)
+  // `canonical` 与 `'new-item'` 不一致时刷新派生状态，避免使用过期结果。
   if (canonical !== 'new-item') return false
+  // 按索引扫描 `cmd.args.length`，需要消费相邻参数时可以精确移动游标。
   for (let i = 0; i < cmd.args.length; i++) {
+    // 原始文本保存`cmd.args[i] ?? ''`，供工具实现 mode Validation后续判断或输出使用。
     const raw = cmd.args[i] ?? ''
+    // 原始文本为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
     if (raw.length === 0) continue
     // Normalize unicode dash prefixes (–, —, ―) and forward-slash (PS 5.1
     // parameter prefix) → ASCII `-` so prefix comparison works. PS tokenizer
     // treats all four dash chars plus `/` as parameter markers. (bug #26)
+    // normalized 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
     const normalized =
       PS_TOKENIZER_DASH_CHARS.has(raw[0]!) || raw[0] === '/'
         ? '-' + raw.slice(1)
         : raw
+    // lower保存`normalized.toLowerCase`，供工具调用后续处理使用。
     const lower = normalized.toLowerCase()
     // Split colon-bound value: -it:SymbolicLink → param='-it', val='symboliclink'
+    // colonIdx保存`lower.indexOf`，供工具调用后续处理使用。
     const colonIdx = lower.indexOf(':', 1)
+    // paramRaw格式化`lower.slice`，供工具调用后续处理使用。
     const paramRaw = colonIdx > 0 ? lower.slice(0, colonIdx) : lower
     // Strip backtick escapes: -Item`Type → -ItemType (bug #22)
+    // param格式化`paramRaw.replace`，供工具调用后续处理使用。
     const param = paramRaw.replace(/`/g, '')
     if (!isItemTypeParamAbbrev(param)) continue
     const rawVal =
@@ -110,6 +133,7 @@ export function isSymlinkCreatingCommand(cmd: {
     // Mirrors the param-name strip at L103. Space-separated args use .value
     // (backtick-resolved by .NET parser), but colon-bound uses .text (raw source).
     // Strip surrounding quotes: -it:'SymbolicLink' or -it:"Junction" (bug #6)
+    // val格式化`rawVal.replace`，供工具调用后续处理使用。
     const val = rawVal.replace(/`/g, '').replace(/^['"]|['"]$/g, '')
     if (LINK_ITEM_TYPES.has(val)) return true
   }
@@ -232,7 +256,9 @@ export function checkPermissionMode(
     // No `hasWriteCommand` requirement: read-through-symlink is equally
     // dangerous (exfil via Get-Content ./link/etc/shadow), and any other
     // command using paths after a just-created link is unvalidatable.
+    // 满足 `hasSymlinkCreate` 时，工具调用执行该分支。
     if (hasSymlinkCreate) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         behavior: 'passthrough',
         message:
@@ -241,8 +267,11 @@ export function checkPermissionMode(
     }
   }
 
+  // 按顺序遍历 `segments` 中的segment，逐个交给工具调用处理。
   for (const segment of segments) {
+    // 按顺序遍历 `segment.commands` 中的cmd 命令数据，逐个交给工具调用处理。
     for (const cmd of segment.commands) {
+      // `cmd.elementType` 与 `'CommandAst'` 不一致时刷新派生状态，避免使用过期结果。
       if (cmd.elementType !== 'CommandAst') {
         // SECURITY: This guard is load-bearing for THREE cases. Do not narrow it.
         //
@@ -261,6 +290,7 @@ export function checkPermissionMode(
         //    also produces a synthetic element here. isReadOnlyCommand relies on
         //    the same accident (its allowlist rejects the synthetic element's
         //    full-text name), so both paths fail safe together.
+        // 返回结构化结果，集中表达工具调用已经整理出的状态。
         return {
           behavior: 'passthrough',
           message: `Pipeline contains expression source (${cmd.elementType}) that cannot be statically validated`,
@@ -270,7 +300,9 @@ export function checkPermissionMode(
       // 'application' = raw name had path chars (. \\ /). scripts\\Remove-Item
       // strips to Remove-Item and would match ACCEPT_EDITS_ALLOWED_CMDLETS below,
       // but PowerShell runs scripts\\Remove-Item.ps1. Same gate as isAllowlistedCommand.
+      // 当 `cmd.nameType` 匹配 `'application'` 时，工具调用执行对应分支。
       if (cmd.nameType === 'application') {
+        // 返回结构化结果，集中表达工具调用已经整理出的状态。
         return {
           behavior: 'passthrough',
           message: `Command '${cmd.name}' resolved from a path-like name and requires approval`,
@@ -294,20 +326,30 @@ export function checkPermissionMode(
       //     Get-SecurityPatterns (ParenExpressionAst not in FindAll filter)
       //   checkPathConstraints: literal text '-Path:(1 > /tmp/x)' not a path
       //   RUNTIME: paren evaluates, redirection writes /tmp/x → arbitrary write
+      // 满足 `cmd.elementTypes` 时，工具调用执行该分支。
       if (cmd.elementTypes) {
+        // 循环处理 `let i = 1; i < cmd.elementTypes.length; i++`，让工具调用逐项把同类条目按顺序走完。
         for (let i = 1; i < cmd.elementTypes.length; i++) {
+          // t 命名 `cmd.elementTypes[i]`，让后续代码直接表达这个值的用途。
           const t = cmd.elementTypes[i]
+          // `t` 与 `'StringConstant' && t !== 'Para...` 不一致时刷新派生状态，避免使用过期结果。
           if (t !== 'StringConstant' && t !== 'Parameter') {
+            // 返回结构化结果，集中表达工具调用已经整理出的状态。
             return {
               behavior: 'passthrough',
               message: `Command argument has unvalidatable type (${t}) — variable paths cannot be statically resolved`,
             }
           }
+          // 当 `t` 匹配 `'Parameter'` 时，工具调用执行对应分支。
           if (t === 'Parameter') {
             // elementTypes[i] ↔ args[i-1] (elementTypes[0] is the command name).
+            // 当前参数保存`cmd.args[i - 1] ?? ''`，供工具实现 mode Validation后续判断或输出使用。
             const arg = cmd.args[i - 1] ?? ''
+            // colonIdx保存`arg.indexOf`，供工具调用后续处理使用。
             const colonIdx = arg.indexOf(':')
+            // 只有 `colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))` 满足时，工具调用才执行该分支。
             if (colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))) {
+              // 返回结构化结果，集中表达工具调用已经整理出的状态。
               return {
                 behavior: 'passthrough',
                 message:
@@ -324,13 +366,17 @@ export function checkPermissionMode(
       // auto-allows the same as the bare write cmdlet. isAllowlistedPipelineTail
       // is the narrow fallback for cmdlets moved from SAFE_OUTPUT_CMDLETS to
       // CMDLET_ALLOWLIST (argLeaksValue validates their args).
+      // 工具调用在这里按实际状态进入对应分支。
       if (
         isSafeOutputCommand(cmd.name) ||
         isAllowlistedPipelineTail(cmd, input.command)
       ) {
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue
       }
+      // 满足 `!isAcceptEditsAllowedCmdlet(cmd.name)` 时，工具调用执行该分支。
       if (!isAcceptEditsAllowedCmdlet(cmd.name)) {
+        // 返回结构化结果，集中表达工具调用已经整理出的状态。
         return {
           behavior: 'passthrough',
           message: `No mode-specific handling for '${cmd.name}' in acceptEdits mode`,
@@ -344,7 +390,9 @@ export function checkPermissionMode(
       // in acceptEdits mode. Without this, @{k='payload' > ~/.bashrc} as a
       // -Value argument passes because HashtableAst maps to 'Other'.
       // argLeaksValue also catches colon-bound variables (-Flag:$env:SECRET).
+      // 满足 `argLeaksValue(cmd.name, cmd)` 时，工具调用执行该分支。
       if (argLeaksValue(cmd.name, cmd)) {
+        // 返回结构化结果，集中表达工具调用已经整理出的状态。
         return {
           behavior: 'passthrough',
           message: `Arguments in '${cmd.name}' cannot be statically validated in acceptEdits mode`,
@@ -353,36 +401,48 @@ export function checkPermissionMode(
     }
 
     // Also check nested commands from control flow statements
+    // 满足 `segment.nestedCommands` 时，工具调用执行该分支。
     if (segment.nestedCommands) {
+      // 按顺序遍历 `segment.nestedCommands` 中的cmd 命令数据，逐个交给工具调用处理。
       for (const cmd of segment.nestedCommands) {
+        // `cmd.elementType` 与 `'CommandAst'` 不一致时刷新派生状态，避免使用过期结果。
         if (cmd.elementType !== 'CommandAst') {
           // SECURITY: Same as above — non-CommandAst element in nested commands
           // (control flow bodies) cannot be statically validated as a path source.
+          // 返回结构化结果，集中表达工具调用已经整理出的状态。
           return {
             behavior: 'passthrough',
             message: `Nested expression element (${cmd.elementType}) cannot be statically validated`,
           }
         }
+        // 当 `cmd.nameType` 匹配 `'application'` 时，工具调用执行对应分支。
         if (cmd.nameType === 'application') {
+          // 返回结构化结果，集中表达工具调用已经整理出的状态。
           return {
             behavior: 'passthrough',
             message: `Nested command '${cmd.name}' resolved from a path-like name and requires approval`,
           }
         }
+        // 工具调用在这里按实际状态进入对应分支。
         if (
           isSafeOutputCommand(cmd.name) ||
           isAllowlistedPipelineTail(cmd, input.command)
         ) {
+          // 跳过当前项，继续处理工具调用中的下一轮循环。
           continue
         }
+        // 满足 `!isAcceptEditsAllowedCmdlet(cmd.name)` 时，工具调用执行该分支。
         if (!isAcceptEditsAllowedCmdlet(cmd.name)) {
+          // 返回结构化结果，集中表达工具调用已经整理出的状态。
           return {
             behavior: 'passthrough',
             message: `No mode-specific handling for '${cmd.name}' in acceptEdits mode`,
           }
         }
         // SECURITY: Same argLeaksValue check as the main command loop above.
+        // 满足 `argLeaksValue(cmd.name, cmd)` 时，工具调用执行该分支。
         if (argLeaksValue(cmd.name, cmd)) {
+          // 返回结构化结果，集中表达工具调用已经整理出的状态。
           return {
             behavior: 'passthrough',
             message: `Arguments in nested '${cmd.name}' cannot be statically validated in acceptEdits mode`,
@@ -393,6 +453,7 @@ export function checkPermissionMode(
   }
 
   // All commands are filesystem-modifying cmdlets -- auto-allow
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     behavior: 'allow',
     updatedInput: input,

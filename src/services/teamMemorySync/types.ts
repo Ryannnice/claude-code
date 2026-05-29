@@ -5,7 +5,9 @@
  * Based on the backend API contract from anthropic/anthropic#250711.
  */
 
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 复用 lazySchema 工具函数，把通用处理留在 ../../utils/lazySchema.js 中维护。
 import { lazySchema } from '../../utils/lazySchema.js'
 
 /**
@@ -13,6 +15,7 @@ import { lazySchema } from '../../utils/lazySchema.js'
  * Keys are file paths relative to the team memory directory (e.g. "MEMORY.md", "patterns.md").
  * Values are UTF-8 string content (typically Markdown).
  */
+// TeamMemoryContentSchema保存`lazySchema`，供服务层 types后续处理使用。
 export const TeamMemoryContentSchema = lazySchema(() =>
   z.object({
     entries: z.record(z.string(), z.string()),
@@ -26,6 +29,7 @@ export const TeamMemoryContentSchema = lazySchema(() =>
 /**
  * Full response from GET /api/claude_code/team_memory
  */
+// TeamMemoryDataSchema保存`lazySchema`，供服务层 types后续处理使用。
 export const TeamMemoryDataSchema = lazySchema(() =>
   z.object({
     organizationId: z.string(),
@@ -44,6 +48,7 @@ export const TeamMemoryDataSchema = lazySchema(() =>
  * too-many-entries case; entry-too-large is handled via MAX_FILE_SIZE_BYTES
  * pre-check on the client side and would need a separate schema.
  */
+// TeamMemoryTooManyEntriesSchema保存`lazySchema`，供服务层 types后续处理使用。
 export const TeamMemoryTooManyEntriesSchema = lazySchema(() =>
   z.object({
     error: z.object({
@@ -56,6 +61,7 @@ export const TeamMemoryTooManyEntriesSchema = lazySchema(() =>
   }),
 )
 
+// TeamMemoryData 固化服务层 types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeamMemoryData = z.infer<ReturnType<typeof TeamMemoryDataSchema>>
 
 /**
@@ -63,6 +69,7 @@ export type TeamMemoryData = z.infer<ReturnType<typeof TeamMemoryDataSchema>>
  * The path is relative to the team memory directory. Only the matched
  * gitleaks rule ID is recorded — never the secret value itself.
  */
+// SkippedSecretFile 固化服务层 types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SkippedSecretFile = {
   path: string
   /** Gitleaks rule ID (e.g., "github-pat", "aws-access-token") */
@@ -74,6 +81,7 @@ export type SkippedSecretFile = {
 /**
  * Result from fetching team memory
  */
+// TeamMemorySyncFetchResult 固化服务层 types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeamMemorySyncFetchResult = {
   success: boolean
   data?: TeamMemoryData
@@ -91,6 +99,7 @@ export type TeamMemorySyncFetchResult = {
  * Contains per-key checksums without entry bodies. Used to refresh
  * serverChecksums cheaply during 412 conflict resolution.
  */
+// TeamMemoryHashesResult 固化服务层 types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeamMemoryHashesResult = {
   success: boolean
   version?: number
@@ -104,6 +113,7 @@ export type TeamMemoryHashesResult = {
 /**
  * Result from uploading team memory with conflict info
  */
+// TeamMemorySyncPushResult 固化服务层 types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeamMemorySyncPushResult = {
   success: boolean
   filesUploaded: number
@@ -126,6 +136,7 @@ export type TeamMemorySyncPushResult = {
 /**
  * Result from uploading team memory
  */
+// TeamMemorySyncUploadResult 固化服务层 types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TeamMemorySyncUploadResult = {
   success: boolean
   checksum?: string

@@ -1,32 +1,55 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { basename } from 'path';
+// 引入 React、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useRef } from 'react';
+// 引入 useMinDisplayTime，将 ../../hooks/useMinDisplayTime.js 中已经封装好的能力接到本文件流程里。
 import { useMinDisplayTime } from '../../hooks/useMinDisplayTime.js';
+// 引入 Ansi、Box、Text、useTheme，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Ansi, Box, Text, useTheme } from '../../ink.js';
+// 引入 findToolByName、Tools，将 ../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { findToolByName, type Tools } from '../../Tool.js';
+// 接入 getReplPrimitiveTools 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { getReplPrimitiveTools } from '../../tools/REPLTool/primitiveTools.js';
+// 类型依赖 { CollapsedReadSearchGroup, NormalizedAssistantMessage } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { CollapsedReadSearchGroup, NormalizedAssistantMessage } from '../../types/message.js';
+// 复用 uniq 工具函数，把通用处理留在 ../../utils/array.js 中维护。
 import { uniq } from '../../utils/array.js';
+// 复用 getToolUseIdsFromCollapsedGroup 工具函数，把通用处理留在 ../../utils/collapseReadSearch.js 中维护。
 import { getToolUseIdsFromCollapsedGroup } from '../../utils/collapseReadSearch.js';
+// 复用 getDisplayPath 工具函数，把通用处理留在 ../../utils/file.js 中维护。
 import { getDisplayPath } from '../../utils/file.js';
+// 复用 formatDuration、formatSecondsShort 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { formatDuration, formatSecondsShort } from '../../utils/format.js';
+// 复用 isFullscreenEnvEnabled 工具函数，把通用处理留在 ../../utils/fullscreen.js 中维护。
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
+// 类型依赖 { buildMessageLookups } 来自 ../../utils/messages.js，用于校准终端渲染的数据契约。
 import type { buildMessageLookups } from '../../utils/messages.js';
+// 类型依赖 { ThemeName } 来自 ../../utils/theme.js，用于校准终端渲染的数据契约。
 import type { ThemeName } from '../../utils/theme.js';
+// 引入 CtrlOToExpand，将 ../CtrlOToExpand.js 中已经封装好的能力接到本文件流程里。
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
+// 引入 useSelectedMessageBg，将 ../messageActions.js 中已经封装好的能力接到本文件流程里。
 import { useSelectedMessageBg } from '../messageActions.js';
+// 引入 PrBadge，将 ../PrBadge.js 中已经封装好的能力接到本文件流程里。
 import { PrBadge } from '../PrBadge.js';
+// 引入 ToolUseLoader，将 ../ToolUseLoader.js 中已经封装好的能力接到本文件流程里。
 import { ToolUseLoader } from '../ToolUseLoader.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
+// teamMemCollapsed保存`feature`，供终端渲染后续处理使用。
 const teamMemCollapsed = feature('TEAMMEM') ? require('./teamMemCollapsed.js') as typeof import('./teamMemCollapsed.js') : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 // Hold each ⤿ hint for a minimum duration so fast-completing tool calls
 // (bash commands, file reads, search patterns) are actually readable instead
 // of flickering past in a single frame.
+// MIN_HINT_DISPLAY_MS 集合保存`700`，供终端 UI Collapsed Read Searc...后续判断或输出使用。
 const MIN_HINT_DISPLAY_MS = 700;
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   message: CollapsedReadSearchGroup;
   inProgressToolUseIDs: Set<string>;
@@ -39,8 +62,11 @@ type Props = {
 };
 
 /** Render a single tool use in verbose mode */
+// VerboseToolUse 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function VerboseToolUse(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(24);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     content,
     tools,
@@ -49,96 +75,166 @@ function VerboseToolUse(t0) {
     shouldAnimate,
     theme
   } = t0;
+  // bg保存`useSelectedMessageBg`，供终端渲染后续处理使用。
   const bg = useSelectedMessageBg();
+  // t1 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t1;
+  // t2 暂存 `Symbol.for("react.early_return_sentinel")` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== bg || $[1] !== content.id || $[2] !== content.input || $[3] !== content.name || $[4] !== inProgressToolUseIDs || $[5] !== lookups || $[6] !== shouldAnimate || $[7] !== theme || $[8] !== tools) {
+    // t2 暂存 `Symbol.for("react.early_return_sentinel")` 生成的渲染片段，后续返回路径直接复用。
     t2 = Symbol.for("react.early_return_sentinel");
+    // 终端 UI 组件 Collapsed Read Search Cont...在这里处理 `bb0: {`，完成这一小步状态转换。
     bb0: {
+      // 工具筛选`findToolByName`，供终端渲染后续处理使用。
       const tool = findToolByName(tools, content.name) ?? findToolByName(getReplPrimitiveTools(), content.name);
+      // 工具缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!tool) {
+        // t2 暂存 `null` 生成的渲染片段，后续返回路径直接复用。
         t2 = null;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb0;
       }
+      // t3 暂存 `lookups.resolvedToolUseIDs.has(content.id)` 的派生结果，便于缓存命中时直接复用。
       let t3;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[11] !== content.id || $[12] !== lookups.resolvedToolUseIDs) {
+        // t3 暂存 `lookups.resolvedToolUseIDs.has(content.id)` 生成的渲染片段，后续返回路径直接复用。
         t3 = lookups.resolvedToolUseIDs.has(content.id);
+        // $[11] 缓存 `content.id`，下次依赖未变时 React 编译产物可直接复用。
         $[11] = content.id;
+        // $[12] 缓存 `lookups.resolvedToolUseIDs`，下次依赖未变时 React 编译产物可直接复用。
         $[12] = lookups.resolvedToolUseIDs;
+        // $[13] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
         $[13] = t3;
       } else {
+        // t3 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
         t3 = $[13];
       }
+      // isResolved标记终端 UI Collapsed Read Searc...是否启用对应路径。
       const isResolved = t3;
+      // t4 暂存 `lookups.erroredToolUseIDs.has(content.id)` 的派生结果，便于缓存命中时直接复用。
       let t4;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[14] !== content.id || $[15] !== lookups.erroredToolUseIDs) {
+        // t4 暂存 `lookups.erroredToolUseIDs.has(content.id)` 生成的渲染片段，后续返回路径直接复用。
         t4 = lookups.erroredToolUseIDs.has(content.id);
+        // $[14] 缓存 `content.id`，下次依赖未变时 React 编译产物可直接复用。
         $[14] = content.id;
+        // $[15] 缓存 `lookups.erroredToolUseIDs`，下次依赖未变时 React 编译产物可直接复用。
         $[15] = lookups.erroredToolUseIDs;
+        // $[16] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
         $[16] = t4;
       } else {
+        // t4 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
         t4 = $[16];
       }
+      // isError 错误信息标记终端 UI Collapsed Read Searc...是否启用对应路径。
       const isError = t4;
+      // t5 暂存 `inProgressToolUseIDs.has(content.id)` 的派生结果，便于缓存命中时直接复用。
       let t5;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[17] !== content.id || $[18] !== inProgressToolUseIDs) {
+        // t5 暂存 `inProgressToolUseIDs.has(content.id)` 生成的渲染片段，后续返回路径直接复用。
         t5 = inProgressToolUseIDs.has(content.id);
+        // $[17] 缓存 `content.id`，下次依赖未变时 React 编译产物可直接复用。
         $[17] = content.id;
+        // $[18] 缓存 `inProgressToolUseIDs`，下次依赖未变时 React 编译产物可直接复用。
         $[18] = inProgressToolUseIDs;
+        // $[19] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
         $[19] = t5;
       } else {
+        // t5 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
         t5 = $[19];
       }
+      // isInProgress 集合标记终端 UI Collapsed Read Searc...是否启用对应路径。
       const isInProgress = t5;
+      // resultMsg读取`toolResultByToolUseID.get`，供终端渲染后续处理使用。
       const resultMsg = lookups.toolResultByToolUseID.get(content.id);
+      // rawToolResult标记终端 UI Collapsed Read Searc...是否启用对应路径。
       const rawToolResult = resultMsg?.type === "user" ? resultMsg.toolUseResult : undefined;
+      // parsedOutput保存`safeParse`，供终端渲染后续处理使用。
       const parsedOutput = tool.outputSchema?.safeParse(rawToolResult);
+      // toolResult解析`parsedOutput?.success ? parsedOutput.data : undefined`，供后续判断或组装使用。
       const toolResult = parsedOutput?.success ? parsedOutput.data : undefined;
+      // parsedInput保存`inputSchema.safeParse`，供终端渲染后续处理使用。
       const parsedInput = tool.inputSchema.safeParse(content.input);
+      // 用户输入解析`parsedInput.success ? parsedInput.data : undefined`，供后续判断或组装使用。
       const input = parsedInput.success ? parsedInput.data : undefined;
+      // userFacingName保存`tool.userFacingName`，供终端渲染后续处理使用。
       const userFacingName = tool.userFacingName(input);
+      // toolUseMessage 消息数据保存`tool.renderToolUseMessage`，供终端渲染后续处理使用。
       const toolUseMessage = input ? tool.renderToolUseMessage(input, {
         theme,
         verbose: true
       }) : null;
+      // t6标记终端 UI Collapsed Read Searc...是否启用对应路径。
       const t6 = shouldAnimate && isInProgress;
+      // t7标记终端 UI Collapsed Read Searc...是否启用对应路径。
       const t7 = !isResolved;
+      // t8 暂存 `<ToolUseLoader shouldAnimate={t6} isUnresolved={t7} isErr...` 的派生结果，便于缓存命中时直接复用。
       let t8;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[20] !== isError || $[21] !== t6 || $[22] !== t7) {
+        // t8 暂存 `<ToolUseLoader shouldAnimate={t6} isUnresolved={t7} isErr...` 生成的渲染片段，后续返回路径直接复用。
         t8 = <ToolUseLoader shouldAnimate={t6} isUnresolved={t7} isError={isError} />;
+        // $[20] 缓存 `isError`，下次依赖未变时 React 编译产物可直接复用。
         $[20] = isError;
+        // $[21] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
         $[21] = t6;
+        // $[22] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
         $[22] = t7;
+        // $[23] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
         $[23] = t8;
       } else {
+        // t8 从 React 编译缓存槽 $[23] 取回渲染片段，避免依赖未变时重建 JSX。
         t8 = $[23];
       }
+      // t1 暂存 `<Box key={content.id} flexDirection="column" marginTop={1...` 生成的渲染片段，后续返回路径直接复用。
       t1 = <Box key={content.id} flexDirection="column" marginTop={1} backgroundColor={bg}><Box flexDirection="row">{t8}<Text><Text bold={true}>{userFacingName}</Text>{toolUseMessage && <Text>({toolUseMessage})</Text>}</Text>{input && tool.renderToolUseTag?.(input)}</Box>{isResolved && !isError && toolResult !== undefined && <Box>{tool.renderToolResultMessage?.(toolResult, [], {
             verbose: true,
             tools,
             theme
           })}</Box>}</Box>;
     }
+    // $[0] 缓存 `bg`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = bg;
+    // $[1] 缓存 `content.id`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = content.id;
+    // $[2] 缓存 `content.input`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = content.input;
+    // $[3] 缓存 `content.name`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = content.name;
+    // $[4] 缓存 `inProgressToolUseIDs`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = inProgressToolUseIDs;
+    // $[5] 缓存 `lookups`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = lookups;
+    // $[6] 缓存 `shouldAnimate`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = shouldAnimate;
+    // $[7] 缓存 `theme`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = theme;
+    // $[8] 缓存 `tools`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = tools;
+    // $[9] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = t1;
+    // $[10] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t2;
   } else {
+    // t1 从 React 编译缓存槽 $[9] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[9];
+    // t2 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[10];
   }
+  // `t2` 与 `Symbol.for("react.early_return_...` 不一致时刷新派生状态，避免使用过期结果。
   if (t2 !== Symbol.for("react.early_return_sentinel")) {
+    // 返回 `t2`，作为终端渲染这次计算的结果。
     return t2;
   }
+  // 返回 `t1`，作为终端渲染这次计算的结果。
   return t1;
 }
+// CollapsedReadSearchContent 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function CollapsedReadSearchContent({
   message,
   inProgressToolUseIDs,
@@ -148,7 +244,9 @@ export function CollapsedReadSearchContent({
   lookups,
   isActiveGroup
 }: Props): React.ReactNode {
+  // bg保存`useSelectedMessageBg`，供终端渲染后续处理使用。
   const bg = useSelectedMessageBg();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     searchCount: rawSearchCount,
     readCount: rawReadCount,
@@ -159,91 +257,144 @@ export function CollapsedReadSearchContent({
     memoryWriteCount,
     messages: groupMessages
   } = message;
+  // 从 `useTheme()` 按位置拆出 theme，让终端 UI 组件 Collapsed Read Search Cont...分别处理这些返回值。
   const [theme] = useTheme();
+  // toolUseIds 集合读取`getToolUseIdsFromCollapsedGroup`，供终端渲染后续处理使用。
   const toolUseIds = getToolUseIdsFromCollapsedGroup(message);
+  // anyError 错误信息筛选`toolUseIds.some`，供终端渲染后续处理使用。
   const anyError = toolUseIds.some(id => lookups.erroredToolUseIDs.has(id));
+  // hasMemoryOps 集合标记终端 UI Collapsed Read Searc...是否启用对应路径。
   const hasMemoryOps = memorySearchCount > 0 || memoryReadCount > 0 || memoryWriteCount > 0;
+  // hasTeamMemoryOps 集合记录 `feature` 是否成立，终端渲染随后按该结果分支。
   const hasTeamMemoryOps = feature('TEAMMEM') ? teamMemCollapsed!.checkHasTeamMemOps(message) : false;
 
   // Track the max seen counts so they only ever increase. The debounce timer
   // causes extra re-renders at arbitrary times; during a brief "invisible window"
   // in the streaming executor the group count can dip, which causes jitter.
+  // maxReadCountRef 引用保存`useRef`，供终端渲染后续处理使用。
   const maxReadCountRef = useRef(0);
+  // maxSearchCountRef 引用保存`useRef`，供终端渲染后续处理使用。
   const maxSearchCountRef = useRef(0);
+  // maxListCountRef 引用保存`useRef`，供终端渲染后续处理使用。
   const maxListCountRef = useRef(0);
+  // maxMcpCountRef 引用保存`useRef`，供终端渲染后续处理使用。
   const maxMcpCountRef = useRef(0);
+  // maxBashCountRef 引用保存`useRef`，供终端渲染后续处理使用。
   const maxBashCountRef = useRef(0);
+  // current更新为 `Math.max(maxReadCountRef.current, rawReadCount)`，确保终端 UI后续读取最新状态。
   maxReadCountRef.current = Math.max(maxReadCountRef.current, rawReadCount);
+  // current更新为 `Math.max(maxSearchCountRef.current, rawSearchCount)`，确保终端 UI后续读取最新状态。
   maxSearchCountRef.current = Math.max(maxSearchCountRef.current, rawSearchCount);
+  // current更新为 `Math.max(maxListCountRef.current, rawListCount)`，确保终端 UI后续读取最新状态。
   maxListCountRef.current = Math.max(maxListCountRef.current, rawListCount);
+  // current更新为 `Math.max(maxMcpCountRef.current, message.mcpCallCount ?? ...`，确保终端 UI后续读取最新状态。
   maxMcpCountRef.current = Math.max(maxMcpCountRef.current, message.mcpCallCount ?? 0);
+  // current更新为 `Math.max(maxBashCountRef.current, message.bashCount ?? 0)`，确保终端 UI后续读取最新状态。
   maxBashCountRef.current = Math.max(maxBashCountRef.current, message.bashCount ?? 0);
+  // readCount 数量 命名 `maxReadCountRef.current`，让后续代码直接表达这个值的用途。
   const readCount = maxReadCountRef.current;
+  // searchCount 数量保存`maxSearchCountRef.current`，供后续判断或组装使用。
   const searchCount = maxSearchCountRef.current;
+  // listCount 数量保存`maxListCountRef.current`，供后续判断或组装使用。
   const listCount = maxListCountRef.current;
+  // mcpCallCount 数量保存`maxMcpCountRef.current`，供终端 UI Collapsed Read Searc...后续判断或输出使用。
   const mcpCallCount = maxMcpCountRef.current;
   // Subtract commands surfaced as "Committed …" / "Created PR …" so the
   // same command isn't counted twice. gitOpBashCount is read live (no max-ref
   // needed — it's 0 until results arrive, then only grows).
+  // gitOpBashCount 数量 命名 `message.gitOpBashCount ?? 0`，让后续代码直接表达这个值的用途。
   const gitOpBashCount = message.gitOpBashCount ?? 0;
+  // bashCount 数量保存`isFullscreenEnvEnabled`，供终端渲染后续处理使用。
   const bashCount = isFullscreenEnvEnabled() ? Math.max(0, maxBashCountRef.current - gitOpBashCount) : 0;
+  // hasNonMemoryOps 集合标记终端 UI Collapsed Read Searc...是否启用对应路径。
   const hasNonMemoryOps = searchCount > 0 || readCount > 0 || listCount > 0 || replCount > 0 || mcpCallCount > 0 || bashCount > 0 || gitOpBashCount > 0;
+  // readPaths 路径数据读取`message.readFilePaths`，供后续判断或组装使用。
   const readPaths = message.readFilePaths;
+  // searchArgs 集合保存`message.searchArgs`，供后续判断或组装使用。
   const searchArgs = message.searchArgs;
+  // incomingHint保存`message.latestDisplayHint`，供后续判断或组装使用。
   let incomingHint = message.latestDisplayHint;
+  // 满足 `incomingHint === undefined` 时，终端渲染执行该分支。
   if (incomingHint === undefined) {
+    // lastSearchRaw保存`at`，供终端渲染后续处理使用。
     const lastSearchRaw = searchArgs?.at(-1);
+    // lastSearch标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const lastSearch = lastSearchRaw !== undefined ? `"${lastSearchRaw}"` : undefined;
+    // lastRead保存`at`，供终端渲染后续处理使用。
     const lastRead = readPaths?.at(-1);
+    // incomingHint更新为 `lastRead !== undefined ? getDisplayPath(lastRead) : lastS...`，确保终端 UI后续读取最新状态。
     incomingHint = lastRead !== undefined ? getDisplayPath(lastRead) : lastSearch;
   }
 
   // Active REPL calls emit repl_tool_call progress with the current inner
   // tool's name+input. Virtual messages don't arrive until REPL completes,
   // so this is the only source of a live hint during execution.
+  // 满足 `isActiveGroup` 时，终端渲染执行该分支。
   if (isActiveGroup) {
+    // 按顺序遍历 `toolUseIds` 中的id_0，逐个交给终端渲染处理。
     for (const id_0 of toolUseIds) {
+      // 满足 `!inProgressToolUseIDs.has(id_0)` 时，终端渲染执行该分支。
       if (!inProgressToolUseIDs.has(id_0)) continue;
+      // latest读取`progressMessagesByToolUseID.get`，供终端渲染后续处理使用。
       const latest = lookups.progressMessagesByToolUseID.get(id_0)?.at(-1)?.data;
+      // 只有 `latest?.type === 'repl_tool_call' && latest.phase` 满足时，终端渲染才执行该分支。
       if (latest?.type === 'repl_tool_call' && latest.phase === 'start') {
+        // 用户输入保存`latest.toolInput as {`，供后续判断或组装使用。
         const input = latest.toolInput as {
           command?: string;
           pattern?: string;
           file_path?: string;
         };
+        // incomingHint更新为 `input.file_path ?? (input.pattern ? `"${input.pattern}"` ...`，确保终端 UI后续读取最新状态。
         incomingHint = input.file_path ?? (input.pattern ? `"${input.pattern}"` : undefined) ?? input.command ?? latest.toolName;
       }
     }
   }
+  // displayedHint保存`useMinDisplayTime`，供终端渲染后续处理使用。
   const displayedHint = useMinDisplayTime(incomingHint, MIN_HINT_DISPLAY_MS);
 
   // In verbose mode, render each tool use with its 1-line result summary
+  // 满足 `verbose` 时，终端渲染执行该分支。
   if (verbose) {
+    // toolUses 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
     const toolUses: NormalizedAssistantMessage[] = [];
+    // 按顺序遍历 `groupMessages` 中的消息，逐个交给终端渲染处理。
     for (const msg of groupMessages) {
+      // 当 `msg.type` 匹配 `'assistant'` 时，终端渲染执行对应分支。
       if (msg.type === 'assistant') {
+        // toolUses 集合追加新条目，保持收集顺序与输入顺序一致。
         toolUses.push(msg);
+      // 终端 UI 组件 Collapsed Read Search Cont...在这里处理 `} else if (msg.type === 'grouped_tool_use') {`，完成这一小步状态转换。
       } else if (msg.type === 'grouped_tool_use') {
+        // toolUses 集合追加新条目，保持收集顺序与输入顺序一致。
         toolUses.push(...msg.messages);
       }
     }
+    // 返回 `<Box flexDirection="column">`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column">
+        {/* 这个回调绑定到 {toolUses.map(msg_0 => {，负责终端渲染在该局部场景下的响应。 */}
         {toolUses.map(msg_0 => {
+        // 文本内容 命名 `msg_0.message.content[0]`，让后续代码直接表达这个值的用途。
         const content = msg_0.message.content[0];
+        // `content?.type` 与 `'tool_use'` 不一致时刷新派生状态，避免使用过期结果。
         if (content?.type !== 'tool_use') return null;
+        // 返回 `<VerboseToolUse key={content.id} content={content} tools={tools} lookup...`，作为终端渲染这次计算的结果。
         return <VerboseToolUse key={content.id} content={content} tools={tools} lookups={lookups} inProgressToolUseIDs={inProgressToolUseIDs} shouldAnimate={shouldAnimate} theme={theme} />;
       })}
+        {/* 终端 UI 组件 Collapsed Read Search Co...处理 `{message.hookInfos && message.hookInfos.length > 0 && <>`，完成这一小步状态转换。 */}
         {message.hookInfos && message.hookInfos.length > 0 && <>
             <Text dimColor>
               {'  ⎿  '}Ran {message.hookCount} PreToolUse{' '}
               {message.hookCount === 1 ? 'hook' : 'hooks'} (
               {formatSecondsShort(message.hookTotalMs ?? 0)})
             </Text>
+            {/* 这个回调绑定到 {message.hookInfos.map((info, idx) => <Text key={`hook-${idx}`} dimColor>，负责终端渲染在该局部场景下的响应。 */}
             {message.hookInfos.map((info, idx) => <Text key={`hook-${idx}`} dimColor>
                 {'     ⎿ '}
                 {info.command} ({formatSecondsShort(info.durationMs ?? 0)})
               </Text>)}
           </>}
+        {/* 这个回调绑定到 {message.relevantMemories?.map(m => <Box key={m.path} flexDirection="column" marginT…，负责终端渲染在该局部场景下的响应。 */}
         {message.relevantMemories?.map(m => <Box key={m.path} flexDirection="column" marginTop={1}>
             <Text dimColor>
               {'  ⎿  '}Recalled {basename(m.path)}
@@ -262,7 +413,9 @@ export function CollapsedReadSearchContent({
 
   // Defensive: If all counts are 0, don't render the collapsed group
   // This shouldn't happen in normal operation, but handles edge cases
+  // 只有 `!hasMemoryOps && !hasTeamMemoryOps && !hasNonMemo` 满足时，终端渲染才执行该分支。
   if (!hasMemoryOps && !hasTeamMemoryOps && !hasNonMemoryOps) {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
 
@@ -270,66 +423,101 @@ export function CollapsedReadSearchContent({
   // progress every second but the collapsed renderer never showed it — long
   // commands (npm install, tests) looked frozen. Shown after 2s so fast
   // commands stay clean; the ticking counter reassures that slow ones aren't stuck.
+  // shellProgressSuffix保存`''`，作为后续固定文本处理的输入。
   let shellProgressSuffix = '';
+  // 只有 `isFullscreenEnvEnabled() && isActiveGroup` 满足时，终端渲染才执行该分支。
   if (isFullscreenEnvEnabled() && isActiveGroup) {
+    // elapsed 先占位，稍后的条件分支会根据实际输入补齐它。
     let elapsed: number | undefined;
+    // 文本行 命名 `0`，让后续代码直接表达这个值的用途。
     let lines = 0;
+    // 按顺序遍历 `toolUseIds` 中的id_1，逐个交给终端渲染处理。
     for (const id_1 of toolUseIds) {
+      // 满足 `!inProgressToolUseIDs.has(id_1)` 时，终端渲染执行该分支。
       if (!inProgressToolUseIDs.has(id_1)) continue;
+      // data读取`progressMessagesByToolUseID.get`，供终端渲染后续处理使用。
       const data = lookups.progressMessagesByToolUseID.get(id_1)?.at(-1)?.data;
+      // `data?.type` 与 `'bash_progress' && data?.type !...` 不一致时刷新派生状态，避免使用过期结果。
       if (data?.type !== 'bash_progress' && data?.type !== 'powershell_progress') {
+        // 跳过当前项，继续处理终端渲染中的下一轮循环。
         continue;
       }
+      // 只有 `elapsed === undefined || data.elapsedTimeSeconds` 满足时，终端渲染才执行该分支。
       if (elapsed === undefined || data.elapsedTimeSeconds > elapsed) {
+        // elapsed更新为 `data.elapsedTimeSeconds`，确保终端 UI后续读取最新状态。
         elapsed = data.elapsedTimeSeconds;
+        // 文本行更新为 `data.totalLines`，确保终端 UI后续读取最新状态。
         lines = data.totalLines;
       }
     }
+    // `elapsed` 与 `undefined && elapsed >= 2` 不一致时刷新派生状态，避免使用过期结果。
     if (elapsed !== undefined && elapsed >= 2) {
+      // time格式化`formatDuration`，供终端渲染后续处理使用。
       const time = formatDuration(elapsed * 1000);
+      // shellProgressSuffix更新为 `lines > 0 ? ` (${time} · ${lines} ${lines === 1 ? 'line' ...`，确保终端 UI后续读取最新状态。
       shellProgressSuffix = lines > 0 ? ` (${time} · ${lines} ${lines === 1 ? 'line' : 'lines'})` : ` (${time})`;
     }
   }
 
   // Build non-memory parts first (search, read, repl, mcp, bash) — these render
   // before memory so the line reads "Ran 3 bash commands, recalled 1 memory".
+  // nonMemParts 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const nonMemParts: React.ReactNode[] = [];
 
   // Git operations lead the line — they're the load-bearing outcome.
+  // pushPart 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function pushPart(key: string, verb: string, body: React.ReactNode): void {
+    // isFirst标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst = nonMemParts.length === 0;
+    // 满足 `!isFirst) nonMemParts.push(<Text key={`comma-${key}`}>, </Text>` 时，终端渲染执行该分支。
     if (!isFirst) nonMemParts.push(<Text key={`comma-${key}`}>, </Text>);
+    // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
     nonMemParts.push(<Text key={key}>
         {isFirst ? verb[0]!.toUpperCase() + verb.slice(1) : verb} {body}
       </Text>);
   }
+  // 只有 `isFullscreenEnvEnabled() && message.commits?.length` 满足时，终端渲染才执行该分支。
   if (isFullscreenEnvEnabled() && message.commits?.length) {
+    // byKind集中保存终端 UI Collapsed Read Searc...要一起传递的字段。
     const byKind = {
       committed: 'committed',
       amended: 'amended commit',
       'cherry-picked': 'cherry-picked'
     };
+    // 按顺序遍历 `['committed', 'amended', 'cherry-pi` 中的kind，逐个交给终端渲染处理。
     for (const kind of ['committed', 'amended', 'cherry-picked'] as const) {
+      // shas 集合筛选`commits.filter`，供终端渲染后续处理使用。
       const shas = message.commits.filter(c => c.kind === kind).map(c_0 => c_0.sha);
+      // 满足 `shas.length` 时，终端渲染执行该分支。
       if (shas.length) {
+        // 调用 pushPart，触发终端渲染此处需要的副作用。
         pushPart(kind, byKind[kind], <Text bold>{shas.join(', ')}</Text>);
       }
     }
   }
+  // 只有 `isFullscreenEnvEnabled() && message.pushes?.length` 满足时，终端渲染才执行该分支。
   if (isFullscreenEnvEnabled() && message.pushes?.length) {
+    // branches 集合保存`uniq`，供终端渲染后续处理使用。
     const branches = uniq(message.pushes.map(p => p.branch));
+    // 调用 pushPart，触发终端渲染此处需要的副作用。
     pushPart('push', 'pushed to', <Text bold>{branches.join(', ')}</Text>);
   }
+  // 只有 `isFullscreenEnvEnabled() && message.branches?.length` 满足时，终端渲染才执行该分支。
   if (isFullscreenEnvEnabled() && message.branches?.length) {
+    // byAction集中保存终端 UI Collapsed Read Searc...要一起传递的字段。
     const byAction = {
       merged: 'merged',
       rebased: 'rebased onto'
     };
+    // 按顺序遍历 `message.branches` 中的b，逐个交给终端渲染处理。
     for (const b of message.branches) {
+      // 调用 pushPart，触发终端渲染此处需要的副作用。
       pushPart(`br-${b.action}-${b.ref}`, byAction[b.action], <Text bold>{b.ref}</Text>);
     }
   }
+  // 只有 `isFullscreenEnvEnabled() && message.prs?.length` 满足时，终端渲染才执行该分支。
   if (isFullscreenEnvEnabled() && message.prs?.length) {
+    // verbs 集合集中保存终端 UI Collapsed Read Searc...要一起传递的字段。
     const verbs = {
       created: 'created',
       edited: 'edited',
@@ -338,60 +526,92 @@ export function CollapsedReadSearchContent({
       closed: 'closed',
       ready: 'marked ready'
     };
+    // 按顺序遍历 `message.prs` 中的pr，逐个交给终端渲染处理。
     for (const pr of message.prs) {
+      // 调用 pushPart，触发终端渲染此处需要的副作用。
       pushPart(`pr-${pr.action}-${pr.number}`, verbs[pr.action], pr.url ? <PrBadge number={pr.number} url={pr.url} bold /> : <Text bold>PR #{pr.number}</Text>);
     }
   }
+  // 满足 `searchCount > 0` 时，终端渲染执行该分支。
   if (searchCount > 0) {
+    // isFirst_0标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_0 = nonMemParts.length === 0;
+    // searchVerb保存`isActiveGroup ? isFirst_0 ? 'Searching for' : 'searching ...`，供终端 UI Collapsed Read Searc...后续判断或输出使用。
     const searchVerb = isActiveGroup ? isFirst_0 ? 'Searching for' : 'searching for' : isFirst_0 ? 'Searched for' : 'searched for';
+    // isFirst_0缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_0) {
+      // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
       nonMemParts.push(<Text key="comma-s">, </Text>);
     }
+    // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
     nonMemParts.push(<Text key="search">
         {searchVerb} <Text bold>{searchCount}</Text>{' '}
         {searchCount === 1 ? 'pattern' : 'patterns'}
       </Text>);
   }
+  // 满足 `readCount > 0` 时，终端渲染执行该分支。
   if (readCount > 0) {
+    // isFirst_1标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_1 = nonMemParts.length === 0;
+    // readVerb读取`isActiveGroup ? isFirst_1 ? 'Reading' : 'reading' : isFir...`，供后续判断或组装使用。
     const readVerb = isActiveGroup ? isFirst_1 ? 'Reading' : 'reading' : isFirst_1 ? 'Read' : 'read';
+    // isFirst_1缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_1) {
+      // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
       nonMemParts.push(<Text key="comma-r">, </Text>);
     }
+    // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
     nonMemParts.push(<Text key="read">
         {readVerb} <Text bold>{readCount}</Text>{' '}
         {readCount === 1 ? 'file' : 'files'}
       </Text>);
   }
+  // 满足 `listCount > 0` 时，终端渲染执行该分支。
   if (listCount > 0) {
+    // isFirst_2标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_2 = nonMemParts.length === 0;
+    // listVerb 集合保存`isActiveGroup ? isFirst_2 ? 'Listing' : 'listing' : isFir...`，供终端 UI Collapsed Read Searc...后续判断或输出使用。
     const listVerb = isActiveGroup ? isFirst_2 ? 'Listing' : 'listing' : isFirst_2 ? 'Listed' : 'listed';
+    // isFirst_2缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_2) {
+      // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
       nonMemParts.push(<Text key="comma-l">, </Text>);
     }
+    // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
     nonMemParts.push(<Text key="list">
         {listVerb} <Text bold>{listCount}</Text>{' '}
         {listCount === 1 ? 'directory' : 'directories'}
       </Text>);
   }
+  // 满足 `replCount > 0` 时，终端渲染执行该分支。
   if (replCount > 0) {
+    // replVerb保存`isActiveGroup ? "REPL'ing" : "REPL'd"`，供终端 UI Collapsed Read Searc...后续判断或输出使用。
     const replVerb = isActiveGroup ? "REPL'ing" : "REPL'd";
+    // 满足 `nonMemParts.length > 0` 时，终端渲染执行该分支。
     if (nonMemParts.length > 0) {
+      // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
       nonMemParts.push(<Text key="comma-repl">, </Text>);
     }
+    // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
     nonMemParts.push(<Text key="repl">
         {replVerb} <Text bold>{replCount}</Text>{' '}
         {replCount === 1 ? 'time' : 'times'}
       </Text>);
   }
+  // 满足 `mcpCallCount > 0` 时，终端渲染执行该分支。
   if (mcpCallCount > 0) {
+    // serverLabel派生`map`，供终端渲染后续处理使用。
     const serverLabel = message.mcpServerNames?.map(n => n.replace(/^claude\.ai /, '')).join(', ') || 'MCP';
+    // isFirst_3标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_3 = nonMemParts.length === 0;
+    // verb_0 命名 `isActiveGroup ? isFirst_3 ? 'Querying' : 'querying' : isF...`，让后续代码直接表达这个值的用途。
     const verb_0 = isActiveGroup ? isFirst_3 ? 'Querying' : 'querying' : isFirst_3 ? 'Queried' : 'queried';
+    // isFirst_3缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_3) {
+      // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
       nonMemParts.push(<Text key="comma-mcp">, </Text>);
     }
+    // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
     nonMemParts.push(<Text key="mcp">
         {verb_0} {serverLabel}
         {mcpCallCount > 1 && <>
@@ -400,12 +620,18 @@ export function CollapsedReadSearchContent({
           </>}
       </Text>);
   }
+  // 只有 `isFullscreenEnvEnabled() && bashCount > 0` 满足时，终端渲染才执行该分支。
   if (isFullscreenEnvEnabled() && bashCount > 0) {
+    // isFirst_4标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_4 = nonMemParts.length === 0;
+    // verb_1保存`isActiveGroup ? isFirst_4 ? 'Running' : 'running' : isFir...`，供终端 UI Collapsed Read Searc...后续判断或输出使用。
     const verb_1 = isActiveGroup ? isFirst_4 ? 'Running' : 'running' : isFirst_4 ? 'Ran' : 'ran';
+    // isFirst_4缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_4) {
+      // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
       nonMemParts.push(<Text key="comma-bash">, </Text>);
     }
+    // nonMemParts 集合追加新条目，保持收集顺序与输入顺序一致。
     nonMemParts.push(<Text key="bash">
         {verb_1} <Text bold>{bashCount}</Text> bash{' '}
         {bashCount === 1 ? 'command' : 'commands'}
@@ -413,38 +639,59 @@ export function CollapsedReadSearchContent({
   }
 
   // Build memory parts (auto-memory) — rendered after nonMemParts
+  // hasPrecedingNonMem标记终端 UI Collapsed Read Searc...是否启用对应路径。
   const hasPrecedingNonMem = nonMemParts.length > 0;
+  // memParts 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const memParts: React.ReactNode[] = [];
+  // 满足 `memoryReadCount > 0` 时，终端渲染执行该分支。
   if (memoryReadCount > 0) {
+    // isFirst_5标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_5 = !hasPrecedingNonMem && memParts.length === 0;
+    // verb_2 命名 `isActiveGroup ? isFirst_5 ? 'Recalling' : 'recalling' : i...`，让后续代码直接表达这个值的用途。
     const verb_2 = isActiveGroup ? isFirst_5 ? 'Recalling' : 'recalling' : isFirst_5 ? 'Recalled' : 'recalled';
+    // isFirst_5缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_5) {
+      // memParts 集合追加新条目，保持收集顺序与输入顺序一致。
       memParts.push(<Text key="comma-mr">, </Text>);
     }
+    // memParts 集合追加新条目，保持收集顺序与输入顺序一致。
     memParts.push(<Text key="mem-read">
         {verb_2} <Text bold>{memoryReadCount}</Text>{' '}
         {memoryReadCount === 1 ? 'memory' : 'memories'}
       </Text>);
   }
+  // 满足 `memorySearchCount > 0` 时，终端渲染执行该分支。
   if (memorySearchCount > 0) {
+    // isFirst_6标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_6 = !hasPrecedingNonMem && memParts.length === 0;
+    // verb_3保存`isActiveGroup ? isFirst_6 ? 'Searching' : 'searching' : i...`，供终端 UI Collapsed Read Searc...后续判断或输出使用。
     const verb_3 = isActiveGroup ? isFirst_6 ? 'Searching' : 'searching' : isFirst_6 ? 'Searched' : 'searched';
+    // isFirst_6缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_6) {
+      // memParts 集合追加新条目，保持收集顺序与输入顺序一致。
       memParts.push(<Text key="comma-ms">, </Text>);
     }
+    // memParts 集合追加新条目，保持收集顺序与输入顺序一致。
     memParts.push(<Text key="mem-search">{`${verb_3} memories`}</Text>);
   }
+  // 满足 `memoryWriteCount > 0` 时，终端渲染执行该分支。
   if (memoryWriteCount > 0) {
+    // isFirst_7标记终端 UI Collapsed Read Searc...是否启用对应路径。
     const isFirst_7 = !hasPrecedingNonMem && memParts.length === 0;
+    // verb_4 命名 `isActiveGroup ? isFirst_7 ? 'Writing' : 'writing' : isFir...`，让后续代码直接表达这个值的用途。
     const verb_4 = isActiveGroup ? isFirst_7 ? 'Writing' : 'writing' : isFirst_7 ? 'Wrote' : 'wrote';
+    // isFirst_7缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!isFirst_7) {
+      // memParts 集合追加新条目，保持收集顺序与输入顺序一致。
       memParts.push(<Text key="comma-mw">, </Text>);
     }
+    // memParts 集合追加新条目，保持收集顺序与输入顺序一致。
     memParts.push(<Text key="mem-write">
         {verb_4} <Text bold>{memoryWriteCount}</Text>{' '}
         {memoryWriteCount === 1 ? 'memory' : 'memories'}
       </Text>);
   }
+  // 返回 `<Box flexDirection="column" marginTop={1} backgroundColor={bg}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" marginTop={1} backgroundColor={bg}>
       <Box flexDirection="row">
         {isActiveGroup ? <ToolUseLoader shouldAnimate isUnresolved isError={anyError} /> : <Box minWidth={2} />}
@@ -459,6 +706,7 @@ export function CollapsedReadSearchContent({
           {isActiveGroup && <Text key="ellipsis">…</Text>} <CtrlOToExpand />
         </Text>
       </Box>
+      {/* 终端 UI 组件 Collapsed Read Search Co...处理 `{isActiveGroup && displayedHint !== undefined &&`，完成这一小步状态转换。 */}
       {isActiveGroup && displayedHint !== undefined &&
     // Row layout: 5-wide gutter for ⎿, then a flex column for the text.
     // Ink's wrap stays inside the right column so continuation lines
@@ -468,6 +716,7 @@ export function CollapsedReadSearchContent({
             <Text dimColor>{'  ⎿  '}</Text>
           </Box>
           <Box flexDirection="column" flexGrow={1}>
+            {/* 这个回调绑定到 {displayedHint.split('\n').map((line, i, arr) => <Text key={`hint-${i}`} dimColor>，负责终端渲染在该局部场景下的响应。 */}
             {displayedHint.split('\n').map((line, i, arr) => <Text key={`hint-${i}`} dimColor>
                 {line}
                 {i === arr.length - 1 && shellProgressSuffix}

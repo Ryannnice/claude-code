@@ -1,6 +1,10 @@
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 引入 HooksSchema，将 ../../schemas/hooks.js 中已经封装好的能力接到本文件流程里。
 import { HooksSchema } from '../../schemas/hooks.js'
+// 接入 McpServerConfigSchema 服务层能力，把外部通信或共享状态交给 ../../services/mcp/types.js 处理。
 import { McpServerConfigSchema } from '../../services/mcp/types.js'
+// 引入 lazySchema，将 ../lazySchema.js 中已经封装好的能力接到本文件流程里。
 import { lazySchema } from '../lazySchema.js'
 
 /**
@@ -16,6 +20,7 @@ import { lazySchema } from '../lazySchema.js'
  * Official marketplace names that are reserved for Anthropic/Claude official use.
  * These names are allowed ONLY for official marketplaces and blocked for third parties.
  */
+// ALLOWED_OFFICIAL_MARKETPLACE_NAMES 市场数据保存`Set`，供插件管理后续处理使用。
 export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
   'claude-code-marketplace',
   'claude-code-plugins',
@@ -32,6 +37,7 @@ export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
  * These are still reserved/allowed names, but opt out of the auto-update
  * default that other official marketplaces receive.
  */
+// NO_AUTO_UPDATE_OFFICIAL_MARKETPLACES 市场数据保存`Set`，供插件管理后续处理使用。
 const NO_AUTO_UPDATE_OFFICIAL_MARKETPLACES = new Set(['knowledge-work-plugins'])
 
 /**
@@ -45,11 +51,14 @@ const NO_AUTO_UPDATE_OFFICIAL_MARKETPLACES = new Set(['knowledge-work-plugins'])
  * @param entry - The marketplace entry (may have autoUpdate set)
  * @returns Whether auto-update is enabled for this marketplace
  */
+// isMarketplaceAutoUpdate 封装插件工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isMarketplaceAutoUpdate(
   marketplaceName: string,
   entry: { autoUpdate?: boolean },
 ): boolean {
+  // normalizedName保存`marketplaceName.toLowerCase`，供插件管理后续处理使用。
   const normalizedName = marketplaceName.toLowerCase()
+  // 返回 `(`，作为插件管理这次计算的结果。
   return (
     entry.autoUpdate ??
     (ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(normalizedName) &&
@@ -68,6 +77,7 @@ export function isMarketplaceAutoUpdate(
  *
  * The pattern is case-insensitive.
  */
+// BLOCKED_OFFICIAL_NAME_PATTERN 先占位，稍后的条件分支会根据实际输入补齐它。
 export const BLOCKED_OFFICIAL_NAME_PATTERN =
   /(?:official[^a-z0-9]*(anthropic|claude)|(?:anthropic|claude)[^a-z0-9]*official|^(?:anthropic|claude)[^a-z0-9]*(marketplace|plugins|official))/i
 
@@ -76,6 +86,7 @@ export const BLOCKED_OFFICIAL_NAME_PATTERN =
  * Marketplace names should only contain ASCII characters to prevent impersonation
  * via lookalike Unicode characters (e.g., Cyrillic 'а' instead of Latin 'a').
  */
+// NON_ASCII_PATTERN保存`/[^\u0020-\u007E]/`，供插件工具 schemas后续判断或输出使用。
 const NON_ASCII_PATTERN = /[^\u0020-\u007E]/
 
 /**
@@ -84,19 +95,25 @@ const NON_ASCII_PATTERN = /[^\u0020-\u007E]/
  * @param name - The marketplace name to check
  * @returns true if the name is blocked (impersonates official), false if allowed
  */
+// isBlockedOfficialName 封装插件工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isBlockedOfficialName(name: string): boolean {
   // If it's in the allowed list, it's not blocked
+  // 满足 `ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(name.toLowerCase())` 时，插件管理执行该分支。
   if (ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(name.toLowerCase())) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // Block names with non-ASCII characters to prevent homograph attacks
   // (e.g., using Cyrillic 'а' to impersonate 'anthropic')
+  // 满足 `NON_ASCII_PATTERN.test(name)` 时，插件管理执行该分支。
   if (NON_ASCII_PATTERN.test(name)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // Check if it matches the blocked pattern
+  // 返回 `BLOCKED_OFFICIAL_NAME_PATTERN.test(name)`，作为插件管理这次计算的结果。
   return BLOCKED_OFFICIAL_NAME_PATTERN.test(name)
 }
 
@@ -104,6 +121,7 @@ export function isBlockedOfficialName(name: string): boolean {
  * The official GitHub organization for Anthropic marketplaces.
  * Reserved names must come from this org.
  */
+// OFFICIAL_GITHUB_ORG保存`'anthropics'`，作为后续固定文本处理的输入。
 export const OFFICIAL_GITHUB_ORG = 'anthropics'
 
 /**
@@ -116,63 +134,84 @@ export const OFFICIAL_GITHUB_ORG = 'anthropics'
  * @param source - The marketplace source configuration
  * @returns An error message if validation fails, or null if valid
  */
+// validateOfficialNameSource 封装插件工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function validateOfficialNameSource(
   name: string,
   source: { source: string; repo?: string; url?: string },
 ): string | null {
+  // normalizedName保存`name.toLowerCase`，供插件管理后续处理使用。
   const normalizedName = name.toLowerCase()
 
   // Only validate reserved names
+  // 满足 `!ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(normalizedName)` 时，插件管理执行该分支。
   if (!ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(normalizedName)) {
+    // 返回 `null // Not a reserved name, no source validation needed`，作为插件管理这次计算的结果。
     return null // Not a reserved name, no source validation needed
   }
 
   // Check for GitHub source type
+  // 当 `source.source` 匹配 `'github'` 时，插件管理执行对应分支。
   if (source.source === 'github') {
     // Verify the repo is from the official org
+    // repo标记插件工具 schemas是否启用对应路径。
     const repo = source.repo || ''
+    // 满足 `!repo.toLowerCase().startsWith(`${OFFICIAL_GITHUB_ORG}/`)` 时，插件管理执行该分支。
     if (!repo.toLowerCase().startsWith(`${OFFICIAL_GITHUB_ORG}/`)) {
+      // 返回 ``The name '${name}' is reserved for official Anthropic marketplaces. On...`，作为插件管理这次计算的结果。
       return `The name '${name}' is reserved for official Anthropic marketplaces. Only repositories from 'github.com/${OFFICIAL_GITHUB_ORG}/' can use this name.`
     }
+    // 返回 `null // Valid: reserved name from official GitHub source`，作为插件管理这次计算的结果。
     return null // Valid: reserved name from official GitHub source
   }
 
   // Check for git URL source type
+  // 只有 `source.source === 'git' && source.url` 满足时，插件管理才执行该分支。
   if (source.source === 'git' && source.url) {
+    // URL保存`url.toLowerCase`，供插件管理后续处理使用。
     const url = source.url.toLowerCase()
     // Check for HTTPS URL format: https://github.com/anthropics/...
     // or SSH format: git@github.com:anthropics/...
+    // isHttpsAnthropics 集合记录 `url.includes` 是否成立，插件管理随后按该结果分支。
     const isHttpsAnthropics = url.includes('github.com/anthropics/')
+    // isSshAnthropics 集合记录 `url.includes` 是否成立，插件管理随后按该结果分支。
     const isSshAnthropics = url.includes('git@github.com:anthropics/')
 
+    // 只有 `isHttpsAnthropics || isSshAnthropics` 满足时，插件管理才执行该分支。
     if (isHttpsAnthropics || isSshAnthropics) {
+      // 返回 `null // Valid: reserved name from official git URL`，作为插件管理这次计算的结果。
       return null // Valid: reserved name from official git URL
     }
 
+    // 返回 ``The name '${name}' is reserved for official Anthropic marketplaces. On...`，作为插件管理这次计算的结果。
     return `The name '${name}' is reserved for official Anthropic marketplaces. Only repositories from 'github.com/${OFFICIAL_GITHUB_ORG}/' can use this name.`
   }
 
   // Reserved names must come from GitHub (either 'github' or 'git' source)
+  // 返回 ``The name '${name}' is reserved for official Anthropic marketplaces and...`，作为插件管理这次计算的结果。
   return `The name '${name}' is reserved for official Anthropic marketplaces and can only be used with GitHub sources from the '${OFFICIAL_GITHUB_ORG}' organization.`
 }
 
 /**
  * Schema for relative file paths that must start with './'
  */
+// RelativePath 路径数据保存`lazySchema`，供插件管理后续处理使用。
 const RelativePath = lazySchema(() => z.string().startsWith('./'))
 
 /**
  * Schema for relative paths to JSON files
  */
+// RelativeJSONPath 路径数据保存`lazySchema`，供插件管理后续处理使用。
 const RelativeJSONPath = lazySchema(() => RelativePath().endsWith('.json'))
 
 /**
  * Schema for MCPB (MCP Bundle) file paths
  * Supports both local relative paths and remote URLs
  */
+// McpbPath 路径数据保存`lazySchema`，供插件管理后续处理使用。
 const McpbPath = lazySchema(() =>
   z.union([
     RelativePath()
+      // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
       .refine(path => path.endsWith('.mcpb') || path.endsWith('.dxt'), {
         message: 'MCPB file path must end with .mcpb or .dxt',
       })
@@ -180,6 +219,7 @@ const McpbPath = lazySchema(() =>
     z
       .string()
       .url()
+      // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
       .refine(url => url.endsWith('.mcpb') || url.endsWith('.dxt'), {
         message: 'MCPB URL must end with .mcpb or .dxt',
       })
@@ -190,11 +230,13 @@ const McpbPath = lazySchema(() =>
 /**
  * Schema for relative paths to Markdown files
  */
+// RelativeMarkdownPath 路径数据保存`lazySchema`，供插件管理后续处理使用。
 const RelativeMarkdownPath = lazySchema(() => RelativePath().endsWith('.md'))
 
 /**
  * Schema for relative paths to command sources (markdown files or directories containing SKILL.md)
  */
+// RelativeCommandPath 命令数据保存`lazySchema`，供插件管理后续处理使用。
 const RelativeCommandPath = lazySchema(() =>
   z.union([
     RelativeMarkdownPath(),
@@ -213,15 +255,18 @@ const RelativeCommandPath = lazySchema(() =>
  * PluginMarketplaceSchema leaves orphaned files in the cache (cleanupNeeded=false).
  * A single shared schema makes drift impossible.
  */
+// MarketplaceNameSchema 市场数据保存`lazySchema`，供插件管理后续处理使用。
 const MarketplaceNameSchema = lazySchema(() =>
   z
     .string()
     .min(1, 'Marketplace must have a name')
+    // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
     .refine(name => !name.includes(' '), {
       message:
         'Marketplace name cannot contain spaces. Use kebab-case (e.g., "my-marketplace")',
     })
     .refine(
+      // 名称更新为 `>`，确保插件工具后续读取最新状态。
       name =>
         !name.includes('/') &&
         !name.includes('\\') &&
@@ -232,14 +277,17 @@ const MarketplaceNameSchema = lazySchema(() =>
           'Marketplace name cannot contain path separators (/ or \\), ".." sequences, or be "."',
       },
     )
+    // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
     .refine(name => !isBlockedOfficialName(name), {
       message:
         'Marketplace name impersonates an official Anthropic/Claude marketplace',
     })
+    // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
     .refine(name => name.toLowerCase() !== 'inline', {
       message:
         'Marketplace name "inline" is reserved for --plugin-dir session plugins',
     })
+    // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
     .refine(name => name.toLowerCase() !== 'builtin', {
       message: 'Marketplace name "builtin" is reserved for built-in plugins',
     }),
@@ -248,6 +296,7 @@ const MarketplaceNameSchema = lazySchema(() =>
 /**
  * Schema for plugin author information
  */
+// PluginAuthorSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginAuthorSchema = lazySchema(() =>
   z.object({
     name: z
@@ -271,11 +320,13 @@ export const PluginAuthorSchema = lazySchema(() =>
  * This schema validates the structure of plugin manifests and provides
  * runtime type checking when loading plugins from disk.
  */
+// PluginManifestMetadataSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestMetadataSchema = lazySchema(() =>
   z.object({
     name: z
       .string()
       .min(1, 'Plugin name cannot be empty')
+      // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
       .refine(name => !name.includes(' '), {
         message:
           'Plugin name cannot contain spaces. Use kebab-case (e.g., "my-plugin")',
@@ -325,6 +376,7 @@ const PluginManifestMetadataSchema = lazySchema(() =>
  * Defines the hooks that a plugin can provide to intercept and modify
  * Claude Code behavior at various lifecycle events.
  */
+// PluginHooksSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginHooksSchema = lazySchema(() =>
   z.object({
     description: z
@@ -332,6 +384,7 @@ export const PluginHooksSchema = lazySchema(() =>
       .optional()
       .describe('Brief, user-facing explanation of what these hooks provide'),
     hooks: z
+      // 链式调用 lazy，继续加工上一行在插件管理中产生的数据。
       .lazy(() => HooksSchema())
       .describe(
         'The hooks provided by the plugin, in the same format as the one used for settings',
@@ -345,6 +398,7 @@ export const PluginHooksSchema = lazySchema(() =>
  * Allows plugins to specify hooks either inline or via external files,
  * supplementing any hooks defined in the standard hooks/hooks.json location.
  */
+// PluginManifestHooksSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestHooksSchema = lazySchema(() =>
   z.object({
     hooks: z.union([
@@ -352,6 +406,7 @@ const PluginManifestHooksSchema = lazySchema(() =>
         'Path to file with additional hooks (in addition to those in hooks/hooks.json, if it exists), relative to the plugin root',
       ),
       z
+        // 链式调用 lazy，继续加工上一行在插件管理中产生的数据。
         .lazy(() => HooksSchema())
         .describe(
           'Additional hooks (in addition to those in hooks/hooks.json, if it exists)',
@@ -362,6 +417,7 @@ const PluginManifestHooksSchema = lazySchema(() =>
             'Path to file with additional hooks (in addition to those in hooks/hooks.json, if it exists), relative to the plugin root',
           ),
           z
+            // 链式调用 lazy，继续加工上一行在插件管理中产生的数据。
             .lazy(() => HooksSchema())
             .describe(
               'Additional hooks (in addition to those in hooks/hooks.json, if it exists)',
@@ -382,6 +438,7 @@ const PluginManifestHooksSchema = lazySchema(() =>
  * - source: Path to a markdown file
  * - content: Inline markdown content
  */
+// CommandMetadataSchema 命令数据保存`lazySchema`，供插件管理后续处理使用。
 export const CommandMetadataSchema = lazySchema(() =>
   z
     .object({
@@ -407,6 +464,7 @@ export const CommandMetadataSchema = lazySchema(() =>
         .describe('Tools allowed when command runs'),
     })
     .refine(
+      // data更新为 `> (data.source && !data.content) || (!data.source && data...`，确保插件工具后续读取最新状态。
       data => (data.source && !data.content) || (!data.source && data.content),
       {
         message:
@@ -426,6 +484,7 @@ export const CommandMetadataSchema = lazySchema(() =>
  * 2. Array of paths: ["./README.md", "./docs/guide.md"]
  * 3. Object mapping: { "about": { "source": "./README.md", "description": "..." } }
  */
+// PluginManifestCommandsSchema 命令数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestCommandsSchema = lazySchema(() =>
   z.object({
     commands: z.union([
@@ -457,6 +516,7 @@ const PluginManifestCommandsSchema = lazySchema(() =>
  * Allows plugins to specify extra agent files beyond those in the
  * standard agents/ directory.
  */
+// PluginManifestAgentsSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestAgentsSchema = lazySchema(() =>
   z.object({
     agents: z.union([
@@ -481,6 +541,7 @@ const PluginManifestAgentsSchema = lazySchema(() =>
  * Allows plugins to specify extra skill directories beyond those in the
  * standard skills/ directory.
  */
+// PluginManifestSkillsSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestSkillsSchema = lazySchema(() =>
   z.object({
     skills: z.union([
@@ -504,6 +565,7 @@ const PluginManifestSkillsSchema = lazySchema(() =>
  * Allows plugins to specify extra output style files or directories beyond those in the
  * standard output-styles/ directory.
  */
+// PluginManifestOutputStylesSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestOutputStylesSchema = lazySchema(() =>
   z.object({
     outputStyles: z.union([
@@ -524,11 +586,14 @@ const PluginManifestOutputStylesSchema = lazySchema(() =>
 )
 
 // Helper validators for LSP config
+// nonEmptyString保存`lazySchema`，供插件管理后续处理使用。
 const nonEmptyString = lazySchema(() => z.string().min(1))
+// fileExtension 文件数据保存`lazySchema`，供插件管理后续处理使用。
 const fileExtension = lazySchema(() =>
   z
     .string()
     .min(2)
+    // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
     .refine(ext => ext.startsWith('.'), {
       message: 'File extensions must start with dot (e.g., ".ts", not "ts")',
     }),
@@ -540,6 +605,7 @@ const fileExtension = lazySchema(() =>
  * Allows plugins to provide MCP servers either inline or via external
  * configuration files, supplementing any servers in .mcp.json.
  */
+// PluginManifestMcpServerSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestMcpServerSchema = lazySchema(() =>
   z.object({
     mcpServers: z.union([
@@ -584,6 +650,7 @@ const PluginManifestMcpServerSchema = lazySchema(() =>
  * Used by both the top-level manifest.userConfig and the per-channel
  * channels[].userConfig (assistant-mode channels).
  */
+// PluginUserConfigOptionSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginUserConfigOptionSchema = lazySchema(() =>
   z
     .object({
@@ -629,6 +696,7 @@ const PluginUserConfigOptionSchema = lazySchema(() =>
  * Values are available as ${user_config.KEY} in MCP/LSP server config, hook
  * commands, and (non-sensitive only) skill/agent content.
  */
+// PluginManifestUserConfigSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestUserConfigSchema = lazySchema(() =>
   z.object({
     userConfig: z
@@ -667,6 +735,7 @@ const PluginManifestUserConfigSchema = lazySchema(() =>
  * path to a JSON file we haven't read yet), so the check happens at load
  * time in mcpPluginIntegration.ts instead.
  */
+// PluginManifestChannelsSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestChannelsSchema = lazySchema(() =>
   z.object({
     channels: z
@@ -705,17 +774,22 @@ const PluginManifestChannelsSchema = lazySchema(() =>
 /**
  * Schema for individual LSP server configuration.
  */
+// LspServerConfigSchema 配置保存`lazySchema`，供插件管理后续处理使用。
 export const LspServerConfigSchema = lazySchema(() =>
   z.strictObject({
     command: z
       .string()
       .min(1)
       .refine(
+        // cmd 命令数据更新为 `> {`，确保插件工具后续读取最新状态。
         cmd => {
           // Commands with spaces should use args array instead
+          // 只有 `cmd.includes(' ') && !cmd.startsWith('/')` 满足时，插件管理才执行该分支。
           if (cmd.includes(' ') && !cmd.startsWith('/')) {
+            // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
             return false
           }
+          // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
           return true
         },
         {
@@ -732,6 +806,7 @@ export const LspServerConfigSchema = lazySchema(() =>
       .describe('Command-line arguments to pass to the server'),
     extensionToLanguage: z
       .record(fileExtension(), nonEmptyString())
+      // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
       .refine(record => Object.keys(record).length > 0, {
         message: 'extensionToLanguage must have at least one mapping',
       })
@@ -794,6 +869,7 @@ export const LspServerConfigSchema = lazySchema(() =>
  * - Object: inline server configs { "serverName": {...} }
  * - Array: mix of strings and objects
  */
+// PluginManifestLspServerSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestLspServerSchema = lazySchema(() =>
   z.object({
     lspServers: z.union([
@@ -834,17 +910,23 @@ const PluginManifestLspServerSchema = lazySchema(() =>
  * - "../../../etc/passwd"
  * - "package//name"
  */
+// NpmPackageNameSchema保存`lazySchema`，供插件管理后续处理使用。
 const NpmPackageNameSchema = lazySchema(() =>
   z
     .string()
     .refine(
+      // 名称更新为 `> !name.includes('..') && !name.includes('//')`，确保插件工具后续读取最新状态。
       name => !name.includes('..') && !name.includes('//'),
       'Package name cannot contain path traversal patterns',
     )
+    // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
     .refine(name => {
       // Allow scoped packages (@org/package) and regular packages
+      // scopedPackageRegex读取 `/^@[a-z0-9][a-z0-9-._]*\/[a-z0-9][a-z0-9-._]*$/` 对应条目，后续围绕该成员继续处理。
       const scopedPackageRegex = /^@[a-z0-9][a-z0-9-._]*\/[a-z0-9][a-z0-9-._]*$/
+      // regularPackageRegex 命名 `/^[a-z0-9][a-z0-9-._]*$/`，让后续代码直接表达这个值的用途。
       const regularPackageRegex = /^[a-z0-9][a-z0-9-._]*$/
+      // 返回 `scopedPackageRegex.test(name) || regularPackageRegex.test(name)`，作为插件管理这次计算的结果。
       return scopedPackageRegex.test(name) || regularPackageRegex.test(name)
     }, 'Invalid npm package name format'),
 )
@@ -854,6 +936,7 @@ const NpmPackageNameSchema = lazySchema(() =>
  * Accepts any record here; filtering to allowlisted keys happens at load time
  * in pluginLoader.ts via PluginSettingsSchema (derived from SettingsSchema).
  */
+// PluginManifestSettingsSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const PluginManifestSettingsSchema = lazySchema(() =>
   z.object({
     settings: z
@@ -881,6 +964,7 @@ const PluginManifestSettingsSchema = lazySchema(() =>
  * still fail at all levels. For developer feedback on unknown top-level
  * fields, use `claude plugin validate`.
  */
+// PluginManifestSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginManifestSchema = lazySchema(() =>
   z.object({
     ...PluginManifestMetadataSchema().shape,
@@ -903,6 +987,7 @@ export const PluginManifestSchema = lazySchema(() =>
  * Defines various ways to reference marketplace manifests including
  * direct URLs, GitHub repos, git URLs, npm packages, and local paths.
  */
+// MarketplaceSourceSchema 市场数据保存`lazySchema`，供插件管理后续处理使用。
 export const MarketplaceSourceSchema = lazySchema(() =>
   z.discriminatedUnion('source', [
     z.object({
@@ -1014,6 +1099,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         source: z.literal('settings'),
         name: MarketplaceNameSchema()
           .refine(
+            // 名称更新为 `> !ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(name.toLowerCas...`，确保插件工具后续读取最新状态。
             name => !ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(name.toLowerCase()),
             {
               message:
@@ -1043,6 +1129,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
   ]),
 )
 
+// gitSha保存`lazySchema`，供插件管理后续处理使用。
 export const gitSha = lazySchema(() =>
   z
     .string()
@@ -1059,6 +1146,7 @@ export const gitSha = lazySchema(() =>
  * Defines various ways to reference and install plugins including
  * local paths, npm packages, Python packages, git URLs, and GitHub repos.
  */
+// PluginSourceSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginSourceSchema = lazySchema(() =>
   z.union([
     RelativePath().describe(
@@ -1179,12 +1267,14 @@ export const PluginSourceSchema = lazySchema(() =>
  * occurrence, and MarketplaceSource appears three times in the settings schema
  * (extraKnownMarketplaces, strictKnownMarketplaces, blockedMarketplaces).
  */
+// SettingsMarketplacePluginSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 const SettingsMarketplacePluginSchema = lazySchema(() =>
   z
     .object({
       name: z
         .string()
         .min(1, 'Plugin name cannot be empty')
+        // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
         .refine(name => !name.includes(' '), {
           message:
             'Plugin name cannot contain spaces. Use kebab-case (e.g., "my-plugin")',
@@ -1198,6 +1288,7 @@ const SettingsMarketplacePluginSchema = lazySchema(() =>
       version: z.string().optional(),
       strict: z.boolean().optional(),
     })
+    // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
     .refine(p => typeof p.source !== 'string', {
       message:
         'Plugins in a settings-sourced marketplace must use remote sources ' +
@@ -1218,7 +1309,9 @@ const SettingsMarketplacePluginSchema = lazySchema(() =>
  * @param source The plugin source from PluginMarketplaceEntry
  * @returns true if the source is a local path, false if it's an external source
  */
+// isLocalPluginSource 封装插件工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isLocalPluginSource(source: PluginSource): source is string {
+  // 返回 `typeof source === 'string' && source.startsWith('./')`，作为插件管理这次计算的结果。
   return typeof source === 'string' && source.startsWith('./')
 }
 
@@ -1233,9 +1326,11 @@ export function isLocalPluginSource(source: PluginSource): source is string {
  * Contrast with isLocalPluginSource, which operates on PluginSource (the
  * per-plugin source inside a marketplace entry) and checks for `./` prefix.
  */
+// isLocalMarketplaceSource 封装插件工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isLocalMarketplaceSource(
   source: MarketplaceSource,
 ): source is Extract<MarketplaceSource, { source: 'file' | 'directory' }> {
+  // 返回 `source.source === 'file' || source.source === 'directory'`，作为插件管理这次计算的结果。
   return source.source === 'file' || source.source === 'directory'
 }
 
@@ -1251,6 +1346,7 @@ export function isLocalMarketplaceSource(
  * plugins from that marketplace would become unavailable. Stripping keeps
  * the blast radius to zero for custom/future fields.
  */
+// PluginMarketplaceEntrySchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginMarketplaceEntrySchema = lazySchema(() =>
   PluginManifestSchema()
     .partial()
@@ -1258,6 +1354,7 @@ export const PluginMarketplaceEntrySchema = lazySchema(() =>
       name: z
         .string()
         .min(1, 'Plugin name cannot be empty')
+        // 链式调用 refine，继续加工上一行在插件管理中产生的数据。
         .refine(name => !name.includes(' '), {
           message:
             'Plugin name cannot contain spaces. Use kebab-case (e.g., "my-plugin")',
@@ -1290,6 +1387,7 @@ export const PluginMarketplaceEntrySchema = lazySchema(() =>
  * Defines the structure for curated collections of plugins that can
  * be discovered and installed from a central repository.
  */
+// PluginMarketplaceSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginMarketplaceSchema = lazySchema(() =>
   z.object({
     name: MarketplaceNameSchema(),
@@ -1336,6 +1434,7 @@ export const PluginMarketplaceSchema = lazySchema(() =>
  * - "db_assistant@company-internal"
  * - "my.plugin@personal-marketplace"
  */
+// PluginIdSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginIdSchema = lazySchema(() =>
   z
     .string()
@@ -1345,6 +1444,7 @@ export const PluginIdSchema = lazySchema(() =>
     ),
 )
 
+// DEP_REF_REGEX 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const DEP_REF_REGEX =
   /^[a-z0-9][-a-z0-9._]*(@[a-z0-9][-a-z0-9._]*)?(@\^[^@]*)?$/i
 
@@ -1364,6 +1464,7 @@ const DEP_REF_REGEX =
  * constraints don't cause old clients to fail schema validation and reject
  * the whole plugin. See CC-993 for the eventual version-range design.
  */
+// DependencyRefSchema保存`lazySchema`，供插件管理后续处理使用。
 export const DependencyRefSchema = lazySchema(() =>
   z.union([
     z
@@ -1372,6 +1473,7 @@ export const DependencyRefSchema = lazySchema(() =>
         DEP_REF_REGEX,
         'Dependency must be a plugin name, optionally qualified with @marketplace',
       )
+      // 链式调用 transform，继续加工上一行在插件管理中产生的数据。
       .transform(s => s.replace(/@\^[^@]*$/, '')),
     z
       .object({
@@ -1386,6 +1488,7 @@ export const DependencyRefSchema = lazySchema(() =>
           .optional(),
       })
       .loose()
+      // 链式调用 transform，继续加工上一行在插件管理中产生的数据。
       .transform(o => (o.marketplace ? `${o.name}@${o.marketplace}` : o.name)),
   ]),
 )
@@ -1405,6 +1508,7 @@ export const DependencyRefSchema = lazySchema(() =>
  * - "db-assistant@company-internal"
  * - { id: "formatter@tools", version: "^2.0.0", required: true }
  */
+// SettingsPluginEntrySchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const SettingsPluginEntrySchema = lazySchema(() =>
   z.union([
     // Simple format: "plugin@marketplace"
@@ -1443,6 +1547,7 @@ export const SettingsPluginEntrySchema = lazySchema(() =>
  *   "installPath": "/home/user/.claude/plugins/installed/anthropic-tools/code-formatter"
  * }
  */
+// InstalledPluginSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const InstalledPluginSchema = lazySchema(() =>
   z.object({
     version: z.string().describe('Currently installed version'),
@@ -1479,6 +1584,7 @@ export const InstalledPluginSchema = lazySchema(() =>
  *   }
  * }
  */
+// InstalledPluginsFileSchemaV1 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const InstalledPluginsFileSchemaV1 = lazySchema(() =>
   z.object({
     version: z.literal(1).describe('Schema version 1'),
@@ -1503,6 +1609,7 @@ export const InstalledPluginsFileSchemaV1 = lazySchema(() =>
  * Note: 'flag' scope plugins (from --settings) are session-only and
  * are NOT persisted to installed_plugins.json.
  */
+// PluginScopeSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginScopeSchema = lazySchema(() =>
   z.enum(['managed', 'user', 'project', 'local']),
 )
@@ -1514,6 +1621,7 @@ export const PluginScopeSchema = lazySchema(() =>
  * For example, the same plugin could be installed at user scope with v1.0
  * and at project scope with v1.1.
  */
+// PluginInstallationEntrySchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const PluginInstallationEntrySchema = lazySchema(() =>
   z.object({
     scope: PluginScopeSchema().describe('Installation scope'),
@@ -1559,6 +1667,7 @@ export const PluginInstallationEntrySchema = lazySchema(() =>
  *   }
  * }
  */
+// InstalledPluginsFileSchemaV2 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const InstalledPluginsFileSchemaV2 = lazySchema(() =>
   z.object({
     version: z.literal(2).describe('Schema version 2'),
@@ -1572,6 +1681,7 @@ export const InstalledPluginsFileSchemaV2 = lazySchema(() =>
  * Combined schema that accepts both V1 and V2 formats
  * Used for reading existing files before migration
  */
+// InstalledPluginsFileSchema 插件数据保存`lazySchema`，供插件管理后续处理使用。
 export const InstalledPluginsFileSchema = lazySchema(() =>
   z.union([InstalledPluginsFileSchemaV1(), InstalledPluginsFileSchemaV2()]),
 )
@@ -1589,6 +1699,7 @@ export const InstalledPluginsFileSchema = lazySchema(() =>
  *   "lastUpdated": "2024-01-15T10:30:00Z"
  * }
  */
+// KnownMarketplaceSchema 市场数据保存`lazySchema`，供插件管理后续处理使用。
 export const KnownMarketplaceSchema = lazySchema(() =>
   z.object({
     source: MarketplaceSourceSchema().describe(
@@ -1621,6 +1732,7 @@ export const KnownMarketplaceSchema = lazySchema(() =>
  *   "company-internal": { "source": { ... }, "installLocation": "...", "lastUpdated": "..." }
  * }
  */
+// KnownMarketplacesFileSchema 市场数据保存`lazySchema`，供插件管理后续处理使用。
 export const KnownMarketplacesFileSchema = lazySchema(() =>
   z.record(
     z.string(), // Marketplace name as key
@@ -1644,38 +1756,54 @@ export const KnownMarketplacesFileSchema = lazySchema(() =>
  *
  * @see CommandMetadataSchema for runtime validation rules
  */
+// CommandMetadata 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CommandMetadata = z.infer<ReturnType<typeof CommandMetadataSchema>>
+// MarketplaceSource 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type MarketplaceSource = z.infer<
   ReturnType<typeof MarketplaceSourceSchema>
 >
+// PluginAuthor 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginAuthor = z.infer<ReturnType<typeof PluginAuthorSchema>>
+// PluginSource 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginSource = z.infer<ReturnType<typeof PluginSourceSchema>>
+// PluginManifest 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginManifest = z.infer<ReturnType<typeof PluginManifestSchema>>
+// PluginManifestChannel 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginManifestChannel = NonNullable<
   PluginManifest['channels']
 >[number]
 
+// PluginMarketplace 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginMarketplace = z.infer<
   ReturnType<typeof PluginMarketplaceSchema>
 >
+// PluginMarketplaceEntry 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginMarketplaceEntry = z.infer<
   ReturnType<typeof PluginMarketplaceEntrySchema>
 >
+// PluginId 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginId = z.infer<ReturnType<typeof PluginIdSchema>> // string in "plugin@marketplace" format
+// InstalledPlugin 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InstalledPlugin = z.infer<ReturnType<typeof InstalledPluginSchema>>
+// InstalledPluginsFileV1 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InstalledPluginsFileV1 = z.infer<
   ReturnType<typeof InstalledPluginsFileSchemaV1>
 >
+// InstalledPluginsFileV2 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InstalledPluginsFileV2 = z.infer<
   ReturnType<typeof InstalledPluginsFileSchemaV2>
 >
+// PluginScope 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginScope = z.infer<ReturnType<typeof PluginScopeSchema>>
+// PluginInstallationEntry 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PluginInstallationEntry = z.infer<
   ReturnType<typeof PluginInstallationEntrySchema>
 >
+// KnownMarketplace 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type KnownMarketplace = z.infer<
   ReturnType<typeof KnownMarketplaceSchema>
 >
+// KnownMarketplacesFile 固化插件管理里传递的数据形状，帮助调用方按同一结构读写字段。
 export type KnownMarketplacesFile = z.infer<
   ReturnType<typeof KnownMarketplacesFileSchema>
 > // Record<string, KnownMarketplace>

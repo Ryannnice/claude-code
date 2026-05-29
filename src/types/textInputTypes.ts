@@ -1,17 +1,28 @@
+// 类型依赖 { ContentBlockParam } 来自 @anthropic-ai/sdk/resources/messages.mjs，用于校准text Input Types的数据契约。
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs'
+// 类型依赖 { UUID } 来自 crypto，用于校准text Input Types的数据契约。
 import type { UUID } from 'crypto'
+// 类型依赖 React 来自 react，用于校准text Input Types的数据契约。
 import type React from 'react'
+// 类型依赖 { PermissionResult } 来自 ../entrypoints/agentSdkTypes.js，用于校准text Input Types的数据契约。
 import type { PermissionResult } from '../entrypoints/agentSdkTypes.js'
+// 类型依赖 { Key } 来自 ../ink.js，用于校准text Input Types的数据契约。
 import type { Key } from '../ink.js'
+// 类型依赖 { PastedContent } 来自 ../utils/config.js，用于校准text Input Types的数据契约。
 import type { PastedContent } from '../utils/config.js'
+// 类型依赖 { ImageDimensions } 来自 ../utils/imageResizer.js，用于校准text Input Types的数据契约。
 import type { ImageDimensions } from '../utils/imageResizer.js'
+// 类型依赖 { TextHighlight } 来自 ../utils/textHighlighting.js，用于校准text Input Types的数据契约。
 import type { TextHighlight } from '../utils/textHighlighting.js'
+// 类型依赖 { AgentId } 来自 ./ids.js，用于校准text Input Types的数据契约。
 import type { AgentId } from './ids.js'
+// 类型依赖 { AssistantMessage, MessageOrigin } 来自 ./message.js，用于校准text Input Types的数据契约。
 import type { AssistantMessage, MessageOrigin } from './message.js'
 
 /**
  * Inline ghost text for mid-input command autocomplete
  */
+// InlineGhostText 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type InlineGhostText = {
   /** The ghost text to display (e.g., "mit" for /commit) */
   readonly text: string
@@ -24,6 +35,7 @@ export type InlineGhostText = {
 /**
  * Base props for text input components
  */
+// BaseTextInputProps 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type BaseTextInputProps = {
   /**
    * Optional callback for handling history navigation on up arrow at start of input
@@ -33,6 +45,7 @@ export type BaseTextInputProps = {
   /**
    * Optional callback for handling history navigation on down arrow at end of input
    */
+  // 这个回调绑定到 readonly onHistoryDown?: () => void，负责text Input Types在该局部场景下的响应。
   readonly onHistoryDown?: () => void
 
   /**
@@ -74,21 +87,25 @@ export type BaseTextInputProps = {
   /**
    * Function to call when value updates.
    */
+  // 这个回调绑定到 readonly onChange: (value: string) => void，负责text Input Types在该局部场景下的响应。
   readonly onChange: (value: string) => void
 
   /**
    * Function to call when `Enter` is pressed, where first argument is a value of the input.
    */
+  // 这个回调绑定到 readonly onSubmit?: (value: string) => void，负责text Input Types在该局部场景下的响应。
   readonly onSubmit?: (value: string) => void
 
   /**
    * Function to call when Ctrl+C is pressed to exit.
    */
+  // 这个回调绑定到 readonly onExit?: () => void，负责text Input Types在该局部场景下的响应。
   readonly onExit?: () => void
 
   /**
    * Optional callback to show exit message
    */
+  // 这个回调绑定到 readonly onExitMessage?: (show: boolean, key?: string) => void，负责text Input Types在该局部场景下的响应。
   readonly onExitMessage?: (show: boolean, key?: string) => void
 
   /**
@@ -99,11 +116,13 @@ export type BaseTextInputProps = {
   /**
    * Optional callback to reset history position
    */
+  // 这个回调绑定到 readonly onHistoryReset?: () => void，负责text Input Types在该局部场景下的响应。
   readonly onHistoryReset?: () => void
 
   /**
    * Optional callback when input is cleared (e.g., double-escape)
    */
+  // 这个回调绑定到 readonly onClearInput?: () => void，负责text Input Types在该局部场景下的响应。
   readonly onClearInput?: () => void
 
   /**
@@ -120,6 +139,7 @@ export type BaseTextInputProps = {
   /**
    * Optional callback when an image is pasted
    */
+  // text Input Types在这里处理 `readonly onImagePaste?: (`，完成这一小步状态转换。
   readonly onImagePaste?: (
     base64Image: string,
     mediaType?: string,
@@ -131,11 +151,13 @@ export type BaseTextInputProps = {
   /**
    * Optional callback when a large text (over 800 chars) is pasted
    */
+  // 这个回调绑定到 readonly onPaste?: (text: string) => void，负责text Input Types在该局部场景下的响应。
   readonly onPaste?: (text: string) => void
 
   /**
    * Callback when the pasting state changes
    */
+  // 这个回调绑定到 readonly onIsPastingChange?: (isPasting: boolean) => void，负责text Input Types在该局部场景下的响应。
   readonly onIsPastingChange?: (isPasting: boolean) => void
 
   /**
@@ -159,6 +181,7 @@ export type BaseTextInputProps = {
   /**
    * Callback to set the offset of the cursor
    */
+  // 这个回调绑定到 onChangeCursorOffset: (offset: number) => void，负责text Input Types在该局部场景下的响应。
   onChangeCursorOffset: (offset: number) => void
 
   /**
@@ -170,6 +193,7 @@ export type BaseTextInputProps = {
   /**
    * Optional callback for undo functionality
    */
+  // 这个回调绑定到 readonly onUndo?: () => void，负责text Input Types在该局部场景下的响应。
   readonly onUndo?: () => void
 
   /**
@@ -198,12 +222,14 @@ export type BaseTextInputProps = {
    * (possibly transformed) input string; returning '' for a non-empty
    * input drops the event.
    */
+  // 这个回调绑定到 readonly inputFilter?: (input: string, key: Key) => string，负责text Input Types在该局部场景下的响应。
   readonly inputFilter?: (input: string, key: Key) => string
 }
 
 /**
  * Extended props for VimTextInput
  */
+// VimTextInputProps 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type VimTextInputProps = BaseTextInputProps & {
   /**
    * Initial vim mode to use
@@ -213,21 +239,26 @@ export type VimTextInputProps = BaseTextInputProps & {
   /**
    * Optional callback for mode changes
    */
+  // 这个回调绑定到 readonly onModeChange?: (mode: VimMode) => void，负责text Input Types在该局部场景下的响应。
   readonly onModeChange?: (mode: VimMode) => void
 }
 
 /**
  * Vim editor modes
  */
+// VimMode 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type VimMode = 'INSERT' | 'NORMAL'
 
 /**
  * Common properties for input hook results
  */
+// BaseInputState 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type BaseInputState = {
+  // 这个回调绑定到 onInput: (input: string, key: Key) => void，负责text Input Types在该局部场景下的响应。
   onInput: (input: string, key: Key) => void
   renderedValue: string
   offset: number
+  // 这个回调绑定到 setOffset: (offset: number) => void，负责text Input Types在该局部场景下的响应。
   setOffset: (offset: number) => void
   /** Cursor line (0-indexed) within the rendered text, accounting for wrapping. */
   cursorLine: number
@@ -249,25 +280,30 @@ export type BaseInputState = {
 /**
  * State for text input
  */
+// TextInputState 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TextInputState = BaseInputState
 
 /**
  * State for vim input with mode
  */
+// VimInputState 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type VimInputState = BaseInputState & {
   mode: VimMode
+  // 这个回调绑定到 setMode: (mode: VimMode) => void，负责text Input Types在该局部场景下的响应。
   setMode: (mode: VimMode) => void
 }
 
 /**
  * Input modes for the prompt
  */
+// PromptInputMode 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type PromptInputMode =
   | 'bash'
   | 'prompt'
   | 'orphaned-permission'
   | 'task-notification'
 
+// EditablePromptInputMode 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type EditablePromptInputMode = Exclude<
   PromptInputMode,
   `${string}-notification`
@@ -291,11 +327,13 @@ export type EditablePromptInputMode = Exclude<
  * The SleepTool is only available in proactive mode, so "wakes SleepTool"
  * is a no-op in normal mode.
  */
+// QueuePriority 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type QueuePriority = 'now' | 'next' | 'later'
 
 /**
  * Queued command type
  */
+// QueuedCommand 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type QueuedCommand = {
   value: string | Array<ContentBlockParam>
   mode: PromptInputMode
@@ -364,23 +402,32 @@ export type QueuedCommand = {
  * that converts PastedContent → ImageBlockParam so the filter and the
  * ID list stay in sync.
  */
+// isValidImagePaste 封装textInputTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isValidImagePaste(c: PastedContent): boolean {
+  // 返回 `c.type === 'image' && c.content.length > 0`，作为text Input Types这次计算的结果。
   return c.type === 'image' && c.content.length > 0
 }
 
 /** Extract image paste IDs from a QueuedCommand's pastedContents. */
+// getImagePasteIds 封装textInputTypes的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getImagePasteIds(
   pastedContents: Record<number, PastedContent> | undefined,
 ): number[] | undefined {
+  // pastedContents 集合缺失时提前走兜底路径，避免text Input Types继续依赖无效输入。
   if (!pastedContents) {
+    // 返回 `undefined`，作为text Input Types这次计算的结果。
     return undefined
   }
+  // ids 集合派生`Object.values`，供text Input Types后续处理使用。
   const ids = Object.values(pastedContents)
     .filter(isValidImagePaste)
+    // 链式调用 map，继续加工上一行在text Input Types中产生的数据。
     .map(c => c.id)
+  // 返回 `ids.length > 0 ? ids : undefined`，作为text Input Types这次计算的结果。
   return ids.length > 0 ? ids : undefined
 }
 
+// OrphanedPermission 固化text Input Types里传递的数据形状，帮助调用方按同一结构读写字段。
 export type OrphanedPermission = {
   permissionResult: PermissionResult
   assistantMessage: AssistantMessage

@@ -1,28 +1,54 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 memo、ReactNode、useMemo、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import { memo, type ReactNode, useMemo, useRef } from 'react';
+// 引入 isBridgeEnabled，将 ../../bridge/bridgeEnabled.js 中已经封装好的能力接到本文件流程里。
 import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js';
+// 引入 getBridgeStatus，将 ../../bridge/bridgeStatusUtil.js 中已经封装好的能力接到本文件流程里。
 import { getBridgeStatus } from '../../bridge/bridgeStatusUtil.js';
+// 引入 useSetPromptOverlay，将 ../../context/promptOverlayContext.js 中已经封装好的能力接到本文件流程里。
 import { useSetPromptOverlay } from '../../context/promptOverlayContext.js';
+// 类型依赖 { VerificationStatus } 来自 ../../hooks/useApiKeyVerification.js，用于校准终端渲染的数据契约。
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js';
+// 类型依赖 { IDESelection } 来自 ../../hooks/useIdeSelection.js，用于校准终端渲染的数据契约。
 import type { IDESelection } from '../../hooks/useIdeSelection.js';
+// 引入 useSettings，将 ../../hooks/useSettings.js 中已经封装好的能力接到本文件流程里。
 import { useSettings } from '../../hooks/useSettings.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { MCPServerConnection } 来自 ../../services/mcp/types.js，用于校准终端渲染的数据契约。
 import type { MCPServerConnection } from '../../services/mcp/types.js';
+// 引入 useAppState，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../state/AppState.js';
+// 类型依赖 { ToolPermissionContext } 来自 ../../Tool.js，用于校准终端渲染的数据契约。
 import type { ToolPermissionContext } from '../../Tool.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../../types/message.js';
+// 类型依赖 { PromptInputMode, VimMode } 来自 ../../types/textInputTypes.js，用于校准终端渲染的数据契约。
 import type { PromptInputMode, VimMode } from '../../types/textInputTypes.js';
+// 类型依赖 { AutoUpdaterResult } 来自 ../../utils/autoUpdater.js，用于校准终端渲染的数据契约。
 import type { AutoUpdaterResult } from '../../utils/autoUpdater.js';
+// 复用 isFullscreenEnvEnabled 工具函数，把通用处理留在 ../../utils/fullscreen.js 中维护。
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
+// 复用 isUndercover 工具函数，把通用处理留在 ../../utils/undercover.js 中维护。
 import { isUndercover } from '../../utils/undercover.js';
+// 引入 CoordinatorTaskPanel、useCoordinatorTaskCount，将 ../CoordinatorAgentStatus.js 中已经封装好的能力接到本文件流程里。
 import { CoordinatorTaskPanel, useCoordinatorTaskCount } from '../CoordinatorAgentStatus.js';
+// 引入 getLastAssistantMessageId、StatusLine、statusLineShouldDisplay，将 ../StatusLine.js 中已经封装好的能力接到本文件流程里。
 import { getLastAssistantMessageId, StatusLine, statusLineShouldDisplay } from '../StatusLine.js';
+// 引入 Notifications，将 ./Notifications.js 中已经封装好的能力接到本文件流程里。
 import { Notifications } from './Notifications.js';
+// 引入 PromptInputFooterLeftSide，将 ./PromptInputFooterLeftSide.js 中已经封装好的能力接到本文件流程里。
 import { PromptInputFooterLeftSide } from './PromptInputFooterLeftSide.js';
+// 引入 PromptInputFooterSuggestions、SuggestionItem，将 ./PromptInputFooterSuggestions.js 中已经封装好的能力接到本文件流程里。
 import { PromptInputFooterSuggestions, type SuggestionItem } from './PromptInputFooterSuggestions.js';
+// 引入 PromptInputHelpMenu，将 ./PromptInputHelpMenu.js 中已经封装好的能力接到本文件流程里。
 import { PromptInputHelpMenu } from './PromptInputHelpMenu.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   apiKeyStatus: VerificationStatus;
   debug: boolean;
@@ -35,7 +61,9 @@ type Props = {
   autoUpdaterResult: AutoUpdaterResult | null;
   isAutoUpdating: boolean;
   verbose: boolean;
+  // 这个回调绑定到 onAutoUpdaterResult: (result: AutoUpdaterResult) => void;，负责终端渲染在该局部场景下的响应。
   onAutoUpdaterResult: (result: AutoUpdaterResult) => void;
+  // 这个回调绑定到 onChangeIsUpdating: (isUpdating: boolean) => void;，负责终端渲染在该局部场景下的响应。
   onChangeIsUpdating: (isUpdating: boolean) => void;
   suggestions: SuggestionItem[];
   selectedSuggestion: number;
@@ -56,10 +84,12 @@ type Props = {
   messages: Message[];
   isSearching: boolean;
   historyQuery: string;
+  // 这个回调绑定到 setHistoryQuery: (query: string) => void;，负责终端渲染在该局部场景下的响应。
   setHistoryQuery: (query: string) => void;
   historyFailedMatch: boolean;
   onOpenTasksDialog?: (taskId?: string) => void;
 };
+// PromptInputFooter 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function PromptInputFooter({
   apiKeyStatus,
   debug,
@@ -94,19 +124,27 @@ function PromptInputFooter({
   historyFailedMatch,
   onOpenTasksDialog
 }: Props): ReactNode {
+  // settings 集合保存`useSettings`，供终端渲染后续处理使用。
   const settings = useSettings();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns,
     rows
   } = useTerminalSize();
+  // messagesRef 引用保存`useRef`，供终端渲染后续处理使用。
   const messagesRef = useRef(messages);
+  // current更新为 `messages`，确保提示输入组件后续读取最新状态。
   messagesRef.current = messages;
+  // lastAssistantMessageId 消息数据保存`useMemo`，供终端渲染后续处理使用。
   const lastAssistantMessageId = useMemo(() => getLastAssistantMessageId(messages), [messages]);
+  // isNarrow标记终端渲染提示输入组件 Prompt Input Footer是否启用对应路径。
   const isNarrow = columns < 80;
   // In fullscreen the bottom slot is flexShrink:0, so every row here is a row
   // stolen from the ScrollBox. Drop the optional StatusLine first. Non-fullscreen
   // has terminal scrollback to absorb overflow, so we never hide StatusLine there.
+  // isFullscreen记录 `isFullscreenEnvEnabled` 是否成立，终端渲染随后按该结果分支。
   const isFullscreen = isFullscreenEnvEnabled();
+  // isShort标记终端渲染提示输入组件 Prompt Input Footer是否启用对应路径。
   const isShort = isFullscreen && rows < 24;
 
   // Pill highlights when tasks is the active footer item AND no specific
@@ -114,27 +152,38 @@ function PromptInputFooter({
   // moved into CoordinatorTaskPanel, so the pill should un-highlight.
   // coordinatorTaskCount === 0 covers the bash-only case (no agent rows
   // exist, pill is the only selectable item).
+  // coordinatorTaskCount 数量保存`useCoordinatorTaskCount`，供终端渲染后续处理使用。
   const coordinatorTaskCount = useCoordinatorTaskCount();
+  // coordinatorTaskIndex 索引保存`useAppState`，供终端渲染后续处理使用。
   const coordinatorTaskIndex = useAppState(s => s.coordinatorTaskIndex);
+  // pillSelected标记终端渲染提示输入组件 Prompt Input Footer是否启用对应路径。
   const pillSelected = tasksSelected && (coordinatorTaskCount === 0 || coordinatorTaskIndex < 0);
 
   // Hide `? for shortcuts` if the user has a custom status line, or during ctrl-r
+  // suppressHint保存`statusLineShouldDisplay`，供终端渲染后续处理使用。
   const suppressHint = suppressHintFromProps || statusLineShouldDisplay(settings) || isSearching;
   // Fullscreen: portal data to FullscreenLayout — see promptOverlayContext.tsx
+  // overlayData保存`useMemo`，供终端渲染后续处理使用。
   const overlayData = useMemo(() => isFullscreen && suggestions.length ? {
     suggestions,
     selectedSuggestion,
     maxColumnWidth
   } : null, [isFullscreen, suggestions, selectedSuggestion, maxColumnWidth]);
+  // 调用 useSetPromptOverlay，触发终端渲染此处需要的副作用。
   useSetPromptOverlay(overlayData);
+  // 只有 `suggestions.length && !isFullscreen` 满足时，终端渲染才执行该分支。
   if (suggestions.length && !isFullscreen) {
+    // 返回 `<Box paddingX={2} paddingY={0}>`，作为终端渲染这次计算的结果。
     return <Box paddingX={2} paddingY={0}>
         <PromptInputFooterSuggestions suggestions={suggestions} selectedSuggestion={selectedSuggestion} maxColumnWidth={maxColumnWidth} />
       </Box>;
   }
+  // 满足 `helpOpen` 时，终端渲染执行该分支。
   if (helpOpen) {
+    // 返回 `<PromptInputHelpMenu dimColor={true} fixedWidth={true} paddingX={2} />`，作为终端渲染这次计算的结果。
     return <PromptInputHelpMenu dimColor={true} fixedWidth={true} paddingX={2} />;
   }
+  // 返回 `<>`，作为终端渲染这次计算的结果。
   return <>
       <Box flexDirection={isNarrow ? 'column' : 'row'} justifyContent={isNarrow ? 'flex-start' : 'space-between'} paddingX={2} gap={isNarrow ? 0 : 1}>
         <Box flexDirection="column" flexShrink={isNarrow ? 0 : 1}>
@@ -151,27 +200,37 @@ function PromptInputFooter({
     </>;
 }
 export default memo(PromptInputFooter);
+// BridgeStatusProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type BridgeStatusProps = {
   bridgeSelected: boolean;
 };
+// BridgeStatusIndicator 封装提示输入组件的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function BridgeStatusIndicator({
   bridgeSelected
 }: BridgeStatusProps): React.ReactNode {
+  // 满足 `!feature('BRIDGE_MODE')` 时，终端渲染执行该分支。
   if (!feature('BRIDGE_MODE')) return null;
 
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // enabled保存`useAppState`，供终端渲染后续处理使用。
   const enabled = useAppState(s => s.replBridgeEnabled);
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // connected保存`useAppState`，供终端渲染后续处理使用。
   const connected = useAppState(s_0 => s_0.replBridgeConnected);
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // sessionActive 会话数据保存`useAppState`，供终端渲染后续处理使用。
   const sessionActive = useAppState(s_1 => s_1.replBridgeSessionActive);
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // reconnecting保存`useAppState`，供终端渲染后续处理使用。
   const reconnecting = useAppState(s_2 => s_2.replBridgeReconnecting);
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
+  // explicit保存`useAppState`，供终端渲染后续处理使用。
   const explicit = useAppState(s_3 => s_3.replBridgeExplicit);
 
   // Failed state is surfaced via notification (useReplBridge), not a footer pill.
+  // 只有 `!isBridgeEnabled() || !enabled` 满足时，终端渲染才执行该分支。
   if (!isBridgeEnabled() || !enabled) return null;
+  // status 集合读取`getBridgeStatus`，供终端渲染后续处理使用。
   const status = getBridgeStatus({
     error: undefined,
     connected,
@@ -180,9 +239,12 @@ function BridgeStatusIndicator({
   });
 
   // For implicit (config-driven) remote, only show the reconnecting state
+  // `!explicit && status.label` 与 `'Remote Control rec` 不一致时刷新派生状态，避免使用过期结果。
   if (!explicit && status.label !== 'Remote Control reconnecting') {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 返回 `<Text color={bridgeSelected ? 'background' : status.color} inverse={bri...`，作为终端渲染这次计算的结果。
   return <Text color={bridgeSelected ? 'background' : status.color} inverse={bridgeSelected} wrap="truncate">
       {status.label}
       {bridgeSelected && <Text dimColor> · Enter to view</Text>}

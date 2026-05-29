@@ -4,11 +4,13 @@
  * doesn't affect permission logic or auto-approval.
  */
 
+// DestructivePattern 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type DestructivePattern = {
   pattern: RegExp
   warning: string
 }
 
+// DESTRUCTIVE_PATTERNS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
   // Git — data loss / hard to reverse
   {
@@ -92,11 +94,16 @@ const DESTRUCTIVE_PATTERNS: DestructivePattern[] = [
  * Checks if a bash command matches known destructive patterns.
  * Returns a human-readable warning string, or null if no destructive pattern is detected.
  */
+// getDestructiveCommandWarning 承担工具调用中的独立步骤，串起Bash 工具 destructive Command Warning需要的输入整理、状态更新和结果输出。
 export function getDestructiveCommandWarning(command: string): string | null {
+  // 遍历 const { pattern, warning } of DESTRUCTIVE_PATTERNS，让工具调用逐项完成同一类处理。
   for (const { pattern, warning } of DESTRUCTIVE_PATTERNS) {
+    // 判断 pattern.test(command)，将工具调用分流到只适用于该条件的处理路径。
     if (pattern.test(command)) {
+      // 返回 warning，把工具调用这个分支的结果交还调用方。
       return warning
     }
   }
+  // 返回 null，把工具调用这个分支的结果交还调用方。
   return null
 }

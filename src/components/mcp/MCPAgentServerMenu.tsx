@@ -1,19 +1,35 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useCallback、useEffect、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+// 类型依赖 { CommandResultDisplay } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from '../../commands.js';
+// 引入 Box、color、Link、Text、useTheme，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
+// 引入 useKeybinding，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+// 接入 AuthenticationCancelledError、performMCPOAuthFlow 服务层能力，把外部通信或共享状态交给 ../../services/mcp/auth.js 处理。
 import { AuthenticationCancelledError, performMCPOAuthFlow } from '../../services/mcp/auth.js';
+// 复用 capitalize 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { capitalize } from '../../utils/stringUtils.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 Select，将 ../CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../CustomSelect/index.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 Dialog，将 ../design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from '../design-system/Dialog.js';
+// 引入 KeyboardShortcutHint，将 ../design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
+// 引入 Spinner，将 ../Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from '../Spinner.js';
+// 类型依赖 { AgentMcpServerInfo } 来自 ./types.js，用于校准终端渲染的数据契约。
 import type { AgentMcpServerInfo } from './types.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   agentServer: AgentMcpServerInfo;
+  // 这个回调绑定到 onCancel: () => void;，负责终端渲染在该局部场景下的响应。
   onCancel: () => void;
   onComplete?: (result?: string, options?: {
     display?: CommandResultDisplay;
@@ -25,62 +41,94 @@ type Props = {
  * These servers are defined in agent frontmatter and only connect when the agent runs.
  * For HTTP/SSE servers, this allows pre-authentication before using the agent.
  */
+// MCPAgentServerMenu 封装MCP 界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function MCPAgentServerMenu({
   agentServer,
   onCancel,
   onComplete
 }: Props): React.ReactNode {
+  // 从 `useTheme()` 按位置拆出 theme，让MCP 界面组件 MCPAgent Server Menu分别处理这些返回值。
   const [theme] = useTheme();
+  // isAuthenticating 由 React state 持有，setIsAuthenticating 会在用户操作或异步结果返回时触发刷新。
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  // 错误 由 React state 持有，setError 会在用户操作或异步结果返回时触发刷新。
   const [error, setError] = useState<string | null>(null);
+  // authorizationUrl 由 React state 持有，setAuthorizationUrl 会在用户操作或异步结果返回时触发刷新。
   const [authorizationUrl, setAuthorizationUrl] = useState<string | null>(null);
+  // authAbortControllerRef 引用保存 hook 状态，让终端渲染MCP 界面组件 MCPAgent Server Menu跨渲染复用同一个容器。
   const authAbortControllerRef = useRef<AbortController | null>(null);
 
   // Abort OAuth flow on unmount so the callback server is closed even if a
   // parent component's Esc handler navigates away before ours fires.
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => () => authAbortControllerRef.current?.abort(), []);
 
   // Handle ESC to cancel authentication flow
+  // handleEscCancel保存`useCallback`，供终端渲染后续处理使用。
   const handleEscCancel = useCallback(() => {
+    // 满足 `isAuthenticating` 时，终端渲染执行该分支。
     if (isAuthenticating) {
+      // 调用 authAbortControllerRef.current?.abort();，完成这一处局部操作。
       authAbortControllerRef.current?.abort();
+      // current更新为 `null`，确保MCP 界面后续读取最新状态。
       authAbortControllerRef.current = null;
+      // setIsAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
       setIsAuthenticating(false);
+      // setAuthorizationUrl 写入新的状态值，使终端渲染后续读取保持一致。
       setAuthorizationUrl(null);
     }
   }, [isAuthenticating]);
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleEscCancel, {
     context: 'Confirmation',
     isActive: isAuthenticating
   });
+  // handleAuthenticate保存`useCallback`，供终端渲染后续处理使用。
   const handleAuthenticate = useCallback(async () => {
+    // 只有 `!agentServer.needsAuth || !agentServer.url` 满足时，终端渲染才执行该分支。
     if (!agentServer.needsAuth || !agentServer.url) {
+      // MCP 界面组件 MCPAgent Server Menu在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setIsAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
     setIsAuthenticating(true);
+    // setError 写入新的状态值，使终端渲染后续读取保持一致。
     setError(null);
+    // controller保存`AbortController`，供终端渲染后续处理使用。
     const controller = new AbortController();
+    // current更新为 `controller`，确保MCP 界面后续读取最新状态。
     authAbortControllerRef.current = controller;
+    // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
     try {
       // Create a temporary config for OAuth
+      // tempConfig 配置 集中保存终端渲染MCP 界面组件 MCPAgent Server Menu要一起传递的字段。
       const tempConfig = {
         type: agentServer.transport as 'http' | 'sse',
         url: agentServer.url
       };
+      // 等待 `performMCPOAuthFlow(agentServer.name, tempConfig, setAuthorizationUrl, ...` 完成，再继续MCP 界面组件 MCPAgent Server Menu的异步流程。
       await performMCPOAuthFlow(agentServer.name, tempConfig, setAuthorizationUrl, controller.signal);
+      // 调用 onComplete?.(`Authentication successful for ${agentServer.name}. The server will connect when …，完成这一处局部操作。
       onComplete?.(`Authentication successful for ${agentServer.name}. The server will connect when the agent runs.`);
     } catch (err) {
       // Don't show error if it was a cancellation
+      // 只有 `err instanceof Error && !(err instanceof AuthenticationCancelledError)` 满足时，终端渲染才执行该分支。
       if (err instanceof Error && !(err instanceof AuthenticationCancelledError)) {
+        // setError 写入新的状态值，使终端渲染后续读取保持一致。
         setError(err.message);
       }
     } finally {
+      // setIsAuthenticating 写入新的状态值，使终端渲染后续读取保持一致。
       setIsAuthenticating(false);
+      // current更新为 `null`，确保MCP 界面后续读取最新状态。
       authAbortControllerRef.current = null;
     }
   }, [agentServer, onComplete]);
+  // capitalizedServerName保存`capitalize`，供终端渲染后续处理使用。
   const capitalizedServerName = capitalize(String(agentServer.name));
+  // 满足 `isAuthenticating` 时，终端渲染执行该分支。
   if (isAuthenticating) {
+    // 返回 `<Box flexDirection="column" gap={1} padding={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="claude">Authenticating with {agentServer.name}…</Text>
         <Box>
@@ -102,19 +150,24 @@ export function MCPAgentServerMenu({
         </Box>
       </Box>;
   }
+  // menuOptions 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
   const menuOptions = [];
 
   // Only show authenticate option for HTTP/SSE servers
+  // 满足 `agentServer.needsAuth` 时，终端渲染执行该分支。
   if (agentServer.needsAuth) {
+    // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
     menuOptions.push({
       label: agentServer.isAuthenticated ? 'Re-authenticate' : 'Authenticate',
       value: 'auth'
     });
   }
+  // menuOptions 集合追加新条目，保持收集顺序与输入顺序一致。
   menuOptions.push({
     label: 'Back',
     value: 'back'
   });
+  // 返回 `<Dialog title={`${capitalizedServerName} MCP Server`} subtitle="agent-o...`，作为终端渲染这次计算的结果。
   return <Dialog title={`${capitalizedServerName} MCP Server`} subtitle="agent-only" onCancel={onCancel} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
             <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
             <KeyboardShortcutHint shortcut="Enter" action="confirm" />
@@ -167,13 +220,19 @@ export function MCPAgentServerMenu({
         </Box>}
 
       <Box>
+        {/* 这个回调绑定到 <Select options={menuOptions} onChange={async value => {，负责终端渲染在该局部场景下的响应。 */}
         <Select options={menuOptions} onChange={async value => {
+        // 按照 value 的取值选择终端渲染的具体处理分支。
         switch (value) {
           case 'auth':
+            // 等待 `handleAuthenticate()` 完成，再继续MCP 界面组件 MCPAgent Server Menu的异步流程。
             await handleAuthenticate();
+            // 结束这个分支或循环，避免终端渲染继续落入后续路径。
             break;
           case 'back':
+            // 调用 onCancel，触发终端渲染此处需要的副作用。
             onCancel();
+            // 结束这个分支或循环，避免终端渲染继续落入后续路径。
             break;
         }
       }} onCancel={onCancel} />

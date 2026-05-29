@@ -1,9 +1,15 @@
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4'
+// 接入 getFeatureValue_DEPRECATED 服务层能力，把外部通信或共享状态交给 ../services/analytics/growthbook.js 处理。
 import { getFeatureValue_DEPRECATED } from '../services/analytics/growthbook.js'
+// 复用 lazySchema 工具函数，把通用处理留在 ../utils/lazySchema.js 中维护。
 import { lazySchema } from '../utils/lazySchema.js'
+// 复用 lt 工具函数，把通用处理留在 ../utils/semver.js 中维护。
 import { lt } from '../utils/semver.js'
+// 引入 isEnvLessBridgeEnabled，将 ./bridgeEnabled.js 中已经封装好的能力接到本文件流程里。
 import { isEnvLessBridgeEnabled } from './bridgeEnabled.js'
 
+// EnvLessBridgeConfig 固化远程桥接会话里传递的数据形状，帮助调用方按同一结构读写字段。
 export type EnvLessBridgeConfig = {
   // withRetry — init-phase backoff (createSession, POST /bridge, recovery /bridge)
   init_retry_max_attempts: number
@@ -41,6 +47,7 @@ export type EnvLessBridgeConfig = {
   should_show_app_upgrade_message: boolean
 }
 
+// DEFAULT_ENV_LESS_BRIDGE_CONFIG 配置 集中保存远程桥接 env Less Bridge Config要一起传递的字段。
 export const DEFAULT_ENV_LESS_BRIDGE_CONFIG: EnvLessBridgeConfig = {
   init_retry_max_attempts: 3,
   init_retry_base_delay_ms: 500,
@@ -59,6 +66,7 @@ export const DEFAULT_ENV_LESS_BRIDGE_CONFIG: EnvLessBridgeConfig = {
 
 // Floors reject the whole object on violation (fall back to DEFAULT) rather
 // than partially trusting — same defense-in-depth as pollConfig.ts.
+// envLessBridgeConfigSchema 配置保存`lazySchema`，供远程桥接会话后续处理使用。
 const envLessBridgeConfigSchema = lazySchema(() =>
   z.object({
     init_retry_max_attempts: z.number().int().min(1).max(10).default(3),
@@ -103,11 +111,16 @@ const envLessBridgeConfigSchema = lazySchema(() =>
     connect_timeout_ms: z.number().int().min(5_000).max(60_000).default(15_000),
     min_version: z
       .string()
+      // 链式调用 refine，继续加工上一行在远程桥接会话中产生的数据。
       .refine(v => {
+        // 保护这一段可能失败的远程桥接会话操作，确保异常能进入相邻错误处理。
         try {
+          // 调用 lt，触发远程桥接会话此处需要的副作用。
           lt(v, '0.0.0')
+          // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
           return true
         } catch {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false
         }
       })
@@ -127,12 +140,16 @@ const envLessBridgeConfigSchema = lazySchema(() =>
  * value instead of the stale-on-first-read disk cache. The _DEPRECATED suffix
  * warns against startup-path usage, which this isn't.
  */
+// getEnvLessBridgeConfig 封装Bridge 通信的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function getEnvLessBridgeConfig(): Promise<EnvLessBridgeConfig> {
+  // 原始文本 等待 `getFeatureValue_DEPRECATED<unknown>(`，确保继续执行前已有结果。
   const raw = await getFeatureValue_DEPRECATED<unknown>(
     'tengu_bridge_repl_v2_config',
     DEFAULT_ENV_LESS_BRIDGE_CONFIG,
   )
+  // 解析结果保存`envLessBridgeConfigSchema`，供远程桥接会话后续处理使用。
   const parsed = envLessBridgeConfigSchema().safeParse(raw)
+  // 返回 `parsed.success ? parsed.data : DEFAULT_ENV_LESS_BRIDGE_CONFIG`，作为远程桥接会话这次计算的结果。
   return parsed.success ? parsed.data : DEFAULT_ENV_LESS_BRIDGE_CONFIG
 }
 
@@ -144,11 +161,16 @@ export async function getEnvLessBridgeConfig(): Promise<EnvLessBridgeConfig> {
  * instead of tengu_bridge_min_version so the two implementations can enforce
  * independent floors.
  */
+// checkEnvLessBridgeMinVersion 封装Bridge 通信的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function checkEnvLessBridgeMinVersion(): Promise<string | null> {
+  // cfg读取`getEnvLessBridgeConfig`，供远程桥接会话后续处理使用。
   const cfg = await getEnvLessBridgeConfig()
+  // 组合条件 `cfg.min_version && lt(MACRO.VERSION, cfg.min_version)` 成立时，远程桥接会话才启用这条专门路径。
   if (cfg.min_version && lt(MACRO.VERSION, cfg.min_version)) {
+    // 返回 ``Your version of Claude Code (${MACRO.VERSION}) is too old for Remote C...`，作为远程桥接会话这次计算的结果。
     return `Your version of Claude Code (${MACRO.VERSION}) is too old for Remote Control.\nVersion ${cfg.min_version} or higher is required. Run \`claude update\` to update.`
   }
+  // 返回 `null`，作为远程桥接会话这次计算的结果。
   return null
 }
 
@@ -158,8 +180,12 @@ export async function checkEnvLessBridgeMinVersion(): Promise<string | null> {
  * AND the should_show_app_upgrade_message config bit is set — lets us
  * roll the v2 bridge before the app ships the new session-list query.
  */
+// shouldShowAppUpgradeMessage 封装Bridge 通信的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function shouldShowAppUpgradeMessage(): Promise<boolean> {
+  // 满足 `!isEnvLessBridgeEnabled()` 时，远程桥接会话执行该分支。
   if (!isEnvLessBridgeEnabled()) return false
+  // cfg读取`getEnvLessBridgeConfig`，供远程桥接会话后续处理使用。
   const cfg = await getEnvLessBridgeConfig()
+  // 返回 `cfg.should_show_app_upgrade_message`，作为远程桥接会话这次计算的结果。
   return cfg.should_show_app_upgrade_message
 }

@@ -1,20 +1,38 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 React、useCallback、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+// 引入 useTerminalSize，将 ../../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js';
+// 类型依赖 { KeyboardEvent } 来自 ../../../ink/events/keyboard-event.js，用于校准终端渲染的数据契约。
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js';
+// 引入 Box、Text，将 ../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../../ink.js';
+// 引入 useKeybinding、useKeybindings，将 ../../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding, useKeybindings } from '../../../keybindings/useKeybinding.js';
+// 引入 useAppState，将 ../../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../../state/AppState.js';
+// 类型依赖 { Question } 来自 ../../../tools/AskUserQuestionTool/AskUserQuestionTool.js，用于校准终端渲染的数据契约。
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js';
+// 复用 getExternalEditor 工具函数，把通用处理留在 ../../../utils/editor.js 中维护。
 import { getExternalEditor } from '../../../utils/editor.js';
+// 复用 toIDEDisplayName 工具函数，把通用处理留在 ../../../utils/ide.js 中维护。
 import { toIDEDisplayName } from '../../../utils/ide.js';
+// 复用 editPromptInEditor 工具函数，把通用处理留在 ../../../utils/promptEditor.js 中维护。
 import { editPromptInEditor } from '../../../utils/promptEditor.js';
+// 引入 Divider，将 ../../design-system/Divider.js 中已经封装好的能力接到本文件流程里。
 import { Divider } from '../../design-system/Divider.js';
+// 引入 TextInput，将 ../../TextInput.js 中已经封装好的能力接到本文件流程里。
 import TextInput from '../../TextInput.js';
+// 引入 PermissionRequestTitle，将 ../PermissionRequestTitle.js 中已经封装好的能力接到本文件流程里。
 import { PermissionRequestTitle } from '../PermissionRequestTitle.js';
+// 引入 PreviewBox，将 ./PreviewBox.js 中已经封装好的能力接到本文件流程里。
 import { PreviewBox } from './PreviewBox.js';
+// 引入 QuestionNavigationBar，将 ./QuestionNavigationBar.js 中已经封装好的能力接到本文件流程里。
 import { QuestionNavigationBar } from './QuestionNavigationBar.js';
+// 类型依赖 { QuestionState } 来自 ./use-multiple-choice-state.js，用于校准终端渲染的数据契约。
 import type { QuestionState } from './use-multiple-choice-state.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   question: Question;
   questions: Question[];
@@ -24,13 +42,19 @@ type Props = {
   hideSubmitTab?: boolean;
   minContentHeight?: number;
   minContentWidth?: number;
+  // 这个回调绑定到 onUpdateQuestionState: (questionText: string, updates: Partial<QuestionState>, isMul…，负责终端渲染在该局部场景下的响应。
   onUpdateQuestionState: (questionText: string, updates: Partial<QuestionState>, isMultiSelect: boolean) => void;
+  // 这个回调绑定到 onAnswer: (questionText: string, label: string | string[], textInput?: string, shoul…，负责终端渲染在该局部场景下的响应。
   onAnswer: (questionText: string, label: string | string[], textInput?: string, shouldAdvance?: boolean) => void;
+  // 这个回调绑定到 onTextInputFocus: (isInInput: boolean) => void;，负责终端渲染在该局部场景下的响应。
   onTextInputFocus: (isInInput: boolean) => void;
+  // 这个回调绑定到 onCancel: () => void;，负责终端渲染在该局部场景下的响应。
   onCancel: () => void;
   onTabPrev?: () => void;
   onTabNext?: () => void;
+  // 这个回调绑定到 onRespondToClaude: () => void;，负责终端渲染在该局部场景下的响应。
   onRespondToClaude: () => void;
+  // 这个回调绑定到 onFinishPlanInterview: () => void;，负责终端渲染在该局部场景下的响应。
   onFinishPlanInterview: () => void;
 };
 
@@ -38,6 +62,7 @@ type Props = {
  * A side-by-side question view for questions with preview content.
  * Displays a vertical option list on the left with a preview panel on the right.
  */
+// PreviewQuestionView 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function PreviewQuestionView({
   question,
   questions,
@@ -56,62 +81,103 @@ export function PreviewQuestionView({
   onRespondToClaude,
   onFinishPlanInterview
 }: Props): React.ReactNode {
+  // isInPlanMode记录 `useAppState` 是否成立，终端渲染随后按该结果分支。
   const isInPlanMode = useAppState(s => s.toolPermissionContext.mode) === 'plan';
+  // isFooterFocused 由 React state 持有，setIsFooterFocused 会在用户操作或异步结果返回时触发刷新。
   const [isFooterFocused, setIsFooterFocused] = useState(false);
+  // footerIndex 索引 由 React state 持有，setFooterIndex 会在用户操作或异步结果返回时触发刷新。
   const [footerIndex, setFooterIndex] = useState(0);
+  // isInNotesInput 由 React state 持有，setIsInNotesInput 会在用户操作或异步结果返回时触发刷新。
   const [isInNotesInput, setIsInNotesInput] = useState(false);
+  // 光标偏移 由 React state 持有，setCursorOffset 会在用户操作或异步结果返回时触发刷新。
   const [cursorOffset, setCursorOffset] = useState(0);
+  // editor读取`getExternalEditor`，供终端渲染后续处理使用。
   const editor = getExternalEditor();
+  // editorName保存`toIDEDisplayName`，供终端渲染后续处理使用。
   const editorName = editor ? toIDEDisplayName(editor) : null;
+  // questionText保存`question.question`，供后续判断或组装使用。
   const questionText = question.question;
+  // questionState 状态读取 `questionStates[questionText]` 对应条目，后续围绕该成员继续处理。
   const questionState = questionStates[questionText];
 
   // Only real options — no "Other" for preview questions
+  // allOptions 集合 命名 `question.options`，让后续代码直接表达这个值的用途。
   const allOptions = question.options;
 
   // Track which option is focused (for preview display)
+  // focusedIndex 索引 由 React state 持有，setFocusedIndex 会在用户操作或异步结果返回时触发刷新。
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   // Reset focusedIndex when navigating to a different question
+  // prevQuestionText保存`useRef`，供终端渲染后续处理使用。
   const prevQuestionText = useRef(questionText);
+  // `prevQuestionText.current` 与 `questionText` 不一致时刷新派生状态，避免使用过期结果。
   if (prevQuestionText.current !== questionText) {
+    // current更新为 `questionText`，确保权限确认界面后续读取最新状态。
     prevQuestionText.current = questionText;
+    // selected保存`questionState?.selectedValue as string | undefined`，供终端渲染权限确认界面 Preview Question View后续判断或输出使用。
     const selected = questionState?.selectedValue as string | undefined;
+    // idx筛选`allOptions.findIndex`，供终端渲染后续处理使用。
     const idx = selected ? allOptions.findIndex(opt => opt.label === selected) : -1;
+    // setFocusedIndex 写入新的状态值，使终端渲染后续读取保持一致。
     setFocusedIndex(idx >= 0 ? idx : 0);
   }
+  // focusedOption读取 `allOptions[focusedIndex]` 对应条目，后续围绕该成员继续处理。
   const focusedOption = allOptions[focusedIndex];
+  // selectedValue保存`questionState?.selectedValue as string | undefined`，供后续判断或组装使用。
   const selectedValue = questionState?.selectedValue as string | undefined;
+  // notesValue标记终端渲染权限确认界面 Preview Question View是否启用对应路径。
   const notesValue = questionState?.textInputValue || '';
+  // handleSelectOption保存`useCallback`，供终端渲染后续处理使用。
   const handleSelectOption = useCallback((index: number) => {
+    // option保存`allOptions[index]`，供终端渲染权限确认界面 Preview Question View后续判断或输出使用。
     const option = allOptions[index];
+    // option缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!option) return;
+    // setFocusedIndex 写入新的状态值，使终端渲染后续读取保持一致。
     setFocusedIndex(index);
+    // 调用 onUpdateQuestionState，触发终端渲染此处需要的副作用。
     onUpdateQuestionState(questionText, {
       selectedValue: option.label
     }, false);
+    // 调用 onAnswer，触发终端渲染此处需要的副作用。
     onAnswer(questionText, option.label);
   }, [allOptions, questionText, onUpdateQuestionState, onAnswer]);
+  // handleNavigate保存`useCallback`，供终端渲染后续处理使用。
   const handleNavigate = useCallback((direction: 'up' | 'down' | number) => {
+    // 满足 `isInNotesInput` 时，终端渲染执行该分支。
     if (isInNotesInput) return;
+    // newIndex 索引 先占位，稍后的条件分支会根据实际输入补齐它。
     let newIndex: number;
+    // 当 `typeof direction` 匹配 `'number'` 时，终端渲染执行对应分支。
     if (typeof direction === 'number') {
+      // newIndex 索引更新为 `direction`，确保权限确认界面后续读取最新状态。
       newIndex = direction;
+    // 权限确认界面 Preview Question View在这里处理 `} else if (direction === 'up') {`，完成这一小步状态转换。
     } else if (direction === 'up') {
+      // newIndex 索引更新为 `focusedIndex > 0 ? focusedIndex - 1 : focusedIndex`，确保权限确认界面后续读取最新状态。
       newIndex = focusedIndex > 0 ? focusedIndex - 1 : focusedIndex;
     } else {
+      // newIndex 索引更新为 `focusedIndex < allOptions.length - 1 ? focusedIndex + 1 :...`，确保权限确认界面后续读取最新状态。
       newIndex = focusedIndex < allOptions.length - 1 ? focusedIndex + 1 : focusedIndex;
     }
+    // 只有 `newIndex >= 0 && newIndex < allOptions.length` 满足时，终端渲染才执行该分支。
     if (newIndex >= 0 && newIndex < allOptions.length) {
+      // setFocusedIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setFocusedIndex(newIndex);
     }
   }, [focusedIndex, allOptions.length, isInNotesInput]);
 
   // Handle ctrl+g to open external editor for notes
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('chat:externalEditor', async () => {
+    // currentValue标记终端渲染权限确认界面 Preview Question View是否启用对应路径。
     const currentValue = questionState?.textInputValue || '';
+    // 结果保存`editPromptInEditor`，供终端渲染后续处理使用。
     const result = await editPromptInEditor(currentValue);
+    // `result.content` 与 `null && result.content !== cur` 不一致时刷新派生状态，避免使用过期结果。
     if (result.content !== null && result.content !== currentValue) {
+      // 调用 onUpdateQuestionState，触发终端渲染此处需要的副作用。
       onUpdateQuestionState(questionText, {
         textInputValue: result.content
       }, false);
@@ -126,8 +192,11 @@ export function PreviewQuestionView({
   // handlers register first on the event emitter and fire before parent handlers.
   // Without this, the parent's useKeybindings may not fire reliably depending on
   // listener ordering in the event emitter.
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'tabs:previous': () => onTabPrev?.(),，负责终端渲染在该局部场景下的响应。
     'tabs:previous': () => onTabPrev?.(),
+    // 这个回调绑定到 'tabs:next': () => onTabNext?.()，负责终端渲染在该局部场景下的响应。
     'tabs:next': () => onTabNext?.()
   }, {
     context: 'Tabs',
@@ -136,105 +205,171 @@ export function PreviewQuestionView({
 
   // Re-submit the answer (plain label) when exiting notes input.
   // Notes are stored in questionStates and collected at submit time via annotations.
+  // handleNotesExit保存`useCallback`，供终端渲染后续处理使用。
   const handleNotesExit = useCallback(() => {
+    // setIsInNotesInput 写入新的状态值，使终端渲染后续读取保持一致。
     setIsInNotesInput(false);
+    // 调用 onTextInputFocus，触发终端渲染此处需要的副作用。
     onTextInputFocus(false);
+    // 满足 `selectedValue` 时，终端渲染执行该分支。
     if (selectedValue) {
+      // 调用 onAnswer，触发终端渲染此处需要的副作用。
       onAnswer(questionText, selectedValue);
     }
   }, [selectedValue, questionText, onAnswer, onTextInputFocus]);
+  // handleDownFromPreview保存`useCallback`，供终端渲染后续处理使用。
   const handleDownFromPreview = useCallback(() => {
+    // setIsFooterFocused 写入新的状态值，使终端渲染后续读取保持一致。
     setIsFooterFocused(true);
   }, []);
+  // handleUpFromFooter保存`useCallback`，供终端渲染后续处理使用。
   const handleUpFromFooter = useCallback(() => {
+    // setIsFooterFocused 写入新的状态值，使终端渲染后续读取保持一致。
     setIsFooterFocused(false);
   }, []);
 
   // Handle keyboard input for option/footer/notes navigation.
   // Always active — the handler routes internally based on isFooterFocused/isInNotesInput.
+  // handleKeyDown保存`useCallback`，供终端渲染后续处理使用。
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // 满足 `isFooterFocused` 时，终端渲染执行该分支。
     if (isFooterFocused) {
+      // 当 `e.key` 匹配 `'up' || e.ctrl && e.key ===...` 时，终端渲染执行对应分支。
       if (e.key === 'up' || e.ctrl && e.key === 'p') {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // 满足 `footerIndex === 0` 时，终端渲染执行该分支。
         if (footerIndex === 0) {
+          // 调用 handleUpFromFooter，触发终端渲染此处需要的副作用。
           handleUpFromFooter();
         } else {
+          // setFooterIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setFooterIndex(0);
         }
+        // 权限确认界面 Preview Question View在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 当 `e.key` 匹配 `'down' || e.ctrl && e.key =...` 时，终端渲染执行对应分支。
       if (e.key === 'down' || e.ctrl && e.key === 'n') {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // 只有 `isInPlanMode && footerIndex === 0` 满足时，终端渲染才执行该分支。
         if (isInPlanMode && footerIndex === 0) {
+          // setFooterIndex 写入新的状态值，使终端渲染后续读取保持一致。
           setFooterIndex(1);
         }
+        // 权限确认界面 Preview Question View在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 当 `e.key` 匹配 `'return'` 时，终端渲染执行对应分支。
       if (e.key === 'return') {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // 满足 `footerIndex === 0` 时，终端渲染执行该分支。
         if (footerIndex === 0) {
+          // 调用 onRespondToClaude，触发终端渲染此处需要的副作用。
           onRespondToClaude();
         } else {
+          // 调用 onFinishPlanInterview，触发终端渲染此处需要的副作用。
           onFinishPlanInterview();
         }
+        // 权限确认界面 Preview Question View在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 当 `e.key` 匹配 `'escape'` 时，终端渲染执行对应分支。
       if (e.key === 'escape') {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // 调用 onCancel，触发终端渲染此处需要的副作用。
         onCancel();
       }
+      // 权限确认界面 Preview Question View在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `isInNotesInput` 时，终端渲染执行该分支。
     if (isInNotesInput) {
       // In notes input mode, handle escape to exit back to option navigation
+      // 当 `e.key` 匹配 `'escape'` 时，终端渲染执行对应分支。
       if (e.key === 'escape') {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // 调用 handleNotesExit，触发终端渲染此处需要的副作用。
         handleNotesExit();
       }
+      // 权限确认界面 Preview Question View在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Handle option navigation (vertical)
+    // 当 `e.key` 匹配 `'up' || e.ctrl && e.key ===...` 时，终端渲染执行对应分支。
     if (e.key === 'up' || e.ctrl && e.key === 'p') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 满足 `focusedIndex > 0` 时，终端渲染执行该分支。
       if (focusedIndex > 0) {
+        // 调用 handleNavigate，触发终端渲染此处需要的副作用。
         handleNavigate('up');
       }
+    // 权限确认界面 Preview Question View在这里处理 `} else if (e.key === 'down' || e.ctrl && e.key === 'n') {`，完成这一小步状态转换。
     } else if (e.key === 'down' || e.ctrl && e.key === 'n') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 满足 `focusedIndex === allOptions.length - 1` 时，终端渲染执行该分支。
       if (focusedIndex === allOptions.length - 1) {
         // At bottom of options, go to footer
+        // 调用 handleDownFromPreview，触发终端渲染此处需要的副作用。
         handleDownFromPreview();
       } else {
+        // 调用 handleNavigate，触发终端渲染此处需要的副作用。
         handleNavigate('down');
       }
+    // 权限确认界面 Preview Question View在这里处理 `} else if (e.key === 'return') {`，完成这一小步状态转换。
     } else if (e.key === 'return') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 调用 handleSelectOption，触发终端渲染此处需要的副作用。
       handleSelectOption(focusedIndex);
+    // 权限确认界面 Preview Question View在这里处理 `} else if (e.key === 'n' && !e.ctrl && !e.meta) {`，完成这一小步状态转换。
     } else if (e.key === 'n' && !e.ctrl && !e.meta) {
       // Press 'n' to focus the notes input
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // setIsInNotesInput 写入新的状态值，使终端渲染后续读取保持一致。
       setIsInNotesInput(true);
+      // 调用 onTextInputFocus，触发终端渲染此处需要的副作用。
       onTextInputFocus(true);
+    // 权限确认界面 Preview Question View在这里处理 `} else if (e.key === 'escape') {`，完成这一小步状态转换。
     } else if (e.key === 'escape') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 调用 onCancel，触发终端渲染此处需要的副作用。
       onCancel();
+    // 权限确认界面 Preview Question View在这里处理 `} else if (e.key.length === 1 && e.key >= '1' && e.key <= '9') {`，完成这一小步状态转换。
     } else if (e.key.length === 1 && e.key >= '1' && e.key <= '9') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // idx_0解析`parseInt`，供终端渲染后续处理使用。
       const idx_0 = parseInt(e.key, 10) - 1;
+      // 满足 `idx_0 < allOptions.length` 时，终端渲染执行该分支。
       if (idx_0 < allOptions.length) {
+        // 调用 handleNavigate，触发终端渲染此处需要的副作用。
         handleNavigate(idx_0);
       }
     }
   }, [isFooterFocused, footerIndex, isInPlanMode, isInNotesInput, focusedIndex, allOptions.length, handleUpFromFooter, handleDownFromPreview, handleNavigate, handleSelectOption, handleNotesExit, onRespondToClaude, onFinishPlanInterview, onCancel, onTextInputFocus]);
+  // previewContent标记终端渲染权限确认界面 Preview Question View是否启用对应路径。
   const previewContent = focusedOption?.preview || null;
 
   // The right panel's available width is terminal minus the left panel and gap.
+  // LEFT_PANEL_WIDTH 命名 `30`，让后续代码直接表达这个值的用途。
   const LEFT_PANEL_WIDTH = 30;
+  // GAP保存`4`，供终端渲染权限确认界面 Preview Question View后续判断或输出使用。
   const GAP = 4;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     columns
   } = useTerminalSize();
+  // previewMaxWidth保存`columns - LEFT_PANEL_WIDTH - GAP`，供终端渲染权限确认界面 Preview Question View后续判断或输出使用。
   const previewMaxWidth = columns - LEFT_PANEL_WIDTH - GAP;
 
   // Lines used within the content area that aren't preview content:
@@ -245,15 +380,19 @@ export function PreviewQuestionView({
   // 1: "Chat about this" line
   // 1: plan mode line (may or may not show)
   // 2: help text (marginTop=1 + text)
+  // PREVIEW_OVERHEAD保存`11`，供后续判断或组装使用。
   const PREVIEW_OVERHEAD = 11;
 
   // Compute the max lines available for preview content from the parent's
   // height budget to prevent terminal overflow. We do NOT pad shorter options
   // to match the tallest — the outer box's minHeight handles cross-question
   // layout consistency, and within-question shifts are acceptable.
+  // previewMaxLines 集合保存`useMemo`，供终端渲染后续处理使用。
   const previewMaxLines = useMemo(() => {
+    // 返回 `minContentHeight ? Math.max(1, minContentHeight - PREVIEW_OVERHEAD) : u...`，作为终端渲染这次计算的结果。
     return minContentHeight ? Math.max(1, minContentHeight - PREVIEW_OVERHEAD) : undefined;
   }, [minContentHeight]);
+  // 返回 `<Box flexDirection="column" marginTop={1} tabIndex={0} autoFocus onKeyD...`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" marginTop={1} tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
       <Divider color="inactive" />
       <Box flexDirection="column" paddingTop={0}>
@@ -265,9 +404,13 @@ export function PreviewQuestionView({
           <Box marginTop={1} flexDirection="row" gap={4}>
             {/* Left panel: vertical option list */}
             <Box flexDirection="column" width={30}>
+              {/* 这个回调绑定到 {allOptions.map((option_0, index_0) => {，负责终端渲染在该局部场景下的响应。 */}
               {allOptions.map((option_0, index_0) => {
+              // isFocused标记终端渲染权限确认界面 Preview Question View是否启用对应路径。
               const isFocused = focusedIndex === index_0;
+              // isSelected标记终端渲染权限确认界面 Preview Question View是否启用对应路径。
               const isSelected = selectedValue === option_0.label;
+              // 返回 `<Box key={option_0.label} flexDirection="row">`，作为终端渲染这次计算的结果。
               return <Box key={option_0.label} flexDirection="row">
                     {isFocused ? <Text color="suggestion">{figures.pointer}</Text> : <Text> </Text>}
                     <Text dimColor> {index_0 + 1}.</Text>
@@ -285,7 +428,9 @@ export function PreviewQuestionView({
               <PreviewBox content={previewContent || 'No preview available'} maxLines={previewMaxLines} minWidth={minContentWidth} maxWidth={previewMaxWidth} />
               <Box marginTop={1} flexDirection="row" gap={1}>
                 <Text color="suggestion">Notes:</Text>
+                {/* 这个回调绑定到 {isInNotesInput ? <TextInput value={notesValue} placeholder="Add notes on this desig…，负责终端渲染在该局部场景下的响应。 */}
                 {isInNotesInput ? <TextInput value={notesValue} placeholder="Add notes on this design…" onChange={value => {
+                // 调用 onUpdateQuestionState，触发终端渲染此处需要的副作用。
                 onUpdateQuestionState(questionText, {
                   textInputValue: value
                 }, false);

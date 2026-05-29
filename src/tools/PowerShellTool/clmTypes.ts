@@ -15,6 +15,7 @@
  * exist (PS resolves type accelerators like [int] → System.Int32 at runtime;
  * we match against what the AST emits, which is the literal text).
  */
+// CLM_ALLOWED_TYPES 集合 用 Set 去重，后续只需判断成员是否存在。
 export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
   [
     // Type accelerators (short names as they appear in AST TypeName.Name)
@@ -184,6 +185,7 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     'system.object',
     // ModuleSpecification — full qualified name
     'microsoft.powershell.commands.modulespecification',
+  // 这个回调绑定到 ].map(t => t.toLowerCase()),，负责工具调用在该局部场景下的响应。
   ].map(t => t.toLowerCase()),
 )
 
@@ -191,10 +193,12 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
  * Normalize a type name from AST TypeName.FullName or TypeName.Name.
  * Handles array suffix ([]) and generic brackets.
  */
+// normalizeTypeName 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function normalizeTypeName(name: string): string {
   // Strip array suffix: "String[]" → "string" (arrays of allowed types are allowed)
   // Strip generic args: "List[int]" → "list" (conservative — the generic wrapper
   // might be unsafe even if the type arg is safe, so we check the outer type)
+  // 返回 `name`，作为工具调用这次计算的结果。
   return name
     .toLowerCase()
     .replace(/\[\]$/, '')
@@ -206,6 +210,8 @@ export function normalizeTypeName(name: string): string {
  * True if typeName (from AST) is in Microsoft's CLM allowlist.
  * Types NOT in this set trigger ask — they access system APIs CLM blocks.
  */
+// isClmAllowedType 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isClmAllowedType(typeName: string): boolean {
+  // 返回 `CLM_ALLOWED_TYPES.has(normalizeTypeName(typeName))`，作为工具调用这次计算的结果。
   return CLM_ALLOWED_TYPES.has(normalizeTypeName(typeName))
 }

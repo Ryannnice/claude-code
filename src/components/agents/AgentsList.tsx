@@ -1,26 +1,45 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { SettingSource } 来自 src/utils/settings/constants.js，用于校准终端渲染的数据契约。
 import type { SettingSource } from 'src/utils/settings/constants.js';
+// 类型依赖 { KeyboardEvent } 来自 ../../ink/events/keyboard-event.js，用于校准终端渲染的数据契约。
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { ResolvedAgent } 来自 ../../tools/AgentTool/agentDisplay.js，用于校准终端渲染的数据契约。
 import type { ResolvedAgent } from '../../tools/AgentTool/agentDisplay.js';
+// 接入 AGENT_SOURCE_GROUPS、compareAgentsByName、getOverrideSourceLabel、resolveAgentModelDisplay 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AGENT_SOURCE_GROUPS, compareAgentsByName, getOverrideSourceLabel, resolveAgentModelDisplay } from '../../tools/AgentTool/agentDisplay.js';
+// 类型依赖 { AgentDefinition } 来自 ../../tools/AgentTool/loadAgentsDir.js，用于校准终端渲染的数据契约。
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js';
+// 复用 count 工具函数，把通用处理留在 ../../utils/array.js 中维护。
 import { count } from '../../utils/array.js';
+// 引入 Dialog，将 ../design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from '../design-system/Dialog.js';
+// 引入 Divider，将 ../design-system/Divider.js 中已经封装好的能力接到本文件流程里。
 import { Divider } from '../design-system/Divider.js';
+// 引入 getAgentSourceDisplayName，将 ./utils.js 中已经封装好的能力接到本文件流程里。
 import { getAgentSourceDisplayName } from './utils.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   source: SettingSource | 'all' | 'built-in' | 'plugin';
   agents: ResolvedAgent[];
+  // 这个回调绑定到 onBack: () => void;，负责终端渲染在该局部场景下的响应。
   onBack: () => void;
+  // 这个回调绑定到 onSelect: (agent: AgentDefinition) => void;，负责终端渲染在该局部场景下的响应。
   onSelect: (agent: AgentDefinition) => void;
   onCreateNew?: () => void;
   changes?: string[];
 };
+// AgentsList 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AgentsList(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(96);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     source,
     agents,
@@ -29,409 +48,728 @@ export function AgentsList(t0) {
     onCreateNew,
     changes
   } = t0;
+  // 从 `React.useState(null)` 按位置拆出 selectedAgent、setSelectedAgent，让终端 UI 组件 Agents List分别处理这些返回值。
   const [selectedAgent, setSelectedAgent] = React.useState(null);
+  // 从 `React.useState(true)` 按位置拆出 isCreateNewSelected、setIsCreateNewSelected，让终端 UI 组件 Agents List分别处理这些返回值。
   const [isCreateNewSelected, setIsCreateNewSelected] = React.useState(true);
+  // t1 暂存 `[...agents].sort(compareAgentsByName)` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== agents) {
+    // t1 暂存 `[...agents].sort(compareAgentsByName)` 生成的渲染片段，后续返回路径直接复用。
     t1 = [...agents].sort(compareAgentsByName);
+    // $[0] 缓存 `agents`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = agents;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // sortedAgents 集合保存`t1`，作为后续临时缓存值处理的输入。
   const sortedAgents = t1;
+  // getOverrideInfo保存`_temp`，供终端 UI Agents List后续判断或输出使用。
   const getOverrideInfo = _temp;
+  // t2 暂存 `() => <Box><Text color={isCreateNewSelected ? "suggestion...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== isCreateNewSelected) {
+    // t2 暂存 `() => <Box><Text color={isCreateNewSelected ? "suggestion...` 生成的渲染片段，后续返回路径直接复用。
     t2 = () => <Box><Text color={isCreateNewSelected ? "suggestion" : undefined}>{isCreateNewSelected ? `${figures.pointer} ` : "  "}</Text><Text color={isCreateNewSelected ? "suggestion" : undefined}>Create new agent</Text></Box>;
+    // $[2] 缓存 `isCreateNewSelected`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = isCreateNewSelected;
+    // $[3] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[3];
   }
+  // renderCreateNewOption 命名 `t2`，让后续代码直接表达这个值的用途。
   const renderCreateNewOption = t2;
+  // t3 暂存 `agent_0 => {` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[4] !== isCreateNewSelected || $[5] !== selectedAgent?.agentType || $[6] !== selectedAgent?.source) {
+    // t3 暂存 `agent_0 => {` 生成的渲染片段，后续返回路径直接复用。
     t3 = agent_0 => {
+      // isBuiltIn标记终端 UI Agents List是否启用对应路径。
       const isBuiltIn = agent_0.source === "built-in";
+      // isSelected标记终端 UI Agents List是否启用对应路径。
       const isSelected = !isBuiltIn && !isCreateNewSelected && selectedAgent?.agentType === agent_0.agentType && selectedAgent?.source === agent_0.source;
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         isOverridden,
         overriddenBy
       } = getOverrideInfo(agent_0);
+      // dimmed标记终端 UI Agents List是否启用对应路径。
       const dimmed = isBuiltIn || isOverridden;
+      // textColor标记终端 UI Agents List是否启用对应路径。
       const textColor = !isBuiltIn && isSelected ? "suggestion" : undefined;
+      // resolvedModel读取`resolveAgentModelDisplay`，供终端渲染后续处理使用。
       const resolvedModel = resolveAgentModelDisplay(agent_0);
+      // 返回 `<Box key={`${agent_0.agentType}-${agent_0.source}`}><Text dimColor={dim...`，作为终端渲染这次计算的结果。
       return <Box key={`${agent_0.agentType}-${agent_0.source}`}><Text dimColor={dimmed && !isSelected} color={textColor}>{isBuiltIn ? "" : isSelected ? `${figures.pointer} ` : "  "}</Text><Text dimColor={dimmed && !isSelected} color={textColor}>{agent_0.agentType}</Text>{resolvedModel && <Text dimColor={true} color={textColor}>{" \xB7 "}{resolvedModel}</Text>}{agent_0.memory && <Text dimColor={true} color={textColor}>{" \xB7 "}{agent_0.memory} memory</Text>}{overriddenBy && <Text dimColor={!isSelected} color={isSelected ? "warning" : undefined}>{" "}{figures.warning} shadowed by {getOverrideSourceLabel(overriddenBy)}</Text>}</Box>;
     };
+    // $[4] 缓存 `isCreateNewSelected`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = isCreateNewSelected;
+    // $[5] 缓存 `selectedAgent?.agentType`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = selectedAgent?.agentType;
+    // $[6] 缓存 `selectedAgent?.source`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = selectedAgent?.source;
+    // $[7] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[7] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[7];
   }
+  // renderAgent 命名 `t3`，让后续代码直接表达这个值的用途。
   const renderAgent = t3;
+  // t4 暂存 `AGENT_SOURCE_GROUPS.filter(_temp3).flatMap(t5 => {` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[8] !== sortedAgents || $[9] !== source) {
+    // 终端 UI 组件 Agents List在这里处理 `bb0: {`，完成这一小步状态转换。
     bb0: {
+      // nonBuiltIn筛选`sortedAgents.filter`，供终端渲染后续处理使用。
       const nonBuiltIn = sortedAgents.filter(_temp2);
+      // 当 `source` 匹配 `"all"` 时，终端渲染执行对应分支。
       if (source === "all") {
+        // t4 暂存 `AGENT_SOURCE_GROUPS.filter(_temp3).flatMap(t5 => {` 生成的渲染片段，后续返回路径直接复用。
         t4 = AGENT_SOURCE_GROUPS.filter(_temp3).flatMap(t5 => {
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             source: groupSource
           } = t5;
+          // 返回 `nonBuiltIn.filter(a_0 => a_0.source === groupSource)`，作为终端渲染这次计算的结果。
           return nonBuiltIn.filter(a_0 => a_0.source === groupSource);
         });
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb0;
       }
+      // t4 暂存 `nonBuiltIn` 生成的渲染片段，后续返回路径直接复用。
       t4 = nonBuiltIn;
     }
+    // $[8] 缓存 `sortedAgents`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = sortedAgents;
+    // $[9] 缓存 `source`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = source;
+    // $[10] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[10] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[10];
   }
+  // selectableAgentsInOrder保存`t4`，作为后续临时缓存值处理的输入。
   const selectableAgentsInOrder = t4;
+  // t5 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // t6 暂存 `[selectableAgentsInOrder, selectedAgent, isCreateNewSelec...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[11] !== isCreateNewSelected || $[12] !== onCreateNew || $[13] !== selectableAgentsInOrder || $[14] !== selectedAgent) {
+    // t5 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t5 = () => {
+      // 只有 `!selectedAgent && !isCreateNewSelected && selecta` 满足时，终端渲染才执行该分支。
       if (!selectedAgent && !isCreateNewSelected && selectableAgentsInOrder.length > 0) {
+        // 满足 `onCreateNew` 时，终端渲染执行该分支。
         if (onCreateNew) {
+          // setIsCreateNewSelected 写入新的状态值，使终端渲染后续读取保持一致。
           setIsCreateNewSelected(true);
         } else {
+          // setSelectedAgent 写入新的状态值，使终端渲染后续读取保持一致。
           setSelectedAgent(selectableAgentsInOrder[0] || null);
         }
       }
     };
+    // t6 暂存 `[selectableAgentsInOrder, selectedAgent, isCreateNewSelec...` 生成的渲染片段，后续返回路径直接复用。
     t6 = [selectableAgentsInOrder, selectedAgent, isCreateNewSelected, onCreateNew];
+    // $[11] 缓存 `isCreateNewSelected`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = isCreateNewSelected;
+    // $[12] 缓存 `onCreateNew`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = onCreateNew;
+    // $[13] 缓存 `selectableAgentsInOrder`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = selectableAgentsInOrder;
+    // $[14] 缓存 `selectedAgent`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = selectedAgent;
+    // $[15] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t5;
+    // $[16] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t6;
   } else {
+    // t5 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[15];
+    // t6 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[16];
   }
+  // 调用 React.useEffect，触发终端渲染此处需要的副作用。
   React.useEffect(t5, t6);
+  // t7 暂存 `e => {` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[17] !== isCreateNewSelected || $[18] !== onCreateNew || $[19] !== onSelect || $[20] !== selectableAgentsInOrder || $[21] !== selectedAgent) {
+    // t7 暂存 `e => {` 生成的渲染片段，后续返回路径直接复用。
     t7 = e => {
+      // 当 `e.key` 匹配 `"return"` 时，终端渲染执行对应分支。
       if (e.key === "return") {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // 只有 `isCreateNewSelected && onCreateNew` 满足时，终端渲染才执行该分支。
         if (isCreateNewSelected && onCreateNew) {
+          // 调用 onCreateNew，触发终端渲染此处需要的副作用。
           onCreateNew();
         } else {
+          // 满足 `selectedAgent` 时，终端渲染执行该分支。
           if (selectedAgent) {
+            // 调用 onSelect，触发终端渲染此处需要的副作用。
             onSelect(selectedAgent);
           }
         }
+        // 终端 UI 组件 Agents List在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // `e.key` 与 `"up" && e.key !== "down"` 不一致时刷新派生状态，避免使用过期结果。
       if (e.key !== "up" && e.key !== "down") {
+        // 终端 UI 组件 Agents List在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // hasCreateOption标记终端 UI Agents List是否启用对应路径。
       const hasCreateOption = !!onCreateNew;
+      // totalItems 集合保存 `selectableAgentsInOrder.length + (hasCreateOption ? 1 : 0)` 的判断结果，供终端 UI Agents List后续分支直接复用。
       const totalItems = selectableAgentsInOrder.length + (hasCreateOption ? 1 : 0);
+      // 满足 `totalItems === 0` 时，终端渲染执行该分支。
       if (totalItems === 0) {
+        // 终端 UI 组件 Agents List在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // currentPosition保存`0`，供终端 UI Agents List后续判断或输出使用。
       let currentPosition = 0;
+      // 只有 `!isCreateNewSelected && selectedAgent` 满足时，终端渲染才执行该分支。
       if (!isCreateNewSelected && selectedAgent) {
+        // agentIndex 索引筛选`selectableAgentsInOrder.findIndex`，供终端渲染后续处理使用。
         const agentIndex = selectableAgentsInOrder.findIndex(a_1 => a_1.agentType === selectedAgent.agentType && a_1.source === selectedAgent.source);
+        // 满足 `agentIndex >= 0` 时，终端渲染执行该分支。
         if (agentIndex >= 0) {
+          // currentPosition更新为 `hasCreateOption ? agentIndex + 1 : agentIndex`，确保Agent 配置界面后续读取最新状态。
           currentPosition = hasCreateOption ? agentIndex + 1 : agentIndex;
         }
       }
+      // newPosition标记终端 UI Agents List是否启用对应路径。
       const newPosition = e.key === "up" ? currentPosition === 0 ? totalItems - 1 : currentPosition - 1 : currentPosition === totalItems - 1 ? 0 : currentPosition + 1;
+      // 只有 `hasCreateOption && newPosition === 0` 满足时，终端渲染才执行该分支。
       if (hasCreateOption && newPosition === 0) {
+        // setIsCreateNewSelected 写入新的状态值，使终端渲染后续读取保持一致。
         setIsCreateNewSelected(true);
+        // setSelectedAgent 写入新的状态值，使终端渲染后续读取保持一致。
         setSelectedAgent(null);
       } else {
+        // agentIndex_0 索引保存`hasCreateOption ? newPosition - 1 : newPosition`，供终端 UI Agents List后续判断或输出使用。
         const agentIndex_0 = hasCreateOption ? newPosition - 1 : newPosition;
+        // newAgent 命名 `selectableAgentsInOrder[agentIndex_0]`，让后续代码直接表达这个值的用途。
         const newAgent = selectableAgentsInOrder[agentIndex_0];
+        // 满足 `newAgent` 时，终端渲染执行该分支。
         if (newAgent) {
+          // setIsCreateNewSelected 写入新的状态值，使终端渲染后续读取保持一致。
           setIsCreateNewSelected(false);
+          // setSelectedAgent 写入新的状态值，使终端渲染后续读取保持一致。
           setSelectedAgent(newAgent);
         }
       }
     };
+    // $[17] 缓存 `isCreateNewSelected`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = isCreateNewSelected;
+    // $[18] 缓存 `onCreateNew`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = onCreateNew;
+    // $[19] 缓存 `onSelect`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = onSelect;
+    // $[20] 缓存 `selectableAgentsInOrder`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = selectableAgentsInOrder;
+    // $[21] 缓存 `selectedAgent`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = selectedAgent;
+    // $[22] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[22] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[22];
   }
+  // handleKeyDown保存`t7`，作为后续临时缓存值处理的输入。
   const handleKeyDown = t7;
+  // t8 暂存 `t9 => {` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[23] !== renderAgent || $[24] !== sortedAgents) {
+    // t8 暂存 `t9 => {` 生成的渲染片段，后续返回路径直接复用。
     t8 = t9 => {
+      // title 标题保存`in`，供终端渲染后续处理使用。
       const title = t9 === undefined ? "Built-in (always available):" : t9;
+      // builtInAgents 集合筛选`sortedAgents.filter`，供终端渲染后续处理使用。
       const builtInAgents = sortedAgents.filter(_temp4);
+      // 返回 `<Box flexDirection="column" marginBottom={1} paddingLeft={2}><Text bold...`，作为终端渲染这次计算的结果。
       return <Box flexDirection="column" marginBottom={1} paddingLeft={2}><Text bold={true} dimColor={true}>{title}</Text>{builtInAgents.map(renderAgent)}</Box>;
     };
+    // $[23] 缓存 `renderAgent`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = renderAgent;
+    // $[24] 缓存 `sortedAgents`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = sortedAgents;
+    // $[25] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[25] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[25];
   }
+  // renderBuiltInAgentsSection保存`t8`，作为后续临时缓存值处理的输入。
   const renderBuiltInAgentsSection = t8;
+  // t9 暂存 `(title_0, groupAgents) => {` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[26] !== renderAgent) {
+    // t9 暂存 `(title_0, groupAgents) => {` 生成的渲染片段，后续返回路径直接复用。
     t9 = (title_0, groupAgents) => {
+      // groupAgents.length 数量缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!groupAgents.length) {
+        // 返回 `null`，作为终端渲染这次计算的结果。
         return null;
       }
+      // folderPath 路径数据读取 `groupAgents[0]?.baseDir` 对应条目，后续围绕该成员继续处理。
       const folderPath = groupAgents[0]?.baseDir;
+      // 返回 `<Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text...`，作为终端渲染这次计算的结果。
       return <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true} dimColor={true}>{title_0}</Text>{folderPath && <Text dimColor={true}> ({folderPath})</Text>}</Box>{groupAgents.map(agent_1 => renderAgent(agent_1))}</Box>;
     };
+    // $[26] 缓存 `renderAgent`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = renderAgent;
+    // $[27] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[27] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[27];
   }
+  // renderAgentGroup保存`t9`，作为后续临时缓存值处理的输入。
   const renderAgentGroup = t9;
+  // t10 暂存 `getAgentSourceDisplayName(source)` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[28] !== source) {
+    // t10 暂存 `getAgentSourceDisplayName(source)` 生成的渲染片段，后续返回路径直接复用。
     t10 = getAgentSourceDisplayName(source);
+    // $[28] 缓存 `source`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = source;
+    // $[29] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[29] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[29];
   }
+  // sourceTitle 标题 命名 `t10`，让后续代码直接表达这个值的用途。
   const sourceTitle = t10;
+  // T0 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let T0;
+  // T1 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let T1;
+  // t11 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t11;
+  // t12 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t12;
+  // t13 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t13;
+  // t14 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t14;
+  // t15 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t15;
+  // t16 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t16;
+  // t17 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t17;
+  // t18 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t18;
+  // t19 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t19;
+  // t20 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t20;
+  // t21 作为 React 编译缓存的临时槽位，稍后会接收 JSX 或派生数据。
   let t21;
+  // t22 暂存 `Symbol.for("react.early_return_sentinel")` 的派生结果，便于缓存命中时直接复用。
   let t22;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[30] !== changes || $[31] !== handleKeyDown || $[32] !== onBack || $[33] !== onCreateNew || $[34] !== renderAgent || $[35] !== renderAgentGroup || $[36] !== renderBuiltInAgentsSection || $[37] !== renderCreateNewOption || $[38] !== sortedAgents || $[39] !== source || $[40] !== sourceTitle) {
+    // t22 暂存 `Symbol.for("react.early_return_sentinel")` 生成的渲染片段，后续返回路径直接复用。
     t22 = Symbol.for("react.early_return_sentinel");
+    // 终端 UI 组件 Agents List在这里处理 `bb1: {`，完成这一小步状态转换。
     bb1: {
+      // builtInAgents_0筛选`sortedAgents.filter`，供终端渲染后续处理使用。
       const builtInAgents_0 = sortedAgents.filter(_temp5);
+      // hasNoAgents 集合记录 `sortedAgents.some` 是否成立，终端渲染随后按该结果分支。
       const hasNoAgents = !sortedAgents.length || source !== "built-in" && !sortedAgents.some(_temp6);
+      // 满足 `hasNoAgents` 时，终端渲染执行该分支。
       if (hasNoAgents) {
+        // t23 暂存 `onCreateNew && <Box>{renderCreateNewOption()}</Box>` 的派生结果，便于缓存命中时直接复用。
         let t23;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[55] !== onCreateNew || $[56] !== renderCreateNewOption) {
+          // t23 暂存 `onCreateNew && <Box>{renderCreateNewOption()}</Box>` 生成的渲染片段，后续返回路径直接复用。
           t23 = onCreateNew && <Box>{renderCreateNewOption()}</Box>;
+          // $[55] 缓存 `onCreateNew`，下次依赖未变时 React 编译产物可直接复用。
           $[55] = onCreateNew;
+          // $[56] 缓存 `renderCreateNewOption`，下次依赖未变时 React 编译产物可直接复用。
           $[56] = renderCreateNewOption;
+          // $[57] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
           $[57] = t23;
         } else {
+          // t23 从 React 编译缓存槽 $[57] 取回渲染片段，避免依赖未变时重建 JSX。
           t23 = $[57];
         }
+        // t24 暂存 `<Text dimColor={true}>No agents found. Create specialized...` 的派生结果，便于缓存命中时直接复用。
         let t24;
+        // t25 暂存 `<Text dimColor={true}>Each subagent has its own context w...` 的派生结果，便于缓存命中时直接复用。
         let t25;
+        // t26 暂存 `<Text dimColor={true}>Try creating: Code Reviewer, Code S...` 的派生结果，便于缓存命中时直接复用。
         let t26;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[58] === Symbol.for("react.memo_cache_sentinel")) {
+          // t24 暂存 `<Text dimColor={true}>No agents found. Create specialized...` 生成的渲染片段，后续返回路径直接复用。
           t24 = <Text dimColor={true}>No agents found. Create specialized subagents that Claude can delegate to.</Text>;
+          // t25 暂存 `<Text dimColor={true}>Each subagent has its own context w...` 生成的渲染片段，后续返回路径直接复用。
           t25 = <Text dimColor={true}>Each subagent has its own context window, custom system prompt, and specific tools.</Text>;
+          // t26 暂存 `<Text dimColor={true}>Try creating: Code Reviewer, Code S...` 生成的渲染片段，后续返回路径直接复用。
           t26 = <Text dimColor={true}>Try creating: Code Reviewer, Code Simplifier, Security Reviewer, Tech Lead, or UX Reviewer.</Text>;
+          // $[58] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
           $[58] = t24;
+          // $[59] 缓存 `t25`，下次依赖未变时 React 编译产物可直接复用。
           $[59] = t25;
+          // $[60] 缓存 `t26`，下次依赖未变时 React 编译产物可直接复用。
           $[60] = t26;
         } else {
+          // t24 从 React 编译缓存槽 $[58] 取回渲染片段，避免依赖未变时重建 JSX。
           t24 = $[58];
+          // t25 从 React 编译缓存槽 $[59] 取回渲染片段，避免依赖未变时重建 JSX。
           t25 = $[59];
+          // t26 从 React 编译缓存槽 $[60] 取回渲染片段，避免依赖未变时重建 JSX。
           t26 = $[60];
         }
+        // t27 暂存 `source !== "built-in" && sortedAgents.some(_temp7) && <><...` 的派生结果，便于缓存命中时直接复用。
         let t27;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[61] !== renderBuiltInAgentsSection || $[62] !== sortedAgents || $[63] !== source) {
+          // t27 暂存 `source !== "built-in" && sortedAgents.some(_temp7) && <><...` 生成的渲染片段，后续返回路径直接复用。
           t27 = source !== "built-in" && sortedAgents.some(_temp7) && <><Divider />{renderBuiltInAgentsSection()}</>;
+          // $[61] 缓存 `renderBuiltInAgentsSection`，下次依赖未变时 React 编译产物可直接复用。
           $[61] = renderBuiltInAgentsSection;
+          // $[62] 缓存 `sortedAgents`，下次依赖未变时 React 编译产物可直接复用。
           $[62] = sortedAgents;
+          // $[63] 缓存 `source`，下次依赖未变时 React 编译产物可直接复用。
           $[63] = source;
+          // $[64] 缓存 `t27`，下次依赖未变时 React 编译产物可直接复用。
           $[64] = t27;
         } else {
+          // t27 从 React 编译缓存槽 $[64] 取回渲染片段，避免依赖未变时重建 JSX。
           t27 = $[64];
         }
+        // t28 暂存 `<Box flexDirection="column" gap={1} tabIndex={0} autoFocu...` 的派生结果，便于缓存命中时直接复用。
         let t28;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[65] !== handleKeyDown || $[66] !== t23 || $[67] !== t27) {
+          // t28 暂存 `<Box flexDirection="column" gap={1} tabIndex={0} autoFocu...` 生成的渲染片段，后续返回路径直接复用。
           t28 = <Box flexDirection="column" gap={1} tabIndex={0} autoFocus={true} onKeyDown={handleKeyDown}>{t23}{t24}{t25}{t26}{t27}</Box>;
+          // $[65] 缓存 `handleKeyDown`，下次依赖未变时 React 编译产物可直接复用。
           $[65] = handleKeyDown;
+          // $[66] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
           $[66] = t23;
+          // $[67] 缓存 `t27`，下次依赖未变时 React 编译产物可直接复用。
           $[67] = t27;
+          // $[68] 缓存 `t28`，下次依赖未变时 React 编译产物可直接复用。
           $[68] = t28;
         } else {
+          // t28 从 React 编译缓存槽 $[68] 取回渲染片段，避免依赖未变时重建 JSX。
           t28 = $[68];
         }
+        // t29 暂存 `<Dialog title={sourceTitle} subtitle="No agents found" on...` 的派生结果，便于缓存命中时直接复用。
         let t29;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[69] !== onBack || $[70] !== sourceTitle || $[71] !== t28) {
+          // t29 暂存 `<Dialog title={sourceTitle} subtitle="No agents found" on...` 生成的渲染片段，后续返回路径直接复用。
           t29 = <Dialog title={sourceTitle} subtitle="No agents found" onCancel={onBack} hideInputGuide={true}>{t28}</Dialog>;
+          // $[69] 缓存 `onBack`，下次依赖未变时 React 编译产物可直接复用。
           $[69] = onBack;
+          // $[70] 缓存 `sourceTitle`，下次依赖未变时 React 编译产物可直接复用。
           $[70] = sourceTitle;
+          // $[71] 缓存 `t28`，下次依赖未变时 React 编译产物可直接复用。
           $[71] = t28;
+          // $[72] 缓存 `t29`，下次依赖未变时 React 编译产物可直接复用。
           $[72] = t29;
         } else {
+          // t29 从 React 编译缓存槽 $[72] 取回渲染片段，避免依赖未变时重建 JSX。
           t29 = $[72];
         }
+        // t22 暂存 `t29` 生成的渲染片段，后续返回路径直接复用。
         t22 = t29;
+        // 结束这个分支或循环，避免终端渲染继续落入后续路径。
         break bb1;
       }
+      // T1 暂存 `Dialog` 生成的渲染片段，后续返回路径直接复用。
       T1 = Dialog;
+      // t17 暂存 `sourceTitle` 生成的渲染片段，后续返回路径直接复用。
       t17 = sourceTitle;
+      // t23 暂存 `count(sortedAgents, _temp8)` 的派生结果，便于缓存命中时直接复用。
       let t23;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[73] !== sortedAgents) {
+        // t23 暂存 `count(sortedAgents, _temp8)` 生成的渲染片段，后续返回路径直接复用。
         t23 = count(sortedAgents, _temp8);
+        // $[73] 缓存 `sortedAgents`，下次依赖未变时 React 编译产物可直接复用。
         $[73] = sortedAgents;
+        // $[74] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
         $[74] = t23;
       } else {
+        // t23 从 React 编译缓存槽 $[74] 取回渲染片段，避免依赖未变时重建 JSX。
         t23 = $[74];
       }
+      // t18 暂存 ``${t23} agents`` 生成的渲染片段，后续返回路径直接复用。
       t18 = `${t23} agents`;
+      // t19 暂存 `onBack` 生成的渲染片段，后续返回路径直接复用。
       t19 = onBack;
+      // t20 暂存 `true` 生成的渲染片段，后续返回路径直接复用。
       t20 = true;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[75] !== changes) {
+        // t21 暂存 `changes && changes.length > 0 && <Box marginTop={1}><Text...` 生成的渲染片段，后续返回路径直接复用。
         t21 = changes && changes.length > 0 && <Box marginTop={1}><Text dimColor={true}>{changes[changes.length - 1]}</Text></Box>;
+        // $[75] 缓存 `changes`，下次依赖未变时 React 编译产物可直接复用。
         $[75] = changes;
+        // $[76] 缓存 `t21`，下次依赖未变时 React 编译产物可直接复用。
         $[76] = t21;
       } else {
+        // t21 从 React 编译缓存槽 $[76] 取回渲染片段，避免依赖未变时重建 JSX。
         t21 = $[76];
       }
+      // T0 暂存 `Box` 生成的渲染片段，后续返回路径直接复用。
       T0 = Box;
+      // t11 暂存 `"column"` 生成的渲染片段，后续返回路径直接复用。
       t11 = "column";
+      // t12 暂存 `0` 生成的渲染片段，后续返回路径直接复用。
       t12 = 0;
+      // t13 暂存 `true` 生成的渲染片段，后续返回路径直接复用。
       t13 = true;
+      // t14 暂存 `handleKeyDown` 生成的渲染片段，后续返回路径直接复用。
       t14 = handleKeyDown;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[77] !== onCreateNew || $[78] !== renderCreateNewOption) {
+        // t15 暂存 `onCreateNew && <Box marginBottom={1}>{renderCreateNewOpti...` 生成的渲染片段，后续返回路径直接复用。
         t15 = onCreateNew && <Box marginBottom={1}>{renderCreateNewOption()}</Box>;
+        // $[77] 缓存 `onCreateNew`，下次依赖未变时 React 编译产物可直接复用。
         $[77] = onCreateNew;
+        // $[78] 缓存 `renderCreateNewOption`，下次依赖未变时 React 编译产物可直接复用。
         $[78] = renderCreateNewOption;
+        // $[79] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
         $[79] = t15;
       } else {
+        // t15 从 React 编译缓存槽 $[79] 取回渲染片段，避免依赖未变时重建 JSX。
         t15 = $[79];
       }
+      // t16 暂存 `source === "all" ? <>{AGENT_SOURCE_GROUPS.filter(_temp9)....` 生成的渲染片段，后续返回路径直接复用。
       t16 = source === "all" ? <>{AGENT_SOURCE_GROUPS.filter(_temp9).map(t24 => {
+          // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
           const {
             label,
             source: groupSource_0
           } = t24;
+          {/* 返回 <React.Fragment key={groupSource_0}>{renderAgentGroup(label, sortedAgents.filter(a_7 => a_7.so…，把终端渲染这个分支的结果交还调用方。 */}
           return <React.Fragment key={groupSource_0}>{renderAgentGroup(label, sortedAgents.filter(a_7 => a_7.source === groupSource_0))}</React.Fragment>;
+        // 这个回调绑定到 })}{builtInAgents_0.length > 0 && <Box flexDirection="column" marginBottom={1} paddi…，负责终端渲染在该局部场景下的响应。
         })}{builtInAgents_0.length > 0 && <Box flexDirection="column" marginBottom={1} paddingLeft={2}><Text dimColor={true}><Text bold={true}>Built-in agents</Text> (always available)</Text>{builtInAgents_0.map(renderAgent)}</Box>}</> : source === "built-in" ? <><Text dimColor={true} italic={true}>Built-in agents are provided by default and cannot be modified.</Text><Box marginTop={1} flexDirection="column">{sortedAgents.map(agent_2 => renderAgent(agent_2))}</Box></> : <>{sortedAgents.filter(_temp0).map(agent_3 => renderAgent(agent_3))}{sortedAgents.some(_temp1) && <><Divider />{renderBuiltInAgentsSection()}</>}</>;
     }
+    // $[30] 缓存 `changes`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = changes;
+    // $[31] 缓存 `handleKeyDown`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = handleKeyDown;
+    // $[32] 缓存 `onBack`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = onBack;
+    // $[33] 缓存 `onCreateNew`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = onCreateNew;
+    // $[34] 缓存 `renderAgent`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = renderAgent;
+    // $[35] 缓存 `renderAgentGroup`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = renderAgentGroup;
+    // $[36] 缓存 `renderBuiltInAgentsSection`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = renderBuiltInAgentsSection;
+    // $[37] 缓存 `renderCreateNewOption`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = renderCreateNewOption;
+    // $[38] 缓存 `sortedAgents`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = sortedAgents;
+    // $[39] 缓存 `source`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = source;
+    // $[40] 缓存 `sourceTitle`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = sourceTitle;
+    // $[41] 缓存 `T0`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = T0;
+    // $[42] 缓存 `T1`，下次依赖未变时 React 编译产物可直接复用。
     $[42] = T1;
+    // $[43] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[43] = t11;
+    // $[44] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[44] = t12;
+    // $[45] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[45] = t13;
+    // $[46] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = t14;
+    // $[47] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = t15;
+    // $[48] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = t16;
+    // $[49] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = t17;
+    // $[50] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = t18;
+    // $[51] 缓存 `t19`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = t19;
+    // $[52] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = t20;
+    // $[53] 缓存 `t21`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = t21;
+    // $[54] 缓存 `t22`，下次依赖未变时 React 编译产物可直接复用。
     $[54] = t22;
   } else {
+    // T0 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
     T0 = $[41];
+    // T1 从 React 编译缓存槽 $[42] 取回渲染片段，避免依赖未变时重建 JSX。
     T1 = $[42];
+    // t11 从 React 编译缓存槽 $[43] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[43];
+    // t12 从 React 编译缓存槽 $[44] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[44];
+    // t13 从 React 编译缓存槽 $[45] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[45];
+    // t14 从 React 编译缓存槽 $[46] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[46];
+    // t15 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[47];
+    // t16 从 React 编译缓存槽 $[48] 取回渲染片段，避免依赖未变时重建 JSX。
     t16 = $[48];
+    // t17 从 React 编译缓存槽 $[49] 取回渲染片段，避免依赖未变时重建 JSX。
     t17 = $[49];
+    // t18 从 React 编译缓存槽 $[50] 取回渲染片段，避免依赖未变时重建 JSX。
     t18 = $[50];
+    // t19 从 React 编译缓存槽 $[51] 取回渲染片段，避免依赖未变时重建 JSX。
     t19 = $[51];
+    // t20 从 React 编译缓存槽 $[52] 取回渲染片段，避免依赖未变时重建 JSX。
     t20 = $[52];
+    // t21 从 React 编译缓存槽 $[53] 取回渲染片段，避免依赖未变时重建 JSX。
     t21 = $[53];
+    // t22 从 React 编译缓存槽 $[54] 取回渲染片段，避免依赖未变时重建 JSX。
     t22 = $[54];
   }
+  // `t22` 与 `Symbol.for("react.early_return_...` 不一致时刷新派生状态，避免使用过期结果。
   if (t22 !== Symbol.for("react.early_return_sentinel")) {
+    // 返回 `t22`，作为终端渲染这次计算的结果。
     return t22;
   }
+  // t23 暂存 `<T0 flexDirection={t11} tabIndex={t12} autoFocus={t13} on...` 的派生结果，便于缓存命中时直接复用。
   let t23;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[80] !== T0 || $[81] !== t11 || $[82] !== t12 || $[83] !== t13 || $[84] !== t14 || $[85] !== t15 || $[86] !== t16) {
+    // t23 暂存 `<T0 flexDirection={t11} tabIndex={t12} autoFocus={t13} on...` 生成的渲染片段，后续返回路径直接复用。
     t23 = <T0 flexDirection={t11} tabIndex={t12} autoFocus={t13} onKeyDown={t14}>{t15}{t16}</T0>;
+    // $[80] 缓存 `T0`，下次依赖未变时 React 编译产物可直接复用。
     $[80] = T0;
+    // $[81] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[81] = t11;
+    // $[82] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[82] = t12;
+    // $[83] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[83] = t13;
+    // $[84] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[84] = t14;
+    // $[85] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[85] = t15;
+    // $[86] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[86] = t16;
+    // $[87] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
     $[87] = t23;
   } else {
+    // t23 从 React 编译缓存槽 $[87] 取回渲染片段，避免依赖未变时重建 JSX。
     t23 = $[87];
   }
+  // t24 暂存 `<T1 title={t17} subtitle={t18} onCancel={t19} hideInputGu...` 的派生结果，便于缓存命中时直接复用。
   let t24;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[88] !== T1 || $[89] !== t17 || $[90] !== t18 || $[91] !== t19 || $[92] !== t20 || $[93] !== t21 || $[94] !== t23) {
+    // t24 暂存 `<T1 title={t17} subtitle={t18} onCancel={t19} hideInputGu...` 生成的渲染片段，后续返回路径直接复用。
     t24 = <T1 title={t17} subtitle={t18} onCancel={t19} hideInputGuide={t20}>{t21}{t23}</T1>;
+    // $[88] 缓存 `T1`，下次依赖未变时 React 编译产物可直接复用。
     $[88] = T1;
+    // $[89] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[89] = t17;
+    // $[90] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[90] = t18;
+    // $[91] 缓存 `t19`，下次依赖未变时 React 编译产物可直接复用。
     $[91] = t19;
+    // $[92] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[92] = t20;
+    // $[93] 缓存 `t21`，下次依赖未变时 React 编译产物可直接复用。
     $[93] = t21;
+    // $[94] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
     $[94] = t23;
+    // $[95] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
     $[95] = t24;
   } else {
+    // t24 从 React 编译缓存槽 $[95] 取回渲染片段，避免依赖未变时重建 JSX。
     t24 = $[95];
   }
+  // 返回 `t24`，作为终端渲染这次计算的结果。
   return t24;
 }
+// _temp1 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp1(a_9) {
+  // 返回 `a_9.source === "built-in"`，作为终端渲染这次计算的结果。
   return a_9.source === "built-in";
 }
+// _temp0 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp0(a_8) {
+  // 返回 `a_8.source !== "built-in"`，作为终端渲染这次计算的结果。
   return a_8.source !== "built-in";
 }
+// _temp9 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp9(g_0) {
+  // 返回 `g_0.source !== "built-in"`，作为终端渲染这次计算的结果。
   return g_0.source !== "built-in";
 }
+// _temp8 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp8(a_6) {
+  // 返回 `!a_6.overriddenBy`，作为终端渲染这次计算的结果。
   return !a_6.overriddenBy;
 }
+// _temp7 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp7(a_5) {
+  // 返回 `a_5.source === "built-in"`，作为终端渲染这次计算的结果。
   return a_5.source === "built-in";
 }
+// _temp6 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp6(a_4) {
+  // 返回 `a_4.source !== "built-in"`，作为终端渲染这次计算的结果。
   return a_4.source !== "built-in";
 }
+// _temp5 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp5(a_3) {
+  // 返回 `a_3.source === "built-in"`，作为终端渲染这次计算的结果。
   return a_3.source === "built-in";
 }
+// _temp4 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp4(a_2) {
+  // 返回 `a_2.source === "built-in"`，作为终端渲染这次计算的结果。
   return a_2.source === "built-in";
 }
+// _temp3 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp3(g) {
+  // 返回 `g.source !== "built-in"`，作为终端渲染这次计算的结果。
   return g.source !== "built-in";
 }
+// _temp2 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(a) {
+  // 返回 `a.source !== "built-in"`，作为终端渲染这次计算的结果。
   return a.source !== "built-in";
 }
+// _temp 封装Agent 配置界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(agent) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     isOverridden: !!agent.overriddenBy,
     overriddenBy: agent.overriddenBy || null

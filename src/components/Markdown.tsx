@@ -1,13 +1,24 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 marked、Token、Tokens，将 marked 中已经封装好的能力接到本文件流程里。
 import { marked, type Token, type Tokens } from 'marked';
+// 引入 React、Suspense、use、useMemo、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import React, { Suspense, use, useMemo, useRef } from 'react';
+// 引入 useSettings，将 ../hooks/useSettings.js 中已经封装好的能力接到本文件流程里。
 import { useSettings } from '../hooks/useSettings.js';
+// 引入 Ansi、Box、useTheme，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Ansi, Box, useTheme } from '../ink.js';
+// 复用 CliHighlight、getCliHighlightPromise 工具函数，把通用处理留在 ../utils/cliHighlight.js 中维护。
 import { type CliHighlight, getCliHighlightPromise } from '../utils/cliHighlight.js';
+// 复用 hashContent 工具函数，把通用处理留在 ../utils/hash.js 中维护。
 import { hashContent } from '../utils/hash.js';
+// 复用 configureMarked、formatToken 工具函数，把通用处理留在 ../utils/markdown.js 中维护。
 import { configureMarked, formatToken } from '../utils/markdown.js';
+// 复用 stripPromptXMLTags 工具函数，把通用处理留在 ../utils/messages.js 中维护。
 import { stripPromptXMLTags } from '../utils/messages.js';
+// 引入 MarkdownTable，将 ./MarkdownTable.js 中已经封装好的能力接到本文件流程里。
 import { MarkdownTable } from './MarkdownTable.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   children: string;
   /** When true, render all text content as dim */
@@ -19,7 +30,9 @@ type Props = {
 // scrolling back to a previously-visible message re-parses. Messages are
 // immutable in history; same content → same tokens. Keyed by hash to avoid
 // retaining full content strings (turn50→turn99 RSS regression, #24180).
+// TOKEN_CACHE_MAX 缓存保存`500`，供后续判断或组装使用。
 const TOKEN_CACHE_MAX = 500;
+// tokenCache 缓存构建`new Map<string, Token[]>()`，供后续判断或组装使用。
 const tokenCache = new Map<string, Token[]>();
 
 // Characters that indicate markdown syntax. If none are present, skip the
@@ -28,6 +41,7 @@ const tokenCache = new Map<string, Token[]>();
 // plain sentences. Checked via indexOf (not regex) for speed.
 // Single regex: matches any MD marker or ordered-list start (N. at line start).
 // One pass instead of 10× includes scans.
+// MD_SYNTAX_RE保存`/[#*`|[>\-_~]|\n\n|^\d+\. |\n\d+\. /`，供终端 UI Markdown后续判断或输出使用。
 const MD_SYNTAX_RE = /[#*`|[>\-_~]|\n\n|^\d+\. |\n\d+\. /;
 function hasMarkdownSyntax(s: string): boolean {
   // Sample first 500 chars — if markdown exists it's usually early (headers,

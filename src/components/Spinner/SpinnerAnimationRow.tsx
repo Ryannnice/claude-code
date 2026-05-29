@@ -1,38 +1,62 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useMemo、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import { useMemo, useRef } from 'react';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../ink/stringWidth.js';
+// 引入 Box、Text、useAnimationFrame，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useAnimationFrame } from '../../ink.js';
+// 类型依赖 { InProcessTeammateTaskState } 来自 ../../tasks/InProcessTeammateTask/types.js，用于校准终端渲染的数据契约。
 import type { InProcessTeammateTaskState } from '../../tasks/InProcessTeammateTask/types.js';
+// 复用 formatDuration、formatNumber 工具函数，把通用处理留在 ../../utils/format.js 中维护。
 import { formatDuration, formatNumber } from '../../utils/format.js';
+// 复用 toInkColor 工具函数，把通用处理留在 ../../utils/ink.js 中维护。
 import { toInkColor } from '../../utils/ink.js';
+// 类型依赖 { Theme } 来自 ../../utils/theme.js，用于校准终端渲染的数据契约。
 import type { Theme } from '../../utils/theme.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 GlimmerMessage，将 ./GlimmerMessage.js 中已经封装好的能力接到本文件流程里。
 import { GlimmerMessage } from './GlimmerMessage.js';
+// 引入 SpinnerGlyph，将 ./SpinnerGlyph.js 中已经封装好的能力接到本文件流程里。
 import { SpinnerGlyph } from './SpinnerGlyph.js';
+// 类型依赖 { SpinnerMode } 来自 ./types.js，用于校准终端渲染的数据契约。
 import type { SpinnerMode } from './types.js';
+// 引入 useStalledAnimation，将 ./useStalledAnimation.js 中已经封装好的能力接到本文件流程里。
 import { useStalledAnimation } from './useStalledAnimation.js';
+// 引入 interpolateColor、toRGBColor，将 ./utils.js 中已经封装好的能力接到本文件流程里。
 import { interpolateColor, toRGBColor } from './utils.js';
+// SEP_WIDTH保存`stringWidth`，供终端渲染后续处理使用。
 const SEP_WIDTH = stringWidth(' · ');
+// THINKING_BARE_WIDTH保存`stringWidth`，供终端渲染后续处理使用。
 const THINKING_BARE_WIDTH = stringWidth('thinking');
+// SHOW_TOKENS_AFTER_MS 集合 命名 `30_000`，让后续代码直接表达这个值的用途。
 const SHOW_TOKENS_AFTER_MS = 30_000;
 
 // Thinking shimmer constants. Previously lived in a separate ThinkingShimmerText
 // component with its own useAnimationFrame(50) — inlined here to reuse our
 // existing 50ms clock and eliminate the redundant subscriber.
+// THINKING_INACTIVE集中保存终端 UI Spinner Animation Row要一起传递的字段。
 const THINKING_INACTIVE = {
   r: 153,
   g: 153,
   b: 153
 };
+// THINKING_INACTIVE_SHIMMER集中保存终端 UI Spinner Animation Row要一起传递的字段。
 const THINKING_INACTIVE_SHIMMER = {
   r: 185,
   g: 185,
   b: 185
 };
+// THINKING_DELAY_MS 集合保存`3000`，供后续判断或组装使用。
 const THINKING_DELAY_MS = 3000;
+// THINKING_GLOW_PERIOD_S 集合保存`2`，供终端 UI Spinner Animation Row后续判断或输出使用。
 const THINKING_GLOW_PERIOD_S = 2;
+// SpinnerAnimationRowProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type SpinnerAnimationRowProps = {
   // Animation inputs
   mode: SpinnerMode;
@@ -78,6 +102,7 @@ export type SpinnerAnimationRowProps = {
  * That keeps the outer Box shells, useAppState selectors, task filtering,
  * and tip/tree subtrees out of the hot animation path.
  */
+// SpinnerAnimationRow 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function SpinnerAnimationRow({
   mode,
   reducedMotion,
@@ -100,10 +125,13 @@ export function SpinnerAnimationRow({
   thinkingStatus,
   effortSuffix
 }: SpinnerAnimationRowProps): React.ReactNode {
+  // 从 `useAnimationFrame(reducedMotion ? null : 50)` 按位置拆出 viewportRef、time，让终端 UI 组件 Spinner Animation Row分别处理这些返回值。
   const [viewportRef, time] = useAnimationFrame(reducedMotion ? null : 50);
 
   // === Elapsed time (wall-clock, derived from refs each frame) ===
+  // now记录时间`Date.now`，供终端渲染后续处理使用。
   const now = Date.now();
+  // elapsedTimeMs 集合标记终端 UI Spinner Animation Row是否启用对应路径。
   const elapsedTimeMs = pauseStartTimeRef.current !== null ? pauseStartTimeRef.current - loadingStartTimeRef.current - totalPausedMsRef.current : now - loadingStartTimeRef.current - totalPausedMsRef.current;
 
   // Track wall-clock turn start for teammates. While a swarm is running the
@@ -111,95 +139,151 @@ export function SpinnerAnimationRow({
   // loadingStartTimeRef; pauses freeze it), so we anchor to the earliest
   // derived start seen so far. When no teammates are running this just tracks
   // derivedStart every frame, effectively resetting for the next swarm.
+  // derivedStart 命名 `now - elapsedTimeMs`，让后续代码直接表达这个值的用途。
   const derivedStart = now - elapsedTimeMs;
+  // turnStartRef 引用保存`useRef`，供终端渲染后续处理使用。
   const turnStartRef = useRef(derivedStart);
+  // 只有 `!hasRunningTeammates || derivedStart < turnStartR` 满足时，终端渲染才执行该分支。
   if (!hasRunningTeammates || derivedStart < turnStartRef.current) {
+    // current更新为 `derivedStart`，确保终端 UI后续读取最新状态。
     turnStartRef.current = derivedStart;
   }
 
   // === Animation derivations from `time` ===
+  // currentResponseLength 响应数据保存`responseLengthRef.current`，供终端 UI Spinner Animation Row后续判断或输出使用。
   const currentResponseLength = responseLengthRef.current;
 
   // Suppress stall detection when leader is idle — responseLengthRef and
   // hasActiveTools both track leader state. When viewing an active teammate
   // while leader is idle, they'd otherwise flag a false stall after 3s.
   // Treating leaderIsIdle like hasActiveTools resets the stall timer.
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     isStalled,
     stalledIntensity
   } = useStalledAnimation(time, currentResponseLength, hasActiveTools || leaderIsIdle, reducedMotion);
+  // frame保存`Math.floor`，供终端渲染后续处理使用。
   const frame = reducedMotion ? 0 : Math.floor(time / 120);
+  // glimmerSpeed标记终端 UI Spinner Animation Row是否启用对应路径。
   const glimmerSpeed = mode === 'requesting' ? 50 : 200;
   // message is stable within a turn; stringWidth is expensive enough (Bun native
   // call per code point) to memoize explicitly across the 50ms loop.
+  // glimmerMessageWidth 消息数据保存`useMemo`，供终端渲染后续处理使用。
   const glimmerMessageWidth = useMemo(() => stringWidth(message), [message]);
+  // cycleLength 数量保存`glimmerMessageWidth + 20`，供终端 UI Spinner Animation Row后续判断或输出使用。
   const cycleLength = glimmerMessageWidth + 20;
+  // cyclePosition保存`Math.floor`，供终端渲染后续处理使用。
   const cyclePosition = Math.floor(time / glimmerSpeed);
+  // glimmerIndex 索引标记终端 UI Spinner Animation Row是否启用对应路径。
   const glimmerIndex = reducedMotion ? -100 : isStalled ? -100 : mode === 'requesting' ? cyclePosition % cycleLength - 10 : glimmerMessageWidth + 10 - cyclePosition % cycleLength;
+  // flashOpacity保存`Math.sin`，供终端渲染后续处理使用。
   const flashOpacity = reducedMotion ? 0 : mode === 'tool-use' ? (Math.sin(time / 1000 * Math.PI) + 1) / 2 : 0;
 
   // === Token counter animation (smooth increment, driven by 50ms clock) ===
+  // tokenCounterRef 引用保存`useRef`，供终端渲染后续处理使用。
   const tokenCounterRef = useRef(currentResponseLength);
+  // 满足 `reducedMotion` 时，终端渲染执行该分支。
   if (reducedMotion) {
+    // current更新为 `currentResponseLength`，确保终端 UI后续读取最新状态。
     tokenCounterRef.current = currentResponseLength;
   } else {
+    // gap保存`currentResponseLength - tokenCounterRef.current`，供后续判断或组装使用。
     const gap = currentResponseLength - tokenCounterRef.current;
+    // 满足 `gap > 0` 时，终端渲染执行该分支。
     if (gap > 0) {
+      // increment 先占位，稍后的条件分支会根据实际输入补齐它。
       let increment;
+      // 满足 `gap < 70` 时，终端渲染执行该分支。
       if (gap < 70) {
+        // increment更新为 `3`，确保终端 UI后续读取最新状态。
         increment = 3;
+      // 终端 UI 组件 Spinner Animation Row在这里处理 `} else if (gap < 200) {`，完成这一小步状态转换。
       } else if (gap < 200) {
+        // increment更新为 `Math.max(8, Math.ceil(gap * 0.15))`，确保终端 UI后续读取最新状态。
         increment = Math.max(8, Math.ceil(gap * 0.15));
       } else {
+        // increment更新为 `50`，确保终端 UI后续读取最新状态。
         increment = 50;
       }
+      // current更新为 `Math.min(tokenCounterRef.current + increment, currentResp...`，确保终端 UI后续读取最新状态。
       tokenCounterRef.current = Math.min(tokenCounterRef.current + increment, currentResponseLength);
     }
   }
+  // displayedResponseLength 响应数据保存`tokenCounterRef.current`，供终端 UI Spinner Animation Row后续判断或输出使用。
   const displayedResponseLength = tokenCounterRef.current;
+  // leaderTokens 集合保存`Math.round`，供终端渲染后续处理使用。
   const leaderTokens = Math.round(displayedResponseLength / 4);
+  // effectiveElapsedMs 集合保存`Math.max`，供终端渲染后续处理使用。
   const effectiveElapsedMs = hasRunningTeammates ? Math.max(elapsedTimeMs, now - turnStartRef.current) : elapsedTimeMs;
+  // timerText格式化`formatDuration`，供终端渲染后续处理使用。
   const timerText = formatDuration(effectiveElapsedMs);
+  // timerWidth保存`stringWidth`，供终端渲染后续处理使用。
   const timerWidth = stringWidth(timerText);
 
   // === Token count (leader + teammates, or foregrounded teammate) ===
+  // totalTokens 集合标记终端 UI Spinner Animation Row是否启用对应路径。
   const totalTokens = foregroundedTeammate && !foregroundedTeammate.isIdle ? foregroundedTeammate.progress?.tokenCount ?? 0 : leaderTokens + teammateTokens;
+  // tokenCount 数量格式化`formatNumber`，供终端渲染后续处理使用。
   const tokenCount = formatNumber(totalTokens);
+  // tokensText保存`hasRunningTeammates ? `${tokenCount} tokens` : `${figures...`，供终端 UI Spinner Animation Row后续判断或输出使用。
   const tokensText = hasRunningTeammates ? `${tokenCount} tokens` : `${figures.arrowDown} ${tokenCount} tokens`;
+  // tokensWidth保存`stringWidth`，供终端渲染后续处理使用。
   const tokensWidth = stringWidth(tokensText);
 
   // === Thinking text (may shrink to fit) ===
+  // thinkingText保存`Math.max`，供终端渲染后续处理使用。
   let thinkingText = thinkingStatus === 'thinking' ? `thinking${effortSuffix}` : typeof thinkingStatus === 'number' ? `thought for ${Math.max(1, Math.round(thinkingStatus / 1000))}s` : null;
+  // thinkingWidthValue保存`stringWidth`，供终端渲染后续处理使用。
   let thinkingWidthValue = thinkingText ? stringWidth(thinkingText) : 0;
 
   // === Progressive width gating ===
+  // messageWidth 消息数据保存`glimmerMessageWidth + 2`，供后续判断或组装使用。
   const messageWidth = glimmerMessageWidth + 2;
+  // sep保存`SEP_WIDTH`，供终端 UI Spinner Animation Row后续判断或输出使用。
   const sep = SEP_WIDTH;
+  // wantsThinking标记终端 UI Spinner Animation Row是否启用对应路径。
   const wantsThinking = thinkingStatus !== null;
+  // wantsTimerAndTokens 集合标记终端 UI Spinner Animation Row是否启用对应路径。
   const wantsTimerAndTokens = verbose || hasRunningTeammates || effectiveElapsedMs > SHOW_TOKENS_AFTER_MS;
+  // availableSpace 命名 `columns - messageWidth - 5`，让后续代码直接表达这个值的用途。
   const availableSpace = columns - messageWidth - 5;
+  // showThinking标记终端 UI Spinner Animation Row是否启用对应路径。
   let showThinking = wantsThinking && availableSpace > thinkingWidthValue;
+  // 只有 `!showThinking && wantsThinking && thinkingStatus` 满足时，终端渲染才执行该分支。
   if (!showThinking && wantsThinking && thinkingStatus === 'thinking' && effortSuffix) {
+    // 满足 `availableSpace > THINKING_BARE_WIDTH` 时，终端渲染执行该分支。
     if (availableSpace > THINKING_BARE_WIDTH) {
+      // thinkingText更新为 `'thinking'`，确保终端 UI后续读取最新状态。
       thinkingText = 'thinking';
+      // thinkingWidthValue更新为 `THINKING_BARE_WIDTH`，确保终端 UI后续读取最新状态。
       thinkingWidthValue = THINKING_BARE_WIDTH;
+      // showThinking更新为 `true`，确保终端 UI后续读取最新状态。
       showThinking = true;
     }
   }
+  // usedAfterThinking 命名 `showThinking ? thinkingWidthValue + sep : 0`，让后续代码直接表达这个值的用途。
   const usedAfterThinking = showThinking ? thinkingWidthValue + sep : 0;
+  // showTimer标记终端 UI Spinner Animation Row是否启用对应路径。
   const showTimer = wantsTimerAndTokens && availableSpace > usedAfterThinking + timerWidth;
+  // usedAfterTimer保存`usedAfterThinking + (showTimer ? timerWidth + sep : 0)`，供后续判断或组装使用。
   const usedAfterTimer = usedAfterThinking + (showTimer ? timerWidth + sep : 0);
+  // showTokens 集合标记终端 UI Spinner Animation Row是否启用对应路径。
   const showTokens = wantsTimerAndTokens && totalTokens > 0 && availableSpace > usedAfterTimer + tokensWidth;
+  // thinkingOnly标记终端 UI Spinner Animation Row是否启用对应路径。
   const thinkingOnly = showThinking && thinkingStatus === 'thinking' && !spinnerSuffix && !showTimer && !showTokens && true;
 
   // === Thinking shimmer color (formerly ThinkingShimmerText's own timer) ===
   // Same sine-wave opacity, but derived from our shared `time` instead of a
   // second useAnimationFrame(50) subscription.
+  // thinkingElapsedSec保存`(time - THINKING_DELAY_MS) / 1000`，供终端 UI Spinner Animation Row后续判断或输出使用。
   const thinkingElapsedSec = (time - THINKING_DELAY_MS) / 1000;
+  // thinkingOpacity保存`Math.sin`，供终端渲染后续处理使用。
   const thinkingOpacity = time < THINKING_DELAY_MS ? 0 : (Math.sin(thinkingElapsedSec * Math.PI * 2 / THINKING_GLOW_PERIOD_S) + 1) / 2;
+  // thinkingShimmerColor保存`toRGBColor`，供终端渲染后续处理使用。
   const thinkingShimmerColor = toRGBColor(interpolateColor(THINKING_INACTIVE, THINKING_INACTIVE_SHIMMER, thinkingOpacity));
 
   // === Build status parts ===
+  // 片段列表 聚合成有序列表，保持后续遍历顺序稳定。
   const parts = [...(spinnerSuffix ? [<Text dimColor key="suffix">
             {spinnerSuffix}
           </Text>] : []), ...(showTimer ? [<Text dimColor key="elapsedTime">
@@ -212,6 +296,7 @@ export function SpinnerAnimationRow({
             </Text> : <Text dimColor key="thinking">
               {thinkingText}
             </Text>] : [])];
+  // status 集合标记终端 UI Spinner Animation Row是否启用对应路径。
   const status = foregroundedTeammate && !foregroundedTeammate.isIdle ? <>
         <Text dimColor>(esc to interrupt </Text>
         <Text color={toInkColor(foregroundedTeammate.identity.color)}>
@@ -223,41 +308,58 @@ export function SpinnerAnimationRow({
           <Byline>{parts}</Byline>
           <Text dimColor>)</Text>
         </> : null;
+  // 返回 `<Box ref={viewportRef} flexDirection="row" flexWrap="wrap" marginTop={1...`，作为终端渲染这次计算的结果。
   return <Box ref={viewportRef} flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
       <SpinnerGlyph frame={frame} messageColor={messageColor} stalledIntensity={overrideColor ? 0 : stalledIntensity} reducedMotion={reducedMotion} time={time} />
       <GlimmerMessage message={message} mode={mode} messageColor={messageColor} glimmerIndex={glimmerIndex} flashOpacity={flashOpacity} shimmerColor={shimmerColor} stalledIntensity={overrideColor ? 0 : stalledIntensity} />
       {status}
     </Box>;
 }
+// SpinnerModeGlyph 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function SpinnerModeGlyph(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(2);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     mode
   } = t0;
+  // 按照 mode 的取值选择终端渲染的具体处理分支。
   switch (mode) {
     case "tool-input":
     case "tool-use":
     case "responding":
     case "thinking":
       {
+        // t1 暂存 `<Box width={2}><Text dimColor={true}>{figures.arrowDown}<...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Box width={2}><Text dimColor={true}>{figures.arrowDown}<...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Box width={2}><Text dimColor={true}>{figures.arrowDown}</Text></Box>;
+          // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[0] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[0];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
     case "requesting":
       {
+        // t1 暂存 `<Box width={2}><Text dimColor={true}>{figures.arrowUp}</T...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Box width={2}><Text dimColor={true}>{figures.arrowUp}</T...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Box width={2}><Text dimColor={true}>{figures.arrowUp}</Text></Box>;
+          // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[1] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[1];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
   }

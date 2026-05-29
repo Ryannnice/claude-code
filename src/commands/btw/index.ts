@@ -1,5 +1,7 @@
+// 类型依赖 { Command } 来自 ../../commands.js，用于校准命令处理的数据契约。
 import type { Command } from '../../commands.js'
 
+// btw 集中保存命令处理斜杠命令 index要一起传递的字段。
 const btw = {
   type: 'local-jsx',
   name: 'btw',
@@ -7,6 +9,7 @@ const btw = {
     'Ask a quick side question without interrupting the main conversation',
   immediate: true,
   argumentHint: '<question>',
+  // 这个回调绑定到 load: () => import('./btw.js'),，负责命令处理在该局部场景下的响应。
   load: () => import('./btw.js'),
 } satisfies Command
 

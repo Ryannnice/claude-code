@@ -1,34 +1,59 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 使用 Node/Bun 的 fs/promises 能力处理本地运行时资源。
 import { stat } from 'fs/promises';
+// 引入 OUTPUT_FILE_TAG、STATUS_TAG、SUMMARY_TAG、TASK_ID_TAG、TASK_NOTIFICATION_TAG、TOOL_USE_ID_TAG，将 ../../constants/xml.js 中已经封装好的能力接到本文件流程里。
 import { OUTPUT_FILE_TAG, STATUS_TAG, SUMMARY_TAG, TASK_ID_TAG, TASK_NOTIFICATION_TAG, TOOL_USE_ID_TAG } from '../../constants/xml.js';
+// 接入 abortSpeculation 服务层能力，把外部通信或共享状态交给 ../../services/PromptSuggestion/speculation.js 处理。
 import { abortSpeculation } from '../../services/PromptSuggestion/speculation.js';
+// 类型依赖 { AppState } 来自 ../../state/AppState.js，用于校准Local Shell Task的数据契约。
 import type { AppState } from '../../state/AppState.js';
+// 类型依赖 { LocalShellSpawnInput, SetAppState, Task, TaskContext, Tas… 来自 ../../Task.js，用于校准Local Shell Task的数据契约。
 import type { LocalShellSpawnInput, SetAppState, Task, TaskContext, TaskHandle } from '../../Task.js';
+// 引入 createTaskStateBase，将 ../../Task.js 中已经封装好的能力接到本文件流程里。
 import { createTaskStateBase } from '../../Task.js';
+// 类型依赖 { AgentId } 来自 ../../types/ids.js，用于校准Local Shell Task的数据契约。
 import type { AgentId } from '../../types/ids.js';
+// 复用 registerCleanup 工具函数，把通用处理留在 ../../utils/cleanupRegistry.js 中维护。
 import { registerCleanup } from '../../utils/cleanupRegistry.js';
+// 复用 tailFile 工具函数，把通用处理留在 ../../utils/fsOperations.js 中维护。
 import { tailFile } from '../../utils/fsOperations.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 复用 enqueuePendingNotification 工具函数，把通用处理留在 ../../utils/messageQueueManager.js 中维护。
 import { enqueuePendingNotification } from '../../utils/messageQueueManager.js';
+// 类型依赖 { ShellCommand } 来自 ../../utils/ShellCommand.js，用于校准Local Shell Task的数据契约。
 import type { ShellCommand } from '../../utils/ShellCommand.js';
+// 复用 evictTaskOutput、getTaskOutputPath 工具函数，把通用处理留在 ../../utils/task/diskOutput.js 中维护。
 import { evictTaskOutput, getTaskOutputPath } from '../../utils/task/diskOutput.js';
+// 复用 registerTask、updateTaskState 工具函数，把通用处理留在 ../../utils/task/framework.js 中维护。
 import { registerTask, updateTaskState } from '../../utils/task/framework.js';
+// 复用 escapeXml 工具函数，把通用处理留在 ../../utils/xml.js 中维护。
 import { escapeXml } from '../../utils/xml.js';
+// 引入 backgroundAgentTask、isLocalAgentTask，将 ../LocalAgentTask/LocalAgentTask.js 中已经封装好的能力接到本文件流程里。
 import { backgroundAgentTask, isLocalAgentTask } from '../LocalAgentTask/LocalAgentTask.js';
+// 引入 isMainSessionTask，将 ../LocalMainSessionTask.js 中已经封装好的能力接到本文件流程里。
 import { isMainSessionTask } from '../LocalMainSessionTask.js';
+// 引入 BashTaskKind、isLocalShellTask、LocalShellTaskState，将 ./guards.js 中已经封装好的能力接到本文件流程里。
 import { type BashTaskKind, isLocalShellTask, type LocalShellTaskState } from './guards.js';
+// 引入 killTask，将 ./killShellTasks.js 中已经封装好的能力接到本文件流程里。
 import { killTask } from './killShellTasks.js';
 
 /** Prefix that identifies a LocalShellTask summary to the UI collapse transform. */
+// BACKGROUND_BASH_SUMMARY_PREFIX固定为 `'Background command '`，作为Local Shell Task后续展示或比较的基准。
 export const BACKGROUND_BASH_SUMMARY_PREFIX = 'Background command ';
+// STALL_CHECK_INTERVAL_MS 集合 命名 `5_000`，让后续代码直接表达这个值的用途。
 const STALL_CHECK_INTERVAL_MS = 5_000;
+// STALL_THRESHOLD_MS 集合 命名 `45_000`，让后续代码直接表达这个值的用途。
 const STALL_THRESHOLD_MS = 45_000;
+// STALL_TAIL_BYTES 集合 命名 `1024`，让后续代码直接表达这个值的用途。
 const STALL_TAIL_BYTES = 1024;
 
 // Last-line patterns that suggest a command is blocked waiting for keyboard
 // input. Used to gate the stall notification — we stay silent on commands that
 // are merely slow (git log -S, long builds) and only notify when the tail
 // looks like an interactive prompt the model can act on. See CC-1175.
+// PROMPT_PATTERNS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const PROMPT_PATTERNS = [/\(y\/n\)/i,
 // (Y/n), (y/N)
 /\[y\/n\]/i,
@@ -36,47 +61,73 @@ const PROMPT_PATTERNS = [/\(y\/n\)/i,
 /\(yes\/no\)/i, /\b(?:Do you|Would you|Shall I|Are you sure|Ready to)\b.*\? *$/i,
 // directed questions
 /Press (any key|Enter)/i, /Continue\?/i, /Overwrite\?/i];
+// looksLikePrompt 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function looksLikePrompt(tail: string): boolean {
+  // lastLine格式化`tail.trimEnd`，供Local Shell Task后续处理使用。
   const lastLine = tail.trimEnd().split('\n').pop() ?? '';
+  // 返回 `PROMPT_PATTERNS.some(p => p.test(lastLine))`，作为Local Shell Task这次计算的结果。
   return PROMPT_PATTERNS.some(p => p.test(lastLine));
 }
 
 // Output-side analog of peekForStdinData (utils/process.ts): fire a one-shot
 // notification if output stops growing and the tail looks like a prompt.
+// startStallWatchdog 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function startStallWatchdog(taskId: string, description: string, kind: BashTaskKind | undefined, toolUseId?: string, agentId?: AgentId): () => void {
+  // 满足 `kind === 'monitor') return (` 时，Local Shell Task执行该分支。
   if (kind === 'monitor') return () => {};
+  // outputPath 路径数据读取`getTaskOutputPath`，供Local Shell Task后续处理使用。
   const outputPath = getTaskOutputPath(taskId);
+  // lastSize保存`0`，供Local Shell Task后续判断或输出使用。
   let lastSize = 0;
+  // lastGrowth记录时间`Date.now`，供Local Shell Task后续处理使用。
   let lastGrowth = Date.now();
+  // cancelled标记Local Shell Task是否启用对应路径。
   let cancelled = false;
+  // timer保存`setInterval`，供Local Shell Task后续处理使用。
   const timer = setInterval(() => {
+    // 这个回调绑定到 void stat(outputPath).then(s => {，负责Local Shell Task在该局部场景下的响应。
     void stat(outputPath).then(s => {
+      // 满足 `s.size > lastSize` 时，Local Shell Task执行该分支。
       if (s.size > lastSize) {
+        // lastSize更新为 `s.size`，确保LocalShellTask后续读取最新状态。
         lastSize = s.size;
+        // lastGrowth更新为 `Date.now()`，确保LocalShellTask后续读取最新状态。
         lastGrowth = Date.now();
+        // Local Shell Task在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `Date.now() - lastGrowth < STALL_THRESHOLD_MS` 时，Local Shell Task执行该分支。
       if (Date.now() - lastGrowth < STALL_THRESHOLD_MS) return;
+      // 显式忽略 `tailFile(outputPath, STALL_TAIL_BYTES).then(({` 的返回值，只保留它触发的副作用。
       void tailFile(outputPath, STALL_TAIL_BYTES).then(({
         content
       }) => {
+        // 满足 `cancelled` 时，Local Shell Task执行该分支。
         if (cancelled) return;
+        // 满足 `!looksLikePrompt(content)` 时，Local Shell Task执行该分支。
         if (!looksLikePrompt(content)) {
           // Not a prompt — keep watching. Reset so the next check is
           // 45s out instead of re-reading the tail on every tick.
+          // lastGrowth更新为 `Date.now()`，确保LocalShellTask后续读取最新状态。
           lastGrowth = Date.now();
+          // Local Shell Task在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
         // Latch before the async-boundary-visible side effects so an
         // overlapping tick's callback sees cancelled=true and bails.
+        // cancelled更新为 `true`，确保LocalShellTask后续读取最新状态。
         cancelled = true;
+        // 调用 clearInterval，触发Local Shell Task此处需要的副作用。
         clearInterval(timer);
+        // toolUseIdLine保存`toolUseId ? `\n<${TOOL_USE_ID_TAG}>${toolUseId}</${TOOL_U...`，供Local Shell Task后续判断或输出使用。
         const toolUseIdLine = toolUseId ? `\n<${TOOL_USE_ID_TAG}>${toolUseId}</${TOOL_USE_ID_TAG}>` : '';
+        // summary固定为 ``${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" appear...`，作为Local Shell Task后续展示或比较的基准。
         const summary = `${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" appears to be waiting for interactive input`;
         // No <status> tag — print.ts treats <status> as a terminal
         // signal and an unknown value falls through to 'completed',
         // falsely closing the task for SDK consumers. Statusless
         // notifications are skipped by the SDK emitter (progress ping).
+        // 消息 命名 ``<${TASK_NOTIFICATION_TAG}>`，让后续代码直接表达这个值的用途。
         const message = `<${TASK_NOTIFICATION_TAG}>
 <${TASK_ID_TAG}>${taskId}</${TASK_ID_TAG}>${toolUseIdLine}
 <${OUTPUT_FILE_TAG}>${outputPath}</${OUTPUT_FILE_TAG}>
@@ -86,83 +137,120 @@ Last output:
 ${content.trimEnd()}
 
 The command is likely blocked on an interactive prompt. Kill this task and re-run with piped input (e.g., \`echo y | command\`) or a non-interactive flag if one exists.`;
+        // 调用 enqueuePendingNotification，触发Local Shell Task此处需要的副作用。
         enqueuePendingNotification({
           value: message,
           mode: 'task-notification',
           priority: 'next',
           agentId
         });
+      // 这个回调绑定到 }, () => {});，负责Local Shell Task在该局部场景下的响应。
       }, () => {});
+    // 这个回调绑定到 }, () => {} // File may not exist yet，负责Local Shell Task在该局部场景下的响应。
     }, () => {} // File may not exist yet
     );
   }, STALL_CHECK_INTERVAL_MS);
+  // 调用 timer.unref，触发Local Shell Task此处需要的副作用。
   timer.unref();
+  // 返回 `() => {`，作为Local Shell Task这次计算的结果。
   return () => {
+    // cancelled更新为 `true`，确保LocalShellTask后续读取最新状态。
     cancelled = true;
+    // 调用 clearInterval，触发Local Shell Task此处需要的副作用。
     clearInterval(timer);
   };
 }
+// enqueueShellNotification 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function enqueueShellNotification(taskId: string, description: string, status: 'completed' | 'failed' | 'killed', exitCode: number | undefined, setAppState: SetAppState, toolUseId?: string, kind: BashTaskKind = 'bash', agentId?: AgentId): void {
   // Atomically check and set notified flag to prevent duplicate notifications.
   // If the task was already marked as notified (e.g., by TaskStopTool), skip
   // enqueueing to avoid sending redundant messages to the model.
+  // shouldEnqueue标记Local Shell Task是否启用对应路径。
   let shouldEnqueue = false;
+  // 调用 updateTaskState，触发Local Shell Task此处需要的副作用。
   updateTaskState(taskId, setAppState, task => {
+    // 满足 `task.notified` 时，Local Shell Task执行该分支。
     if (task.notified) {
+      // 返回 `task`，作为Local Shell Task这次计算的结果。
       return task;
     }
+    // shouldEnqueue更新为 `true`，确保LocalShellTask后续读取最新状态。
     shouldEnqueue = true;
+    // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
     return {
       ...task,
       notified: true
     };
   });
+  // shouldEnqueue缺失时提前走兜底路径，避免Local Shell Task继续依赖无效输入。
   if (!shouldEnqueue) {
+    // Local Shell Task在这里结束当前路径，避免继续执行不适用的后续分支。
     return;
   }
 
   // Abort any active speculation — background task state changed, so speculated
   // results may reference stale task output. The prompt suggestion text is
   // preserved; only the pre-computed response is discarded.
+  // 触发取消信号，通知Local Shell Task中仍在等待的异步任务尽快停止。
   abortSpeculation(setAppState);
+  // summary 先占位，稍后的条件分支会根据实际输入补齐它。
   let summary: string;
+  // 当 `feature('MONITOR_TOOL') && kind` 匹配 `'monitor'` 时，Local Shell Task执行对应分支。
   if (feature('MONITOR_TOOL') && kind === 'monitor') {
     // Monitor is streaming-only (post-#22764) — the script exiting means
     // the stream ended, not "condition met". Distinct from the bash prefix
     // so Monitor completions don't fold into the "N background commands
     // completed" collapse.
+    // 按照 status 的取值选择Local Shell Task的具体处理分支。
     switch (status) {
       case 'completed':
+        // summary更新为 ``Monitor "${description}" stream ended``，确保LocalShellTask后续读取最新状态。
         summary = `Monitor "${description}" stream ended`;
+        // 结束这个分支或循环，避免Local Shell Task继续落入后续路径。
         break;
       case 'failed':
+        // summary更新为 ``Monitor "${description}" script failed${exitCode !== und...`，确保LocalShellTask后续读取最新状态。
         summary = `Monitor "${description}" script failed${exitCode !== undefined ? ` (exit ${exitCode})` : ''}`;
+        // 结束这个分支或循环，避免Local Shell Task继续落入后续路径。
         break;
       case 'killed':
+        // summary更新为 ``Monitor "${description}" stopped``，确保LocalShellTask后续读取最新状态。
         summary = `Monitor "${description}" stopped`;
+        // 结束这个分支或循环，避免Local Shell Task继续落入后续路径。
         break;
     }
   } else {
+    // 按照 status 的取值选择Local Shell Task的具体处理分支。
     switch (status) {
       case 'completed':
+        // summary更新为 ``${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" comple...`，确保LocalShellTask后续读取最新状态。
         summary = `${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" completed${exitCode !== undefined ? ` (exit code ${exitCode})` : ''}`;
+        // 结束这个分支或循环，避免Local Shell Task继续落入后续路径。
         break;
       case 'failed':
+        // summary更新为 ``${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" failed...`，确保LocalShellTask后续读取最新状态。
         summary = `${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" failed${exitCode !== undefined ? ` with exit code ${exitCode}` : ''}`;
+        // 结束这个分支或循环，避免Local Shell Task继续落入后续路径。
         break;
       case 'killed':
+        // summary更新为 ``${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" was st...`，确保LocalShellTask后续读取最新状态。
         summary = `${BACKGROUND_BASH_SUMMARY_PREFIX}"${description}" was stopped`;
+        // 结束这个分支或循环，避免Local Shell Task继续落入后续路径。
         break;
     }
   }
+  // outputPath 路径数据读取`getTaskOutputPath`，供Local Shell Task后续处理使用。
   const outputPath = getTaskOutputPath(taskId);
+  // toolUseIdLine保存`toolUseId ? `\n<${TOOL_USE_ID_TAG}>${toolUseId}</${TOOL_U...`，供Local Shell Task后续判断或输出使用。
   const toolUseIdLine = toolUseId ? `\n<${TOOL_USE_ID_TAG}>${toolUseId}</${TOOL_USE_ID_TAG}>` : '';
+  // 消息 命名 ``<${TASK_NOTIFICATION_TAG}>`，让后续代码直接表达这个值的用途。
   const message = `<${TASK_NOTIFICATION_TAG}>
 <${TASK_ID_TAG}>${taskId}</${TASK_ID_TAG}>${toolUseIdLine}
 <${OUTPUT_FILE_TAG}>${outputPath}</${OUTPUT_FILE_TAG}>
 <${STATUS_TAG}>${status}</${STATUS_TAG}>
 <${SUMMARY_TAG}>${escapeXml(summary)}</${SUMMARY_TAG}>
 </${TASK_NOTIFICATION_TAG}>`;
+  // 调用 enqueuePendingNotification，触发Local Shell Task此处需要的副作用。
   enqueuePendingNotification({
     value: message,
     mode: 'task-notification',
@@ -170,16 +258,21 @@ function enqueueShellNotification(taskId: string, description: string, status: '
     agentId
   });
 }
+// LocalShellTask 集中保存Local Shell Task要一起传递的字段。
 export const LocalShellTask: Task = {
   name: 'LocalShellTask',
   type: 'local_bash',
+  // kill 使用 taskId, setAppState 完成Local Shell Task里的对应操作。
   async kill(taskId, setAppState) {
+    // 调用 killTask，触发Local Shell Task此处需要的副作用。
     killTask(taskId, setAppState);
   }
 };
+// spawnShellTask 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function spawnShellTask(input: LocalShellSpawnInput & {
   shellCommand: ShellCommand;
 }, context: TaskContext): Promise<TaskHandle> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     command,
     description,
@@ -188,18 +281,24 @@ export async function spawnShellTask(input: LocalShellSpawnInput & {
     agentId,
     kind
   } = input;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     setAppState
   } = context;
 
   // TaskOutput owns the data — use its taskId so disk writes are consistent
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     taskOutput
   } = shellCommand;
+  // taskId保存`taskOutput.taskId`，供后续判断或组装使用。
   const taskId = taskOutput.taskId;
+  // unregisterCleanup保存`registerCleanup`，供Local Shell Task后续处理使用。
   const unregisterCleanup = registerCleanup(async () => {
+    // 调用 killTask，触发Local Shell Task此处需要的副作用。
     killTask(taskId, setAppState);
   });
+  // taskState 状态 集中保存Local Shell Task要一起传递的字段。
   const taskState: LocalShellTaskState = {
     ...createTaskStateBase(taskId, 'local_bash', description, toolUseId),
     type: 'local_bash',
@@ -213,21 +312,33 @@ export async function spawnShellTask(input: LocalShellSpawnInput & {
     agentId,
     kind
   };
+  // 调用 registerTask，触发Local Shell Task此处需要的副作用。
   registerTask(taskState, setAppState);
 
   // Data flows through TaskOutput automatically — no stream listeners needed.
   // Just transition to backgrounded state so the process keeps running.
+  // 调用 shellCommand.background，触发Local Shell Task此处需要的副作用。
   shellCommand.background(taskId);
+  // cancelStallWatchdog保存`startStallWatchdog`，供Local Shell Task后续处理使用。
   const cancelStallWatchdog = startStallWatchdog(taskId, description, kind, toolUseId, agentId);
+  // 这个回调绑定到 void shellCommand.result.then(async result => {，负责Local Shell Task在该局部场景下的响应。
   void shellCommand.result.then(async result => {
+    // 调用 cancelStallWatchdog，触发Local Shell Task此处需要的副作用。
     cancelStallWatchdog();
+    // 等待 `flushAndCleanup(shellCommand)` 完成，再继续Local Shell Task的异步流程。
     await flushAndCleanup(shellCommand);
+    // wasKilled标记Local Shell Task是否启用对应路径。
     let wasKilled = false;
+    // 这个回调绑定到 updateTaskState<LocalShellTaskState>(taskId, setAppState, task => {，负责Local Shell Task在该局部场景下的响应。
     updateTaskState<LocalShellTaskState>(taskId, setAppState, task => {
+      // 当 `task.status` 匹配 `'killed'` 时，Local Shell Task执行对应分支。
       if (task.status === 'killed') {
+        // wasKilled更新为 `true`，确保LocalShellTask后续读取最新状态。
         wasKilled = true;
+        // 返回 `task`，作为Local Shell Task这次计算的结果。
         return task;
       }
+      // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
       return {
         ...task,
         status: result.code === 0 ? 'completed' : 'failed',
@@ -240,12 +351,17 @@ export async function spawnShellTask(input: LocalShellSpawnInput & {
         endTime: Date.now()
       };
     });
+    // 调用 enqueueShellNotification，触发Local Shell Task此处需要的副作用。
     enqueueShellNotification(taskId, description, wasKilled ? 'killed' : result.code === 0 ? 'completed' : 'failed', result.code, setAppState, toolUseId, kind, agentId);
+    // 显式忽略 `evictTaskOutput(taskId)` 的返回值，只保留它触发的副作用。
     void evictTaskOutput(taskId);
   });
+  // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
   return {
     taskId,
+    // 这个回调绑定到 cleanup: () => {，负责Local Shell Task在该局部场景下的响应。
     cleanup: () => {
+      // 调用 unregisterCleanup，触发Local Shell Task此处需要的副作用。
       unregisterCleanup();
     }
   };
@@ -256,19 +372,25 @@ export async function spawnShellTask(input: LocalShellSpawnInput & {
  * Called when a bash command has been running long enough to show the BackgroundHint.
  * @returns taskId for the registered task
  */
+// registerForeground 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function registerForeground(input: LocalShellSpawnInput & {
   shellCommand: ShellCommand;
 }, setAppState: SetAppState, toolUseId?: string): string {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     command,
     description,
     shellCommand,
     agentId
   } = input;
+  // taskId保存`shellCommand.taskOutput.taskId`，供Local Shell Task后续判断或输出使用。
   const taskId = shellCommand.taskOutput.taskId;
+  // unregisterCleanup保存`registerCleanup`，供Local Shell Task后续处理使用。
   const unregisterCleanup = registerCleanup(async () => {
+    // 调用 killTask，触发Local Shell Task此处需要的副作用。
     killTask(taskId, setAppState);
   });
+  // taskState 状态 集中保存Local Shell Task要一起传递的字段。
   const taskState: LocalShellTaskState = {
     ...createTaskStateBase(taskId, 'local_bash', description, toolUseId),
     type: 'local_bash',
@@ -282,7 +404,9 @@ export function registerForeground(input: LocalShellSpawnInput & {
     // Not yet backgrounded - running in foreground
     agentId
   };
+  // 调用 registerTask，触发Local Shell Task此处需要的副作用。
   registerTask(taskState, setAppState);
+  // 返回 `taskId`，作为Local Shell Task这次计算的结果。
   return taskId;
 }
 
@@ -290,15 +414,23 @@ export function registerForeground(input: LocalShellSpawnInput & {
  * Background a specific foreground task.
  * @returns true if backgrounded successfully, false otherwise
  */
+// backgroundTask 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function backgroundTask(taskId: string, getAppState: () => AppState, setAppState: SetAppState): boolean {
   // Step 1: Get the task and shell command from current state
+  // 状态读取`getAppState`，供Local Shell Task后续处理使用。
   const state = getAppState();
+  // task 命名 `state.tasks[taskId]`，让后续代码直接表达这个值的用途。
   const task = state.tasks[taskId];
+  // 组合条件 `!isLocalShellTask(task) || task.isBackgrounded || !task.shellCommand` 成立时，Local Shell Task才启用这条专门路径。
   if (!isLocalShellTask(task) || task.isBackgrounded || !task.shellCommand) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
+  // shellCommand 命令数据保存`task.shellCommand`，供后续判断或组装使用。
   const shellCommand = task.shellCommand;
+  // description保存`task.description`，供后续判断或组装使用。
   const description = task.description;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     toolUseId,
     kind,
@@ -306,14 +438,21 @@ function backgroundTask(taskId: string, getAppState: () => AppState, setAppState
   } = task;
 
   // Transition to backgrounded — TaskOutput continues receiving data automatically
+  // 满足 `!shellCommand.background(taskId)` 时，Local Shell Task执行该分支。
   if (!shellCommand.background(taskId)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
+  // setAppState 写入新的状态值，使Local Shell Task后续读取保持一致。
   setAppState(prev => {
+    // prevTask读取 `prev.tasks[taskId]` 对应条目，后续围绕该成员继续处理。
     const prevTask = prev.tasks[taskId];
+    // 组合条件 `!isLocalShellTask(prevTask) || prevTask.isBackgrounded` 成立时，Local Shell Task才启用这条专门路径。
     if (!isLocalShellTask(prevTask) || prevTask.isBackgrounded) {
+      // 返回 `prev`，作为Local Shell Task这次计算的结果。
       return prev;
     }
+    // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
     return {
       ...prev,
       tasks: {
@@ -325,22 +464,34 @@ function backgroundTask(taskId: string, getAppState: () => AppState, setAppState
       }
     };
   });
+  // cancelStallWatchdog保存`startStallWatchdog`，供Local Shell Task后续处理使用。
   const cancelStallWatchdog = startStallWatchdog(taskId, description, kind, toolUseId, agentId);
 
   // Set up result handler
+  // 这个回调绑定到 void shellCommand.result.then(async result => {，负责Local Shell Task在该局部场景下的响应。
   void shellCommand.result.then(async result => {
+    // 调用 cancelStallWatchdog，触发Local Shell Task此处需要的副作用。
     cancelStallWatchdog();
+    // 等待 `flushAndCleanup(shellCommand)` 完成，再继续Local Shell Task的异步流程。
     await flushAndCleanup(shellCommand);
+    // wasKilled标记Local Shell Task是否启用对应路径。
     let wasKilled = false;
+    // 这个回调绑定到 let cleanupFn: (() => void) | undefined;，负责Local Shell Task在该局部场景下的响应。
     let cleanupFn: (() => void) | undefined;
+    // 这个回调绑定到 updateTaskState<LocalShellTaskState>(taskId, setAppState, t => {，负责Local Shell Task在该局部场景下的响应。
     updateTaskState<LocalShellTaskState>(taskId, setAppState, t => {
+      // 当 `t.status` 匹配 `'killed'` 时，Local Shell Task执行对应分支。
       if (t.status === 'killed') {
+        // wasKilled更新为 `true`，确保LocalShellTask后续读取最新状态。
         wasKilled = true;
+        // 返回 `t`，作为Local Shell Task这次计算的结果。
         return t;
       }
 
       // Capture cleanup function to call outside of updater
+      // cleanupFn更新为 `t.unregisterCleanup`，确保LocalShellTask后续读取最新状态。
       cleanupFn = t.unregisterCleanup;
+      // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
       return {
         ...t,
         status: result.code === 0 ? 'completed' : 'failed',
@@ -355,15 +506,22 @@ function backgroundTask(taskId: string, getAppState: () => AppState, setAppState
     });
 
     // Call cleanup outside of the state updater (avoid side effects in updater)
+    // 调用 cleanupFn?.();，完成这一处局部操作。
     cleanupFn?.();
+    // 满足 `wasKilled` 时，Local Shell Task执行该分支。
     if (wasKilled) {
+      // 调用 enqueueShellNotification，触发Local Shell Task此处需要的副作用。
       enqueueShellNotification(taskId, description, 'killed', result.code, setAppState, toolUseId, kind, agentId);
     } else {
+      // finalStatus 集合标记Local Shell Task是否启用对应路径。
       const finalStatus = result.code === 0 ? 'completed' : 'failed';
+      // 调用 enqueueShellNotification，触发Local Shell Task此处需要的副作用。
       enqueueShellNotification(taskId, description, finalStatus, result.code, setAppState, toolUseId, kind, agentId);
     }
+    // 显式忽略 `evictTaskOutput(taskId)` 的返回值，只保留它触发的副作用。
     void evictTaskOutput(taskId);
   });
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
 
@@ -375,36 +533,55 @@ function backgroundTask(taskId: string, getAppState: () => AppState, setAppState
  * Check if there are any foreground tasks (bash or agent) that can be backgrounded.
  * Used to determine whether Ctrl+B should background existing tasks vs. background the session.
  */
+// hasForegroundTasks 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function hasForegroundTasks(state: AppState): boolean {
+  // 返回 `Object.values(state.tasks).some(task => {`，作为Local Shell Task这次计算的结果。
   return Object.values(state.tasks).some(task => {
+    // 组合条件 `isLocalShellTask(task) && !task.isBackgrounded && task.shellCommand` 成立时，Local Shell Task才启用这条专门路径。
     if (isLocalShellTask(task) && !task.isBackgrounded && task.shellCommand) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     }
     // Exclude main session tasks - they display in the main view, not as foreground tasks
+    // 组合条件 `isLocalAgentTask(task) && !task.isBackgrounded && !isMainSessionTask(task)` 成立时，Local Shell Task才启用这条专门路径。
     if (isLocalAgentTask(task) && !task.isBackgrounded && !isMainSessionTask(task)) {
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true;
     }
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   });
 }
+// backgroundAll 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function backgroundAll(getAppState: () => AppState, setAppState: SetAppState): void {
+  // 状态读取`getAppState`，供Local Shell Task后续处理使用。
   const state = getAppState();
 
   // Background all foreground bash tasks
+  // foregroundBashTaskIds 集合派生`Object.keys`，供Local Shell Task后续处理使用。
   const foregroundBashTaskIds = Object.keys(state.tasks).filter(id => {
+    // task读取 `state.tasks[id]` 对应条目，后续围绕该成员继续处理。
     const task = state.tasks[id];
+    // 返回 `isLocalShellTask(task) && !task.isBackgrounded && task.shellCommand`，作为Local Shell Task这次计算的结果。
     return isLocalShellTask(task) && !task.isBackgrounded && task.shellCommand;
   });
+  // 按顺序遍历 `foregroundBashTaskIds` 中的taskId，逐个交给Local Shell Task处理。
   for (const taskId of foregroundBashTaskIds) {
+    // 调用 backgroundTask，触发Local Shell Task此处需要的副作用。
     backgroundTask(taskId, getAppState, setAppState);
   }
 
   // Background all foreground agent tasks
+  // foregroundAgentTaskIds 集合派生`Object.keys`，供Local Shell Task后续处理使用。
   const foregroundAgentTaskIds = Object.keys(state.tasks).filter(id => {
+    // task读取 `state.tasks[id]` 对应条目，后续围绕该成员继续处理。
     const task = state.tasks[id];
+    // 返回 `isLocalAgentTask(task) && !task.isBackgrounded`，作为Local Shell Task这次计算的结果。
     return isLocalAgentTask(task) && !task.isBackgrounded;
   });
+  // 按顺序遍历 `foregroundAgentTaskIds` 中的taskId，逐个交给Local Shell Task处理。
   for (const taskId of foregroundAgentTaskIds) {
+    // 调用 backgroundAgentTask，触发Local Shell Task此处需要的副作用。
     backgroundAgentTask(taskId, getAppState, setAppState);
   }
 }
@@ -417,17 +594,27 @@ export function backgroundAll(getAppState: () => AppState, setAppState: SetAppSt
  * already registered the task (avoiding duplicate task_started SDK events
  * and leaked cleanup callbacks).
  */
+// backgroundExistingForegroundTask 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function backgroundExistingForegroundTask(taskId: string, shellCommand: ShellCommand, description: string, setAppState: SetAppState, toolUseId?: string): boolean {
+  // 满足 `!shellCommand.background(taskId)` 时，Local Shell Task执行该分支。
   if (!shellCommand.background(taskId)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }
+  // agentId 先占位，稍后的条件分支会根据实际输入补齐它。
   let agentId: AgentId | undefined;
+  // setAppState 写入新的状态值，使Local Shell Task后续读取保持一致。
   setAppState(prev => {
+    // prevTask读取 `prev.tasks[taskId]` 对应条目，后续围绕该成员继续处理。
     const prevTask = prev.tasks[taskId];
+    // 组合条件 `!isLocalShellTask(prevTask) || prevTask.isBackgrounded` 成立时，Local Shell Task才启用这条专门路径。
     if (!isLocalShellTask(prevTask) || prevTask.isBackgrounded) {
+      // 返回 `prev`，作为Local Shell Task这次计算的结果。
       return prev;
     }
+    // agentId更新为 `prevTask.agentId`，确保LocalShellTask后续读取最新状态。
     agentId = prevTask.agentId;
+    // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
     return {
       ...prev,
       tasks: {
@@ -439,20 +626,32 @@ export function backgroundExistingForegroundTask(taskId: string, shellCommand: S
       }
     };
   });
+  // cancelStallWatchdog保存`startStallWatchdog`，供Local Shell Task后续处理使用。
   const cancelStallWatchdog = startStallWatchdog(taskId, description, undefined, toolUseId, agentId);
 
   // Set up result handler (mirrors backgroundTask's handler)
+  // 这个回调绑定到 void shellCommand.result.then(async result => {，负责Local Shell Task在该局部场景下的响应。
   void shellCommand.result.then(async result => {
+    // 调用 cancelStallWatchdog，触发Local Shell Task此处需要的副作用。
     cancelStallWatchdog();
+    // 等待 `flushAndCleanup(shellCommand)` 完成，再继续Local Shell Task的异步流程。
     await flushAndCleanup(shellCommand);
+    // wasKilled标记Local Shell Task是否启用对应路径。
     let wasKilled = false;
+    // 这个回调绑定到 let cleanupFn: (() => void) | undefined;，负责Local Shell Task在该局部场景下的响应。
     let cleanupFn: (() => void) | undefined;
+    // 这个回调绑定到 updateTaskState<LocalShellTaskState>(taskId, setAppState, t => {，负责Local Shell Task在该局部场景下的响应。
     updateTaskState<LocalShellTaskState>(taskId, setAppState, t => {
+      // 当 `t.status` 匹配 `'killed'` 时，Local Shell Task执行对应分支。
       if (t.status === 'killed') {
+        // wasKilled更新为 `true`，确保LocalShellTask后续读取最新状态。
         wasKilled = true;
+        // 返回 `t`，作为Local Shell Task这次计算的结果。
         return t;
       }
+      // cleanupFn更新为 `t.unregisterCleanup`，确保LocalShellTask后续读取最新状态。
       cleanupFn = t.unregisterCleanup;
+      // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
       return {
         ...t,
         status: result.code === 0 ? 'completed' : 'failed',
@@ -465,11 +664,16 @@ export function backgroundExistingForegroundTask(taskId: string, shellCommand: S
         endTime: Date.now()
       };
     });
+    // 调用 cleanupFn?.();，完成这一处局部操作。
     cleanupFn?.();
+    // finalStatus 集合标记Local Shell Task是否启用对应路径。
     const finalStatus = wasKilled ? 'killed' : result.code === 0 ? 'completed' : 'failed';
+    // 调用 enqueueShellNotification，触发Local Shell Task此处需要的副作用。
     enqueueShellNotification(taskId, description, finalStatus, result.code, setAppState, toolUseId, undefined, agentId);
+    // 显式忽略 `evictTaskOutput(taskId)` 的返回值，只保留它触发的副作用。
     void evictTaskOutput(taskId);
   });
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true;
 }
 
@@ -478,7 +682,9 @@ export function backgroundExistingForegroundTask(taskId: string, shellCommand: S
  * Used when backgrounding raced with completion — the tool result already
  * carries the full output, so the <task_notification> would be redundant.
  */
+// markTaskNotified 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function markTaskNotified(taskId: string, setAppState: SetAppState): void {
+  // 调用 updateTaskState，触发Local Shell Task此处需要的副作用。
   updateTaskState(taskId, setAppState, t => t.notified ? t : {
     ...t,
     notified: true
@@ -488,21 +694,30 @@ export function markTaskNotified(taskId: string, setAppState: SetAppState): void
 /**
  * Unregister a foreground task when the command completes without being backgrounded.
  */
+// unregisterForeground 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function unregisterForeground(taskId: string, setAppState: SetAppState): void {
+  // 这个回调绑定到 let cleanupFn: (() => void) | undefined;，负责Local Shell Task在该局部场景下的响应。
   let cleanupFn: (() => void) | undefined;
+  // setAppState 写入新的状态值，使Local Shell Task后续读取保持一致。
   setAppState(prev => {
+    // task读取 `prev.tasks[taskId]` 对应条目，后续围绕该成员继续处理。
     const task = prev.tasks[taskId];
     // Only remove if it's a foreground task (not backgrounded)
+    // 组合条件 `!isLocalShellTask(task) || task.isBackgrounded` 成立时，Local Shell Task才启用这条专门路径。
     if (!isLocalShellTask(task) || task.isBackgrounded) {
+      // 返回 `prev`，作为Local Shell Task这次计算的结果。
       return prev;
     }
 
     // Capture cleanup function to call outside of updater
+    // cleanupFn更新为 `task.unregisterCleanup`，确保LocalShellTask后续读取最新状态。
     cleanupFn = task.unregisterCleanup;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       [taskId]: removed,
       ...rest
     } = prev.tasks;
+    // 返回结构化结果，集中表达Local Shell Task已经整理出的状态。
     return {
       ...prev,
       tasks: rest
@@ -510,13 +725,19 @@ export function unregisterForeground(taskId: string, setAppState: SetAppState): 
   });
 
   // Call cleanup outside of the state updater (avoid side effects in updater)
+  // 调用 cleanupFn?.();，完成这一处局部操作。
   cleanupFn?.();
 }
+// flushAndCleanup 封装LocalShellTask的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function flushAndCleanup(shellCommand: ShellCommand): Promise<void> {
+  // 保护这一段可能失败的Local Shell Task操作，确保异常能进入相邻错误处理。
   try {
+    // 等待 `shellCommand.taskOutput.flush()` 完成，再继续Local Shell Task的异步流程。
     await shellCommand.taskOutput.flush();
+    // 调用 shellCommand.cleanup，触发Local Shell Task此处需要的副作用。
     shellCommand.cleanup();
   } catch (error) {
+    // 记录Local Shell Task运行诊断，方便排查异常路径或性能问题。
     logError(error);
   }
 }

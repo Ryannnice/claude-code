@@ -1,25 +1,48 @@
+// 引入 React、useCallback、useEffect、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// 引入 Box、Text、useTheme，将 ../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useTheme } from '../../../ink.js';
+// 引入 useKeybinding，将 ../../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding } from '../../../keybindings/useKeybinding.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../../../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 ../../../services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../../services/analytics/index.js';
+// 接入 sanitizeToolNameForAnalytics 服务层能力，把外部通信或共享状态交给 ../../../services/analytics/metadata.js 处理。
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js';
+// 接入 getDestructiveCommandWarning 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { getDestructiveCommandWarning } from '../../../tools/PowerShellTool/destructiveCommandWarning.js';
+// 接入 PowerShellTool 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { PowerShellTool } from '../../../tools/PowerShellTool/PowerShellTool.js';
+// 接入 isAllowlistedCommand 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { isAllowlistedCommand } from '../../../tools/PowerShellTool/readOnlyValidation.js';
+// 类型依赖 { PermissionUpdate } 来自 ../../../utils/permissions/PermissionUpdateSchema.js，用于校准终端渲染的数据契约。
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js';
+// 复用 getCompoundCommandPrefixesStatic 工具函数，把通用处理留在 ../../../utils/powershell/staticPrefix.js 中维护。
 import { getCompoundCommandPrefixesStatic } from '../../../utils/powershell/staticPrefix.js';
+// 引入 Select，将 ../../CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../../CustomSelect/select.js';
+// 引入 UnaryEvent、usePermissionRequestLogging，将 ../hooks.js 中已经封装好的能力接到本文件流程里。
 import { type UnaryEvent, usePermissionRequestLogging } from '../hooks.js';
+// 引入 PermissionDecisionDebugInfo，将 ../PermissionDecisionDebugInfo.js 中已经封装好的能力接到本文件流程里。
 import { PermissionDecisionDebugInfo } from '../PermissionDecisionDebugInfo.js';
+// 引入 PermissionDialog，将 ../PermissionDialog.js 中已经封装好的能力接到本文件流程里。
 import { PermissionDialog } from '../PermissionDialog.js';
+// 引入 PermissionExplainerContent、usePermissionExplainerUI，将 ../PermissionExplanation.js 中已经封装好的能力接到本文件流程里。
 import { PermissionExplainerContent, usePermissionExplainerUI } from '../PermissionExplanation.js';
+// 类型依赖 { PermissionRequestProps } 来自 ../PermissionRequest.js，用于校准终端渲染的数据契约。
 import type { PermissionRequestProps } from '../PermissionRequest.js';
+// 引入 PermissionRuleExplanation，将 ../PermissionRuleExplanation.js 中已经封装好的能力接到本文件流程里。
 import { PermissionRuleExplanation } from '../PermissionRuleExplanation.js';
+// 引入 useShellPermissionFeedback，将 ../useShellPermissionFeedback.js 中已经封装好的能力接到本文件流程里。
 import { useShellPermissionFeedback } from '../useShellPermissionFeedback.js';
+// 引入 logUnaryPermissionEvent，将 ../utils.js 中已经封装好的能力接到本文件流程里。
 import { logUnaryPermissionEvent } from '../utils.js';
+// 引入 powershellToolUseOptions，将 ./powershellToolUseOptions.js 中已经封装好的能力接到本文件流程里。
 import { powershellToolUseOptions } from './powershellToolUseOptions.js';
+// PowerShellPermissionRequest 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function PowerShellPermissionRequest(props: PermissionRequestProps): React.ReactNode {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     toolUseConfirm,
     toolUseContext,
@@ -27,17 +50,21 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
     onReject,
     workerBadge
   } = props;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     command,
     description
   } = PowerShellTool.inputSchema.parse(toolUseConfirm.input);
+  // 从 `useTheme()` 按位置拆出 theme，让权限确认界面 Power Shell Permission Reque...分别处理这些返回值。
   const [theme] = useTheme();
+  // explainerState 状态保存`usePermissionExplainerUI`，供终端渲染后续处理使用。
   const explainerState = usePermissionExplainerUI({
     toolName: toolUseConfirm.tool.name,
     toolInput: toolUseConfirm.input,
     toolDescription: toolUseConfirm.description,
     messages: toolUseContext.messages
   });
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     yesInputMode,
     noInputMode,
@@ -57,7 +84,9 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
     onReject,
     explainerVisible: explainerState.visible
   });
+  // destructiveWarning 警告信息读取`getFeatureValue_CACHED_MAY_BE_STALE`，供终端渲染后续处理使用。
   const destructiveWarning = getFeatureValue_CACHED_MAY_BE_STALE('tengu_destructive_command_warning', false) ? getDestructiveCommandWarning(command) : null;
+  // showPermissionDebug 权限数据 由 React state 持有，setShowPermissionDebug 会在用户操作或异步结果返回时触发刷新。
   const [showPermissionDebug, setShowPermissionDebug] = useState(false);
 
   // Editable prefix — compute static prefix locally (no LLM call).
@@ -69,34 +98,51 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
   // corpus shows 14 multiline rules, zero match twice). For compound commands,
   // computes a prefix per subcommand, excluding subcommands that are already
   // auto-allowed (read-only).
+  // editablePrefix 由 React state 持有，setEditablePrefix 会在用户操作或异步结果返回时触发刷新。
   const [editablePrefix, setEditablePrefix] = useState<string | undefined>(command.includes('\n') ? undefined : command);
+  // hasUserEditedPrefix记录 `useRef` 是否成立，终端渲染随后按该结果分支。
   const hasUserEditedPrefix = useRef(false);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // cancelled标记终端渲染权限确认界面 Power Shell Permission...是否启用对应路径。
     let cancelled = false;
     // Filter receives ParsedCommandElement — isAllowlistedCommand works from
     // element.name/nameType/args directly. isReadOnlyCommand(text) would need
     // to reparse (pwsh.exe spawn per subcommand) and returns false without the
     // full parsed AST, making the filter a no-op.
+    // 调用 getCompoundCommandPrefixesStatic，触发终端渲染此处需要的副作用。
     getCompoundCommandPrefixesStatic(command, element => isAllowlistedCommand(element, element.text)).then(prefixes => {
+      // 只有 `cancelled || hasUserEditedPrefix.current` 满足时，终端渲染才执行该分支。
       if (cancelled || hasUserEditedPrefix.current) return;
+      // 满足 `prefixes.length > 0` 时，终端渲染执行该分支。
       if (prefixes.length > 0) {
+        // setEditablePrefix 写入新的状态值，使终端渲染后续读取保持一致。
         setEditablePrefix(`${prefixes[0]}:*`);
       }
+    // 这个回调绑定到 }).catch(() => {});，负责终端渲染在该局部场景下的响应。
     }).catch(() => {});
+    // 返回 `() => {`，作为终端渲染这次计算的结果。
     return () => {
+      // cancelled更新为 `true`，确保权限确认界面后续读取最新状态。
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [command]);
+  // onEditablePrefixChange保存`useCallback`，供终端渲染后续处理使用。
   const onEditablePrefixChange = useCallback((value: string) => {
+    // current更新为 `true`，确保权限确认界面后续读取最新状态。
     hasUserEditedPrefix.current = true;
+    // setEditablePrefix 写入新的状态值，使终端渲染后续读取保持一致。
     setEditablePrefix(value);
   }, []);
+  // unaryEvent读取 hook 状态，供终端渲染权限确认界面 Power Shell Permission...本轮渲染使用。
   const unaryEvent = useMemo<UnaryEvent>(() => ({
     completion_type: 'tool_use_single',
     language_name: 'none'
   }), []);
+  // 调用 usePermissionRequestLogging，触发终端渲染此处需要的副作用。
   usePermissionRequestLogging(toolUseConfirm, unaryEvent);
+  // 选项保存`useMemo`，供终端渲染后续处理使用。
   const options = useMemo(() => powershellToolUseOptions({
     suggestions: toolUseConfirm.permissionResult.behavior === 'ask' ? toolUseConfirm.permissionResult.suggestions : undefined,
     onRejectFeedbackChange: setRejectFeedback,
@@ -108,31 +154,44 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
   }), [toolUseConfirm, yesInputMode, noInputMode, editablePrefix, onEditablePrefixChange]);
 
   // Toggle permission debug info with keybinding
+  // handleToggleDebug保存`useCallback`，供终端渲染后续处理使用。
   const handleToggleDebug = useCallback(() => {
+    // setShowPermissionDebug 写入新的状态值，使终端渲染后续读取保持一致。
     setShowPermissionDebug(prev => !prev);
   }, []);
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('permission:toggleDebug', handleToggleDebug, {
     context: 'Confirmation'
   });
+  // onSelect 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function onSelect(value: string) {
     // Map options to numeric values for analytics (strings not allowed in logEvent)
+    // optionIndex 索引 集中保存权限确认界面 Power Shell Permission Reque...要一起传递的字段。
     const optionIndex: Record<string, number> = {
       yes: 1,
       'yes-apply-suggestions': 2,
       'yes-prefix-edited': 2,
       no: 3
     };
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_permission_request_option_selected', {
       option_index: optionIndex[value],
       explainer_visible: explainerState.visible
     });
+    // toolNameForAnalytics 集合保存`sanitizeToolNameForAnalytics`，供终端渲染后续处理使用。
     const toolNameForAnalytics = sanitizeToolNameForAnalytics(toolUseConfirm.tool.name) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
+    // 当 `value` 匹配 `'yes-prefix-edited'` 时，终端渲染执行对应分支。
     if (value === 'yes-prefix-edited') {
+      // trimmedPrefix格式化`trim`，供终端渲染后续处理使用。
       const trimmedPrefix = (editablePrefix ?? '').trim();
+      // 调用 logUnaryPermissionEvent，触发终端渲染此处需要的副作用。
       logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
+      // trimmedPrefix缺失时直接走兜底路径，避免终端渲染使用无效输入。
       if (!trimmedPrefix) {
+        // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
         toolUseConfirm.onAllow(toolUseConfirm.input, []);
       } else {
+        // prefixUpdates 集合 聚合成有序列表，保持后续遍历顺序稳定。
         const prefixUpdates: PermissionUpdate[] = [{
           type: 'addRules',
           rules: [{
@@ -142,17 +201,24 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
           behavior: 'allow',
           destination: 'localSettings'
         }];
+        // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
         toolUseConfirm.onAllow(toolUseConfirm.input, prefixUpdates);
       }
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
+      // 权限确认界面 Power Shell Permission Reque...在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 按照 value 的取值选择终端渲染的具体处理分支。
     switch (value) {
       case 'yes':
         {
+          // trimmedFeedback格式化`acceptFeedback.trim`，供终端渲染后续处理使用。
           const trimmedFeedback = acceptFeedback.trim();
+          // 调用 logUnaryPermissionEvent，触发终端渲染此处需要的副作用。
           logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
           // Log accept submission with feedback context
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_accept_submitted', {
             toolName: toolNameForAnalytics,
             isMcp: toolUseConfirm.tool.isMcp ?? false,
@@ -160,24 +226,34 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
             instructions_length: trimmedFeedback.length,
             entered_feedback_mode: yesFeedbackModeEntered
           });
+          // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
           toolUseConfirm.onAllow(toolUseConfirm.input, [], trimmedFeedback || undefined);
+          // 调用 onDone，触发终端渲染此处需要的副作用。
           onDone();
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         }
       case 'yes-apply-suggestions':
         {
+          // 调用 logUnaryPermissionEvent，触发终端渲染此处需要的副作用。
           logUnaryPermissionEvent('tool_use_single', toolUseConfirm, 'accept');
           // Extract suggestions if present (works for both 'ask' and 'passthrough' behaviors)
+          // permissionUpdates 权限数据固定为 `'suggestions' in toolUseConfirm.permissionResult ? toolUs...`，作为终端渲染权限确认界面 Power Shell Permission...后续展示或比较的基准。
           const permissionUpdates = 'suggestions' in toolUseConfirm.permissionResult ? toolUseConfirm.permissionResult.suggestions || [] : [];
+          // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
           toolUseConfirm.onAllow(toolUseConfirm.input, permissionUpdates);
+          // 调用 onDone，触发终端渲染此处需要的副作用。
           onDone();
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         }
       case 'no':
         {
+          // trimmedFeedback格式化`rejectFeedback.trim`，供终端渲染后续处理使用。
           const trimmedFeedback = rejectFeedback.trim();
 
           // Log reject submission with feedback context
+          // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
           logEvent('tengu_reject_submitted', {
             toolName: toolNameForAnalytics,
             isMcp: toolUseConfirm.tool.isMcp ?? false,
@@ -187,11 +263,14 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
           });
 
           // Process rejection (with or without feedback)
+          // 调用 handleReject，触发终端渲染此处需要的副作用。
           handleReject(trimmedFeedback || undefined);
+          // 结束这个分支或循环，避免终端渲染继续落入后续路径。
           break;
         }
     }
   }
+  // 返回 `<PermissionDialog workerBadge={workerBadge} title="PowerShell command">`，作为终端渲染这次计算的结果。
   return <PermissionDialog workerBadge={workerBadge} title="PowerShell command">
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Text dimColor={explainerState.visible}>
@@ -207,6 +286,7 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
         {!explainerState.visible && <Text dimColor>{toolUseConfirm.description}</Text>}
         <PermissionExplainerContent visible={explainerState.visible} promise={explainerState.promise} />
       </Box>
+      {/* 权限确认界面 Power Shell Permission Req...处理 `{showPermissionDebug ? <>`，完成这一小步状态转换。 */}
       {showPermissionDebug ? <>
           <PermissionDecisionDebugInfo permissionResult={toolUseConfirm.permissionResult} toolName="PowerShell" />
           {toolUseContext.options.debug && <Box justifyContent="flex-end" marginTop={1}>
@@ -219,6 +299,7 @@ export function PowerShellPermissionRequest(props: PermissionRequestProps): Reac
                 <Text color="warning">{destructiveWarning}</Text>
               </Box>}
             <Text>Do you want to proceed?</Text>
+            {/* 这个回调绑定到 <Select options={options} inlineDescriptions onChange={onSelect} onCancel={() => han…，负责终端渲染在该局部场景下的响应。 */}
             <Select options={options} inlineDescriptions onChange={onSelect} onCancel={() => handleReject()} onFocus={handleFocus} onInputModeToggle={handleInputModeToggle} />
           </Box>
           <Box justifyContent="space-between" marginTop={1}>

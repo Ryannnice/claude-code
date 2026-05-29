@@ -1,180 +1,317 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 类型依赖 { Base64ImageSource, ImageBlockParam } 来自 @anthropic-ai/sdk/resources/messages.mjs，用于校准终端渲染的数据契约。
 import type { Base64ImageSource, ImageBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs';
+// 引入 React、Suspense、use、useCallback、useMemo、useRef、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { Suspense, use, useCallback, useMemo, useRef, useState } from 'react';
+// 引入 useSettings，将 ../../../hooks/useSettings.js 中已经封装好的能力接到本文件流程里。
 import { useSettings } from '../../../hooks/useSettings.js';
+// 引入 useTerminalSize，将 ../../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../../../ink/stringWidth.js';
+// 引入 useTheme，将 ../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { useTheme } from '../../../ink.js';
+// 引入 useKeybindings，将 ../../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybindings } from '../../../keybindings/useKeybinding.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 ../../../services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../../services/analytics/index.js';
+// 引入 useAppState，将 ../../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState } from '../../../state/AppState.js';
+// 类型依赖 { Question } 来自 ../../../tools/AskUserQuestionTool/AskUserQuestionTool.js，用于校准终端渲染的数据契约。
 import type { Question } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js';
+// 接入 AskUserQuestionTool 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AskUserQuestionTool } from '../../../tools/AskUserQuestionTool/AskUserQuestionTool.js';
+// 复用 CliHighlight、getCliHighlightPromise 工具函数，把通用处理留在 ../../../utils/cliHighlight.js 中维护。
 import { type CliHighlight, getCliHighlightPromise } from '../../../utils/cliHighlight.js';
+// 类型依赖 { PastedContent } 来自 ../../../utils/config.js，用于校准终端渲染的数据契约。
 import type { PastedContent } from '../../../utils/config.js';
+// 类型依赖 { ImageDimensions } 来自 ../../../utils/imageResizer.js，用于校准终端渲染的数据契约。
 import type { ImageDimensions } from '../../../utils/imageResizer.js';
+// 复用 maybeResizeAndDownsampleImageBlock 工具函数，把通用处理留在 ../../../utils/imageResizer.js 中维护。
 import { maybeResizeAndDownsampleImageBlock } from '../../../utils/imageResizer.js';
+// 复用 cacheImagePath、storeImage 工具函数，把通用处理留在 ../../../utils/imageStore.js 中维护。
 import { cacheImagePath, storeImage } from '../../../utils/imageStore.js';
+// 复用 logError 工具函数，把通用处理留在 ../../../utils/log.js 中维护。
 import { logError } from '../../../utils/log.js';
+// 复用 applyMarkdown 工具函数，把通用处理留在 ../../../utils/markdown.js 中维护。
 import { applyMarkdown } from '../../../utils/markdown.js';
+// 复用 isPlanModeInterviewPhaseEnabled 工具函数，把通用处理留在 ../../../utils/planModeV2.js 中维护。
 import { isPlanModeInterviewPhaseEnabled } from '../../../utils/planModeV2.js';
+// 复用 getPlanFilePath 工具函数，把通用处理留在 ../../../utils/plans.js 中维护。
 import { getPlanFilePath } from '../../../utils/plans.js';
+// 类型依赖 { PermissionRequestProps } 来自 ../PermissionRequest.js，用于校准终端渲染的数据契约。
 import type { PermissionRequestProps } from '../PermissionRequest.js';
+// 引入 QuestionView，将 ./QuestionView.js 中已经封装好的能力接到本文件流程里。
 import { QuestionView } from './QuestionView.js';
+// 引入 SubmitQuestionsView，将 ./SubmitQuestionsView.js 中已经封装好的能力接到本文件流程里。
 import { SubmitQuestionsView } from './SubmitQuestionsView.js';
+// 引入 useMultipleChoiceState，将 ./use-multiple-choice-state.js 中已经封装好的能力接到本文件流程里。
 import { useMultipleChoiceState } from './use-multiple-choice-state.js';
+// MIN_CONTENT_HEIGHT保存`12`，供后续判断或组装使用。
 const MIN_CONTENT_HEIGHT = 12;
+// MIN_CONTENT_WIDTH保存`40`，供终端渲染权限确认界面 Ask User Question Perm...后续判断或输出使用。
 const MIN_CONTENT_WIDTH = 40;
 // Lines used by chrome around the content area (nav bar, title, footer, help text, etc.)
+// CONTENT_CHROME_OVERHEAD 命名 `15`，让后续代码直接表达这个值的用途。
 const CONTENT_CHROME_OVERHEAD = 15;
+// AskUserQuestionPermissionRequest 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function AskUserQuestionPermissionRequest(props) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(4);
+  // settings 集合保存`useSettings`，供终端渲染后续处理使用。
   const settings = useSettings();
+  // 满足 `settings.syntaxHighlightingDisabled` 时，终端渲染执行该分支。
   if (settings.syntaxHighlightingDisabled) {
+    // t0 暂存 `<AskUserQuestionPermissionRequestBody {...props} highligh...` 的派生结果，便于缓存命中时直接复用。
     let t0;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[0] !== props) {
+      // t0 暂存 `<AskUserQuestionPermissionRequestBody {...props} highligh...` 生成的渲染片段，后续返回路径直接复用。
       t0 = <AskUserQuestionPermissionRequestBody {...props} highlight={null} />;
+      // $[0] 缓存 `props`，下次依赖未变时 React 编译产物可直接复用。
       $[0] = props;
+      // $[1] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
       $[1] = t0;
     } else {
+      // t0 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
       t0 = $[1];
     }
+    // 返回 `t0`，作为终端渲染这次计算的结果。
     return t0;
   }
+  // t0 暂存 `<Suspense fallback={<AskUserQuestionPermissionRequestBody...` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== props) {
+    // t0 暂存 `<Suspense fallback={<AskUserQuestionPermissionRequestBody...` 生成的渲染片段，后续返回路径直接复用。
     t0 = <Suspense fallback={<AskUserQuestionPermissionRequestBody {...props} highlight={null} />}><AskUserQuestionWithHighlight {...props} /></Suspense>;
+    // $[2] 缓存 `props`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = props;
+    // $[3] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[3];
   }
+  // 返回 `t0`，作为终端渲染这次计算的结果。
   return t0;
 }
+// AskUserQuestionWithHighlight 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function AskUserQuestionWithHighlight(props) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(4);
+  // t0 暂存 `getCliHighlightPromise()` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+    // t0 暂存 `getCliHighlightPromise()` 生成的渲染片段，后续返回路径直接复用。
     t0 = getCliHighlightPromise();
+    // $[0] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[0];
   }
+  // highlight保存`use`，供终端渲染后续处理使用。
   const highlight = use(t0);
+  // t1 暂存 `<AskUserQuestionPermissionRequestBody {...props} highligh...` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[1] !== highlight || $[2] !== props) {
+    // t1 暂存 `<AskUserQuestionPermissionRequestBody {...props} highligh...` 生成的渲染片段，后续返回路径直接复用。
     t1 = <AskUserQuestionPermissionRequestBody {...props} highlight={highlight} />;
+    // $[1] 缓存 `highlight`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = highlight;
+    // $[2] 缓存 `props`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = props;
+    // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[3];
   }
+  // 返回 `t1`，作为终端渲染这次计算的结果。
   return t1;
 }
+// AskUserQuestionPermissionRequestBody 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function AskUserQuestionPermissionRequestBody(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(115);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     toolUseConfirm,
     onDone,
     onReject,
     highlight
   } = t0;
+  // t1 暂存 `AskUserQuestionTool.inputSchema.safeParse(toolUseConfirm....` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== toolUseConfirm.input) {
+    // t1 暂存 `AskUserQuestionTool.inputSchema.safeParse(toolUseConfirm....` 生成的渲染片段，后续返回路径直接复用。
     t1 = AskUserQuestionTool.inputSchema.safeParse(toolUseConfirm.input);
+    // $[0] 缓存 `toolUseConfirm.input`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = toolUseConfirm.input;
+    // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[1];
   }
+  // 结果 命名 `t1`，让后续代码直接表达这个值的用途。
   const result = t1;
+  // t2 暂存 `result.success ? result.data.questions || [] : []` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[2] !== result.data || $[3] !== result.success) {
+    // t2 暂存 `result.success ? result.data.questions || [] : []` 生成的渲染片段，后续返回路径直接复用。
     t2 = result.success ? result.data.questions || [] : [];
+    // $[2] 缓存 `result.data`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = result.data;
+    // $[3] 缓存 `result.success`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = result.success;
+    // $[4] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[4] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[4];
   }
+  // questions 集合沿用 `t2` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const questions = t2;
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     rows: terminalRows
   } = useTerminalSize();
+  // 从 `useTheme()` 按位置拆出 theme，让权限确认界面 Ask User Question Permission...分别处理这些返回值。
   const [theme] = useTheme();
+  // maxHeight保存`0`，供后续判断或组装使用。
   let maxHeight = 0;
+  // maxWidth 命名 `0`，让后续代码直接表达这个值的用途。
   let maxWidth = 0;
+  // maxAllowedHeight保存`Math.max`，供终端渲染后续处理使用。
   const maxAllowedHeight = Math.max(MIN_CONTENT_HEIGHT, terminalRows - CONTENT_CHROME_OVERHEAD);
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[5] !== highlight || $[6] !== maxAllowedHeight || $[7] !== maxHeight || $[8] !== maxWidth || $[9] !== questions || $[10] !== theme) {
+    // 按顺序遍历 `questions` 中的q，逐个交给终端渲染处理。
     for (const q of questions) {
+      // hasPreview记录 `options.some` 是否成立，终端渲染随后按该结果分支。
       const hasPreview = q.options.some(_temp);
+      // 满足 `hasPreview` 时，终端渲染执行该分支。
       if (hasPreview) {
+        // maxPreviewContentLines 集合保存`Math.max`，供终端渲染后续处理使用。
         const maxPreviewContentLines = Math.max(1, maxAllowedHeight - 11);
+        // maxPreviewBoxHeight 命名 `0`，让后续代码直接表达这个值的用途。
         let maxPreviewBoxHeight = 0;
+        // 按顺序遍历 `q.options` 中的opt_0，逐个交给终端渲染处理。
         for (const opt_0 of q.options) {
+          // 满足 `opt_0.preview` 时，终端渲染执行该分支。
           if (opt_0.preview) {
+            // rendered保存`applyMarkdown`，供终端渲染后续处理使用。
             const rendered = applyMarkdown(opt_0.preview, theme, highlight);
+            // previewLines 集合格式化`rendered.split`，供终端渲染后续处理使用。
             const previewLines = rendered.split("\n");
+            // isTruncated标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
             const isTruncated = previewLines.length > maxPreviewContentLines;
+            // displayedLines 集合记录 `isTruncated ? maxPreviewContentLines : previewLines.length` 是否成立，下一步按该结果分支。
             const displayedLines = isTruncated ? maxPreviewContentLines : previewLines.length;
+            // maxPreviewBoxHeight更新为 `Math.max(maxPreviewBoxHeight, displayedLines + (isTruncat...`，确保权限确认界面后续读取最新状态。
             maxPreviewBoxHeight = Math.max(maxPreviewBoxHeight, displayedLines + (isTruncated ? 1 : 0) + 2);
+            // 按顺序遍历 `previewLines` 中的line，逐个交给终端渲染处理。
             for (const line of previewLines) {
+              // maxWidth更新为 `Math.max(maxWidth, stringWidth(line))`，确保权限确认界面后续读取最新状态。
               maxWidth = Math.max(maxWidth, stringWidth(line));
             }
           }
         }
+        // rightPanelHeight保存`maxPreviewBoxHeight + 2`，供终端渲染权限确认界面 Ask User Question Perm...后续判断或输出使用。
         const rightPanelHeight = maxPreviewBoxHeight + 2;
+        // leftPanelHeight记录 `q.options.length + 2` 是否成立，下一步按该结果分支。
         const leftPanelHeight = q.options.length + 2;
+        // sideByHeight保存`Math.max`，供终端渲染后续处理使用。
         const sideByHeight = Math.max(leftPanelHeight, rightPanelHeight);
+        // maxHeight更新为 `Math.max(maxHeight, sideByHeight + 7)`，确保权限确认界面后续读取最新状态。
         maxHeight = Math.max(maxHeight, sideByHeight + 7);
       } else {
+        // maxHeight更新为 `Math.max(maxHeight, q.options.length + 3 + 7)`，确保权限确认界面后续读取最新状态。
         maxHeight = Math.max(maxHeight, q.options.length + 3 + 7);
       }
     }
+    // $[5] 缓存 `highlight`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = highlight;
+    // $[6] 缓存 `maxAllowedHeight`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = maxAllowedHeight;
+    // $[7] 缓存 `maxHeight`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = maxHeight;
+    // $[8] 缓存 `maxWidth`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = maxWidth;
+    // $[9] 缓存 `questions`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = questions;
+    // $[10] 缓存 `theme`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = theme;
+    // $[11] 缓存 `maxHeight`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = maxHeight;
   } else {
+    // maxHeight更新为 `$[11]`，确保权限确认界面后续读取最新状态。
     maxHeight = $[11];
   }
+  // 临时值 t3保存`Math.min`，供终端渲染后续处理使用。
   const t3 = Math.min(Math.max(maxHeight, MIN_CONTENT_HEIGHT), maxAllowedHeight);
+  // 临时值 t4保存`Math.max`，供终端渲染后续处理使用。
   const t4 = Math.max(maxWidth, MIN_CONTENT_WIDTH);
+  // t5 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[12] !== t3 || $[13] !== t4) {
+    // t5 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t5 = {
       globalContentHeight: t3,
       globalContentWidth: t4
     };
+    // $[12] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t3;
+    // $[13] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t4;
+    // $[14] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[14];
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     globalContentHeight,
     globalContentWidth
   } = t5;
+  // metadataSource 命名 `result.success ? result.data.metadata?.source : undefined`，让后续代码直接表达这个值的用途。
   const metadataSource = result.success ? result.data.metadata?.source : undefined;
+  // t6 暂存 `{}` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
+    // t6 暂存 `{}` 生成的渲染片段，后续返回路径直接复用。
     t6 = {};
+    // $[15] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[15] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[15];
   }
+  // pastedContentsByQuestion 由 React state 持有，setPastedContentsByQuestion 会在用户操作或异步结果返回时触发刷新。
   const [pastedContentsByQuestion, setPastedContentsByQuestion] = useState(t6);
+  // nextPasteIdRef 引用保存`useRef`，供终端渲染后续处理使用。
   const nextPasteIdRef = useRef(0);
+  // t7 暂存 `function onImagePaste(questionText, base64Image, mediaTyp...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
+    // t7 暂存 `function onImagePaste(questionText, base64Image, mediaTyp...` 生成的渲染片段，后续返回路径直接复用。
     t7 = function onImagePaste(questionText, base64Image, mediaType, filename, dimensions, _sourcePath) {
+      // current更新为 `nextPasteIdRef.current + 1`，确保权限确认界面后续读取最新状态。
       nextPasteIdRef.current = nextPasteIdRef.current + 1;
+      // pasteId保存`nextPasteIdRef.current`，供后续判断或组装使用。
       const pasteId = nextPasteIdRef.current;
+      // 新内容 集中保存终端渲染权限确认界面 Ask User Question Perm...要一起传递的字段。
       const newContent = {
         id: pasteId,
         type: "image",
@@ -183,8 +320,11 @@ function AskUserQuestionPermissionRequestBody(t0) {
         filename: filename || "Pasted image",
         dimensions
       };
+      // 调用 cacheImagePath，触发终端渲染此处需要的副作用。
       cacheImagePath(newContent);
+      // 调用 storeImage，触发终端渲染此处需要的副作用。
       storeImage(newContent);
+      // setPastedContentsByQuestion 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedContentsByQuestion(prev => ({
         ...prev,
         [questionText]: {
@@ -193,51 +333,82 @@ function AskUserQuestionPermissionRequestBody(t0) {
         }
       }));
     };
+    // $[16] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[16] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[16];
   }
+  // onImagePaste沿用 `t7` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const onImagePaste = t7;
+  // t8 暂存 `(questionText_0, id) => {` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
+    // t8 暂存 `(questionText_0, id) => {` 生成的渲染片段，后续返回路径直接复用。
     t8 = (questionText_0, id) => {
+      // setPastedContentsByQuestion 写入新的状态值，使终端渲染后续读取保持一致。
       setPastedContentsByQuestion(prev_0 => {
+        // questionContents 集合 集中保存终端渲染权限确认界面 Ask User Question Perm...要一起传递的字段。
         const questionContents = {
           ...(prev_0[questionText_0] ?? {})
         };
+        // 权限确认界面 Ask User Question Permission...在这里处理 `delete questionContents[id]`，完成这一小步状态转换。
         delete questionContents[id];
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...prev_0,
           [questionText_0]: questionContents
         };
       });
     };
+    // $[17] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[17];
   }
+  // onRemoveImage 命名 `t8`，让后续代码直接表达这个值的用途。
   const onRemoveImage = t8;
+  // t9 暂存 `Object.values(pastedContentsByQuestion).flatMap(_temp2).f...` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[18] !== pastedContentsByQuestion) {
+    // t9 暂存 `Object.values(pastedContentsByQuestion).flatMap(_temp2).f...` 生成的渲染片段，后续返回路径直接复用。
     t9 = Object.values(pastedContentsByQuestion).flatMap(_temp2).filter(_temp3);
+    // $[18] 缓存 `pastedContentsByQuestion`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = pastedContentsByQuestion;
+    // $[19] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[19];
   }
+  // allImageAttachments 集合 命名 `t9`，让后续代码直接表达这个值的用途。
   const allImageAttachments = t9;
+  // toolPermissionContextMode 权限数据保存`useAppState`，供终端渲染后续处理使用。
   const toolPermissionContextMode = useAppState(_temp4);
+  // isInPlanMode标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
   const isInPlanMode = toolPermissionContextMode === "plan";
+  // t10 暂存 `isInPlanMode ? getPlanFilePath() : undefined` 的派生结果，便于缓存命中时直接复用。
   let t10;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[20] !== isInPlanMode) {
+    // t10 暂存 `isInPlanMode ? getPlanFilePath() : undefined` 生成的渲染片段，后续返回路径直接复用。
     t10 = isInPlanMode ? getPlanFilePath() : undefined;
+    // $[20] 缓存 `isInPlanMode`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = isInPlanMode;
+    // $[21] 缓存 `t10`，下次依赖未变时 React 编译产物可直接复用。
     $[21] = t10;
   } else {
+    // t10 从 React 编译缓存槽 $[21] 取回渲染片段，避免依赖未变时重建 JSX。
     t10 = $[21];
   }
+  // planFilePath 路径数据保存`t10`，作为后续临时缓存值处理的输入。
   const planFilePath = t10;
+  // 状态保存`useMultipleChoiceState`，供终端渲染后续处理使用。
   const state = useMultipleChoiceState();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     currentQuestionIndex,
     answers,
@@ -249,23 +420,39 @@ function AskUserQuestionPermissionRequestBody(t0) {
     setAnswer,
     setTextInputMode
   } = state;
+  // currentQuestion标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
   const currentQuestion = currentQuestionIndex < (questions?.length || 0) ? questions?.[currentQuestionIndex] : null;
+  // isInSubmitView标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
   const isInSubmitView = currentQuestionIndex === (questions?.length || 0);
+  // t11 暂存 `questions?.every(q_0 => q_0?.question && !!answers[q_0.qu...` 的派生结果，便于缓存命中时直接复用。
   let t11;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[22] !== answers || $[23] !== questions) {
+    // t11 暂存 `questions?.every(q_0 => q_0?.question && !!answers[q_0.qu...` 生成的渲染片段，后续返回路径直接复用。
     t11 = questions?.every(q_0 => q_0?.question && !!answers[q_0.question]) ?? false;
+    // $[22] 缓存 `answers`，下次依赖未变时 React 编译产物可直接复用。
     $[22] = answers;
+    // $[23] 缓存 `questions`，下次依赖未变时 React 编译产物可直接复用。
     $[23] = questions;
+    // $[24] 缓存 `t11`，下次依赖未变时 React 编译产物可直接复用。
     $[24] = t11;
   } else {
+    // t11 从 React 编译缓存槽 $[24] 取回渲染片段，避免依赖未变时重建 JSX。
     t11 = $[24];
   }
+  // allQuestionsAnswered沿用 `t11` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const allQuestionsAnswered = t11;
+  // hideSubmitTab标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
   const hideSubmitTab = questions.length === 1 && !questions[0]?.multiSelect;
+  // t12 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t12;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[25] !== isInPlanMode || $[26] !== metadataSource || $[27] !== onDone || $[28] !== onReject || $[29] !== questions.length || $[30] !== toolUseConfirm) {
+    // t12 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t12 = () => {
+      // 满足 `metadataSource` 时，终端渲染执行该分支。
       if (metadataSource) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent("tengu_ask_user_question_rejected", {
           source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           questionCount: questions.length,
@@ -273,38 +460,61 @@ function AskUserQuestionPermissionRequestBody(t0) {
           interviewPhaseEnabled: isInPlanMode && isPlanModeInterviewPhaseEnabled()
         });
       }
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
+      // 调用 onReject，触发终端渲染此处需要的副作用。
       onReject();
+      // 调用 toolUseConfirm.onReject，触发终端渲染此处需要的副作用。
       toolUseConfirm.onReject();
     };
+    // $[25] 缓存 `isInPlanMode`，下次依赖未变时 React 编译产物可直接复用。
     $[25] = isInPlanMode;
+    // $[26] 缓存 `metadataSource`，下次依赖未变时 React 编译产物可直接复用。
     $[26] = metadataSource;
+    // $[27] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[27] = onDone;
+    // $[28] 缓存 `onReject`，下次依赖未变时 React 编译产物可直接复用。
     $[28] = onReject;
+    // $[29] 缓存 `questions.length`，下次依赖未变时 React 编译产物可直接复用。
     $[29] = questions.length;
+    // $[30] 缓存 `toolUseConfirm`，下次依赖未变时 React 编译产物可直接复用。
     $[30] = toolUseConfirm;
+    // $[31] 缓存 `t12`，下次依赖未变时 React 编译产物可直接复用。
     $[31] = t12;
   } else {
+    // t12 从 React 编译缓存槽 $[31] 取回渲染片段，避免依赖未变时重建 JSX。
     t12 = $[31];
   }
+  // handleCancel沿用 `t12` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const handleCancel = t12;
+  // t13 暂存 `async () => {` 的派生结果，便于缓存命中时直接复用。
   let t13;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[32] !== allImageAttachments || $[33] !== answers || $[34] !== isInPlanMode || $[35] !== metadataSource || $[36] !== onDone || $[37] !== questions || $[38] !== toolUseConfirm) {
+    // t13 暂存 `async () => {` 生成的渲染片段，后续返回路径直接复用。
     t13 = async () => {
+      // questionsWithAnswers 集合派生`questions.map`，供终端渲染后续处理使用。
       const questionsWithAnswers = questions.map(q_1 => {
+        // answer保存`answers[q_1.question]`，供终端渲染权限确认界面 Ask User Question Perm...后续判断或输出使用。
         const answer = answers[q_1.question];
+        // 满足 `answer` 时，终端渲染执行该分支。
         if (answer) {
+          // 返回 ``- "${q_1.question}"\n Answer: ${answer}``，作为终端渲染这次计算的结果。
           return `- "${q_1.question}"\n  Answer: ${answer}`;
         }
+        // 返回 ``- "${q_1.question}"\n (No answer provided)``，作为终端渲染这次计算的结果。
         return `- "${q_1.question}"\n  (No answer provided)`;
       }).join("\n");
+      // feedback保存``The user wants to clarify these questions.`，作为后续固定文本处理的输入。
       const feedback = `The user wants to clarify these questions.
     This means they may have additional information, context or questions for you.
     Take their response into account and then reformulate the questions if appropriate.
     Start by asking them what they would like to clarify.
 
     Questions asked:\n${questionsWithAnswers}`;
+      // 满足 `metadataSource` 时，终端渲染执行该分支。
       if (metadataSource) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent("tengu_ask_user_question_respond_to_claude", {
           source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           questionCount: questions.length,
@@ -312,37 +522,61 @@ function AskUserQuestionPermissionRequestBody(t0) {
           interviewPhaseEnabled: isInPlanMode && isPlanModeInterviewPhaseEnabled()
         });
       }
+      // imageBlocks 集合保存`convertImagesToBlocks`，供终端渲染后续处理使用。
       const imageBlocks = await convertImagesToBlocks(allImageAttachments);
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
+      // 调用 toolUseConfirm.onReject，触发终端渲染此处需要的副作用。
       toolUseConfirm.onReject(feedback, imageBlocks && imageBlocks.length > 0 ? imageBlocks : undefined);
     };
+    // $[32] 缓存 `allImageAttachments`，下次依赖未变时 React 编译产物可直接复用。
     $[32] = allImageAttachments;
+    // $[33] 缓存 `answers`，下次依赖未变时 React 编译产物可直接复用。
     $[33] = answers;
+    // $[34] 缓存 `isInPlanMode`，下次依赖未变时 React 编译产物可直接复用。
     $[34] = isInPlanMode;
+    // $[35] 缓存 `metadataSource`，下次依赖未变时 React 编译产物可直接复用。
     $[35] = metadataSource;
+    // $[36] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[36] = onDone;
+    // $[37] 缓存 `questions`，下次依赖未变时 React 编译产物可直接复用。
     $[37] = questions;
+    // $[38] 缓存 `toolUseConfirm`，下次依赖未变时 React 编译产物可直接复用。
     $[38] = toolUseConfirm;
+    // $[39] 缓存 `t13`，下次依赖未变时 React 编译产物可直接复用。
     $[39] = t13;
   } else {
+    // t13 从 React 编译缓存槽 $[39] 取回渲染片段，避免依赖未变时重建 JSX。
     t13 = $[39];
   }
+  // handleRespondToClaude 命名 `t13`，让后续代码直接表达这个值的用途。
   const handleRespondToClaude = t13;
+  // t14 暂存 `async () => {` 的派生结果，便于缓存命中时直接复用。
   let t14;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[40] !== allImageAttachments || $[41] !== answers || $[42] !== isInPlanMode || $[43] !== metadataSource || $[44] !== onDone || $[45] !== questions || $[46] !== toolUseConfirm) {
+    // t14 暂存 `async () => {` 生成的渲染片段，后续返回路径直接复用。
     t14 = async () => {
+      // questionsWithAnswers_0派生`questions.map`，供终端渲染后续处理使用。
       const questionsWithAnswers_0 = questions.map(q_2 => {
+        // answer_0读取 `answers[q_2.question]` 对应条目，后续围绕该成员继续处理。
         const answer_0 = answers[q_2.question];
+        // 满足 `answer_0` 时，终端渲染执行该分支。
         if (answer_0) {
+          // 返回 ``- "${q_2.question}"\n Answer: ${answer_0}``，作为终端渲染这次计算的结果。
           return `- "${q_2.question}"\n  Answer: ${answer_0}`;
         }
+        // 返回 ``- "${q_2.question}"\n (No answer provided)``，作为终端渲染这次计算的结果。
         return `- "${q_2.question}"\n  (No answer provided)`;
       }).join("\n");
+      // feedback_0 命名 ``The user has indicated they have provided enough answers...`，让后续代码直接表达这个值的用途。
       const feedback_0 = `The user has indicated they have provided enough answers for the plan interview.
 Stop asking clarifying questions and proceed to finish the plan with the information you have.
 
 Questions asked and answers provided:\n${questionsWithAnswers_0}`;
+      // 满足 `metadataSource` 时，终端渲染执行该分支。
       if (metadataSource) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent("tengu_ask_user_question_finish_plan_interview", {
           source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           questionCount: questions.length,
@@ -350,26 +584,44 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
           interviewPhaseEnabled: isInPlanMode && isPlanModeInterviewPhaseEnabled()
         });
       }
+      // imageBlocks_0保存`convertImagesToBlocks`，供终端渲染后续处理使用。
       const imageBlocks_0 = await convertImagesToBlocks(allImageAttachments);
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
+      // 调用 toolUseConfirm.onReject，触发终端渲染此处需要的副作用。
       toolUseConfirm.onReject(feedback_0, imageBlocks_0 && imageBlocks_0.length > 0 ? imageBlocks_0 : undefined);
     };
+    // $[40] 缓存 `allImageAttachments`，下次依赖未变时 React 编译产物可直接复用。
     $[40] = allImageAttachments;
+    // $[41] 缓存 `answers`，下次依赖未变时 React 编译产物可直接复用。
     $[41] = answers;
+    // $[42] 缓存 `isInPlanMode`，下次依赖未变时 React 编译产物可直接复用。
     $[42] = isInPlanMode;
+    // $[43] 缓存 `metadataSource`，下次依赖未变时 React 编译产物可直接复用。
     $[43] = metadataSource;
+    // $[44] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[44] = onDone;
+    // $[45] 缓存 `questions`，下次依赖未变时 React 编译产物可直接复用。
     $[45] = questions;
+    // $[46] 缓存 `toolUseConfirm`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = toolUseConfirm;
+    // $[47] 缓存 `t14`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = t14;
   } else {
+    // t14 从 React 编译缓存槽 $[47] 取回渲染片段，避免依赖未变时重建 JSX。
     t14 = $[47];
   }
+  // handleFinishPlanInterview保存`t14`，作为后续临时缓存值处理的输入。
   const handleFinishPlanInterview = t14;
+  // t15 暂存 `async answersToSubmit => {` 的派生结果，便于缓存命中时直接复用。
   let t15;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[48] !== allImageAttachments || $[49] !== isInPlanMode || $[50] !== metadataSource || $[51] !== onDone || $[52] !== questionStates || $[53] !== questions || $[54] !== toolUseConfirm) {
+    // t15 暂存 `async answersToSubmit => {` 生成的渲染片段，后续返回路径直接复用。
     t15 = async answersToSubmit => {
+      // 满足 `metadataSource` 时，终端渲染执行该分支。
       if (metadataSource) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent("tengu_ask_user_question_accepted", {
           source: metadataSource as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           questionCount: questions.length,
@@ -378,13 +630,21 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
           interviewPhaseEnabled: isInPlanMode && isPlanModeInterviewPhaseEnabled()
         });
       }
+      // annotations 集合 从空对象开始收集键值，后续按名称补齐内容。
       const annotations = {};
+      // 按顺序遍历 `questions` 中的q_3，逐个交给终端渲染处理。
       for (const q_3 of questions) {
+        // answer_1读取 `answersToSubmit[q_3.question]` 对应条目，后续围绕该成员继续处理。
         const answer_1 = answersToSubmit[q_3.question];
+        // notes 集合保存`questionStates[q_3.question]?.textInputValue`，供终端渲染权限确认界面 Ask User Question Perm...后续判断或输出使用。
         const notes = questionStates[q_3.question]?.textInputValue;
+        // selectedOption筛选`options.find`，供终端渲染后续处理使用。
         const selectedOption = answer_1 ? q_3.options.find(opt_1 => opt_1.label === answer_1) : undefined;
+        // preview保存`selectedOption?.preview`，供后续判断或组装使用。
         const preview = selectedOption?.preview;
+        // 只有 `preview || notes?.trim()` 满足时，终端渲染才执行该分支。
         if (preview || notes?.trim()) {
+          // question更新为 `{`，确保权限确认界面 Ask User Question Permission...后续读取最新状态。
           annotations[q_3.question] = {
             ...(preview && {
               preview
@@ -395,6 +655,7 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
           };
         }
       }
+      // updatedInput 集中保存终端渲染权限确认界面 Ask User Question Perm...要一起传递的字段。
       const updatedInput = {
         ...toolUseConfirm.input,
         answers: answersToSubmit,
@@ -402,234 +663,405 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
           annotations
         })
       };
+      // contentBlocks 集合保存`convertImagesToBlocks`，供终端渲染后续处理使用。
       const contentBlocks = await convertImagesToBlocks(allImageAttachments);
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
+      // 调用 toolUseConfirm.onAllow，触发终端渲染此处需要的副作用。
       toolUseConfirm.onAllow(updatedInput, [], undefined, contentBlocks && contentBlocks.length > 0 ? contentBlocks : undefined);
     };
+    // $[48] 缓存 `allImageAttachments`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = allImageAttachments;
+    // $[49] 缓存 `isInPlanMode`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = isInPlanMode;
+    // $[50] 缓存 `metadataSource`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = metadataSource;
+    // $[51] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = onDone;
+    // $[52] 缓存 `questionStates`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = questionStates;
+    // $[53] 缓存 `questions`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = questions;
+    // $[54] 缓存 `toolUseConfirm`，下次依赖未变时 React 编译产物可直接复用。
     $[54] = toolUseConfirm;
+    // $[55] 缓存 `t15`，下次依赖未变时 React 编译产物可直接复用。
     $[55] = t15;
   } else {
+    // t15 从 React 编译缓存槽 $[55] 取回渲染片段，避免依赖未变时重建 JSX。
     t15 = $[55];
   }
+  // submitAnswers 集合保存`t15`，作为后续临时缓存值处理的输入。
   const submitAnswers = t15;
+  // t16 暂存 `(questionText_1, label, textInput, t17) => {` 的派生结果，便于缓存命中时直接复用。
   let t16;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[56] !== answers || $[57] !== pastedContentsByQuestion || $[58] !== questions.length || $[59] !== setAnswer || $[60] !== submitAnswers) {
+    // t16 暂存 `(questionText_1, label, textInput, t17) => {` 生成的渲染片段，后续返回路径直接复用。
     t16 = (questionText_1, label, textInput, t17) => {
+      // shouldAdvance标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
       const shouldAdvance = t17 === undefined ? true : t17;
+      // answer_2 先占位，稍后的条件分支会根据实际输入补齐它。
       let answer_2;
+      // isMultiSelect记录 `Array.isArray` 是否成立，终端渲染随后按该结果分支。
       const isMultiSelect = Array.isArray(label);
+      // 满足 `isMultiSelect` 时，终端渲染执行该分支。
       if (isMultiSelect) {
+        // answer_2更新为 `label.join(", ")`，确保权限确认界面后续读取最新状态。
         answer_2 = label.join(", ");
       } else {
+        // 满足 `textInput` 时，终端渲染执行该分支。
         if (textInput) {
+          // questionImages 集合派生`Object.values`，供终端渲染后续处理使用。
           const questionImages = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter(_temp5);
+          // answer_2更新为 `questionImages.length > 0 ? `${textInput} (Image attached...`，确保权限确认界面后续读取最新状态。
           answer_2 = questionImages.length > 0 ? `${textInput} (Image attached)` : textInput;
         } else {
+          // 当 `label` 匹配 `"__other__"` 时，终端渲染执行对应分支。
           if (label === "__other__") {
+            // questionImages_0派生`Object.values`，供终端渲染后续处理使用。
             const questionImages_0 = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter(_temp6);
+            // answer_2更新为 `questionImages_0.length > 0 ? "(Image attached)" : label`，确保权限确认界面后续读取最新状态。
             answer_2 = questionImages_0.length > 0 ? "(Image attached)" : label;
           } else {
+            // answer_2更新为 `label`，确保权限确认界面后续读取最新状态。
             answer_2 = label;
           }
         }
       }
+      // isSingleQuestion标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
       const isSingleQuestion = questions.length === 1;
+      // 只有 `!isMultiSelect && isSingleQuestion && shouldAdvan` 满足时，终端渲染才执行该分支。
       if (!isMultiSelect && isSingleQuestion && shouldAdvance) {
+        // updatedAnswers 集合 集中保存终端渲染权限确认界面 Ask User Question Perm...要一起传递的字段。
         const updatedAnswers = {
           ...answers,
           [questionText_1]: answer_2
         };
+        // 调用 submitAnswers，触发终端渲染此处需要的副作用。
         submitAnswers(updatedAnswers).catch(logError);
+        // 权限确认界面 Ask User Question Permission...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // setAnswer 写入新的状态值，使终端渲染后续读取保持一致。
       setAnswer(questionText_1, answer_2, shouldAdvance);
     };
+    // $[56] 缓存 `answers`，下次依赖未变时 React 编译产物可直接复用。
     $[56] = answers;
+    // $[57] 缓存 `pastedContentsByQuestion`，下次依赖未变时 React 编译产物可直接复用。
     $[57] = pastedContentsByQuestion;
+    // $[58] 缓存 `questions.length`，下次依赖未变时 React 编译产物可直接复用。
     $[58] = questions.length;
+    // $[59] 缓存 `setAnswer`，下次依赖未变时 React 编译产物可直接复用。
     $[59] = setAnswer;
+    // $[60] 缓存 `submitAnswers`，下次依赖未变时 React 编译产物可直接复用。
     $[60] = submitAnswers;
+    // $[61] 缓存 `t16`，下次依赖未变时 React 编译产物可直接复用。
     $[61] = t16;
   } else {
+    // t16 从 React 编译缓存槽 $[61] 取回渲染片段，避免依赖未变时重建 JSX。
     t16 = $[61];
   }
+  // handleQuestionAnswer保存`t16`，作为后续临时缓存值处理的输入。
   const handleQuestionAnswer = t16;
+  // t17 暂存 `function handleFinalResponse(value) {` 的派生结果，便于缓存命中时直接复用。
   let t17;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[62] !== answers || $[63] !== handleCancel || $[64] !== submitAnswers) {
+    // t17 暂存 `function handleFinalResponse(value) {` 生成的渲染片段，后续返回路径直接复用。
     t17 = function handleFinalResponse(value) {
+      // 当 `value` 匹配 `"cancel"` 时，终端渲染执行对应分支。
       if (value === "cancel") {
+        // 调用 handleCancel，触发终端渲染此处需要的副作用。
         handleCancel();
+        // 权限确认界面 Ask User Question Permission...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 当 `value` 匹配 `"submit"` 时，终端渲染执行对应分支。
       if (value === "submit") {
+        // 调用 submitAnswers，触发终端渲染此处需要的副作用。
         submitAnswers(answers).catch(logError);
       }
     };
+    // $[62] 缓存 `answers`，下次依赖未变时 React 编译产物可直接复用。
     $[62] = answers;
+    // $[63] 缓存 `handleCancel`，下次依赖未变时 React 编译产物可直接复用。
     $[63] = handleCancel;
+    // $[64] 缓存 `submitAnswers`，下次依赖未变时 React 编译产物可直接复用。
     $[64] = submitAnswers;
+    // $[65] 缓存 `t17`，下次依赖未变时 React 编译产物可直接复用。
     $[65] = t17;
   } else {
+    // t17 从 React 编译缓存槽 $[65] 取回渲染片段，避免依赖未变时重建 JSX。
     t17 = $[65];
   }
+  // handleFinalResponse 响应数据保存`t17`，作为后续临时缓存值处理的输入。
   const handleFinalResponse = t17;
+  // maxIndex 索引标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
   const maxIndex = hideSubmitTab ? (questions?.length || 1) - 1 : questions?.length || 0;
+  // t18 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t18;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[66] !== currentQuestionIndex || $[67] !== prevQuestion) {
+    // t18 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t18 = () => {
+      // 满足 `currentQuestionIndex > 0` 时，终端渲染执行该分支。
       if (currentQuestionIndex > 0) {
+        // 调用 prevQuestion，触发终端渲染此处需要的副作用。
         prevQuestion();
       }
     };
+    // $[66] 缓存 `currentQuestionIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[66] = currentQuestionIndex;
+    // $[67] 缓存 `prevQuestion`，下次依赖未变时 React 编译产物可直接复用。
     $[67] = prevQuestion;
+    // $[68] 缓存 `t18`，下次依赖未变时 React 编译产物可直接复用。
     $[68] = t18;
   } else {
+    // t18 从 React 编译缓存槽 $[68] 取回渲染片段，避免依赖未变时重建 JSX。
     t18 = $[68];
   }
+  // handleTabPrev保存`t18`，作为后续临时缓存值处理的输入。
   const handleTabPrev = t18;
+  // t19 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t19;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[69] !== currentQuestionIndex || $[70] !== maxIndex || $[71] !== nextQuestion) {
+    // t19 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t19 = () => {
+      // 满足 `currentQuestionIndex < maxIndex` 时，终端渲染执行该分支。
       if (currentQuestionIndex < maxIndex) {
+        // 调用 nextQuestion，触发终端渲染此处需要的副作用。
         nextQuestion();
       }
     };
+    // $[69] 缓存 `currentQuestionIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[69] = currentQuestionIndex;
+    // $[70] 缓存 `maxIndex`，下次依赖未变时 React 编译产物可直接复用。
     $[70] = maxIndex;
+    // $[71] 缓存 `nextQuestion`，下次依赖未变时 React 编译产物可直接复用。
     $[71] = nextQuestion;
+    // $[72] 缓存 `t19`，下次依赖未变时 React 编译产物可直接复用。
     $[72] = t19;
   } else {
+    // t19 从 React 编译缓存槽 $[72] 取回渲染片段，避免依赖未变时重建 JSX。
     t19 = $[72];
   }
+  // handleTabNext 命名 `t19`，让后续代码直接表达这个值的用途。
   const handleTabNext = t19;
+  // t20 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t20;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[73] !== handleTabNext || $[74] !== handleTabPrev) {
+    // t20 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t20 = {
       "tabs:previous": handleTabPrev,
       "tabs:next": handleTabNext
     };
+    // $[73] 缓存 `handleTabNext`，下次依赖未变时 React 编译产物可直接复用。
     $[73] = handleTabNext;
+    // $[74] 缓存 `handleTabPrev`，下次依赖未变时 React 编译产物可直接复用。
     $[74] = handleTabPrev;
+    // $[75] 缓存 `t20`，下次依赖未变时 React 编译产物可直接复用。
     $[75] = t20;
   } else {
+    // t20 从 React 编译缓存槽 $[75] 取回渲染片段，避免依赖未变时重建 JSX。
     t20 = $[75];
   }
+  // t21标记终端渲染权限确认界面 Ask User Question Perm...是否启用对应路径。
   const t21 = !(isInTextInput && !isInSubmitView);
+  // t22 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t22;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[76] !== t21) {
+    // t22 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t22 = {
       context: "Tabs",
       isActive: t21
     };
+    // $[76] 缓存 `t21`，下次依赖未变时 React 编译产物可直接复用。
     $[76] = t21;
+    // $[77] 缓存 `t22`，下次依赖未变时 React 编译产物可直接复用。
     $[77] = t22;
   } else {
+    // t22 从 React 编译缓存槽 $[77] 取回渲染片段，避免依赖未变时重建 JSX。
     t22 = $[77];
   }
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings(t20, t22);
+  // 满足 `currentQuestion` 时，终端渲染执行该分支。
   if (currentQuestion) {
+    // t23 暂存 `(base64, mediaType_0, filename_0, dims, path) => onImageP...` 的派生结果，便于缓存命中时直接复用。
     let t23;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[78] !== currentQuestion.question) {
+      // t23 暂存 `(base64, mediaType_0, filename_0, dims, path) => onImageP...` 生成的渲染片段，后续返回路径直接复用。
       t23 = (base64, mediaType_0, filename_0, dims, path) => onImagePaste(currentQuestion.question, base64, mediaType_0, filename_0, dims, path);
+      // $[78] 缓存 `currentQuestion.question`，下次依赖未变时 React 编译产物可直接复用。
       $[78] = currentQuestion.question;
+      // $[79] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
       $[79] = t23;
     } else {
+      // t23 从 React 编译缓存槽 $[79] 取回渲染片段，避免依赖未变时重建 JSX。
       t23 = $[79];
     }
+    // t24 暂存 `pastedContentsByQuestion[currentQuestion.question] ?? {}` 的派生结果，便于缓存命中时直接复用。
     let t24;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[80] !== currentQuestion.question || $[81] !== pastedContentsByQuestion) {
+      // t24 暂存 `pastedContentsByQuestion[currentQuestion.question] ?? {}` 生成的渲染片段，后续返回路径直接复用。
       t24 = pastedContentsByQuestion[currentQuestion.question] ?? {};
+      // $[80] 缓存 `currentQuestion.question`，下次依赖未变时 React 编译产物可直接复用。
       $[80] = currentQuestion.question;
+      // $[81] 缓存 `pastedContentsByQuestion`，下次依赖未变时 React 编译产物可直接复用。
       $[81] = pastedContentsByQuestion;
+      // $[82] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
       $[82] = t24;
     } else {
+      // t24 从 React 编译缓存槽 $[82] 取回渲染片段，避免依赖未变时重建 JSX。
       t24 = $[82];
     }
+    // t25 暂存 `id_0 => onRemoveImage(currentQuestion.question, id_0)` 的派生结果，便于缓存命中时直接复用。
     let t25;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[83] !== currentQuestion.question) {
+      // t25 暂存 `id_0 => onRemoveImage(currentQuestion.question, id_0)` 生成的渲染片段，后续返回路径直接复用。
       t25 = id_0 => onRemoveImage(currentQuestion.question, id_0);
+      // $[83] 缓存 `currentQuestion.question`，下次依赖未变时 React 编译产物可直接复用。
       $[83] = currentQuestion.question;
+      // $[84] 缓存 `t25`，下次依赖未变时 React 编译产物可直接复用。
       $[84] = t25;
     } else {
+      // t25 从 React 编译缓存槽 $[84] 取回渲染片段，避免依赖未变时重建 JSX。
       t25 = $[84];
     }
+    // t26 暂存 `<><QuestionView question={currentQuestion} questions={que...` 的派生结果，便于缓存命中时直接复用。
     let t26;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[85] !== answers || $[86] !== currentQuestion || $[87] !== currentQuestionIndex || $[88] !== globalContentHeight || $[89] !== globalContentWidth || $[90] !== handleCancel || $[91] !== handleFinishPlanInterview || $[92] !== handleQuestionAnswer || $[93] !== handleRespondToClaude || $[94] !== handleTabNext || $[95] !== handleTabPrev || $[96] !== hideSubmitTab || $[97] !== nextQuestion || $[98] !== planFilePath || $[99] !== questionStates || $[100] !== questions || $[101] !== setTextInputMode || $[102] !== t23 || $[103] !== t24 || $[104] !== t25 || $[105] !== updateQuestionState) {
+      // t26 暂存 `<><QuestionView question={currentQuestion} questions={que...` 生成的渲染片段，后续返回路径直接复用。
       t26 = <><QuestionView question={currentQuestion} questions={questions} currentQuestionIndex={currentQuestionIndex} answers={answers} questionStates={questionStates} hideSubmitTab={hideSubmitTab} minContentHeight={globalContentHeight} minContentWidth={globalContentWidth} planFilePath={planFilePath} onUpdateQuestionState={updateQuestionState} onAnswer={handleQuestionAnswer} onTextInputFocus={setTextInputMode} onCancel={handleCancel} onSubmit={nextQuestion} onTabPrev={handleTabPrev} onTabNext={handleTabNext} onRespondToClaude={handleRespondToClaude} onFinishPlanInterview={handleFinishPlanInterview} onImagePaste={t23} pastedContents={t24} onRemoveImage={t25} /></>;
+      // $[85] 缓存 `answers`，下次依赖未变时 React 编译产物可直接复用。
       $[85] = answers;
+      // $[86] 缓存 `currentQuestion`，下次依赖未变时 React 编译产物可直接复用。
       $[86] = currentQuestion;
+      // $[87] 缓存 `currentQuestionIndex`，下次依赖未变时 React 编译产物可直接复用。
       $[87] = currentQuestionIndex;
+      // $[88] 缓存 `globalContentHeight`，下次依赖未变时 React 编译产物可直接复用。
       $[88] = globalContentHeight;
+      // $[89] 缓存 `globalContentWidth`，下次依赖未变时 React 编译产物可直接复用。
       $[89] = globalContentWidth;
+      // $[90] 缓存 `handleCancel`，下次依赖未变时 React 编译产物可直接复用。
       $[90] = handleCancel;
+      // $[91] 缓存 `handleFinishPlanInterview`，下次依赖未变时 React 编译产物可直接复用。
       $[91] = handleFinishPlanInterview;
+      // $[92] 缓存 `handleQuestionAnswer`，下次依赖未变时 React 编译产物可直接复用。
       $[92] = handleQuestionAnswer;
+      // $[93] 缓存 `handleRespondToClaude`，下次依赖未变时 React 编译产物可直接复用。
       $[93] = handleRespondToClaude;
+      // $[94] 缓存 `handleTabNext`，下次依赖未变时 React 编译产物可直接复用。
       $[94] = handleTabNext;
+      // $[95] 缓存 `handleTabPrev`，下次依赖未变时 React 编译产物可直接复用。
       $[95] = handleTabPrev;
+      // $[96] 缓存 `hideSubmitTab`，下次依赖未变时 React 编译产物可直接复用。
       $[96] = hideSubmitTab;
+      // $[97] 缓存 `nextQuestion`，下次依赖未变时 React 编译产物可直接复用。
       $[97] = nextQuestion;
+      // $[98] 缓存 `planFilePath`，下次依赖未变时 React 编译产物可直接复用。
       $[98] = planFilePath;
+      // $[99] 缓存 `questionStates`，下次依赖未变时 React 编译产物可直接复用。
       $[99] = questionStates;
+      // $[100] 缓存 `questions`，下次依赖未变时 React 编译产物可直接复用。
       $[100] = questions;
+      // $[101] 缓存 `setTextInputMode`，下次依赖未变时 React 编译产物可直接复用。
       $[101] = setTextInputMode;
+      // $[102] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
       $[102] = t23;
+      // $[103] 缓存 `t24`，下次依赖未变时 React 编译产物可直接复用。
       $[103] = t24;
+      // $[104] 缓存 `t25`，下次依赖未变时 React 编译产物可直接复用。
       $[104] = t25;
+      // $[105] 缓存 `updateQuestionState`，下次依赖未变时 React 编译产物可直接复用。
       $[105] = updateQuestionState;
+      // $[106] 缓存 `t26`，下次依赖未变时 React 编译产物可直接复用。
       $[106] = t26;
     } else {
+      // t26 从 React 编译缓存槽 $[106] 取回渲染片段，避免依赖未变时重建 JSX。
       t26 = $[106];
     }
+    // 返回 `t26`，作为终端渲染这次计算的结果。
     return t26;
   }
+  // 满足 `isInSubmitView` 时，终端渲染执行该分支。
   if (isInSubmitView) {
+    // t23 暂存 `<><SubmitQuestionsView questions={questions} currentQuest...` 的派生结果，便于缓存命中时直接复用。
     let t23;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[107] !== allQuestionsAnswered || $[108] !== answers || $[109] !== currentQuestionIndex || $[110] !== globalContentHeight || $[111] !== handleFinalResponse || $[112] !== questions || $[113] !== toolUseConfirm.permissionResult) {
+      // t23 暂存 `<><SubmitQuestionsView questions={questions} currentQuest...` 生成的渲染片段，后续返回路径直接复用。
       t23 = <><SubmitQuestionsView questions={questions} currentQuestionIndex={currentQuestionIndex} answers={answers} allQuestionsAnswered={allQuestionsAnswered} permissionResult={toolUseConfirm.permissionResult} minContentHeight={globalContentHeight} onFinalResponse={handleFinalResponse} /></>;
+      // $[107] 缓存 `allQuestionsAnswered`，下次依赖未变时 React 编译产物可直接复用。
       $[107] = allQuestionsAnswered;
+      // $[108] 缓存 `answers`，下次依赖未变时 React 编译产物可直接复用。
       $[108] = answers;
+      // $[109] 缓存 `currentQuestionIndex`，下次依赖未变时 React 编译产物可直接复用。
       $[109] = currentQuestionIndex;
+      // $[110] 缓存 `globalContentHeight`，下次依赖未变时 React 编译产物可直接复用。
       $[110] = globalContentHeight;
+      // $[111] 缓存 `handleFinalResponse`，下次依赖未变时 React 编译产物可直接复用。
       $[111] = handleFinalResponse;
+      // $[112] 缓存 `questions`，下次依赖未变时 React 编译产物可直接复用。
       $[112] = questions;
+      // $[113] 缓存 `toolUseConfirm.permissionResult`，下次依赖未变时 React 编译产物可直接复用。
       $[113] = toolUseConfirm.permissionResult;
+      // $[114] 缓存 `t23`，下次依赖未变时 React 编译产物可直接复用。
       $[114] = t23;
     } else {
+      // t23 从 React 编译缓存槽 $[114] 取回渲染片段，避免依赖未变时重建 JSX。
       t23 = $[114];
     }
+    // 返回 `t23`，作为终端渲染这次计算的结果。
     return t23;
   }
+  // 返回 `null`，作为终端渲染这次计算的结果。
   return null;
 }
+// _temp6 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp6(c_1) {
+  // 返回 `c_1.type === "image"`，作为终端渲染这次计算的结果。
   return c_1.type === "image";
 }
+// _temp5 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp5(c_0) {
+  // 返回 `c_0.type === "image"`，作为终端渲染这次计算的结果。
   return c_0.type === "image";
 }
+// _temp4 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp4(s) {
+  // 返回 `s.toolPermissionContext.mode`，作为终端渲染这次计算的结果。
   return s.toolPermissionContext.mode;
 }
+// _temp3 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp3(c) {
+  // 返回 `c.type === "image"`，作为终端渲染这次计算的结果。
   return c.type === "image";
 }
+// _temp2 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(contents) {
+  // 返回 `Object.values(contents)`，作为终端渲染这次计算的结果。
   return Object.values(contents);
 }
+// _temp 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(opt) {
+  // 返回 `opt.preview`，作为终端渲染这次计算的结果。
   return opt.preview;
 }
+// convertImagesToBlocks 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function convertImagesToBlocks(images: PastedContent[]): Promise<ImageBlockParam[] | undefined> {
+  // images 集合为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
   if (images.length === 0) return undefined;
+  // 返回 `Promise.all(images.map(async img => {`，作为终端渲染这次计算的结果。
   return Promise.all(images.map(async img => {
+    // block 集中保存权限确认界面 Ask User Question Permission...要一起传递的字段。
     const block: ImageBlockParam = {
       type: 'image',
       source: {
@@ -638,7 +1070,9 @@ async function convertImagesToBlocks(images: PastedContent[]): Promise<ImageBloc
         data: img.content
       }
     };
+    // resized统计`maybeResizeAndDownsampleImageBlock`，供终端渲染后续处理使用。
     const resized = await maybeResizeAndDownsampleImageBlock(block);
+    // 返回 `resized.block`，作为终端渲染这次计算的结果。
     return resized.block;
   }));
 }

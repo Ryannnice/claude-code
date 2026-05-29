@@ -12,13 +12,16 @@
  * so the shim defaults to active (matching isCseShimEnabled()'s own default).
  */
 
+// 这个回调绑定到 let _isCseShimEnabled: (() => boolean) | undefined，负责远程桥接会话在该局部场景下的响应。
 let _isCseShimEnabled: (() => boolean) | undefined
 
 /**
  * Register the GrowthBook gate for the cse_ shim. Called from bridge
  * init code that already imports bridgeEnabled.ts.
  */
+// setCseShimGate 封装Bridge 通信的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function setCseShimGate(gate: () => boolean): void {
+  // _isCseShimEnabled更新为 `gate`，确保Bridge 通信后续读取最新状态。
   _isCseShimEnabled = gate
 }
 
@@ -35,9 +38,13 @@ export function setCseShimGate(gate: () => boolean): void {
  * session-management calls. It arrives as `cse_*` from the work poll under
  * the compat gate, so archiveSession/fetchSessionTitle need this re-tag.
  */
+// toCompatSessionId 封装Bridge 通信的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function toCompatSessionId(id: string): string {
+  // 满足 `!id.startsWith('cse_')` 时，远程桥接会话执行该分支。
   if (!id.startsWith('cse_')) return id
+  // 组合条件 `_isCseShimEnabled && !_isCseShimEnabled()` 成立时，远程桥接会话才启用这条专门路径。
   if (_isCseShimEnabled && !_isCseShimEnabled()) return id
+  // 返回 `'session_' + id.slice('cse_'.length)`，作为远程桥接会话这次计算的结果。
   return 'session_' + id.slice('cse_'.length)
 }
 
@@ -51,7 +58,10 @@ export function toCompatSessionId(id: string): string {
  * stores — so perpetual reconnect passes the wrong costume and gets "Session
  * not found" back. Same UUID, wrong tag. No-op for IDs that aren't `session_*`.
  */
+// toInfraSessionId 封装Bridge 通信的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function toInfraSessionId(id: string): string {
+  // 满足 `!id.startsWith('session_')` 时，远程桥接会话执行该分支。
   if (!id.startsWith('session_')) return id
+  // 返回 `'cse_' + id.slice('session_'.length)`，作为远程桥接会话这次计算的结果。
   return 'cse_' + id.slice('session_'.length)
 }

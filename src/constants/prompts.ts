@@ -1,88 +1,135 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// 引入 as osType、version as osVersion、release as osRelease，将 os 中已经封装好的能力接到本文件流程里。
 import { type as osType, version as osVersion, release as osRelease } from 'os'
+// 复用 env 工具函数，把通用处理留在 ../utils/env.js 中维护。
 import { env } from '../utils/env.js'
+// 复用 getIsGit 工具函数，把通用处理留在 ../utils/git.js 中维护。
 import { getIsGit } from '../utils/git.js'
+// 复用 getCwd 工具函数，把通用处理留在 ../utils/cwd.js 中维护。
 import { getCwd } from '../utils/cwd.js'
+// 引入 getIsNonInteractiveSession，将 ../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
+// 复用 getCurrentWorktreeSession 工具函数，把通用处理留在 ../utils/worktree.js 中维护。
 import { getCurrentWorktreeSession } from '../utils/worktree.js'
+// 引入 getSessionStartDate，将 ./common.js 中已经封装好的能力接到本文件流程里。
 import { getSessionStartDate } from './common.js'
+// 复用 getInitialSettings 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getInitialSettings } from '../utils/settings/settings.js'
+// 整理这一组导入，让prompts后续逻辑可以直接复用这些外部能力。
 import {
   AGENT_TOOL_NAME,
   VERIFICATION_AGENT_TYPE,
 } from '../tools/AgentTool/constants.js'
+// 接入 FILE_WRITE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
+// 接入 FILE_READ_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_READ_TOOL_NAME } from '../tools/FileReadTool/prompt.js'
+// 接入 FILE_EDIT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
+// 接入 TODO_WRITE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { TODO_WRITE_TOOL_NAME } from '../tools/TodoWriteTool/constants.js'
+// 接入 TASK_CREATE_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { TASK_CREATE_TOOL_NAME } from '../tools/TaskCreateTool/constants.js'
+// 类型依赖 { Tools } 来自 ../Tool.js，用于校准prompts的数据契约。
 import type { Tools } from '../Tool.js'
+// 类型依赖 { Command } 来自 ../types/command.js，用于校准prompts的数据契约。
 import type { Command } from '../types/command.js'
+// 接入 BASH_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
+// 整理这一组导入，让prompts后续逻辑可以直接复用这些外部能力。
 import {
   getCanonicalName,
   getMarketingNameForModel,
 } from '../utils/model/model.js'
+// 引入 getSkillToolCommands，将 src/commands.js 中已经封装好的能力接到本文件流程里。
 import { getSkillToolCommands } from 'src/commands.js'
+// 接入 SKILL_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { SKILL_TOOL_NAME } from '../tools/SkillTool/constants.js'
+// 引入 getOutputStyleConfig，将 ./outputStyles.js 中已经封装好的能力接到本文件流程里。
 import { getOutputStyleConfig } from './outputStyles.js'
+// 整理这一组导入，让prompts后续逻辑可以直接复用这些外部能力。
 import type {
   MCPServerConnection,
   ConnectedMCPServer,
 } from '../services/mcp/types.js'
+// 接入 GLOB_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
+// 接入 GREP_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
+// 复用 hasEmbeddedSearchTools 工具函数，把通用处理留在 src/utils/embeddedTools.js 中维护。
 import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
+// 接入 ASK_USER_QUESTION_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { ASK_USER_QUESTION_TOOL_NAME } from '../tools/AskUserQuestionTool/prompt.js'
+// 整理这一组导入，让prompts后续逻辑可以直接复用这些外部能力。
 import {
   EXPLORE_AGENT,
   EXPLORE_AGENT_MIN_QUERIES,
 } from 'src/tools/AgentTool/built-in/exploreAgent.js'
+// 接入 areExplorePlanAgentsEnabled 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { areExplorePlanAgentsEnabled } from 'src/tools/AgentTool/builtInAgents.js'
+// 整理这一组导入，让prompts后续逻辑可以直接复用这些外部能力。
 import {
   isScratchpadEnabled,
   getScratchpadDir,
 } from '../utils/permissions/filesystem.js'
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../utils/envUtils.js'
+// 接入 isReplModeEnabled 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { isReplModeEnabled } from '../tools/REPLTool/constants.js'
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle'
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 src/services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
+// 复用 shouldUseGlobalCacheScope 工具函数，把通用处理留在 ../utils/betas.js 中维护。
 import { shouldUseGlobalCacheScope } from '../utils/betas.js'
+// 接入 isForkSubagentEnabled 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { isForkSubagentEnabled } from '../tools/AgentTool/forkSubagent.js'
+// 整理这一组导入，让prompts后续逻辑可以直接复用这些外部能力。
 import {
   systemPromptSection,
   DANGEROUS_uncachedSystemPromptSection,
   resolveSystemPromptSections,
 } from './systemPromptSections.js'
+// 接入 SLEEP_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { SLEEP_TOOL_NAME } from '../tools/SleepTool/prompt.js'
+// 引入 TICK_TAG，将 ./xml.js 中已经封装好的能力接到本文件流程里。
 import { TICK_TAG } from './xml.js'
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js'
+// 引入 loadMemoryPrompt，将 ../memdir/memdir.js 中已经封装好的能力接到本文件流程里。
 import { loadMemoryPrompt } from '../memdir/memdir.js'
+// 复用 isUndercover 工具函数，把通用处理留在 ../utils/undercover.js 中维护。
 import { isUndercover } from '../utils/undercover.js'
+// 复用 isMcpInstructionsDeltaEnabled 工具函数，把通用处理留在 ../utils/mcpInstructionsDelta.js 中维护。
 import { isMcpInstructionsDeltaEnabled } from '../utils/mcpInstructionsDelta.js'
 
 // Dead code elimination: conditional imports for feature-gated modules
 /* eslint-disable @typescript-eslint/no-require-imports */
+// getCachedMCConfigForFRC 配置保存`feature`，供prompts后续处理使用。
 const getCachedMCConfigForFRC = feature('CACHED_MICROCOMPACT')
   ? (
       require('../services/compact/cachedMCConfig.js') as typeof import('../services/compact/cachedMCConfig.js')
     ).getCachedMCConfig
   : null
 
+// proactiveModule 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const proactiveModule =
   feature('PROACTIVE') || feature('KAIROS')
     ? require('../proactive/index.js')
     : null
+// BRIEF_PROACTIVE_SECTION 先占位，稍后的条件分支会根据实际输入补齐它。
 const BRIEF_PROACTIVE_SECTION: string | null =
   feature('KAIROS') || feature('KAIROS_BRIEF')
     ? (
         require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js')
       ).BRIEF_PROACTIVE_SECTION
     : null
+// briefToolModule 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
 const briefToolModule =
   feature('KAIROS') || feature('KAIROS_BRIEF')
     ? (require('../tools/BriefTool/BriefTool.js') as typeof import('../tools/BriefTool/BriefTool.js'))
     : null
+// DISCOVER_SKILLS_TOOL_NAME 通过懒加载取得，避免prompts在启动阶段加载暂时用不到的实现。
 const DISCOVER_SKILLS_TOOL_NAME: string | null = feature(
   'EXPERIMENTAL_SKILL_SEARCH',
 )
@@ -92,13 +139,17 @@ const DISCOVER_SKILLS_TOOL_NAME: string | null = feature(
   : null
 // Capture the module (not .isSkillSearchEnabled directly) so spyOn() in tests
 // patches what we actually call — a captured function ref would point past the spy.
+// skillSearchFeatureCheck保存`feature`，供prompts后续处理使用。
 const skillSearchFeatureCheck = feature('EXPERIMENTAL_SKILL_SEARCH')
   ? (require('../services/skillSearch/featureCheck.js') as typeof import('../services/skillSearch/featureCheck.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
+// 类型依赖 { OutputStyleConfig } 来自 ./outputStyles.js，用于校准prompts的数据契约。
 import type { OutputStyleConfig } from './outputStyles.js'
+// 引入 CYBER_RISK_INSTRUCTION，将 ./cyberRiskInstruction.js 中已经封装好的能力接到本文件流程里。
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
 
+// CLAUDE_CODE_DOCS_MAP_URL 先占位，稍后的条件分支会根据实际输入补齐它。
 export const CLAUDE_CODE_DOCS_MAP_URL =
   'https://code.claude.com/docs/en/claude_code_docs_map.md'
 
@@ -111,60 +162,82 @@ export const CLAUDE_CODE_DOCS_MAP_URL =
  * - src/utils/api.ts (splitSysPromptPrefix)
  * - src/services/api/claude.ts (buildSystemPromptBlocks)
  */
+// SYSTEM_PROMPT_DYNAMIC_BOUNDARY 先占位，稍后的条件分支会根据实际输入补齐它。
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY =
   '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'
 
 // @[MODEL LAUNCH]: Update the latest frontier model.
+// FRONTIER_MODEL_NAME保存`'Claude Opus 4.6'`，作为后续固定文本处理的输入。
 const FRONTIER_MODEL_NAME = 'Claude Opus 4.6'
 
 // @[MODEL LAUNCH]: Update the model family IDs below to the latest in each tier.
+// CLAUDE_4_5_OR_4_6_MODEL_IDS 集合 集中保存prompts要一起传递的字段。
 const CLAUDE_4_5_OR_4_6_MODEL_IDS = {
   opus: 'claude-opus-4-6',
   sonnet: 'claude-sonnet-4-6',
   haiku: 'claude-haiku-4-5-20251001',
 }
 
+// getHooksSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getHooksSection(): string {
+  // 返回 ``Users may configure 'hooks', shell commands that execute in response t...`，作为prompts这次计算的结果。
   return `Users may configure 'hooks', shell commands that execute in response to events like tool calls, in settings. Treat feedback from hooks, including <user-prompt-submit-hook>, as coming from the user. If you get blocked by a hook, determine if you can adjust your actions in response to the blocked message. If not, ask the user to check their hooks configuration.`
 }
 
+// getSystemRemindersSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSystemRemindersSection(): string {
+  // 返回 ``- Tool results and user messages may include <system-reminder> tags. <...`，作为prompts这次计算的结果。
   return `- Tool results and user messages may include <system-reminder> tags. <system-reminder> tags contain useful information and reminders. They are automatically added by the system, and bear no direct relation to the specific tool results or user messages in which they appear.
 - The conversation has unlimited context through automatic summarization.`
 }
 
+// getAntModelOverrideSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getAntModelOverrideSection(): string | null {
+  // `process.env.USER_TYPE` 与 `'ant'` 不一致时刷新派生状态，避免使用过期结果。
   if (process.env.USER_TYPE !== 'ant') return null
+  // 满足 `isUndercover()` 时，prompts执行该分支。
   if (isUndercover()) return null
+  // 返回 `getAntModelOverrideConfig()?.defaultSystemPromptSuffix || null`，作为prompts这次计算的结果。
   return getAntModelOverrideConfig()?.defaultSystemPromptSuffix || null
 }
 
+// getLanguageSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getLanguageSection(
   languagePreference: string | undefined,
 ): string | null {
+  // languagePreference缺失时提前走兜底路径，避免prompts继续依赖无效输入。
   if (!languagePreference) return null
 
+  // 返回 ``# Language`，作为prompts这次计算的结果。
   return `# Language
 Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, and communications with the user. Technical terms and code identifiers should remain in their original form.`
 }
 
+// getOutputStyleSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getOutputStyleSection(
   outputStyleConfig: OutputStyleConfig | null,
 ): string | null {
+  // 满足 `outputStyleConfig === null` 时，prompts执行该分支。
   if (outputStyleConfig === null) return null
 
+  // 返回 ``# Output Style: ${outputStyleConfig.name}`，作为prompts这次计算的结果。
   return `# Output Style: ${outputStyleConfig.name}
 ${outputStyleConfig.prompt}`
 }
 
+// getMcpInstructionsSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getMcpInstructionsSection(
   mcpClients: MCPServerConnection[] | undefined,
 ): string | null {
+  // !mcpClients || mcpClients 集合为空时立即返回或跳过，避免prompts把空集合当成可处理内容。
   if (!mcpClients || mcpClients.length === 0) return null
+  // 返回 `getMcpInstructions(mcpClients)`，作为prompts这次计算的结果。
   return getMcpInstructions(mcpClients)
 }
 
+// prependBullets 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function prependBullets(items: Array<string | string[]>): string[] {
+  // 返回 `items.flatMap(item =>`，作为prompts这次计算的结果。
   return items.flatMap(item =>
     Array.isArray(item)
       ? item.map(subitem => `  - ${subitem}`)
@@ -172,10 +245,12 @@ export function prependBullets(items: Array<string | string[]>): string[] {
   )
 }
 
+// getSimpleIntroSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSimpleIntroSection(
   outputStyleConfig: OutputStyleConfig | null,
 ): string {
   // eslint-disable-next-line custom-rules/prompt-spacing
+  // 返回 ```，作为prompts这次计算的结果。
   return `
 You are an interactive agent that helps users ${outputStyleConfig !== null ? 'according to your "Output Style" below, which describes how you should respond to user queries.' : 'with software engineering tasks.'} Use the instructions below and the tools available to you to assist the user.
 
@@ -183,7 +258,9 @@ ${CYBER_RISK_INSTRUCTION}
 IMPORTANT: You must NEVER generate or guess URLs for the user unless you are confident that the URLs are for helping the user with programming. You may use URLs provided by the user in their messages or local files.`
 }
 
+// getSimpleSystemSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSimpleSystemSection(): string {
+  // items 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const items = [
     `All text you output outside of tool use is displayed to the user. Output text to communicate with the user. You can use Github-flavored markdown for formatting, and will be rendered in a monospace font using the CommonMark specification.`,
     `Tools are executed in a user-selected permission mode. When you attempt to call a tool that is not automatically allowed by the user's permission mode or permission settings, the user will be prompted so that they can approve or deny the execution. If the user denies a tool you call, do not re-attempt the exact same tool call. Instead, think about why the user has denied the tool call and adjust your approach.`,
@@ -193,10 +270,13 @@ function getSimpleSystemSection(): string {
     `The system will automatically compress prior messages in your conversation as it approaches context limits. This means your conversation with the user is not limited by the context window.`,
   ]
 
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return ['# System', ...prependBullets(items)].join(`\n`)
 }
 
+// getSimpleDoingTasksSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSimpleDoingTasksSection(): string {
+  // codeStyleSubitems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const codeStyleSubitems = [
     `Don't add features, refactor code, or make "improvements" beyond what was asked. A bug fix doesn't need surrounding code cleaned up. A simple feature doesn't need extra configurability. Don't add docstrings, comments, or type annotations to code you didn't change. Only add comments where the logic isn't self-evident.`,
     `Don't add error handling, fallbacks, or validation for scenarios that can't happen. Trust internal code and framework guarantees. Only validate at system boundaries (user input, external APIs). Don't use feature flags or backwards-compatibility shims when you can just change the code.`,
@@ -213,11 +293,13 @@ function getSimpleDoingTasksSection(): string {
       : []),
   ]
 
+  // userHelpSubitems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const userHelpSubitems = [
     `/help: Get help with using Claude Code`,
     `To give feedback, users should ${MACRO.ISSUES_EXPLAINER}`,
   ]
 
+  // items 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const items = [
     `The user will primarily request you to perform software engineering tasks. These may include solving bugs, adding new functionality, refactoring code, explaining code, and more. When given an unclear or generic instruction, consider it in the context of these software engineering tasks and the current working directory. For example, if the user asks you to change "methodName" to snake case, do not reply with just "method_name", instead find the method in the code and modify the code.`,
     `You are highly capable and often allow users to complete ambitious tasks that would otherwise be too complex or take too long. You should defer to user judgement about whether a task is too large to attempt.`,
@@ -249,10 +331,13 @@ function getSimpleDoingTasksSection(): string {
     userHelpSubitems,
   ]
 
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return [`# Doing tasks`, ...prependBullets(items)].join(`\n`)
 }
 
+// getActionsSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getActionsSection(): string {
+  // 返回 ``# Executing actions with care`，作为prompts这次计算的结果。
   return `# Executing actions with care
 
 Carefully consider the reversibility and blast radius of actions. Generally you can freely take local, reversible actions like editing files or running tests. But for actions that are hard to reverse, affect shared systems beyond your local environment, or could otherwise be risky or destructive, check with the user before proceeding. The cost of pausing to confirm is low, while the cost of an unwanted action (lost work, unintended messages sent, deleted branches) can be very high. For actions like these, consider the context, the action, and user instructions, and by default transparently communicate the action and ask for confirmation before proceeding. This default can be changed by user instructions - if explicitly asked to operate more autonomously, then you may proceed without confirmation, but still attend to the risks and consequences when taking actions. A user approving an action (like a git push) once does NOT mean that they approve it in all contexts, so unless actions are authorized in advance in durable instructions like CLAUDE.md files, always confirm first. Authorization stands for the scope specified, not beyond. Match the scope of your actions to what was actually requested.
@@ -266,7 +351,9 @@ Examples of the kind of risky actions that warrant user confirmation:
 When you encounter an obstacle, do not use destructive actions as a shortcut to simply make it go away. For instance, try to identify root causes and fix underlying issues rather than bypassing safety checks (e.g. --no-verify). If you discover unexpected state like unfamiliar files, branches, or configuration, investigate before deleting or overwriting, as it may represent the user's in-progress work. For example, typically resolve merge conflicts rather than discarding changes; similarly, if a lock file exists, investigate what process holds it rather than deleting it. In short: only take risky actions carefully, and when in doubt, ask before acting. Follow both the spirit and letter of these instructions - measure twice, cut once.`
 }
 
+// getUsingYourToolsSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getUsingYourToolsSection(enabledTools: Set<string>): string {
+  // taskToolName筛选`find`，供prompts后续处理使用。
   const taskToolName = [TASK_CREATE_TOOL_NAME, TODO_WRITE_TOOL_NAME].find(n =>
     enabledTools.has(n),
   )
@@ -274,20 +361,27 @@ function getUsingYourToolsSection(enabledTools: Set<string>): string {
   // In REPL mode, Read/Write/Edit/Glob/Grep/Bash/Agent are hidden from direct
   // use (REPL_ONLY_TOOLS). The "prefer dedicated tools over Bash" guidance is
   // irrelevant — REPL's own prompt covers how to call them from scripts.
+  // 满足 `isReplModeEnabled()` 时，prompts执行该分支。
   if (isReplModeEnabled()) {
+    // items 集合 聚合成有序列表，保持后续遍历顺序稳定。
     const items = [
       taskToolName
         ? `Break down and manage your work with the ${taskToolName} tool. These tools are helpful for planning your work and helping the user track your progress. Mark each task as completed as soon as you are done with the task. Do not batch up multiple tasks before marking them as completed.`
         : null,
+    // 这个回调绑定到 ].filter(item => item !== null)，负责prompts在该局部场景下的响应。
     ].filter(item => item !== null)
+    // items 集合为空时立即返回或跳过，避免prompts把空集合当成可处理内容。
     if (items.length === 0) return ''
+    // 返回列表结果，保留prompts已经排好的条目顺序。
     return [`# Using your tools`, ...prependBullets(items)].join(`\n`)
   }
 
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
   // dedicated Glob/Grep tools, so skip guidance pointing at them.
+  // embedded保存`hasEmbeddedSearchTools`，供prompts后续处理使用。
   const embedded = hasEmbeddedSearchTools()
 
+  // providedToolSubitems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const providedToolSubitems = [
     `To read files use ${FILE_READ_TOOL_NAME} instead of cat, head, tail, or sed`,
     `To edit files use ${FILE_EDIT_TOOL_NAME} instead of sed or awk`,
@@ -301,6 +395,7 @@ function getUsingYourToolsSection(enabledTools: Set<string>): string {
     `Reserve using the ${BASH_TOOL_NAME} exclusively for system commands and terminal operations that require shell execution. If you are unsure and there is a relevant dedicated tool, default to using the dedicated tool and only fallback on using the ${BASH_TOOL_NAME} tool for these if it is absolutely necessary.`,
   ]
 
+  // items 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const items = [
     `Do NOT use the ${BASH_TOOL_NAME} to run commands when a relevant dedicated tool is provided. Using dedicated tools allows the user to better understand and review your work. This is CRITICAL to assisting the user:`,
     providedToolSubitems,
@@ -308,12 +403,16 @@ function getUsingYourToolsSection(enabledTools: Set<string>): string {
       ? `Break down and manage your work with the ${taskToolName} tool. These tools are helpful for planning your work and helping the user track your progress. Mark each task as completed as soon as you are done with the task. Do not batch up multiple tasks before marking them as completed.`
       : null,
     `You can call multiple tools in a single response. If you intend to call multiple tools and there are no dependencies between them, make all independent tool calls in parallel. Maximize use of parallel tool calls where possible to increase efficiency. However, if some tool calls depend on previous calls to inform dependent values, do NOT call these tools in parallel and instead call them sequentially. For instance, if one operation must complete before another starts, run these operations sequentially instead.`,
+  // 这个回调绑定到 ].filter(item => item !== null)，负责prompts在该局部场景下的响应。
   ].filter(item => item !== null)
 
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return [`# Using your tools`, ...prependBullets(items)].join(`\n`)
 }
 
+// getAgentToolSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getAgentToolSection(): string {
+  // 返回 `isForkSubagentEnabled()`，作为prompts这次计算的结果。
   return isForkSubagentEnabled()
     ? `Calling ${AGENT_TOOL_NAME} without a subagent_type creates a fork, which runs in the background and keeps its tool output out of your context \u2014 so you can keep chatting with the user while it works. Reach for it when research or multi-step implementation work would otherwise fill your context with raw output you won't need again. **If you ARE the fork** \u2014 execute directly; do not re-delegate.`
     : `Use the ${AGENT_TOOL_NAME} tool with specialized agents when the task at hand matches the agent's description. Subagents are valuable for parallelizing independent queries or for protecting the main context window from excessive results, but they should not be used excessively when not needed. Importantly, avoid duplicating work that subagents are already doing - if you delegate research to a subagent, do not also perform the same searches yourself.`
@@ -330,13 +429,17 @@ function getAgentToolSection(): string {
  * feature() guard is internal — external builds DCE the string literal
  * along with the DISCOVER_SKILLS_TOOL_NAME interpolation.
  */
+// getDiscoverSkillsGuidance 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getDiscoverSkillsGuidance(): string | null {
+  // prompts在这里进入条件判断，后续代码按实际状态分流。
   if (
     feature('EXPERIMENTAL_SKILL_SEARCH') &&
     DISCOVER_SKILLS_TOOL_NAME !== null
   ) {
+    // 返回 ``Relevant skills are automatically surfaced each turn as "Skills releva...`，作为prompts这次计算的结果。
     return `Relevant skills are automatically surfaced each turn as "Skills relevant to your task:" reminders. If you're about to do something those don't cover — a mid-task pivot, an unusual workflow, a multi-step plan — call ${DISCOVER_SKILLS_TOOL_NAME} with a specific description of what you're doing. Skills already visible or loaded are filtered automatically. Skip this if the surfaced skills already cover your next action.`
   }
+  // 返回 `null`，作为prompts这次计算的结果。
   return null
 }
 
@@ -349,18 +452,24 @@ function getDiscoverSkillsGuidance(): string | null {
  * outputStyleConfig intentionally NOT moved here — identity framing lives
  * in the static intro pending eval.
  */
+// getSessionSpecificGuidanceSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSessionSpecificGuidanceSection(
   enabledTools: Set<string>,
   skillToolCommands: Command[],
 ): string | null {
+  // hasAskUserQuestionTool记录 `enabledTools.has` 是否成立，prompts随后按该结果分支。
   const hasAskUserQuestionTool = enabledTools.has(ASK_USER_QUESTION_TOOL_NAME)
+  // hasSkills 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const hasSkills =
     skillToolCommands.length > 0 && enabledTools.has(SKILL_TOOL_NAME)
+  // hasAgentTool记录 `enabledTools.has` 是否成立，prompts随后按该结果分支。
   const hasAgentTool = enabledTools.has(AGENT_TOOL_NAME)
+  // searchTools 集合保存`hasEmbeddedSearchTools`，供prompts后续处理使用。
   const searchTools = hasEmbeddedSearchTools()
     ? `\`find\` or \`grep\` via the ${BASH_TOOL_NAME} tool`
     : `the ${GLOB_TOOL_NAME} or ${GREP_TOOL_NAME}`
 
+  // items 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const items = [
     hasAskUserQuestionTool
       ? `If you do not understand why the user has denied a tool call, use the ${ASK_USER_QUESTION_TOOL_NAME} to ask them.`
@@ -393,15 +502,21 @@ function getSessionSpecificGuidanceSection(
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_hive_evidence', false)
       ? `The contract: when non-trivial implementation happens on your turn, independent adversarial verification must happen before you report completion \u2014 regardless of who did the implementing (you directly, a fork you spawned, or a subagent). You are the one reporting to the user; you own the gate. Non-trivial means: 3+ file edits, backend/API changes, or infrastructure changes. Spawn the ${AGENT_TOOL_NAME} tool with subagent_type="${VERIFICATION_AGENT_TYPE}". Your own checks, caveats, and a fork's self-checks do NOT substitute \u2014 only the verifier assigns a verdict; you cannot self-assign PARTIAL. Pass the original user request, all files changed (by anyone), the approach, and the plan file path if applicable. Flag concerns if you have them but do NOT share test results or claim things work. On FAIL: fix, resume the verifier with its findings plus your fix, repeat until PASS. On PASS: spot-check it \u2014 re-run 2-3 commands from its report, confirm every PASS has a Command run block with output that matches your re-run. If any PASS lacks a command block or diverges, resume the verifier with the specifics. On PARTIAL (from the verifier): report what passed and what could not be verified.`
       : null,
+  // 这个回调绑定到 ].filter(item => item !== null)，负责prompts在该局部场景下的响应。
   ].filter(item => item !== null)
 
+  // items 集合为空时立即返回或跳过，避免prompts把空集合当成可处理内容。
   if (items.length === 0) return null
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return ['# Session-specific guidance', ...prependBullets(items)].join('\n')
 }
 
 // @[MODEL LAUNCH]: Remove this section when we launch numbat.
+// getOutputEfficiencySection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getOutputEfficiencySection(): string {
+  // 当 `process.env.USER_TYPE` 匹配 `'ant'` 时，prompts执行对应分支。
   if (process.env.USER_TYPE === 'ant') {
+    // 返回 ``# Communicating with the user`，作为prompts这次计算的结果。
     return `# Communicating with the user
 When sending user-facing text, you're writing for a person, not logging to a console. Assume users can't see most tool calls or thinking - only your text output. Before your first tool call, briefly state what you're about to do. While working, give short updates at key moments: when you find something load-bearing (a bug, a root cause), when changing direction, when you've made progress without an update.
 
@@ -413,6 +528,7 @@ What's most important is the reader understanding your output without mental ove
 
 These user-facing text instructions do not apply to code or tool calls.`
   }
+  // 返回 ``# Output efficiency`，作为prompts这次计算的结果。
   return `# Output efficiency
 
 IMPORTANT: Go straight to the point. Try the simplest approach first without going in circles. Do not overdo it. Be extra concise.
@@ -427,7 +543,9 @@ Focus text output on:
 If you can say it in one sentence, don't use three. Prefer short, direct sentences over long explanations. This does not apply to code or tool calls.`
 }
 
+// getSimpleToneAndStyleSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getSimpleToneAndStyleSection(): string {
+  // items 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const items = [
     `Only use emojis if the user explicitly requests it. Avoid using emojis in all communication unless asked.`,
     process.env.USER_TYPE === 'ant'
@@ -436,38 +554,50 @@ function getSimpleToneAndStyleSection(): string {
     `When referencing specific functions or pieces of code include the pattern file_path:line_number to allow the user to easily navigate to the source code location.`,
     `When referencing GitHub issues or pull requests, use the owner/repo#123 format (e.g. anthropics/claude-code#100) so they render as clickable links.`,
     `Do not use a colon before tool calls. Your tool calls may not be shown directly in the output, so text like "Let me read the file:" followed by a read tool call should just be "Let me read the file." with a period.`,
+  // 这个回调绑定到 ].filter(item => item !== null)，负责prompts在该局部场景下的响应。
   ].filter(item => item !== null)
 
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return [`# Tone and style`, ...prependBullets(items)].join(`\n`)
 }
 
+// getSystemPrompt 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function getSystemPrompt(
   tools: Tools,
   model: string,
   additionalWorkingDirectories?: string[],
   mcpClients?: MCPServerConnection[],
 ): Promise<string[]> {
+  // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)` 时，prompts执行该分支。
   if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
+    // 返回列表结果，保留prompts已经排好的条目顺序。
     return [
       `You are Claude Code, Anthropic's official CLI for Claude.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
     ]
   }
 
+  // cwd读取`getCwd`，供prompts后续处理使用。
   const cwd = getCwd()
+  // 并行获取 skillToolCommands、outputStyleConfig、envInfo，缩短prompts等待多个独立异步任务的时间。
   const [skillToolCommands, outputStyleConfig, envInfo] = await Promise.all([
     getSkillToolCommands(cwd),
     getOutputStyleConfig(),
     computeSimpleEnvInfo(model, additionalWorkingDirectories),
   ])
 
+  // settings 集合读取`getInitialSettings`，供prompts后续处理使用。
   const settings = getInitialSettings()
+  // enabledTools 集合保存`Set`，供prompts后续处理使用。
   const enabledTools = new Set(tools.map(_ => _.name))
 
+  // prompts在这里进入条件判断，后续代码按实际状态分流。
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule?.isProactiveActive()
   ) {
+    // 记录prompts运行诊断，方便排查异常路径或性能问题。
     logForDebugging(`[SystemPrompt] path=simple-proactive`)
+    // 返回列表结果，保留prompts已经排好的条目顺序。
     return [
       `\nYou are an autonomous agent. Use the available tools to do useful work.
 
@@ -485,23 +615,31 @@ ${CYBER_RISK_INSTRUCTION}`,
       getFunctionResultClearingSection(model),
       SUMMARIZE_TOOL_RESULTS_SECTION,
       getProactiveSection(),
+    // 这个回调绑定到 ].filter(s => s !== null)，负责prompts在该局部场景下的响应。
     ].filter(s => s !== null)
   }
 
+  // dynamicSections 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const dynamicSections = [
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('session_guidance', () =>
       getSessionSpecificGuidanceSection(enabledTools, skillToolCommands),
     ),
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('memory', () => loadMemoryPrompt()),
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('ant_model_override', () =>
       getAntModelOverrideSection(),
     ),
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('env_info_simple', () =>
       computeSimpleEnvInfo(model, additionalWorkingDirectories),
     ),
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('language', () =>
       getLanguageSection(settings.language),
     ),
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('output_style', () =>
       getOutputStyleSection(outputStyleConfig),
     ),
@@ -512,16 +650,20 @@ ${CYBER_RISK_INSTRUCTION}`,
     // so a mid-session gate flip doesn't read a stale cached value.
     DANGEROUS_uncachedSystemPromptSection(
       'mcp_instructions',
+      // 这个回调绑定到 () =>，负责prompts在该局部场景下的响应。
       () =>
         isMcpInstructionsDeltaEnabled()
           ? null
           : getMcpInstructionsSection(mcpClients),
       'MCP servers connect/disconnect between turns',
     ),
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('scratchpad', () => getScratchpadInstructions()),
+    // 调用 systemPromptSection，触发prompts此处需要的副作用。
     systemPromptSection('frc', () => getFunctionResultClearingSection(model)),
     systemPromptSection(
       'summarize_tool_results',
+      // 这个回调绑定到 () => SUMMARIZE_TOOL_RESULTS_SECTION,，负责prompts在该局部场景下的响应。
       () => SUMMARIZE_TOOL_RESULTS_SECTION,
     ),
     // Numeric length anchors — research shows ~1.2% output token reduction vs
@@ -530,6 +672,7 @@ ${CYBER_RISK_INSTRUCTION}`,
       ? [
           systemPromptSection(
             'numeric_length_anchors',
+            // 这个回调绑定到 () =>，负责prompts在该局部场景下的响应。
             () =>
               'Length limits: keep text between tool calls to \u226425 words. Keep final responses to \u2264100 words unless the task requires more detail.',
           ),
@@ -544,19 +687,23 @@ ${CYBER_RISK_INSTRUCTION}`,
           // budget-continuation paths don't see attachments (#21577).
           systemPromptSection(
             'token_budget',
+            // 这个回调绑定到 () =>，负责prompts在该局部场景下的响应。
             () =>
               'When the user specifies a token target (e.g., "+500k", "spend 2M tokens", "use 1B tokens"), your output token count will be shown each turn. Keep working until you approach the target \u2014 plan your work to fill it productively. The target is a hard minimum, not a suggestion. If you stop early, the system will automatically continue you.',
           ),
         ]
       : []),
     ...(feature('KAIROS') || feature('KAIROS_BRIEF')
+      // 这个回调绑定到 ? [systemPromptSection('brief', () => getBriefSection())]，负责prompts在该局部场景下的响应。
       ? [systemPromptSection('brief', () => getBriefSection())]
       : []),
   ]
 
+  // resolvedDynamicSections 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const resolvedDynamicSections =
     await resolveSystemPromptSections(dynamicSections)
 
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return [
     // --- Static content (cacheable) ---
     getSimpleIntroSection(outputStyleConfig),
@@ -573,29 +720,40 @@ ${CYBER_RISK_INSTRUCTION}`,
     ...(shouldUseGlobalCacheScope() ? [SYSTEM_PROMPT_DYNAMIC_BOUNDARY] : []),
     // --- Dynamic content (registry-managed) ---
     ...resolvedDynamicSections,
+  // 这个回调绑定到 ].filter(s => s !== null)，负责prompts在该局部场景下的响应。
   ].filter(s => s !== null)
 }
 
+// getMcpInstructions 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getMcpInstructions(mcpClients: MCPServerConnection[]): string | null {
+  // connectedClients 集合筛选`mcpClients.filter`，供prompts后续处理使用。
   const connectedClients = mcpClients.filter(
     (client): client is ConnectedMCPServer => client.type === 'connected',
   )
 
+  // clientsWithInstructions 集合筛选`connectedClients.filter`，供prompts后续处理使用。
   const clientsWithInstructions = connectedClients.filter(
+    // API 客户端更新为 `> client.instructions`，确保prompts后续读取最新状态。
     client => client.instructions,
   )
 
+  // clientsWithInstructions 集合为空时立即返回或跳过，避免prompts把空集合当成可处理内容。
   if (clientsWithInstructions.length === 0) {
+    // 返回 `null`，作为prompts这次计算的结果。
     return null
   }
 
+  // instructionBlocks 集合保存`clientsWithInstructions`，供prompts后续判断或输出使用。
   const instructionBlocks = clientsWithInstructions
+    // 链式调用 map，继续加工上一行在prompts中产生的数据。
     .map(client => {
+      // 返回 ``## ${client.name}`，作为prompts这次计算的结果。
       return `## ${client.name}
 ${client.instructions}`
     })
     .join('\n\n')
 
+  // 返回 ``# MCP Server Instructions`，作为prompts这次计算的结果。
   return `# MCP Server Instructions
 
 The following MCP servers have provided instructions for how to use their tools and resources:
@@ -603,10 +761,12 @@ The following MCP servers have provided instructions for how to use their tools 
 ${instructionBlocks}`
 }
 
+// computeEnvInfo 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function computeEnvInfo(
   modelId: string,
   additionalWorkingDirectories?: string[],
 ): Promise<string> {
+  // 并行获取 isGit、unameSR，缩短prompts等待多个独立异步任务的时间。
   const [isGit, unameSR] = await Promise.all([getIsGit(), getUnameSR()])
 
   // Undercover: keep ALL model names/IDs out of the system prompt so nothing
@@ -617,26 +777,34 @@ export async function computeEnvInfo(
   // DCE: `process.env.USER_TYPE === 'ant'` is build-time --define. It MUST be
   // inlined at each callsite (not hoisted to a const) so the bundler can
   // constant-fold it to `false` in external builds and eliminate the branch.
+  // modelDescription 命名 `''`，让后续代码直接表达这个值的用途。
   let modelDescription = ''
+  // 组合条件 `process.env.USER_TYPE === 'ant' && isUndercover()` 成立时，prompts才启用这条专门路径。
   if (process.env.USER_TYPE === 'ant' && isUndercover()) {
     // suppress
   } else {
+    // marketingName读取`getMarketingNameForModel`，供prompts后续处理使用。
     const marketingName = getMarketingNameForModel(modelId)
+    // modelDescription更新为 `marketingName`，确保prompts后续读取最新状态。
     modelDescription = marketingName
       ? `You are powered by the model named ${marketingName}. The exact model ID is ${modelId}.`
       : `You are powered by the model ${modelId}.`
   }
 
+  // additionalDirsInfo 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const additionalDirsInfo =
     additionalWorkingDirectories && additionalWorkingDirectories.length > 0
       ? `Additional working directories: ${additionalWorkingDirectories.join(', ')}\n`
       : ''
 
+  // cutoff读取`getKnowledgeCutoff`，供prompts后续处理使用。
   const cutoff = getKnowledgeCutoff(modelId)
+  // knowledgeCutoffMessage 消息数据保存`cutoff`，供prompts后续判断或输出使用。
   const knowledgeCutoffMessage = cutoff
     ? `\n\nAssistant knowledge cutoff is ${cutoff}.`
     : ''
 
+  // 返回 ``Here is useful information about the environment you are running in:`，作为prompts这次计算的结果。
   return `Here is useful information about the environment you are running in:
 <env>
 Working directory: ${getCwd()}
@@ -648,32 +816,43 @@ OS Version: ${unameSR}
 ${modelDescription}${knowledgeCutoffMessage}`
 }
 
+// computeSimpleEnvInfo 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function computeSimpleEnvInfo(
   modelId: string,
   additionalWorkingDirectories?: string[],
 ): Promise<string> {
+  // 并行获取 isGit、unameSR，缩短prompts等待多个独立异步任务的时间。
   const [isGit, unameSR] = await Promise.all([getIsGit(), getUnameSR()])
 
   // Undercover: strip all model name/ID references. See computeEnvInfo.
   // DCE: inline the USER_TYPE check at each site — do NOT hoist to a const.
+  // modelDescription初始化为空值，后续分支会在有数据时补齐。
   let modelDescription: string | null = null
+  // 组合条件 `process.env.USER_TYPE === 'ant' && isUndercover()` 成立时，prompts才启用这条专门路径。
   if (process.env.USER_TYPE === 'ant' && isUndercover()) {
     // suppress
   } else {
+    // marketingName读取`getMarketingNameForModel`，供prompts后续处理使用。
     const marketingName = getMarketingNameForModel(modelId)
+    // modelDescription更新为 `marketingName`，确保prompts后续读取最新状态。
     modelDescription = marketingName
       ? `You are powered by the model named ${marketingName}. The exact model ID is ${modelId}.`
       : `You are powered by the model ${modelId}.`
   }
 
+  // cutoff读取`getKnowledgeCutoff`，供prompts后续处理使用。
   const cutoff = getKnowledgeCutoff(modelId)
+  // knowledgeCutoffMessage 消息数据保存`cutoff`，供prompts后续判断或输出使用。
   const knowledgeCutoffMessage = cutoff
     ? `Assistant knowledge cutoff is ${cutoff}.`
     : null
 
+  // cwd读取`getCwd`，供prompts后续处理使用。
   const cwd = getCwd()
+  // isWorktree记录 `getCurrentWorktreeSession` 是否成立，prompts随后按该结果分支。
   const isWorktree = getCurrentWorktreeSession() !== null
 
+  // envItems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const envItems = [
     `Primary working directory: ${cwd}`,
     isWorktree
@@ -700,8 +879,10 @@ export async function computeSimpleEnvInfo(
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
       : `Fast mode for Claude Code uses the same ${FRONTIER_MODEL_NAME} model with faster output. It does NOT switch to a different model. It can be toggled with /fast.`,
+  // 这个回调绑定到 ].filter(item => item !== null)，负责prompts在该局部场景下的响应。
   ].filter(item => item !== null)
 
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return [
     `# Environment`,
     `You have been invoked in the following environment: `,
@@ -710,38 +891,58 @@ export async function computeSimpleEnvInfo(
 }
 
 // @[MODEL LAUNCH]: Add a knowledge cutoff date for the new model.
+// getKnowledgeCutoff 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getKnowledgeCutoff(modelId: string): string | null {
+  // canonical读取`getCanonicalName`，供prompts后续处理使用。
   const canonical = getCanonicalName(modelId)
+  // 满足 `canonical.includes('claude-sonnet-4-6')` 时，prompts执行该分支。
   if (canonical.includes('claude-sonnet-4-6')) {
+    // 返回 `'August 2025'`，作为prompts这次计算的结果。
     return 'August 2025'
+  // prompts在这里处理 `} else if (canonical.includes('claude-opus-4-6')) {`，完成这一小步状态转换。
   } else if (canonical.includes('claude-opus-4-6')) {
+    // 返回 `'May 2025'`，作为prompts这次计算的结果。
     return 'May 2025'
+  // prompts在这里处理 `} else if (canonical.includes('claude-opus-4-5')) {`，完成这一小步状态转换。
   } else if (canonical.includes('claude-opus-4-5')) {
+    // 返回 `'May 2025'`，作为prompts这次计算的结果。
     return 'May 2025'
+  // prompts在这里处理 `} else if (canonical.includes('claude-haiku-4')) {`，完成这一小步状态转换。
   } else if (canonical.includes('claude-haiku-4')) {
+    // 返回 `'February 2025'`，作为prompts这次计算的结果。
     return 'February 2025'
+  // prompts在这里处理 `} else if (`，完成这一小步状态转换。
   } else if (
     canonical.includes('claude-opus-4') ||
     canonical.includes('claude-sonnet-4')
   ) {
+    // 返回 `'January 2025'`，作为prompts这次计算的结果。
     return 'January 2025'
   }
+  // 返回 `null`，作为prompts这次计算的结果。
   return null
 }
 
+// getShellInfoLine 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getShellInfoLine(): string {
+  // shell 来自环境变量默认值，运行参数仍可在入口处覆盖。
   const shell = process.env.SHELL || 'unknown'
+  // shellName筛选`shell.includes`，供prompts后续处理使用。
   const shellName = shell.includes('zsh')
     ? 'zsh'
     : shell.includes('bash')
       ? 'bash'
       : shell
+  // 当 `env.platform` 匹配 `'win32'` 时，prompts执行对应分支。
   if (env.platform === 'win32') {
+    // 返回 ``Shell: ${shellName} (use Unix shell syntax, not Windows — e.g., /dev/n...`，作为prompts这次计算的结果。
     return `Shell: ${shellName} (use Unix shell syntax, not Windows — e.g., /dev/null not NUL, forward slashes in paths)`
   }
+  // 返回 ``Shell: ${shellName}``，作为prompts这次计算的结果。
   return `Shell: ${shellName}`
 }
 
+// getUnameSR 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getUnameSR(): string {
   // os.type() and os.release() both wrap uname(3) on POSIX, producing output
   // byte-identical to `uname -sr`: "Darwin 25.3.0", "Linux 6.6.4", etc.
@@ -749,20 +950,26 @@ export function getUnameSR(): string {
   // os.version() gives the friendlier "Windows 11 Pro" (via GetVersionExW /
   // RtlGetVersion) so use that instead. Feeds the OS Version line in the
   // system prompt env section.
+  // 当 `env.platform` 匹配 `'win32'` 时，prompts执行对应分支。
   if (env.platform === 'win32') {
+    // 返回 ``${osVersion()} ${osRelease()}``，作为prompts这次计算的结果。
     return `${osVersion()} ${osRelease()}`
   }
+  // 返回 ``${osType()} ${osRelease()}``，作为prompts这次计算的结果。
   return `${osType()} ${osRelease()}`
 }
 
+// DEFAULT_AGENT_PROMPT固定为 ``You are an agent for Claude Code, Anthropic's official C...`，作为prompts后续展示或比较的基准。
 export const DEFAULT_AGENT_PROMPT = `You are an agent for Claude Code, Anthropic's official CLI for Claude. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.`
 
+// enhanceSystemPromptWithEnvDetails 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function enhanceSystemPromptWithEnvDetails(
   existingSystemPrompt: string[],
   model: string,
   additionalWorkingDirectories?: string[],
   enabledToolNames?: ReadonlySet<string>,
 ): Promise<string[]> {
+  // notes 集合保存``Notes:`，作为后续固定文本处理的输入。
   const notes = `Notes:
 - Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths.
 - In your final response, share file paths (always absolute, never relative) that are relevant to the task. Include code snippets only when the exact text is load-bearing (e.g., a bug you found, a function signature the caller asked for) — do not recap code you merely read.
@@ -774,6 +981,7 @@ export async function enhanceSystemPromptWithEnvDetails(
   // enabledToolNames when the caller provides it (runAgent.ts does).
   // AgentTool.tsx:768 builds the prompt before assembleToolPool:830 so it
   // omits this param — `?? true` preserves guidance there.
+  // discoverSkillsGuidance 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const discoverSkillsGuidance =
     feature('EXPERIMENTAL_SKILL_SEARCH') &&
     skillSearchFeatureCheck?.isSkillSearchEnabled() &&
@@ -781,7 +989,9 @@ export async function enhanceSystemPromptWithEnvDetails(
     (enabledToolNames?.has(DISCOVER_SKILLS_TOOL_NAME) ?? true)
       ? getDiscoverSkillsGuidance()
       : null
+  // envInfo保存`computeEnvInfo`，供prompts后续处理使用。
   const envInfo = await computeEnvInfo(model, additionalWorkingDirectories)
+  // 返回列表结果，保留prompts已经排好的条目顺序。
   return [
     ...existingSystemPrompt,
     notes,
@@ -794,13 +1004,18 @@ export async function enhanceSystemPromptWithEnvDetails(
  * Returns instructions for using the scratchpad directory if enabled.
  * The scratchpad is a per-session directory where Claude can write temporary files.
  */
+// getScratchpadInstructions 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getScratchpadInstructions(): string | null {
+  // 满足 `!isScratchpadEnabled()` 时，prompts执行该分支。
   if (!isScratchpadEnabled()) {
+    // 返回 `null`，作为prompts这次计算的结果。
     return null
   }
 
+  // scratchpadDir读取`getScratchpadDir`，供prompts后续处理使用。
   const scratchpadDir = getScratchpadDir()
 
+  // 返回 ``# Scratchpad Directory`，作为prompts这次计算的结果。
   return `# Scratchpad Directory
 
 IMPORTANT: Always use this scratchpad directory for temporary files instead of \`/tmp\` or other system temp directories:
@@ -818,49 +1033,69 @@ Only use \`/tmp\` if the user explicitly requests it.
 The scratchpad directory is session-specific, isolated from the user's project, and can be used freely without permission prompts.`
 }
 
+// getFunctionResultClearingSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getFunctionResultClearingSection(model: string): string | null {
+  // 组合条件 `!feature('CACHED_MICROCOMPACT') || !getCachedMCConfigForFRC` 成立时，prompts才启用这条专门路径。
   if (!feature('CACHED_MICROCOMPACT') || !getCachedMCConfigForFRC) {
+    // 返回 `null`，作为prompts这次计算的结果。
     return null
   }
+  // 配置读取`getCachedMCConfigForFRC`，供prompts后续处理使用。
   const config = getCachedMCConfigForFRC()
+  // isModelSupported记录 `some` 是否成立，prompts随后按该结果分支。
   const isModelSupported = config.supportedModels?.some(pattern =>
     model.includes(pattern),
   )
+  // prompts在这里进入条件判断，后续代码按实际状态分流。
   if (
     !config.enabled ||
     !config.systemPromptSuggestSummaries ||
     !isModelSupported
   ) {
+    // 返回 `null`，作为prompts这次计算的结果。
     return null
   }
+  // 返回 ``# Function Result Clearing`，作为prompts这次计算的结果。
   return `# Function Result Clearing
 
 Old tool results will be automatically cleared from context to free up space. The ${config.keepRecent} most recent results are always kept.`
 }
 
+// SUMMARIZE_TOOL_RESULTS_SECTION 命名 ``When working with tool results, write down any important...`，让后续代码直接表达这个值的用途。
 const SUMMARIZE_TOOL_RESULTS_SECTION = `When working with tool results, write down any important information you might need later in your response, as the original tool result may be cleared later.`
 
+// getBriefSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getBriefSection(): string | null {
+  // 组合条件 `!(feature('KAIROS') || feature('KAIROS_BRIEF'))` 成立时，prompts才启用这条专门路径。
   if (!(feature('KAIROS') || feature('KAIROS_BRIEF'))) return null
+  // BRIEF_PROACTIVE_SECTION缺失时提前走兜底路径，避免prompts继续依赖无效输入。
   if (!BRIEF_PROACTIVE_SECTION) return null
   // Whenever the tool is available, the model is told to use it. The
   // /brief toggle and --brief flag now only control the isBriefOnly
   // display filter — they no longer gate model-facing behavior.
+  // 满足 `!briefToolModule?.isBriefEnabled()` 时，prompts执行该分支。
   if (!briefToolModule?.isBriefEnabled()) return null
   // When proactive is active, getProactiveSection() already appends the
   // section inline. Skip here to avoid duplicating it in the system prompt.
+  // prompts在这里进入条件判断，后续代码按实际状态分流。
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule?.isProactiveActive()
   )
+    // 返回 `null`，作为prompts这次计算的结果。
     return null
+  // 返回 `BRIEF_PROACTIVE_SECTION`，作为prompts这次计算的结果。
   return BRIEF_PROACTIVE_SECTION
 }
 
+// getProactiveSection 封装prompts的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getProactiveSection(): string | null {
+  // 组合条件 `!(feature('PROACTIVE') || feature('KAIROS'))` 成立时，prompts才启用这条专门路径。
   if (!(feature('PROACTIVE') || feature('KAIROS'))) return null
+  // 满足 `!proactiveModule?.isProactiveActive()` 时，prompts执行该分支。
   if (!proactiveModule?.isProactiveActive()) return null
 
+  // 返回 ``# Autonomous work`，作为prompts这次计算的结果。
   return `# Autonomous work
 
 You are running autonomously. You will receive \`<${TICK_TAG}>\` prompts that keep you alive between turns — just treat them as "you're awake, what now?" The time in each \`<${TICK_TAG}>\` is the user's current local time. Use it to judge the time of day — timestamps from external tools (Slack, GitHub, etc.) may be in a different timezone.

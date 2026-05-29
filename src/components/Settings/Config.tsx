@@ -1,62 +1,114 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 Box、Text、useTheme、useThemeSetting、useTerminalFocus，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink.js';
+// 类型依赖 { KeyboardEvent } 来自 ../../ink/events/keyboard-event.js，用于校准终端渲染的数据契约。
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useState、useCallback，将 react 中已经封装好的能力接到本文件流程里。
 import { useState, useCallback } from 'react';
+// 引入 useKeybinding、useKeybindings，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 复用 GlobalConfig、saveGlobalConfig、getCurrentProjectConfig、OutputStyle 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { type GlobalConfig, saveGlobalConfig, getCurrentProjectConfig, type OutputStyle } from '../../utils/config.js';
+// 复用 normalizeApiKeyForConfig 工具函数，把通用处理留在 ../../utils/authPortable.js 中维护。
 import { normalizeApiKeyForConfig } from '../../utils/authPortable.js';
+// 复用 getGlobalConfig、getAutoUpdaterDisabledReason、formatAutoUpdaterDisabledReason、getRemoteControlAtStartup 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { getGlobalConfig, getAutoUpdaterDisabledReason, formatAutoUpdaterDisabledReason, getRemoteControlAtStartup } from '../../utils/config.js';
+// 引入 chalk，将 chalk 中已经封装好的能力接到本文件流程里。
 import chalk from 'chalk';
+// 复用 permissionModeTitle、permissionModeFromString、toExternalPermissionMode、isExternalPermissionMode、EXTERNAL_PERMISSION_MODES、PERMISSION_MODES、ExternalPermissionMode、PermissionMode 工具函数，把通用处理留在 ../../utils/permissions/PermissionMode.js 中维护。
 import { permissionModeTitle, permissionModeFromString, toExternalPermissionMode, isExternalPermissionMode, EXTERNAL_PERMISSION_MODES, PERMISSION_MODES, type ExternalPermissionMode, type PermissionMode } from '../../utils/permissions/PermissionMode.js';
+// 复用 getAutoModeEnabledState、hasAutoModeOptInAnySource、transitionPlanAutoMode 工具函数，把通用处理留在 ../../utils/permissions/permissionSetup.js 中维护。
 import { getAutoModeEnabledState, hasAutoModeOptInAnySource, transitionPlanAutoMode } from '../../utils/permissions/permissionSetup.js';
+// 复用 logError 工具函数，把通用处理留在 ../../utils/log.js 中维护。
 import { logError } from '../../utils/log.js';
+// 接入 logEvent、AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent, type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js';
+// 引入 isBridgeEnabled，将 ../../bridge/bridgeEnabled.js 中已经封装好的能力接到本文件流程里。
 import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js';
+// 引入 ThemePicker，将 ../ThemePicker.js 中已经封装好的能力接到本文件流程里。
 import { ThemePicker } from '../ThemePicker.js';
+// 引入 useAppState、useSetAppState、useAppStateStore，将 ../../state/AppState.js 中已经封装好的能力接到本文件流程里。
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js';
+// 引入 ModelPicker，将 ../ModelPicker.js 中已经封装好的能力接到本文件流程里。
 import { ModelPicker } from '../ModelPicker.js';
+// 复用 modelDisplayString、isOpus1mMergeEnabled 工具函数，把通用处理留在 ../../utils/model/model.js 中维护。
 import { modelDisplayString, isOpus1mMergeEnabled } from '../../utils/model/model.js';
+// 复用 isBilledAsExtraUsage 工具函数，把通用处理留在 ../../utils/extraUsage.js 中维护。
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
+// 引入 ClaudeMdExternalIncludesDialog，将 ../ClaudeMdExternalIncludesDialog.js 中已经封装好的能力接到本文件流程里。
 import { ClaudeMdExternalIncludesDialog } from '../ClaudeMdExternalIncludesDialog.js';
+// 引入 ChannelDowngradeDialog、ChannelDowngradeChoice，将 ../ChannelDowngradeDialog.js 中已经封装好的能力接到本文件流程里。
 import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog.js';
+// 引入 Dialog，将 ../design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from '../design-system/Dialog.js';
+// 引入 Select，将 ../CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../CustomSelect/index.js';
+// 引入 OutputStylePicker，将 ../OutputStylePicker.js 中已经封装好的能力接到本文件流程里。
 import { OutputStylePicker } from '../OutputStylePicker.js';
+// 引入 LanguagePicker，将 ../LanguagePicker.js 中已经封装好的能力接到本文件流程里。
 import { LanguagePicker } from '../LanguagePicker.js';
+// 复用 getExternalClaudeMdIncludes、getMemoryFiles、hasExternalClaudeMdIncludes 工具函数，把通用处理留在 src/utils/claudemd.js 中维护。
 import { getExternalClaudeMdIncludes, getMemoryFiles, hasExternalClaudeMdIncludes } from 'src/utils/claudemd.js';
+// 引入 KeyboardShortcutHint，将 ../design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
+// 引入 ConfigurableShortcutHint，将 ../ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
+// 引入 Byline，将 ../design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from '../design-system/Byline.js';
+// 引入 useTabHeaderFocus，将 ../design-system/Tabs.js 中已经封装好的能力接到本文件流程里。
 import { useTabHeaderFocus } from '../design-system/Tabs.js';
+// 引入 useIsInsideModal，将 ../../context/modalContext.js 中已经封装好的能力接到本文件流程里。
 import { useIsInsideModal } from '../../context/modalContext.js';
+// 引入 SearchBox，将 ../SearchBox.js 中已经封装好的能力接到本文件流程里。
 import { SearchBox } from '../SearchBox.js';
+// 复用 isSupportedTerminal、hasAccessToIDEExtensionDiffFeature 工具函数，把通用处理留在 ../../utils/ide.js 中维护。
 import { isSupportedTerminal, hasAccessToIDEExtensionDiffFeature } from '../../utils/ide.js';
+// 复用 getInitialSettings、getSettingsForSource、updateSettingsForSource 工具函数，把通用处理留在 ../../utils/settings/settings.js 中维护。
 import { getInitialSettings, getSettingsForSource, updateSettingsForSource } from '../../utils/settings/settings.js';
+// 引入 getUserMsgOptIn、setUserMsgOptIn，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/state.js';
+// 引入 DEFAULT_OUTPUT_STYLE_NAME，将 src/constants/outputStyles.js 中已经封装好的能力接到本文件流程里。
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js';
+// 复用 isEnvTruthy、isRunningOnHomespace 工具函数，把通用处理留在 src/utils/envUtils.js 中维护。
 import { isEnvTruthy, isRunningOnHomespace } from 'src/utils/envUtils.js';
+// 类型依赖 { LocalJSXCommandContext, CommandResultDisplay } 来自 ../../commands.js，用于校准终端渲染的数据契约。
 import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 ../../services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+// 复用 isAgentSwarmsEnabled 工具函数，把通用处理留在 ../../utils/agentSwarmsEnabled.js 中维护。
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js';
+// 复用 getCliTeammateModeOverride、clearCliTeammateModeOverride 工具函数，把通用处理留在 ../../utils/swarm/backends/teammateModeSnapshot.js 中维护。
 import { getCliTeammateModeOverride, clearCliTeammateModeOverride } from '../../utils/swarm/backends/teammateModeSnapshot.js';
+// 复用 getHardcodedTeammateModelFallback 工具函数，把通用处理留在 ../../utils/swarm/teammateModel.js 中维护。
 import { getHardcodedTeammateModelFallback } from '../../utils/swarm/teammateModel.js';
+// 引入 useSearchInput，将 ../../hooks/useSearchInput.js 中已经封装好的能力接到本文件流程里。
 import { useSearchInput } from '../../hooks/useSearchInput.js';
+// 引入 useTerminalSize，将 ../../hooks/useTerminalSize.js 中已经封装好的能力接到本文件流程里。
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+// 复用 clearFastModeCooldown、FAST_MODE_MODEL_DISPLAY、isFastModeAvailable、isFastModeEnabled、getFastModeModel、isFastModeSupportedByModel 工具函数，把通用处理留在 ../../utils/fastMode.js 中维护。
 import { clearFastModeCooldown, FAST_MODE_MODEL_DISPLAY, isFastModeAvailable, isFastModeEnabled, getFastModeModel, isFastModeSupportedByModel } from '../../utils/fastMode.js';
+// 复用 isFullscreenEnvEnabled 工具函数，把通用处理留在 ../../utils/fullscreen.js 中维护。
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   onClose: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
   context: LocalJSXCommandContext;
+  // 这个回调绑定到 setTabsHidden: (hidden: boolean) => void;，负责终端渲染在该局部场景下的响应。
   setTabsHidden: (hidden: boolean) => void;
   onIsSearchModeChange?: (inSearchMode: boolean) => void;
   contentHeight?: number;
 };
+// SettingBase 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type SettingBase = {
   id: string;
   label: string;
@@ -65,6 +117,7 @@ type SettingBase = {
   label: React.ReactNode;
   searchText: string;
 };
+// Setting 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Setting = (SettingBase & {
   value: boolean;
   onChange(value: boolean): void;
@@ -72,16 +125,20 @@ type Setting = (SettingBase & {
 }) | (SettingBase & {
   value: string;
   options: string[];
+  // onChange 使用 value: string 完成终端渲染里的对应操作。
   onChange(value: string): void;
   type: 'enum';
 }) | (SettingBase & {
   // For enums that are set by a custom component, we don't need to pass options,
   // but we still need a value to display in the top-level config menu
   value: string;
+  // onChange 使用 value: string 完成终端渲染里的对应操作。
   onChange(value: string): void;
   type: 'managedEnum';
 });
+// SubMenu 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type SubMenu = 'Theme' | 'Model' | 'TeammateModel' | 'ExternalIncludes' | 'OutputStyle' | 'ChannelDowngrade' | 'Language' | 'EnableAutoUpdates';
+// Config 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function Config({
   onClose,
   context,
@@ -89,25 +146,42 @@ export function Config({
   onIsSearchModeChange,
   contentHeight
 }: Props): React.ReactNode {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     headerFocused,
     focusHeader
   } = useTabHeaderFocus();
+  // insideModal保存`useIsInsideModal`，供终端渲染后续处理使用。
   const insideModal = useIsInsideModal();
+  // 从 `useTheme()` 按位置拆出 setTheme，让终端 UI 组件 Config分别处理这些返回值。
   const [, setTheme] = useTheme();
+  // themeSetting保存`useThemeSetting`，供终端渲染后续处理使用。
   const themeSetting = useThemeSetting();
+  // globalConfig 配置 由 React state 持有，setGlobalConfig 会在用户操作或异步结果返回时触发刷新。
   const [globalConfig, setGlobalConfig] = useState(getGlobalConfig());
+  // initialConfig 配置保存`React.useRef`，供终端渲染后续处理使用。
   const initialConfig = React.useRef(getGlobalConfig());
+  // settingsData 由 React state 持有，setSettingsData 会在用户操作或异步结果返回时触发刷新。
   const [settingsData, setSettingsData] = useState(getInitialSettings());
+  // initialSettingsData保存`React.useRef`，供终端渲染后续处理使用。
   const initialSettingsData = React.useRef(getInitialSettings());
+  // currentOutputStyle 由 React state 持有，setCurrentOutputStyle 会在用户操作或异步结果返回时触发刷新。
   const [currentOutputStyle, setCurrentOutputStyle] = useState<OutputStyle>(settingsData?.outputStyle || DEFAULT_OUTPUT_STYLE_NAME);
+  // initialOutputStyle保存`React.useRef`，供终端渲染后续处理使用。
   const initialOutputStyle = React.useRef(currentOutputStyle);
+  // currentLanguage 由 React state 持有，setCurrentLanguage 会在用户操作或异步结果返回时触发刷新。
   const [currentLanguage, setCurrentLanguage] = useState<string | undefined>(settingsData?.language);
+  // initialLanguage保存`React.useRef`，供终端渲染后续处理使用。
   const initialLanguage = React.useRef(currentLanguage);
+  // 选中索引 由 React state 持有，setSelectedIndex 会在用户操作或异步结果返回时触发刷新。
   const [selectedIndex, setSelectedIndex] = useState(0);
+  // scrollOffset 由 React state 持有，setScrollOffset 会在用户操作或异步结果返回时触发刷新。
   const [scrollOffset, setScrollOffset] = useState(0);
+  // isSearchMode 由 React state 持有，setIsSearchMode 会在用户操作或异步结果返回时触发刷新。
   const [isSearchMode, setIsSearchMode] = useState(true);
+  // isTerminalFocused记录 `useTerminalFocus` 是否成立，终端渲染随后按该结果分支。
   const isTerminalFocused = useTerminalFocus();
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     rows
   } = useTerminalSize();
@@ -115,28 +189,40 @@ export function Config({
   // pane height across all tabs — prevents layout jank when switching).
   // Reserve ~10 rows for chrome (search box, gaps, footer, scroll hints).
   // Fallback calc for standalone rendering (tests).
+  // paneCap保存`Math.min`，供终端渲染后续处理使用。
   const paneCap = contentHeight ?? Math.min(Math.floor(rows * 0.8), 30);
+  // maxVisible保存`Math.max`，供终端渲染后续处理使用。
   const maxVisible = Math.max(5, paneCap - 10);
+  // mainLoopModel保存`useAppState`，供终端渲染后续处理使用。
   const mainLoopModel = useAppState(s => s.mainLoopModel);
+  // verbose保存`useAppState`，供终端渲染后续处理使用。
   const verbose = useAppState(s_0 => s_0.verbose);
+  // thinkingEnabled保存`useAppState`，供终端渲染后续处理使用。
   const thinkingEnabled = useAppState(s_1 => s_1.thinkingEnabled);
+  // isFastMode记录 `useAppState` 是否成立，终端渲染随后按该结果分支。
   const isFastMode = useAppState(s_2 => isFastModeEnabled() ? s_2.fastMode : false);
+  // promptSuggestionEnabled保存`useAppState`，供终端渲染后续处理使用。
   const promptSuggestionEnabled = useAppState(s_3 => s_3.promptSuggestionEnabled);
   // Show auto in the default-mode dropdown when the user has opted in OR the
   // config is fully 'enabled' — even if currently circuit-broken ('disabled'),
   // an opted-in user should still see it in settings (it's a temporary state).
+  // showAutoInDefaultModePicker保存`feature`，供终端渲染后续处理使用。
   const showAutoInDefaultModePicker = feature('TRANSCRIPT_CLASSIFIER') ? hasAutoModeOptInAnySource() || getAutoModeEnabledState() === 'enabled' : false;
   // Chat/Transcript view picker is visible to entitled users (pass the GB
   // gate) even if they haven't opted in this session — it IS the persistent
   // opt-in. 'chat' written here is read at next startup by main.tsx which
   // sets userMsgOptIn if still entitled.
   /* eslint-disable @typescript-eslint/no-require-imports */
+  // showDefaultViewPicker保存`feature`，供终端渲染后续处理使用。
   const showDefaultViewPicker = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('../../tools/BriefTool/BriefTool.js') as typeof import('../../tools/BriefTool/BriefTool.js')).isBriefEntitled() : false;
   /* eslint-enable @typescript-eslint/no-require-imports */
+  // setAppState 状态保存`useSetAppState`，供终端渲染后续处理使用。
   const setAppState = useSetAppState();
+  // 从 `useState<{` 按位置拆出 changes、setChanges，让终端 UI 组件 Config分别处理这些返回值。
   const [changes, setChanges] = useState<{
     [key: string]: unknown;
   }>({});
+  // initialThinkingEnabled保存`React.useRef`，供终端渲染后续处理使用。
   const initialThinkingEnabled = React.useRef(thinkingEnabled);
   // Per-source settings snapshots for revert-on-escape. getInitialSettings()
   // returns merged-across-sources which can't tell us what to delete vs
@@ -144,13 +230,20 @@ export function Config({
   // undefined-deletes-key semantics can. Lazy-init via useState (no setter) to
   // avoid reading settings files on every render — useRef evaluates its arg
   // eagerly even though only the first result is kept.
+  // 这个回调绑定到 const [initialLocalSettings] = useState(() => getSettingsForSource('localSettings'));，负责终端渲染在该局部场景下的响应。
   const [initialLocalSettings] = useState(() => getSettingsForSource('localSettings'));
+  // 这个回调绑定到 const [initialUserSettings] = useState(() => getSettingsForSource('userSettings'));，负责终端渲染在该局部场景下的响应。
   const [initialUserSettings] = useState(() => getSettingsForSource('userSettings'));
+  // initialThemeSetting保存`React.useRef`，供终端渲染后续处理使用。
   const initialThemeSetting = React.useRef(themeSetting);
   // AppState fields Config may modify — snapshot once at mount.
+  // store保存`useAppStateStore`，供终端渲染后续处理使用。
   const store = useAppStateStore();
+  // 这个回调绑定到 const [initialAppState] = useState(() => {，负责终端渲染在该局部场景下的响应。
   const [initialAppState] = useState(() => {
+    // s_4读取`store.getState`，供终端渲染后续处理使用。
     const s_4 = store.getState();
+    // 返回结构化结果，集中表达终端渲染已经整理出的状态。
     return {
       mainLoopModel: s_4.mainLoopModel,
       mainLoopModelForSession: s_4.mainLoopModelForSession,
@@ -169,18 +262,24 @@ export function Config({
   // defaultView to 'chat' then Escape leaves the tool active while the
   // display filter reverts — the exact ambient-activation behavior this
   // PR's entitlement/opt-in split is meant to prevent.
+  // 这个回调绑定到 const [initialUserMsgOptIn] = useState(() => getUserMsgOptIn());，负责终端渲染在该局部场景下的响应。
   const [initialUserMsgOptIn] = useState(() => getUserMsgOptIn());
   // Set on first user-visible change; gates revertChanges() on Escape so
   // opening-then-closing doesn't trigger redundant disk writes.
+  // isDirty记录 `React.useRef` 是否成立，终端渲染随后按该结果分支。
   const isDirty = React.useRef(false);
+  // showThinkingWarning 警告信息 由 React state 持有，setShowThinkingWarning 会在用户操作或异步结果返回时触发刷新。
   const [showThinkingWarning, setShowThinkingWarning] = useState(false);
+  // showSubmenu 由 React state 持有，setShowSubmenu 会在用户操作或异步结果返回时触发刷新。
   const [showSubmenu, setShowSubmenu] = useState<SubMenu | null>(null);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     query: searchQuery,
     setQuery: setSearchQuery,
     cursorOffset: searchCursorOffset
   } = useSearchInput({
     isActive: isSearchMode && showSubmenu === null && !headerFocused,
+    // 这个回调绑定到 onExit: () => setIsSearchMode(false),，负责终端渲染在该局部场景下的响应。
     onExit: () => setIsSearchMode(false),
     onExitUp: focusHeader,
     // Ctrl+C/D must reach Settings' useExitOnCtrlCD; 'd' also avoids
@@ -191,68 +290,95 @@ export function Config({
   // Tell the parent when Config's own Esc handler is active so Settings cedes
   // confirm:no. Only true when search mode owns the keyboard — not when the
   // tab header is focused (then Settings must handle Esc-to-close).
+  // ownsEsc标记终端 UI Config是否启用对应路径。
   const ownsEsc = isSearchMode && !headerFocused;
+  // 调用 React.useEffect，触发终端渲染此处需要的副作用。
   React.useEffect(() => {
+    // 调用 onIsSearchModeChange?.(ownsEsc);，完成这一处局部操作。
     onIsSearchModeChange?.(ownsEsc);
   }, [ownsEsc, onIsSearchModeChange]);
+  // isConnectedToIde记录 `hasAccessToIDEExtensionDiffFeature` 是否成立，终端渲染随后按该结果分支。
   const isConnectedToIde = hasAccessToIDEExtensionDiffFeature(context.options.mcpClients);
+  // isFileCheckpointingAvailable 文件数据记录 `isEnvTruthy` 是否成立，终端渲染随后按该结果分支。
   const isFileCheckpointingAvailable = !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING);
+  // memoryFiles 文件数据保存`React.use`，供终端渲染后续处理使用。
   const memoryFiles = React.use(getMemoryFiles(true));
+  // shouldShowExternalIncludesToggle记录 `hasExternalClaudeMdIncludes` 是否成立，终端渲染随后按该结果分支。
   const shouldShowExternalIncludesToggle = hasExternalClaudeMdIncludes(memoryFiles);
+  // autoUpdaterDisabledReason读取`getAutoUpdaterDisabledReason`，供终端渲染后续处理使用。
   const autoUpdaterDisabledReason = getAutoUpdaterDisabledReason();
+  // onChangeMainModelConfig 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function onChangeMainModelConfig(value: string | null): void {
+    // previousModel保存`mainLoopModel`，供后续判断或组装使用。
     const previousModel = mainLoopModel;
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_config_model_changed', {
       from_model: previousModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       to_model: value as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev => ({
       ...prev,
       mainLoopModel: value,
       mainLoopModelForSession: null
     }));
+    // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
     setChanges(prev_0 => {
+      // valStr保存`modelDisplayString`，供终端渲染后续处理使用。
       const valStr = modelDisplayString(value) + (isBilledAsExtraUsage(value, false, isOpus1mMergeEnabled()) ? ' · Billed as extra usage' : '');
+      // 满足 `'model' in prev_0` 时，终端渲染执行该分支。
       if ('model' in prev_0) {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           model,
           ...rest
         } = prev_0;
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...rest,
           model: valStr
         };
       }
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         ...prev_0,
         model: valStr
       };
     });
   }
+  // onChangeVerbose 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function onChangeVerbose(value_0: boolean): void {
     // Update the global config to persist the setting
+    // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
     saveGlobalConfig(current => ({
       ...current,
       verbose: value_0
     }));
+    // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
     setGlobalConfig({
       ...getGlobalConfig(),
       verbose: value_0
     });
 
     // Update the app state for immediate UI feedback
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev_1 => ({
       ...prev_1,
       verbose: value_0
     }));
+    // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
     setChanges(prev_2 => {
+      // 满足 `'verbose' in prev_2` 时，终端渲染执行该分支。
       if ('verbose' in prev_2) {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           verbose: verbose_0,
           ...rest_0
         } = prev_2;
+        // 返回 `rest_0`，作为终端渲染这次计算的结果。
         return rest_0;
       }
+      // 返回结构化结果，集中表达终端渲染已经整理出的状态。
       return {
         ...prev_2,
         verbose: value_0
@@ -261,6 +387,7 @@ export function Config({
   }
 
   // TODO: Add MCP servers
+  // settingsItems 集合 聚合成有序列表，保持后续遍历顺序稳定。
   const settingsItems: Setting[] = [
   // Global settings
   {
@@ -268,15 +395,19 @@ export function Config({
     label: 'Auto-compact',
     value: globalConfig.autoCompactEnabled,
     type: 'boolean' as const,
+    // onChange 使用 autoCompactEnabled: boolean 完成终端渲染里的对应操作。
     onChange(autoCompactEnabled: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_0 => ({
         ...current_0,
         autoCompactEnabled
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         autoCompactEnabled
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_auto_compact_setting_changed', {
         enabled: autoCompactEnabled
       });
@@ -286,15 +417,19 @@ export function Config({
     label: 'Show tips',
     value: settingsData?.spinnerTipsEnabled ?? true,
     type: 'boolean' as const,
+    // onChange 使用 spinnerTipsEnabled: boolean 完成终端渲染里的对应操作。
     onChange(spinnerTipsEnabled: boolean) {
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('localSettings', {
         spinnerTipsEnabled
       });
       // Update local state to reflect the change immediately
+      // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
       setSettingsData(prev_3 => ({
         ...prev_3,
         spinnerTipsEnabled
       }));
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_tips_setting_changed', {
         enabled: spinnerTipsEnabled
       });
@@ -304,15 +439,19 @@ export function Config({
     label: 'Reduce motion',
     value: settingsData?.prefersReducedMotion ?? false,
     type: 'boolean' as const,
+    // onChange 使用 prefersReducedMotion: boolean 完成终端渲染里的对应操作。
     onChange(prefersReducedMotion: boolean) {
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('localSettings', {
         prefersReducedMotion
       });
+      // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
       setSettingsData(prev_4 => ({
         ...prev_4,
         prefersReducedMotion
       }));
       // Sync to AppState so components react immediately
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev_5 => ({
         ...prev_5,
         settings: {
@@ -320,6 +459,7 @@ export function Config({
           prefersReducedMotion
         }
       }));
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_reduce_motion_setting_changed', {
         enabled: prefersReducedMotion
       });
@@ -329,14 +469,18 @@ export function Config({
     label: 'Thinking mode',
     value: thinkingEnabled ?? true,
     type: 'boolean' as const,
+    // onChange 使用 enabled: boolean 完成终端渲染里的对应操作。
     onChange(enabled: boolean) {
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev_6 => ({
         ...prev_6,
         thinkingEnabled: enabled
       }));
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('userSettings', {
         alwaysThinkingEnabled: enabled ? undefined : false
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_thinking_toggled', {
         enabled
       });
@@ -348,28 +492,36 @@ export function Config({
     label: `Fast mode (${FAST_MODE_MODEL_DISPLAY} only)`,
     value: !!isFastMode,
     type: 'boolean' as const,
+    // onChange 使用 enabled_0: boolean 完成终端渲染里的对应操作。
     onChange(enabled_0: boolean) {
+      // 调用 clearFastModeCooldown，触发终端渲染此处需要的副作用。
       clearFastModeCooldown();
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('userSettings', {
         fastMode: enabled_0 ? true : undefined
       });
+      // 满足 `enabled_0` 时，终端渲染执行该分支。
       if (enabled_0) {
+        // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
         setAppState(prev_7 => ({
           ...prev_7,
           mainLoopModel: getFastModeModel(),
           mainLoopModelForSession: null,
           fastMode: true
         }));
+        // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
         setChanges(prev_8 => ({
           ...prev_8,
           model: getFastModeModel(),
           'Fast mode': 'ON'
         }));
       } else {
+        // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
         setAppState(prev_9 => ({
           ...prev_9,
           fastMode: false
         }));
+        // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
         setChanges(prev_10 => ({
           ...prev_10,
           'Fast mode': 'OFF'
@@ -381,11 +533,14 @@ export function Config({
     label: 'Prompt suggestions',
     value: promptSuggestionEnabled,
     type: 'boolean' as const,
+    // onChange 使用 enabled_1: boolean 完成终端渲染里的对应操作。
     onChange(enabled_1: boolean) {
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev_11 => ({
         ...prev_11,
         promptSuggestionEnabled: enabled_1
       }));
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('userSettings', {
         promptSuggestionEnabled: enabled_1 ? undefined : false
       });
@@ -397,18 +552,24 @@ export function Config({
     label: 'Speculative execution',
     value: globalConfig.speculationEnabled ?? true,
     type: 'boolean' as const,
+    // onChange 使用 enabled_2: boolean 完成终端渲染里的对应操作。
     onChange(enabled_2: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_1 => {
+        // 满足 `current_1.speculationEnabled === enabled_2` 时，终端渲染执行该分支。
         if (current_1.speculationEnabled === enabled_2) return current_1;
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...current_1,
           speculationEnabled: enabled_2
         };
       });
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         speculationEnabled: enabled_2
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_speculation_setting_changed', {
         enabled: enabled_2
       });
@@ -418,15 +579,19 @@ export function Config({
     label: 'Rewind code (checkpoints)',
     value: globalConfig.fileCheckpointingEnabled,
     type: 'boolean' as const,
+    // onChange 使用 enabled_3: boolean 完成终端渲染里的对应操作。
     onChange(enabled_3: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_2 => ({
         ...current_2,
         fileCheckpointingEnabled: enabled_3
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         fileCheckpointingEnabled: enabled_3
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_file_history_snapshots_setting_changed', {
         enabled: enabled_3
       });
@@ -442,15 +607,19 @@ export function Config({
     label: 'Terminal progress bar',
     value: globalConfig.terminalProgressBarEnabled,
     type: 'boolean' as const,
+    // onChange 使用 terminalProgressBarEnabled: boolean 完成终端渲染里的对应操作。
     onChange(terminalProgressBarEnabled: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_3 => ({
         ...current_3,
         terminalProgressBarEnabled
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         terminalProgressBarEnabled
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_terminal_progress_bar_setting_changed', {
         enabled: terminalProgressBarEnabled
       });
@@ -460,15 +629,19 @@ export function Config({
     label: 'Show status in terminal tab',
     value: globalConfig.showStatusInTerminalTab ?? false,
     type: 'boolean' as const,
+    // onChange 使用 showStatusInTerminalTab: boolean 完成终端渲染里的对应操作。
     onChange(showStatusInTerminalTab: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_4 => ({
         ...current_4,
         showStatusInTerminalTab
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         showStatusInTerminalTab
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_terminal_tab_status_setting_changed', {
         enabled: showStatusInTerminalTab
       });
@@ -478,15 +651,19 @@ export function Config({
     label: 'Show turn duration',
     value: globalConfig.showTurnDuration,
     type: 'boolean' as const,
+    // onChange 使用 showTurnDuration: boolean 完成终端渲染里的对应操作。
     onChange(showTurnDuration: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_5 => ({
         ...current_5,
         showTurnDuration
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         showTurnDuration
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_show_turn_duration_setting_changed', {
         enabled: showTurnDuration
       });
@@ -495,28 +672,42 @@ export function Config({
     id: 'defaultPermissionMode',
     label: 'Default permission mode',
     value: settingsData?.permissions?.defaultMode || 'default',
+    // 这个回调绑定到 options: (() => {，负责终端渲染在该局部场景下的响应。
     options: (() => {
+      // priorityOrder 聚合成有序列表，保持后续遍历顺序稳定。
       const priorityOrder: PermissionMode[] = ['default', 'plan'];
+      // allModes 集合 通过懒加载取得，避免终端 UI 组件 Config在启动阶段加载暂时用不到的实现。
       const allModes: readonly PermissionMode[] = feature('TRANSCRIPT_CLASSIFIER') ? PERMISSION_MODES : EXTERNAL_PERMISSION_MODES;
+      // excluded 聚合成有序列表，保持后续遍历顺序稳定。
       const excluded: PermissionMode[] = ['bypassPermissions'];
+      // 只有 `feature('TRANSCRIPT_CLASSIFIER') && !showAutoInDefaultModePicker` 满足时，终端渲染才执行该分支。
       if (feature('TRANSCRIPT_CLASSIFIER') && !showAutoInDefaultModePicker) {
+        // excluded追加新条目，保持收集顺序与输入顺序一致。
         excluded.push('auto');
       }
+      // 返回列表结果，保留终端渲染已经排好的条目顺序。
       return [...priorityOrder, ...allModes.filter(m => !priorityOrder.includes(m) && !excluded.includes(m))];
     })(),
     type: 'enum' as const,
+    // onChange 使用 mode: string 完成终端渲染里的对应操作。
     onChange(mode: string) {
+      // parsedMode保存`permissionModeFromString`，供终端渲染后续处理使用。
       const parsedMode = permissionModeFromString(mode);
       // Internal modes (e.g. auto) are stored directly
+      // validatedMode保存`isExternalPermissionMode`，供终端渲染后续处理使用。
       const validatedMode = isExternalPermissionMode(parsedMode) ? toExternalPermissionMode(parsedMode) : parsedMode;
+      // 结果保存`updateSettingsForSource`，供终端渲染后续处理使用。
       const result = updateSettingsForSource('userSettings', {
         permissions: {
           ...settingsData?.permissions,
           defaultMode: validatedMode as ExternalPermissionMode
         }
       });
+      // 满足 `result.error` 时，终端渲染执行该分支。
       if (result.error) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logError(result.error);
+        // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
 
@@ -524,6 +715,7 @@ export function Config({
       // validatedMode is typed as the wide PermissionMode union but at
       // runtime is always a PERMISSION_MODES member (the options dropdown
       // is built from that array above), so this narrowing is sound.
+      // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
       setSettingsData(prev_12 => ({
         ...prev_12,
         permissions: {
@@ -532,10 +724,12 @@ export function Config({
         }
       }));
       // Track changes
+      // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
       setChanges(prev_13 => ({
         ...prev_13,
         defaultPermissionMode: mode
       }));
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_config_changed', {
         setting: 'defaultPermissionMode' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -548,10 +742,13 @@ export function Config({
       useAutoModeDuringPlan?: boolean;
     } | undefined)?.useAutoModeDuringPlan ?? true,
     type: 'boolean' as const,
+    // onChange 使用 useAutoModeDuringPlan: boolean 完成终端渲染里的对应操作。
     onChange(useAutoModeDuringPlan: boolean) {
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('userSettings', {
         useAutoModeDuringPlan
       });
+      // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
       setSettingsData(prev_14 => ({
         ...prev_14,
         useAutoModeDuringPlan
@@ -559,14 +756,19 @@ export function Config({
       // Internal writes suppress the file watcher, so
       // applySettingsChange won't fire. Reconcile directly so
       // mid-plan toggles take effect immediately.
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev_15 => {
+        // next保存`transitionPlanAutoMode`，供终端渲染后续处理使用。
         const next = transitionPlanAutoMode(prev_15.toolPermissionContext);
+        // 满足 `next === prev_15.toolPermissionContext` 时，终端渲染执行该分支。
         if (next === prev_15.toolPermissionContext) return prev_15;
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...prev_15,
           toolPermissionContext: next
         };
       });
+      // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
       setChanges(prev_16 => ({
         ...prev_16,
         'Use auto mode during plan': useAutoModeDuringPlan
@@ -577,15 +779,19 @@ export function Config({
     label: 'Respect .gitignore in file picker',
     value: globalConfig.respectGitignore,
     type: 'boolean' as const,
+    // onChange 使用 respectGitignore: boolean 完成终端渲染里的对应操作。
     onChange(respectGitignore: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_6 => ({
         ...current_6,
         respectGitignore
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         respectGitignore
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_respect_gitignore_setting_changed', {
         enabled: respectGitignore
       });
@@ -595,15 +801,19 @@ export function Config({
     label: 'Always copy full response (skip /copy picker)',
     value: globalConfig.copyFullResponse,
     type: 'boolean' as const,
+    // onChange 使用 copyFullResponse: boolean 完成终端渲染里的对应操作。
     onChange(copyFullResponse: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_7 => ({
         ...current_7,
         copyFullResponse
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         copyFullResponse
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_config_changed', {
         setting: 'copyFullResponse' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: String(copyFullResponse) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -617,15 +827,19 @@ export function Config({
     label: 'Copy on select',
     value: globalConfig.copyOnSelect ?? true,
     type: 'boolean' as const,
+    // onChange 使用 copyOnSelect: boolean 完成终端渲染里的对应操作。
     onChange(copyOnSelect: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_8 => ({
         ...current_8,
         copyOnSelect
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         copyOnSelect
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_config_changed', {
         setting: 'copyOnSelect' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: String(copyOnSelect) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -638,12 +852,14 @@ export function Config({
     label: 'Auto-update channel',
     value: 'disabled',
     type: 'managedEnum' as const,
+    // onChange 使用 无 完成终端渲染里的对应操作。
     onChange() {}
   } : {
     id: 'autoUpdatesChannel',
     label: 'Auto-update channel',
     value: settingsData?.autoUpdatesChannel ?? 'latest',
     type: 'managedEnum' as const,
+    // onChange 使用 无 完成终端渲染里的对应操作。
     onChange() {
       // Handled via toggleSetting -> 'ChannelDowngrade'
     }
@@ -659,11 +875,14 @@ export function Config({
     value: globalConfig.preferredNotifChannel,
     options: ['auto', 'iterm2', 'terminal_bell', 'iterm2_with_bell', 'kitty', 'ghostty', 'notifications_disabled'],
     type: 'enum',
+    // onChange 使用 notifChannel: GlobalConfig['preferredNotifChannel… 完成终端渲染里的对应操作。
     onChange(notifChannel: GlobalConfig['preferredNotifChannel']) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_9 => ({
         ...current_9,
         preferredNotifChannel: notifChannel
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         preferredNotifChannel: notifChannel
@@ -674,11 +893,14 @@ export function Config({
     label: 'Push when idle',
     value: globalConfig.taskCompleteNotifEnabled ?? false,
     type: 'boolean' as const,
+    // onChange 使用 taskCompleteNotifEnabled: boolean 完成终端渲染里的对应操作。
     onChange(taskCompleteNotifEnabled: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_10 => ({
         ...current_10,
         taskCompleteNotifEnabled
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         taskCompleteNotifEnabled
@@ -689,11 +911,14 @@ export function Config({
     label: 'Push when input needed',
     value: globalConfig.inputNeededNotifEnabled ?? false,
     type: 'boolean' as const,
+    // onChange 使用 inputNeededNotifEnabled: boolean 完成终端渲染里的对应操作。
     onChange(inputNeededNotifEnabled: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_11 => ({
         ...current_11,
         inputNeededNotifEnabled
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         inputNeededNotifEnabled
@@ -704,11 +929,14 @@ export function Config({
     label: 'Push when Claude decides',
     value: globalConfig.agentPushNotifEnabled ?? false,
     type: 'boolean' as const,
+    // onChange 使用 agentPushNotifEnabled: boolean 完成终端渲染里的对应操作。
     onChange(agentPushNotifEnabled: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_12 => ({
         ...current_12,
         agentPushNotifEnabled
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         agentPushNotifEnabled
@@ -719,6 +947,7 @@ export function Config({
     label: 'Output style',
     value: currentOutputStyle,
     type: 'managedEnum' as const,
+    // 这个回调绑定到 onChange: () => {} // handled by OutputStylePicker submenu，负责终端渲染在该局部场景下的响应。
     onChange: () => {} // handled by OutputStylePicker submenu
   }, ...(showDefaultViewPicker ? [{
     id: 'defaultView',
@@ -729,18 +958,26 @@ export function Config({
     value: settingsData?.defaultView === undefined ? 'default' : String(settingsData.defaultView),
     options: ['transcript', 'chat', 'default'],
     type: 'enum' as const,
+    // onChange 使用 selected: string 完成终端渲染里的对应操作。
     onChange(selected: string) {
+      // defaultView标记终端 UI Config是否启用对应路径。
       const defaultView = selected === 'default' ? undefined : selected as 'chat' | 'transcript';
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('localSettings', {
         defaultView
       });
+      // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
       setSettingsData(prev_17 => ({
         ...prev_17,
         defaultView
       }));
+      // nextBrief标记终端 UI Config是否启用对应路径。
       const nextBrief = defaultView === 'chat';
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev_18 => {
+        // 满足 `prev_18.isBriefOnly === nextBrief` 时，终端渲染执行该分支。
         if (prev_18.isBriefOnly === nextBrief) return prev_18;
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...prev_18,
           isBriefOnly: nextBrief
@@ -750,11 +987,14 @@ export function Config({
       // Two-way now (same as /brief) — accepting a cache invalidation
       // is better than leaving the tool on after switching away.
       // Reverted on Escape via initialUserMsgOptIn snapshot.
+      // setUserMsgOptIn 写入新的状态值，使终端渲染后续读取保持一致。
       setUserMsgOptIn(nextBrief);
+      // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
       setChanges(prev_19 => ({
         ...prev_19,
         'Default view': selected
       }));
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_default_view_setting_changed', {
         value: (defaultView ?? 'unset') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
@@ -764,6 +1004,7 @@ export function Config({
     label: 'Language',
     value: currentLanguage ?? 'Default (English)',
     type: 'managedEnum' as const,
+    // 这个回调绑定到 onChange: () => {} // handled by LanguagePicker submenu，负责终端渲染在该局部场景下的响应。
     onChange: () => {} // handled by LanguagePicker submenu
   }, {
     id: 'editorMode',
@@ -772,15 +1013,19 @@ export function Config({
     value: globalConfig.editorMode === 'emacs' ? 'normal' : globalConfig.editorMode || 'normal',
     options: ['normal', 'vim'],
     type: 'enum',
+    // onChange 使用 value_1: string 完成终端渲染里的对应操作。
     onChange(value_1: string) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_13 => ({
         ...current_13,
         editorMode: value_1 as GlobalConfig['editorMode']
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         editorMode: value_1 as GlobalConfig['editorMode']
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_editor_mode_changed', {
         mode: value_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -791,18 +1036,24 @@ export function Config({
     label: 'Show PR status footer',
     value: globalConfig.prStatusFooterEnabled ?? true,
     type: 'boolean' as const,
+    // onChange 使用 enabled_4: boolean 完成终端渲染里的对应操作。
     onChange(enabled_4: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_14 => {
+        // 满足 `current_14.prStatusFooterEnabled === enabled_4` 时，终端渲染执行该分支。
         if (current_14.prStatusFooterEnabled === enabled_4) return current_14;
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...current_14,
           prStatusFooterEnabled: enabled_4
         };
       });
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         prStatusFooterEnabled: enabled_4
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_pr_status_footer_setting_changed', {
         enabled: enabled_4
       });
@@ -819,15 +1070,19 @@ export function Config({
     value: globalConfig.diffTool ?? 'auto',
     options: ['terminal', 'auto'],
     type: 'enum' as const,
+    // onChange 使用 diffTool: string 完成终端渲染里的对应操作。
     onChange(diffTool: string) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_15 => ({
         ...current_15,
         diffTool: diffTool as GlobalConfig['diffTool']
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         diffTool: diffTool as GlobalConfig['diffTool']
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_diff_tool_changed', {
         tool: diffTool as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -838,15 +1093,19 @@ export function Config({
     label: 'Auto-connect to IDE (external terminal)',
     value: globalConfig.autoConnectIde ?? false,
     type: 'boolean' as const,
+    // onChange 使用 autoConnectIde: boolean 完成终端渲染里的对应操作。
     onChange(autoConnectIde: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_16 => ({
         ...current_16,
         autoConnectIde
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         autoConnectIde
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_auto_connect_ide_changed', {
         enabled: autoConnectIde,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -857,15 +1116,19 @@ export function Config({
     label: 'Auto-install IDE extension',
     value: globalConfig.autoInstallIdeExtension ?? true,
     type: 'boolean' as const,
+    // onChange 使用 autoInstallIdeExtension: boolean 完成终端渲染里的对应操作。
     onChange(autoInstallIdeExtension: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_17 => ({
         ...current_17,
         autoInstallIdeExtension
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         autoInstallIdeExtension
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_auto_install_ide_extension_changed', {
         enabled: autoInstallIdeExtension,
         source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -876,44 +1139,59 @@ export function Config({
     label: 'Claude in Chrome enabled by default',
     value: globalConfig.claudeInChromeDefaultEnabled ?? true,
     type: 'boolean' as const,
+    // onChange 使用 enabled_5: boolean 完成终端渲染里的对应操作。
     onChange(enabled_5: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_18 => ({
         ...current_18,
         claudeInChromeDefaultEnabled: enabled_5
       }));
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig({
         ...getGlobalConfig(),
         claudeInChromeDefaultEnabled: enabled_5
       });
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_claude_in_chrome_setting_changed', {
         enabled: enabled_5
       });
     }
   },
   // Teammate mode (only shown when agent swarms are enabled)
+  // 链式调用 链式方法，继续加工上一行在终端渲染中产生的数据。
   ...(isAgentSwarmsEnabled() ? (() => {
+    // cliOverride读取`getCliTeammateModeOverride`，供终端渲染后续处理使用。
     const cliOverride = getCliTeammateModeOverride();
+    // label保存`cliOverride ? `Teammate mode [overridden: ${cliOverride}]...`，供终端 UI Config后续判断或输出使用。
     const label = cliOverride ? `Teammate mode [overridden: ${cliOverride}]` : 'Teammate mode';
+    // 返回列表结果，保留终端渲染已经排好的条目顺序。
     return [{
       id: 'teammateMode',
       label,
       value: globalConfig.teammateMode ?? 'auto',
       options: ['auto', 'tmux', 'in-process'],
       type: 'enum' as const,
+      // onChange 使用 mode_0: string 完成终端渲染里的对应操作。
       onChange(mode_0: string) {
+        // `mode_0` 与 `'auto' && mode_0 !== 'tmux' && ...` 不一致时刷新派生状态，避免使用过期结果。
         if (mode_0 !== 'auto' && mode_0 !== 'tmux' && mode_0 !== 'in-process') {
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
         // Clear CLI override and set new mode (pass mode to avoid race condition)
+        // 调用 clearCliTeammateModeOverride，触发终端渲染此处需要的副作用。
         clearCliTeammateModeOverride(mode_0);
+        // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
         saveGlobalConfig(current_19 => ({
           ...current_19,
           teammateMode: mode_0
         }));
+        // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
         setGlobalConfig({
           ...getGlobalConfig(),
           teammateMode: mode_0
         });
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_teammate_mode_changed', {
           mode: mode_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
@@ -923,6 +1201,7 @@ export function Config({
       label: 'Default teammate model',
       value: teammateModelDisplayString(globalConfig.teammateDefaultModel),
       type: 'managedEnum' as const,
+      // onChange 使用 无 完成终端渲染里的对应操作。
       onChange() {}
     }];
   })() : []),
@@ -933,39 +1212,56 @@ export function Config({
     value: globalConfig.remoteControlAtStartup === undefined ? 'default' : String(globalConfig.remoteControlAtStartup),
     options: ['true', 'false', 'default'],
     type: 'enum' as const,
+    // onChange 使用 selected_0: string 完成终端渲染里的对应操作。
     onChange(selected_0: string) {
+      // 当 `selected_0` 匹配 `'default'` 时，终端渲染执行对应分支。
       if (selected_0 === 'default') {
         // Unset the config key so it falls back to the platform default
+        // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
         saveGlobalConfig(current_20 => {
+          // 满足 `current_20.remoteControlAtStartup === undefined` 时，终端渲染执行该分支。
           if (current_20.remoteControlAtStartup === undefined) return current_20;
+          // next_0集中保存终端 UI Config要一起传递的字段。
           const next_0 = {
             ...current_20
           };
+          // 终端 UI 组件 Config在这里处理 `delete next_0.remoteControlAtStartup`，完成这一小步状态转换。
           delete next_0.remoteControlAtStartup;
+          // 返回 `next_0`，作为终端渲染这次计算的结果。
           return next_0;
         });
+        // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
         setGlobalConfig({
           ...getGlobalConfig(),
           remoteControlAtStartup: undefined
         });
       } else {
+        // enabled_6标记终端 UI Config是否启用对应路径。
         const enabled_6 = selected_0 === 'true';
+        // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
         saveGlobalConfig(current_21 => {
+          // 满足 `current_21.remoteControlAtStartup === enabled_6` 时，终端渲染执行该分支。
           if (current_21.remoteControlAtStartup === enabled_6) return current_21;
+          // 返回结构化结果，集中表达终端渲染已经整理出的状态。
           return {
             ...current_21,
             remoteControlAtStartup: enabled_6
           };
         });
+        // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
         setGlobalConfig({
           ...getGlobalConfig(),
           remoteControlAtStartup: enabled_6
         });
       }
       // Sync to AppState so useReplBridge reacts immediately
+      // resolved读取`getRemoteControlAtStartup`，供终端渲染后续处理使用。
       const resolved = getRemoteControlAtStartup();
+      // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
       setAppState(prev_20 => {
+        // 只有 `prev_20.replBridgeEnabled === resolved && !prev_20.replBridgeOutboundOnly` 满足时，终端渲染才执行该分支。
         if (prev_20.replBridgeEnabled === resolved && !prev_20.replBridgeOutboundOnly) return prev_20;
+        // 返回结构化结果，集中表达终端渲染已经整理出的状态。
         return {
           ...prev_20,
           replBridgeEnabled: resolved,
@@ -976,15 +1272,21 @@ export function Config({
   }] : []), ...(shouldShowExternalIncludesToggle ? [{
     id: 'showExternalIncludesDialog',
     label: 'External CLAUDE.md includes',
+    // 这个回调绑定到 value: (() => {，负责终端渲染在该局部场景下的响应。
     value: (() => {
+      // projectConfig 配置读取`getCurrentProjectConfig`，供终端渲染后续处理使用。
       const projectConfig = getCurrentProjectConfig();
+      // 满足 `projectConfig.hasClaudeMdExternalIncludesApproved` 时，终端渲染执行该分支。
       if (projectConfig.hasClaudeMdExternalIncludesApproved) {
+        // 返回 `'true'`，作为终端渲染这次计算的结果。
         return 'true';
       } else {
+        // 返回 `'false'`，作为终端渲染这次计算的结果。
         return 'false';
       }
     })(),
     type: 'managedEnum' as const,
+    // onChange 使用 无 完成终端渲染里的对应操作。
     onChange() {
       // Will be handled by toggleSetting function
     }
@@ -999,74 +1301,111 @@ export function Config({
     searchText: 'Use custom API key',
     value: Boolean(process.env.ANTHROPIC_API_KEY && globalConfig.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(process.env.ANTHROPIC_API_KEY))),
     type: 'boolean' as const,
+    // onChange 使用 useCustomKey: boolean 完成终端渲染里的对应操作。
     onChange(useCustomKey: boolean) {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current_22 => {
+        // updated集中保存终端 UI Config要一起传递的字段。
         const updated = {
           ...current_22
         };
+        // updated.customApiKeyResponses 响应数据缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!updated.customApiKeyResponses) {
+          // customApiKeyResponses 响应数据更新为 `{`，确保终端 UI后续读取最新状态。
           updated.customApiKeyResponses = {
             approved: [],
             rejected: []
           };
         }
+        // updated.customApiKeyResponses.approved 响应数据缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!updated.customApiKeyResponses.approved) {
+          // customApiKeyResponses 响应数据更新为 `{`，确保终端 UI后续读取最新状态。
           updated.customApiKeyResponses = {
             ...updated.customApiKeyResponses,
             approved: []
           };
         }
+        // updated.customApiKeyResponses.rejected 响应数据缺失时直接走兜底路径，避免终端渲染使用无效输入。
         if (!updated.customApiKeyResponses.rejected) {
+          // customApiKeyResponses 响应数据更新为 `{`，确保终端 UI后续读取最新状态。
           updated.customApiKeyResponses = {
             ...updated.customApiKeyResponses,
             rejected: []
           };
         }
+        // 满足 `process.env.ANTHROPIC_API_KEY` 时，终端渲染执行该分支。
         if (process.env.ANTHROPIC_API_KEY) {
+          // truncatedKey保存`normalizeApiKeyForConfig`，供终端渲染后续处理使用。
           const truncatedKey = normalizeApiKeyForConfig(process.env.ANTHROPIC_API_KEY);
+          // 满足 `useCustomKey` 时，终端渲染执行该分支。
           if (useCustomKey) {
+            // customApiKeyResponses 响应数据更新为 `{`，确保终端 UI后续读取最新状态。
             updated.customApiKeyResponses = {
               ...updated.customApiKeyResponses,
+              // 这个回调绑定到 approved: [...(updated.customApiKeyResponses.approved ?? []).filter(k => k !== trunc…，负责终端渲染在该局部场景下的响应。
               approved: [...(updated.customApiKeyResponses.approved ?? []).filter(k => k !== truncatedKey), truncatedKey],
+              // 这个回调绑定到 rejected: (updated.customApiKeyResponses.rejected ?? []).filter(k_0 => k_0 !== trunc…，负责终端渲染在该局部场景下的响应。
               rejected: (updated.customApiKeyResponses.rejected ?? []).filter(k_0 => k_0 !== truncatedKey)
             };
           } else {
+            // customApiKeyResponses 响应数据更新为 `{`，确保终端 UI后续读取最新状态。
             updated.customApiKeyResponses = {
               ...updated.customApiKeyResponses,
+              // 这个回调绑定到 approved: (updated.customApiKeyResponses.approved ?? []).filter(k_1 => k_1 !== trunc…，负责终端渲染在该局部场景下的响应。
               approved: (updated.customApiKeyResponses.approved ?? []).filter(k_1 => k_1 !== truncatedKey),
+              // 这个回调绑定到 rejected: [...(updated.customApiKeyResponses.rejected ?? []).filter(k_2 => k_2 !== t…，负责终端渲染在该局部场景下的响应。
               rejected: [...(updated.customApiKeyResponses.rejected ?? []).filter(k_2 => k_2 !== truncatedKey), truncatedKey]
             };
           }
         }
+        // 返回 `updated`，作为终端渲染这次计算的结果。
         return updated;
       });
+      // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
       setGlobalConfig(getGlobalConfig());
     }
   }] : [])];
 
   // Filter settings based on search query
+  // filteredSettingsItems 集合保存`React.useMemo`，供终端渲染后续处理使用。
   const filteredSettingsItems = React.useMemo(() => {
+    // searchQuery缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!searchQuery) return settingsItems;
+    // lowerQuery保存`searchQuery.toLowerCase`，供终端渲染后续处理使用。
     const lowerQuery = searchQuery.toLowerCase();
+    // 返回 `settingsItems.filter(setting => {`，作为终端渲染这次计算的结果。
     return settingsItems.filter(setting => {
+      // 满足 `setting.id.toLowerCase().includes(lowerQuery)` 时，终端渲染执行该分支。
       if (setting.id.toLowerCase().includes(lowerQuery)) return true;
+      // searchableText保存`'searchText' in setting ? setting.searchText : setting.la...`，作为后续固定文本处理的输入。
       const searchableText = 'searchText' in setting ? setting.searchText : setting.label;
+      // 返回 `searchableText.toLowerCase().includes(lowerQuery)`，作为终端渲染这次计算的结果。
       return searchableText.toLowerCase().includes(lowerQuery);
     });
   }, [settingsItems, searchQuery]);
 
   // Adjust selected index when filtered list shrinks, and keep the selected
   // item visible when maxVisible changes (e.g., terminal resize).
+  // 调用 React.useEffect，触发终端渲染此处需要的副作用。
   React.useEffect(() => {
+    // 满足 `selectedIndex >= filteredSettingsItems.length` 时，终端渲染执行该分支。
     if (selectedIndex >= filteredSettingsItems.length) {
+      // newIndex 索引保存`Math.max`，供终端渲染后续处理使用。
       const newIndex = Math.max(0, filteredSettingsItems.length - 1);
+      // setSelectedIndex 写入新的状态值，使终端渲染后续读取保持一致。
       setSelectedIndex(newIndex);
+      // setScrollOffset 写入新的状态值，使终端渲染后续读取保持一致。
       setScrollOffset(Math.max(0, newIndex - maxVisible + 1));
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // setScrollOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setScrollOffset(prev_21 => {
+      // 满足 `selectedIndex < prev_21` 时，终端渲染执行该分支。
       if (selectedIndex < prev_21) return selectedIndex;
+      // 满足 `selectedIndex >= prev_21 + maxVisible` 时，终端渲染执行该分支。
       if (selectedIndex >= prev_21 + maxVisible) return selectedIndex - maxVisible + 1;
+      // 返回 `prev_21`，作为终端渲染这次计算的结果。
       return prev_21;
     });
   }, [filteredSettingsItems.length, selectedIndex, maxVisible]);
@@ -1074,99 +1413,154 @@ export function Config({
   // Keep the selected item visible within the scroll window.
   // Called synchronously from navigation handlers to avoid a render frame
   // where the selected item falls outside the visible window.
+  // adjustScrollOffset保存`useCallback`，供终端渲染后续处理使用。
   const adjustScrollOffset = useCallback((newIndex_0: number) => {
+    // setScrollOffset 写入新的状态值，使终端渲染后续读取保持一致。
     setScrollOffset(prev_22 => {
+      // 满足 `newIndex_0 < prev_22` 时，终端渲染执行该分支。
       if (newIndex_0 < prev_22) return newIndex_0;
+      // 满足 `newIndex_0 >= prev_22 + maxVisible` 时，终端渲染执行该分支。
       if (newIndex_0 >= prev_22 + maxVisible) return newIndex_0 - maxVisible + 1;
+      // 返回 `prev_22`，作为终端渲染这次计算的结果。
       return prev_22;
     });
   }, [maxVisible]);
 
   // Enter: keep all changes (already persisted by onChange handlers), close
   // with a summary of what changed.
+  // handleSaveAndClose保存`useCallback`，供终端渲染后续处理使用。
   const handleSaveAndClose = useCallback(() => {
     // Submenu handling: each submenu has its own Enter/Esc — don't close
     // the whole panel while one is open.
+    // `showSubmenu` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
     if (showSubmenu !== null) {
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
     // Log any changes that were made
     // TODO: Make these proper messages
+    // 这个回调绑定到 const formattedChanges: string[] = Object.entries(changes).map(([key, value_2]) => {，负责终端渲染在该局部场景下的响应。
     const formattedChanges: string[] = Object.entries(changes).map(([key, value_2]) => {
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_config_changed', {
         key: key as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: value_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 返回 ``Set ${key} to ${chalk.bold(value_2)}``，作为终端渲染这次计算的结果。
       return `Set ${key} to ${chalk.bold(value_2)}`;
     });
     // Check for API key changes
     // On homespace, ANTHROPIC_API_KEY is preserved in process.env for child
     // processes but ignored by Claude Code itself (see auth.ts).
+    // effectiveApiKey保存`isRunningOnHomespace`，供终端渲染后续处理使用。
     const effectiveApiKey = isRunningOnHomespace() ? undefined : process.env.ANTHROPIC_API_KEY;
+    // initialUsingCustomKey保存`Boolean`，供终端渲染后续处理使用。
     const initialUsingCustomKey = Boolean(effectiveApiKey && initialConfig.current.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
+    // currentUsingCustomKey保存`Boolean`，供终端渲染后续处理使用。
     const currentUsingCustomKey = Boolean(effectiveApiKey && globalConfig.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));
+    // `initialUsingCustomKey` 与 `currentUsingCustomKey` 不一致时刷新派生状态，避免使用过期结果。
     if (initialUsingCustomKey !== currentUsingCustomKey) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${currentUsingCustomKey ? 'Enabled' : 'Disabled'} custom API key`);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_config_changed', {
         key: 'env.ANTHROPIC_API_KEY' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         value: currentUsingCustomKey as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
     }
+    // `globalConfig.theme` 与 `initialConfig.current.theme` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.theme !== initialConfig.current.theme) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`Set theme to ${chalk.bold(globalConfig.theme)}`);
     }
+    // `globalConfig.preferredNotifChannel` 与 `initialCon` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.preferredNotifChannel !== initialConfig.current.preferredNotifChannel) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`Set notifications to ${chalk.bold(globalConfig.preferredNotifChannel)}`);
     }
+    // `currentOutputStyle` 与 `initialOutputStyle.current` 不一致时刷新派生状态，避免使用过期结果。
     if (currentOutputStyle !== initialOutputStyle.current) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`Set output style to ${chalk.bold(currentOutputStyle)}`);
     }
+    // `currentLanguage` 与 `initialLanguage.current` 不一致时刷新派生状态，避免使用过期结果。
     if (currentLanguage !== initialLanguage.current) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`Set response language to ${chalk.bold(currentLanguage ?? 'Default (English)')}`);
     }
+    // `globalConfig.editorMode` 与 `initialConfig.current` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.editorMode !== initialConfig.current.editorMode) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`Set editor mode to ${chalk.bold(globalConfig.editorMode || 'emacs')}`);
     }
+    // `globalConfig.diffTool` 与 `initialConfig.current.d` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.diffTool !== initialConfig.current.diffTool) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`Set diff tool to ${chalk.bold(globalConfig.diffTool)}`);
     }
+    // `globalConfig.autoConnectIde` 与 `initialConfig.cur` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.autoConnectIde !== initialConfig.current.autoConnectIde) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.autoConnectIde ? 'Enabled' : 'Disabled'} auto-connect to IDE`);
     }
+    // `globalConfig.autoInstallIdeExtension` 与 `initialC` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.autoInstallIdeExtension !== initialConfig.current.autoInstallIdeExtension) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.autoInstallIdeExtension ? 'Enabled' : 'Disabled'} auto-install IDE extension`);
     }
+    // `globalConfig.autoCompactEnabled` 与 `initialConfig` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.autoCompactEnabled !== initialConfig.current.autoCompactEnabled) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.autoCompactEnabled ? 'Enabled' : 'Disabled'} auto-compact`);
     }
+    // `globalConfig.respectGitignore` 与 `initialConfig.c` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.respectGitignore !== initialConfig.current.respectGitignore) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.respectGitignore ? 'Enabled' : 'Disabled'} respect .gitignore in file picker`);
     }
+    // `globalConfig.copyFullResponse` 与 `initialConfig.c` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.copyFullResponse !== initialConfig.current.copyFullResponse) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.copyFullResponse ? 'Enabled' : 'Disabled'} always copy full response`);
     }
+    // `globalConfig.copyOnSelect` 与 `initialConfig.curre` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.copyOnSelect !== initialConfig.current.copyOnSelect) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.copyOnSelect ? 'Enabled' : 'Disabled'} copy on select`);
     }
+    // `globalConfig.terminalProgressBarEnabled` 与 `initi` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.terminalProgressBarEnabled !== initialConfig.current.terminalProgressBarEnabled) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.terminalProgressBarEnabled ? 'Enabled' : 'Disabled'} terminal progress bar`);
     }
+    // `globalConfig.showStatusInTerminalTab` 与 `initialC` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.showStatusInTerminalTab !== initialConfig.current.showStatusInTerminalTab) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.showStatusInTerminalTab ? 'Enabled' : 'Disabled'} terminal tab status`);
     }
+    // `globalConfig.showTurnDuration` 与 `initialConfig.c` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.showTurnDuration !== initialConfig.current.showTurnDuration) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`${globalConfig.showTurnDuration ? 'Enabled' : 'Disabled'} turn duration`);
     }
+    // `globalConfig.remoteControlAtStartup` 与 `initialCo` 不一致时刷新派生状态，避免使用过期结果。
     if (globalConfig.remoteControlAtStartup !== initialConfig.current.remoteControlAtStartup) {
+      // remoteLabel标记终端 UI Config是否启用对应路径。
       const remoteLabel = globalConfig.remoteControlAtStartup === undefined ? 'Reset Remote Control to default' : `${globalConfig.remoteControlAtStartup ? 'Enabled' : 'Disabled'} Remote Control for all sessions`;
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(remoteLabel);
     }
+    // `settingsData?.autoUpdatesChannel` 与 `initialSetti` 不一致时刷新派生状态，避免使用过期结果。
     if (settingsData?.autoUpdatesChannel !== initialSettingsData.current?.autoUpdatesChannel) {
+      // formattedChanges 集合追加新条目，保持收集顺序与输入顺序一致。
       formattedChanges.push(`Set auto-update channel to ${chalk.bold(settingsData?.autoUpdatesChannel ?? 'latest')}`);
     }
+    // 满足 `formattedChanges.length > 0` 时，终端渲染执行该分支。
     if (formattedChanges.length > 0) {
+      // 调用 onClose，触发终端渲染此处需要的副作用。
       onClose(formattedChanges.join('\n'));
     } else {
+      // 调用 onClose，触发终端渲染此处需要的副作用。
       onClose('Config dialog dismissed', {
         display: 'system'
       });
@@ -1176,27 +1570,35 @@ export function Config({
   // Restore all state stores to their mount-time snapshots. Changes are
   // applied to disk/AppState immediately on toggle, so "cancel" means
   // actively writing the old values back.
+  // revertChanges 集合保存`useCallback`，供终端渲染后续处理使用。
   const revertChanges = useCallback(() => {
     // Theme: restores ThemeProvider React state. Must run before the global
     // config overwrite since setTheme internally calls saveGlobalConfig with
     // a partial update — we want the full snapshot to be the last write.
+    // `themeSetting` 与 `initialThemeSetting.current` 不一致时刷新派生状态，避免使用过期结果。
     if (themeSetting !== initialThemeSetting.current) {
+      // setTheme 写入新的状态值，使终端渲染后续读取保持一致。
       setTheme(initialThemeSetting.current);
     }
     // Global config: full overwrite from snapshot. saveGlobalConfig skips if
     // the returned ref equals current (test mode checks ref; prod writes to
     // disk but content is identical).
+    // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
     saveGlobalConfig(() => initialConfig.current);
     // Settings files: restore each key Config may have touched. undefined
     // deletes the key (updateSettingsForSource customizer at settings.ts:368).
+    // il保存`initialLocalSettings`，供后续判断或组装使用。
     const il = initialLocalSettings;
+    // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
     updateSettingsForSource('localSettings', {
       spinnerTipsEnabled: il?.spinnerTipsEnabled,
       prefersReducedMotion: il?.prefersReducedMotion,
       defaultView: il?.defaultView,
       outputStyle: il?.outputStyle
     });
+    // iu 命名 `initialUserSettings`，让后续代码直接表达这个值的用途。
     const iu = initialUserSettings;
+    // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
     updateSettingsForSource('userSettings', {
       alwaysThinkingEnabled: iu?.alwaysThinkingEnabled,
       fastMode: iu?.fastMode,
@@ -1224,7 +1626,9 @@ export function Config({
       }
     });
     // AppState: batch-restore all possibly-touched fields.
+    // ia保存`initialAppState`，供终端 UI Config后续判断或输出使用。
     const ia = initialAppState;
+    // setAppState 写入新的状态值，使终端渲染后续读取保持一致。
     setAppState(prev_23 => ({
       ...prev_23,
       mainLoopModel: ia.mainLoopModel,
@@ -1244,19 +1648,27 @@ export function Config({
     // Bootstrap state: restore userMsgOptIn. Only touched by the defaultView
     // onChange above, so no feature() guard needed here (that path only
     // exists when showDefaultViewPicker is true).
+    // `getUserMsgOptIn()` 与 `initialUserMsgOptIn` 不一致时刷新派生状态，避免使用过期结果。
     if (getUserMsgOptIn() !== initialUserMsgOptIn) {
+      // setUserMsgOptIn 写入新的状态值，使终端渲染后续读取保持一致。
       setUserMsgOptIn(initialUserMsgOptIn);
     }
   }, [themeSetting, setTheme, initialLocalSettings, initialUserSettings, initialAppState, initialUserMsgOptIn, setAppState]);
 
   // Escape: revert all changes (if any) and close.
+  // handleEscape保存`useCallback`，供终端渲染后续处理使用。
   const handleEscape = useCallback(() => {
+    // `showSubmenu` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
     if (showSubmenu !== null) {
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `isDirty.current` 时，终端渲染执行该分支。
     if (isDirty.current) {
+      // 调用 revertChanges，触发终端渲染此处需要的副作用。
       revertChanges();
     }
+    // 调用 onClose，触发终端渲染此处需要的副作用。
     onClose('Config dialog dismissed', {
       display: 'system'
     });
@@ -1265,12 +1677,14 @@ export function Config({
   // Disable when submenu is open so the submenu's Dialog handles ESC, and in
   // search mode so the onKeyDown handler (which clears-then-exits search)
   // wins — otherwise Escape in search would jump straight to revert+close.
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('confirm:no', handleEscape, {
     context: 'Settings',
     isActive: showSubmenu === null && !isSearchMode && !headerFocused
   });
   // Save-and-close fires on Enter only when not in search mode (Enter there
   // exits search to the list — see the isSearchMode branch in handleKeyDown).
+  // 调用 useKeybinding，触发终端渲染此处需要的副作用。
   useKeybinding('settings:close', handleSaveAndClose, {
     context: 'Settings',
     isActive: showSubmenu === null && !isSearchMode && !headerFocused
@@ -1278,122 +1692,195 @@ export function Config({
 
   // Settings navigation and toggle actions via configurable keybindings.
   // Only active when not in search mode and no submenu is open.
+  // toggleSetting保存`useCallback`，供终端渲染后续处理使用。
   const toggleSetting = useCallback(() => {
+    // setting_0读取 `filteredSettingsItems[selectedIndex]` 对应条目，后续围绕该成员继续处理。
     const setting_0 = filteredSettingsItems[selectedIndex];
+    // 只有 `!setting_0 || !setting_0.onChange` 满足时，终端渲染才执行该分支。
     if (!setting_0 || !setting_0.onChange) {
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 当 `setting_0.type` 匹配 `'boolean'` 时，终端渲染执行对应分支。
     if (setting_0.type === 'boolean') {
+      // current更新为 `true`，确保终端 UI后续读取最新状态。
       isDirty.current = true;
+      // 调用 setting_0.onChange，触发终端渲染此处需要的副作用。
       setting_0.onChange(!setting_0.value);
+      // 当 `setting_0.id` 匹配 `'thinkingEnabled'` 时，终端渲染执行对应分支。
       if (setting_0.id === 'thinkingEnabled') {
+        // newValue标记终端 UI Config是否启用对应路径。
         const newValue = !setting_0.value;
+        // backToInitial标记终端 UI Config是否启用对应路径。
         const backToInitial = newValue === initialThinkingEnabled.current;
+        // 满足 `backToInitial` 时，终端渲染执行该分支。
         if (backToInitial) {
+          // setShowThinkingWarning 写入新的状态值，使终端渲染后续读取保持一致。
           setShowThinkingWarning(false);
+        // 这个回调绑定到 } else if (context.messages.some(m_0 => m_0.type === 'assistant')) {，负责终端渲染在该局部场景下的响应。
         } else if (context.messages.some(m_0 => m_0.type === 'assistant')) {
+          // setShowThinkingWarning 写入新的状态值，使终端渲染后续读取保持一致。
           setShowThinkingWarning(true);
         }
       }
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 只有 `setting_0.id === 'theme' || setting_0.id === 'mod` 满足时，终端渲染才执行该分支。
     if (setting_0.id === 'theme' || setting_0.id === 'model' || setting_0.id === 'teammateDefaultModel' || setting_0.id === 'showExternalIncludesDialog' || setting_0.id === 'outputStyle' || setting_0.id === 'language') {
       // managedEnum items open a submenu — isDirty is set by the submenu's
       // completion callback, not here (submenu may be cancelled).
+      // 按照 setting_0.id 的取值选择终端渲染的具体处理分支。
       switch (setting_0.id) {
         case 'theme':
+          // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
           setShowSubmenu('Theme');
+          // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
           setTabsHidden(true);
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         case 'model':
+          // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
           setShowSubmenu('Model');
+          // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
           setTabsHidden(true);
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         case 'teammateDefaultModel':
+          // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
           setShowSubmenu('TeammateModel');
+          // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
           setTabsHidden(true);
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         case 'showExternalIncludesDialog':
+          // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
           setShowSubmenu('ExternalIncludes');
+          // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
           setTabsHidden(true);
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         case 'outputStyle':
+          // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
           setShowSubmenu('OutputStyle');
+          // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
           setTabsHidden(true);
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         case 'language':
+          // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
           setShowSubmenu('Language');
+          // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
           setTabsHidden(true);
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
       }
     }
+    // 当 `setting_0.id` 匹配 `'autoUpdatesChannel'` 时，终端渲染执行对应分支。
     if (setting_0.id === 'autoUpdatesChannel') {
+      // 满足 `autoUpdaterDisabledReason` 时，终端渲染执行该分支。
       if (autoUpdaterDisabledReason) {
         // Auto-updates are disabled - show enable dialog instead
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu('EnableAutoUpdates');
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(true);
+        // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // currentChannel保存`settingsData?.autoUpdatesChannel ?? 'latest'`，供后续判断或组装使用。
       const currentChannel = settingsData?.autoUpdatesChannel ?? 'latest';
+      // 当 `currentChannel` 匹配 `'latest'` 时，终端渲染执行对应分支。
       if (currentChannel === 'latest') {
         // Switching to stable - show downgrade dialog
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu('ChannelDowngrade');
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(true);
       } else {
         // Switching to latest - just do it and clear minimumVersion
+        // current更新为 `true`，确保终端 UI后续读取最新状态。
         isDirty.current = true;
+        // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
         updateSettingsForSource('userSettings', {
           autoUpdatesChannel: 'latest',
           minimumVersion: undefined
         });
+        // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
         setSettingsData(prev_24 => ({
           ...prev_24,
           autoUpdatesChannel: 'latest',
           minimumVersion: undefined
         }));
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_autoupdate_channel_changed', {
           channel: 'latest' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 当 `setting_0.type` 匹配 `'enum'` 时，终端渲染执行对应分支。
     if (setting_0.type === 'enum') {
+      // current更新为 `true`，确保终端 UI后续读取最新状态。
       isDirty.current = true;
+      // currentIndex 索引保存`options.indexOf`，供终端渲染后续处理使用。
       const currentIndex = setting_0.options.indexOf(setting_0.value);
+      // nextIndex 索引 命名 `(currentIndex + 1) % setting_0.options.length`，让后续代码直接表达这个值的用途。
       const nextIndex = (currentIndex + 1) % setting_0.options.length;
+      // 调用 setting_0.onChange，触发终端渲染此处需要的副作用。
       setting_0.onChange(setting_0.options[nextIndex]!);
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
   }, [autoUpdaterDisabledReason, filteredSettingsItems, selectedIndex, settingsData?.autoUpdatesChannel, setTabsHidden]);
+  // moveSelection封装成回调，供终端 UI Config在事件触发或异步步骤中调用。
   const moveSelection = (delta: -1 | 1): void => {
+    // setShowThinkingWarning 写入新的状态值，使终端渲染后续读取保持一致。
     setShowThinkingWarning(false);
+    // newIndex_1 索引保存`Math.max`，供终端渲染后续处理使用。
     const newIndex_1 = Math.max(0, Math.min(filteredSettingsItems.length - 1, selectedIndex + delta));
+    // setSelectedIndex 写入新的状态值，使终端渲染后续读取保持一致。
     setSelectedIndex(newIndex_1);
+    // 调用 adjustScrollOffset，触发终端渲染此处需要的副作用。
     adjustScrollOffset(newIndex_1);
   };
+  // 调用 useKeybindings，触发终端渲染此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责终端渲染在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `selectedIndex === 0` 时，终端渲染执行该分支。
       if (selectedIndex === 0) {
         // ↑ at top enters search mode so users can type-to-filter after
         // reaching the list boundary. Wheel-up (scroll:lineUp) clamps
         // instead — overshoot shouldn't move focus away from the list.
+        // setShowThinkingWarning 写入新的状态值，使终端渲染后续读取保持一致。
         setShowThinkingWarning(false);
+        // setIsSearchMode 写入新的状态值，使终端渲染后续读取保持一致。
         setIsSearchMode(true);
+        // setScrollOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setScrollOffset(0);
       } else {
+        // 调用 moveSelection，触发终端渲染此处需要的副作用。
         moveSelection(-1);
       }
     },
+    // 这个回调绑定到 'select:next': () => moveSelection(1),，负责终端渲染在该局部场景下的响应。
     'select:next': () => moveSelection(1),
     // Wheel. ScrollKeybindingHandler's scroll:line* returns false (not
     // consumed) when the ScrollBox content fits — which it always does
     // here because the list is paginated (slice). The event falls through
     // to this handler which navigates the list, clamping at boundaries.
+    // 这个回调绑定到 'scroll:lineUp': () => moveSelection(-1),，负责终端渲染在该局部场景下的响应。
     'scroll:lineUp': () => moveSelection(-1),
+    // 这个回调绑定到 'scroll:lineDown': () => moveSelection(1),，负责终端渲染在该局部场景下的响应。
     'scroll:lineDown': () => moveSelection(1),
     'select:accept': toggleSetting,
+    // 这个回调绑定到 'settings:search': () => {，负责终端渲染在该局部场景下的响应。
     'settings:search': () => {
+      // setIsSearchMode 写入新的状态值，使终端渲染后续读取保持一致。
       setIsSearchMode(true);
+      // setSearchQuery 写入新的状态值，使终端渲染后续读取保持一致。
       setSearchQuery('');
     }
   }, {
@@ -1404,57 +1891,92 @@ export function Config({
   // Combined key handling across search/list modes. Branch order mirrors
   // the original useInput gate priority: submenu and header short-circuit
   // first (their own handlers own input), then search vs. list.
+  // handleKeyDown保存`useCallback`，供终端渲染后续处理使用。
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // `showSubmenu` 与 `null` 不一致时刷新派生状态，避免使用过期结果。
     if (showSubmenu !== null) return;
+    // 满足 `headerFocused` 时，终端渲染执行该分支。
     if (headerFocused) return;
     // Search mode: Esc clears then exits, Enter/↓ moves to the list.
+    // 满足 `isSearchMode` 时，终端渲染执行该分支。
     if (isSearchMode) {
+      // 当 `e.key` 匹配 `'escape'` 时，终端渲染执行对应分支。
       if (e.key === 'escape') {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // 满足 `searchQuery.length > 0` 时，终端渲染执行该分支。
         if (searchQuery.length > 0) {
+          // setSearchQuery 写入新的状态值，使终端渲染后续读取保持一致。
           setSearchQuery('');
         } else {
+          // setIsSearchMode 写入新的状态值，使终端渲染后续读取保持一致。
           setIsSearchMode(false);
         }
+        // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 只有 `e.key === 'return' || e.key === 'down' || e.key =` 满足时，终端渲染才执行该分支。
       if (e.key === 'return' || e.key === 'down' || e.key === 'wheeldown') {
+        // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
         e.preventDefault();
+        // setIsSearchMode 写入新的状态值，使终端渲染后续读取保持一致。
         setIsSearchMode(false);
+        // setSelectedIndex 写入新的状态值，使终端渲染后续读取保持一致。
         setSelectedIndex(0);
+        // setScrollOffset 写入新的状态值，使终端渲染后续读取保持一致。
         setScrollOffset(0);
       }
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
     // List mode: left/right/tab cycle the selected option's value. These
     // keys used to switch tabs; now they only do so when the tab row is
     // explicitly focused (see headerFocused in Settings.tsx).
+    // 只有 `e.key === 'left' || e.key === 'right' || e.key ==` 满足时，终端渲染才执行该分支。
     if (e.key === 'left' || e.key === 'right' || e.key === 'tab') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // 调用 toggleSetting，触发终端渲染此处需要的副作用。
       toggleSetting();
+      // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
     // Fallback: printable characters (other than those bound to actions)
     // enter search mode. Carve out j/k// — useKeybindings (still on the
     // useInput path) consumes these via stopImmediatePropagation, but
     // onKeyDown dispatches independently so we must skip them explicitly.
+    // 只有 `e.ctrl || e.meta` 满足时，终端渲染才执行该分支。
     if (e.ctrl || e.meta) return;
+    // 当 `e.key` 匹配 `'j' || e.key === 'k' || e.k...` 时，终端渲染执行对应分支。
     if (e.key === 'j' || e.key === 'k' || e.key === '/') return;
+    // `e.key.length === 1 && e.key` 与 `' '` 不一致时刷新派生状态，避免使用过期结果。
     if (e.key.length === 1 && e.key !== ' ') {
+      // 调用 e.preventDefault，触发终端渲染此处需要的副作用。
       e.preventDefault();
+      // setIsSearchMode 写入新的状态值，使终端渲染后续读取保持一致。
       setIsSearchMode(true);
+      // setSearchQuery 写入新的状态值，使终端渲染后续读取保持一致。
       setSearchQuery(e.key);
     }
   }, [showSubmenu, headerFocused, isSearchMode, searchQuery, setSearchQuery, toggleSetting]);
+  // 返回 `<Box flexDirection="column" width="100%" tabIndex={0} autoFocus onKeyDo...`，作为终端渲染这次计算的结果。
   return <Box flexDirection="column" width="100%" tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
+      {/* 终端 UI 组件 Config处理 `{showSubmenu === 'Theme' ? <>`，完成这一小步状态转换。 */}
       {showSubmenu === 'Theme' ? <>
           <ThemePicker onThemeSelect={setting_1 => {
+        // current更新为 `true`，确保终端 UI后续读取最新状态。
         isDirty.current = true;
+        // setTheme 写入新的状态值，使终端渲染后续读取保持一致。
         setTheme(setting_1);
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
+      // 这个回调绑定到 }} onCancel={() => {，负责终端渲染在该局部场景下的响应。
       }} onCancel={() => {
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
       }} hideEscToCancel skipExitHandling={true} // Skip exit handling as Config already handles it
       />
@@ -1467,13 +1989,21 @@ export function Config({
             </Text>
           </Box>
         </> : showSubmenu === 'Model' ? <>
+          {/* 这个回调绑定到 <ModelPicker initial={mainLoopModel} onSelect={(model_0, _effort) => {，负责终端渲染在该局部场景下的响应。 */}
           <ModelPicker initial={mainLoopModel} onSelect={(model_0, _effort) => {
+        // current更新为 `true`，确保终端 UI后续读取最新状态。
         isDirty.current = true;
+        // 调用 onChangeMainModelConfig，触发终端渲染此处需要的副作用。
         onChangeMainModelConfig(model_0);
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
+      // 这个回调绑定到 }} onCancel={() => {，负责终端渲染在该局部场景下的响应。
       }} onCancel={() => {
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
       }} showFastModeNotice={isFastModeEnabled() ? isFastMode && isFastModeSupportedByModel(mainLoopModel) && isFastModeAvailable() : false} />
           <Text dimColor>
@@ -1483,33 +2013,46 @@ export function Config({
             </Byline>
           </Text>
         </> : showSubmenu === 'TeammateModel' ? <>
+          {/* 这个回调绑定到 <ModelPicker initial={globalConfig.teammateDefaultModel ?? null} skipSettingsWrite h…，负责终端渲染在该局部场景下的响应。 */}
           <ModelPicker initial={globalConfig.teammateDefaultModel ?? null} skipSettingsWrite headerText="Default model for newly spawned teammates. The leader can override via the tool call's model parameter." onSelect={(model_1, _effort_0) => {
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
         // First-open-then-Enter from unset: picker highlights "Default"
         // (initial=null) and confirming would write null, silently
         // switching Opus-fallback → follow-leader. Treat as no-op.
+        // 满足 `globalConfig.teammateDefaultModel === undefined &` 时，终端渲染执行该分支。
         if (globalConfig.teammateDefaultModel === undefined && model_1 === null) {
+          // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // current更新为 `true`，确保终端 UI后续读取最新状态。
         isDirty.current = true;
+        // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
         saveGlobalConfig(current_23 => current_23.teammateDefaultModel === model_1 ? current_23 : {
           ...current_23,
           teammateDefaultModel: model_1
         });
+        // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
         setGlobalConfig({
           ...getGlobalConfig(),
           teammateDefaultModel: model_1
         });
+        // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
         setChanges(prev_25 => ({
           ...prev_25,
           teammateDefaultModel: teammateModelDisplayString(model_1)
         }));
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_teammate_default_model_changed', {
           model: model_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
+      // 这个回调绑定到 }} onCancel={() => {，负责终端渲染在该局部场景下的响应。
       }} onCancel={() => {
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
       }} />
           <Text dimColor>
@@ -1519,8 +2062,11 @@ export function Config({
             </Byline>
           </Text>
         </> : showSubmenu === 'ExternalIncludes' ? <>
+          {/* 这个回调绑定到 <ClaudeMdExternalIncludesDialog onDone={() => {，负责终端渲染在该局部场景下的响应。 */}
           <ClaudeMdExternalIncludesDialog onDone={() => {
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
       }} externalIncludes={getExternalClaudeMdIncludes(memoryFiles)} />
           <Text dimColor>
@@ -1530,23 +2076,33 @@ export function Config({
             </Byline>
           </Text>
         </> : showSubmenu === 'OutputStyle' ? <>
+          {/* 这个回调绑定到 <OutputStylePicker initialStyle={currentOutputStyle} onComplete={style => {，负责终端渲染在该局部场景下的响应。 */}
           <OutputStylePicker initialStyle={currentOutputStyle} onComplete={style => {
+        // current更新为 `true`，确保终端 UI后续读取最新状态。
         isDirty.current = true;
+        // setCurrentOutputStyle 写入新的状态值，使终端渲染后续读取保持一致。
         setCurrentOutputStyle(style ?? DEFAULT_OUTPUT_STYLE_NAME);
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
 
         // Save to local settings
+        // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
         updateSettingsForSource('localSettings', {
           outputStyle: style
         });
+        // 显式忽略 `logEvent('tengu_output_style_changed', {` 的返回值，只保留它触发的副作用。
         void logEvent('tengu_output_style_changed', {
           style: (style ?? DEFAULT_OUTPUT_STYLE_NAME) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           settings_source: 'localSettings' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
+      // 这个回调绑定到 }} onCancel={() => {，负责终端渲染在该局部场景下的响应。
       }} onCancel={() => {
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
       }} />
           <Text dimColor>
@@ -1556,22 +2112,32 @@ export function Config({
             </Byline>
           </Text>
         </> : showSubmenu === 'Language' ? <>
+          {/* 这个回调绑定到 <LanguagePicker initialLanguage={currentLanguage} onComplete={language => {，负责终端渲染在该局部场景下的响应。 */}
           <LanguagePicker initialLanguage={currentLanguage} onComplete={language => {
+        // current更新为 `true`，确保终端 UI后续读取最新状态。
         isDirty.current = true;
+        // setCurrentLanguage 写入新的状态值，使终端渲染后续读取保持一致。
         setCurrentLanguage(language);
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
 
         // Save to user settings
+        // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
         updateSettingsForSource('userSettings', {
           language
         });
+        // 显式忽略 `logEvent('tengu_language_changed', {` 的返回值，只保留它触发的副作用。
         void logEvent('tengu_language_changed', {
           language: (language ?? 'default') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
           source: 'config_panel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
+      // 这个回调绑定到 }} onCancel={() => {，负责终端渲染在该局部场景下的响应。
       }} onCancel={() => {
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
       }} />
           <Text dimColor>
@@ -1580,8 +2146,11 @@ export function Config({
               <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
             </Byline>
           </Text>
+        {/* 这个回调绑定到 </> : showSubmenu === 'EnableAutoUpdates' ? <Dialog title="Enable Auto-Updates" onCa…，负责终端渲染在该局部场景下的响应。 */}
         </> : showSubmenu === 'EnableAutoUpdates' ? <Dialog title="Enable Auto-Updates" onCancel={() => {
+      // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
       setShowSubmenu(null);
+      // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
       setTabsHidden(false);
     }} hideBorder hideInputGuide>
           {autoUpdaterDisabledReason?.type !== 'config' ? <>
@@ -1598,55 +2167,76 @@ export function Config({
       }, {
         label: 'Enable with stable channel',
         value: 'stable'
+      // 这个回调绑定到 }]} onChange={(channel: string) => {，负责终端渲染在该局部场景下的响应。
       }]} onChange={(channel: string) => {
+        // current更新为 `true`，确保终端 UI后续读取最新状态。
         isDirty.current = true;
+        // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
         setShowSubmenu(null);
+        // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
         setTabsHidden(false);
+        // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
         saveGlobalConfig(current_24 => ({
           ...current_24,
           autoUpdates: true
         }));
+        // setGlobalConfig 写入新的状态值，使终端渲染后续读取保持一致。
         setGlobalConfig({
           ...getGlobalConfig(),
           autoUpdates: true
         });
+        // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
         updateSettingsForSource('userSettings', {
           autoUpdatesChannel: channel as 'latest' | 'stable',
           minimumVersion: undefined
         });
+        // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
         setSettingsData(prev_26 => ({
           ...prev_26,
           autoUpdatesChannel: channel as 'latest' | 'stable',
           minimumVersion: undefined
         }));
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logEvent('tengu_autoupdate_enabled', {
           channel: channel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }} />}
+        {/* 这个回调绑定到 </Dialog> : showSubmenu === 'ChannelDowngrade' ? <ChannelDowngradeDialog currentVers…，负责终端渲染在该局部场景下的响应。 */}
         </Dialog> : showSubmenu === 'ChannelDowngrade' ? <ChannelDowngradeDialog currentVersion={MACRO.VERSION} onChoice={(choice: ChannelDowngradeChoice) => {
+      // setShowSubmenu 写入新的状态值，使终端渲染后续读取保持一致。
       setShowSubmenu(null);
+      // setTabsHidden 写入新的状态值，使终端渲染后续读取保持一致。
       setTabsHidden(false);
+      // 当 `choice` 匹配 `'cancel'` 时，终端渲染执行对应分支。
       if (choice === 'cancel') {
         // User cancelled - don't change anything
+        // 终端 UI 组件 Config在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // current更新为 `true`，确保终端 UI后续读取最新状态。
       isDirty.current = true;
       // Switch to stable channel
+      // newSettings 集合 先占位，稍后的条件分支会根据实际输入补齐它。
       const newSettings: {
         autoUpdatesChannel: 'stable';
         minimumVersion?: string;
       } = {
         autoUpdatesChannel: 'stable'
       };
+      // 当 `choice` 匹配 `'stay'` 时，终端渲染执行对应分支。
       if (choice === 'stay') {
         // User wants to stay on current version until stable catches up
+        // minimumVersion更新为 `MACRO.VERSION`，确保终端 UI后续读取最新状态。
         newSettings.minimumVersion = MACRO.VERSION;
       }
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource('userSettings', newSettings);
+      // setSettingsData 写入新的状态值，使终端渲染后续读取保持一致。
       setSettingsData(prev_27 => ({
         ...prev_27,
         ...newSettings
       }));
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_autoupdate_channel_changed', {
         channel: 'stable' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         minimum_version_set: choice === 'stay'
@@ -1660,9 +2250,13 @@ export function Config({
                 {scrollOffset > 0 && <Text dimColor>
                     {figures.arrowUp} {scrollOffset} more above
                   </Text>}
+                {/* 这个回调绑定到 {filteredSettingsItems.slice(scrollOffset, scrollOffset + maxVisible).map((setting_2…，负责终端渲染在该局部场景下的响应。 */}
                 {filteredSettingsItems.slice(scrollOffset, scrollOffset + maxVisible).map((setting_2, i) => {
+            // actualIndex 索引保存`scrollOffset + i`，供后续判断或组装使用。
             const actualIndex = scrollOffset + i;
+            // isSelected标记终端 UI Config是否启用对应路径。
             const isSelected = actualIndex === selectedIndex && !headerFocused && !isSearchMode;
+            // 返回 `<React.Fragment key={setting_2.id}>`，作为终端渲染这次计算的结果。
             return <React.Fragment key={setting_2.id}>
                         <Box>
                           <Box width={44}>
@@ -1735,13 +2329,19 @@ export function Config({
         </Box>}
     </Box>;
 }
+// teammateModelDisplayString 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function teammateModelDisplayString(value: string | null | undefined): string {
+  // 满足 `value === undefined` 时，终端渲染执行该分支。
   if (value === undefined) {
+    // 返回 `modelDisplayString(getHardcodedTeammateModelFallback())`，作为终端渲染这次计算的结果。
     return modelDisplayString(getHardcodedTeammateModelFallback());
   }
+  // 满足 `value === null) return "Default (leader's model` 时，终端渲染执行该分支。
   if (value === null) return "Default (leader's model)";
+  // 返回 `modelDisplayString(value)`，作为终端渲染这次计算的结果。
   return modelDisplayString(value);
 }
+// THEME_LABELS 集合 集中保存终端 UI 组件 Config要一起传递的字段。
 const THEME_LABELS: Record<string, string> = {
   auto: 'Auto (match terminal)',
   dark: 'Dark mode',
@@ -1751,70 +2351,102 @@ const THEME_LABELS: Record<string, string> = {
   'dark-ansi': 'Dark mode (ANSI colors only)',
   'light-ansi': 'Light mode (ANSI colors only)'
 };
+// NotifChannelLabel 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function NotifChannelLabel(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(4);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     value
   } = t0;
+  // 按照 value 的取值选择终端渲染的具体处理分支。
   switch (value) {
     case "auto":
       {
+        // 返回 `"Auto"`，作为终端渲染这次计算的结果。
         return "Auto";
       }
     case "iterm2":
       {
+        // t1 暂存 `<Text>iTerm2 <Text dimColor={true}>(OSC 9)</Text></Text>` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Text>iTerm2 <Text dimColor={true}>(OSC 9)</Text></Text>` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Text>iTerm2 <Text dimColor={true}>(OSC 9)</Text></Text>;
+          // $[0] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[0] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[0] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[0];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
     case "terminal_bell":
       {
+        // t1 暂存 `<Text>Terminal Bell <Text dimColor={true}>(\a)</Text></Te...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Text>Terminal Bell <Text dimColor={true}>(\a)</Text></Te...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Text>Terminal Bell <Text dimColor={true}>(\a)</Text></Text>;
+          // $[1] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[1] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[1];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
     case "kitty":
       {
+        // t1 暂存 `<Text>Kitty <Text dimColor={true}>(OSC 99)</Text></Text>` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Text>Kitty <Text dimColor={true}>(OSC 99)</Text></Text>` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Text>Kitty <Text dimColor={true}>(OSC 99)</Text></Text>;
+          // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[2] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[2];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
     case "ghostty":
       {
+        // t1 暂存 `<Text>Ghostty <Text dimColor={true}>(OSC 777)</Text></Tex...` 的派生结果，便于缓存命中时直接复用。
         let t1;
+        // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
         if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
+          // t1 暂存 `<Text>Ghostty <Text dimColor={true}>(OSC 777)</Text></Tex...` 生成的渲染片段，后续返回路径直接复用。
           t1 = <Text>Ghostty <Text dimColor={true}>(OSC 777)</Text></Text>;
+          // $[3] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
           $[3] = t1;
         } else {
+          // t1 从 React 编译缓存槽 $[3] 取回渲染片段，避免依赖未变时重建 JSX。
           t1 = $[3];
         }
+        // 返回 `t1`，作为终端渲染这次计算的结果。
         return t1;
       }
     case "iterm2_with_bell":
       {
+        // 返回 `"iTerm2 w/ Bell"`，作为终端渲染这次计算的结果。
         return "iTerm2 w/ Bell";
       }
     case "notifications_disabled":
       {
+        // 返回 `"Disabled"`，作为终端渲染这次计算的结果。
         return "Disabled";
       }
     default:
       {
+        // 返回 `value`，作为终端渲染这次计算的结果。
         return value;
       }
   }

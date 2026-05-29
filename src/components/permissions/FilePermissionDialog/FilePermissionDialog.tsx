@@ -1,27 +1,49 @@
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { relative } from 'path';
+// 引入 React、useMemo，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useMemo } from 'react';
+// 引入 useDiffInIDE，将 ../../../hooks/useDiffInIDE.js 中已经封装好的能力接到本文件流程里。
 import { useDiffInIDE } from '../../../hooks/useDiffInIDE.js';
+// 引入 Box、Text，将 ../../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../../ink.js';
+// 类型依赖 { ToolUseContext } 来自 ../../../Tool.js，用于校准终端渲染的数据契约。
 import type { ToolUseContext } from '../../../Tool.js';
+// 复用 getLanguageName 工具函数，把通用处理留在 ../../../utils/cliHighlight.js 中维护。
 import { getLanguageName } from '../../../utils/cliHighlight.js';
+// 复用 getCwd 工具函数，把通用处理留在 ../../../utils/cwd.js 中维护。
 import { getCwd } from '../../../utils/cwd.js';
+// 复用 getFsImplementation、safeResolvePath 工具函数，把通用处理留在 ../../../utils/fsOperations.js 中维护。
 import { getFsImplementation, safeResolvePath } from '../../../utils/fsOperations.js';
+// 复用 expandPath 工具函数，把通用处理留在 ../../../utils/path.js 中维护。
 import { expandPath } from '../../../utils/path.js';
+// 类型依赖 { CompletionType } 来自 ../../../utils/unaryLogging.js，用于校准终端渲染的数据契约。
 import type { CompletionType } from '../../../utils/unaryLogging.js';
+// 引入 Select，将 ../../CustomSelect/index.js 中已经封装好的能力接到本文件流程里。
 import { Select } from '../../CustomSelect/index.js';
+// 引入 ShowInIDEPrompt，将 ../../ShowInIDEPrompt.js 中已经封装好的能力接到本文件流程里。
 import { ShowInIDEPrompt } from '../../ShowInIDEPrompt.js';
+// 引入 usePermissionRequestLogging，将 ../hooks.js 中已经封装好的能力接到本文件流程里。
 import { usePermissionRequestLogging } from '../hooks.js';
+// 引入 PermissionDialog，将 ../PermissionDialog.js 中已经封装好的能力接到本文件流程里。
 import { PermissionDialog } from '../PermissionDialog.js';
+// 类型依赖 { ToolUseConfirm } 来自 ../PermissionRequest.js，用于校准终端渲染的数据契约。
 import type { ToolUseConfirm } from '../PermissionRequest.js';
+// 类型依赖 { WorkerBadgeProps } 来自 ../WorkerBadge.js，用于校准终端渲染的数据契约。
 import type { WorkerBadgeProps } from '../WorkerBadge.js';
+// 类型依赖 { IDEDiffSupport } 来自 ./ideDiffConfig.js，用于校准终端渲染的数据契约。
 import type { IDEDiffSupport } from './ideDiffConfig.js';
+// 类型依赖 { FileOperationType, PermissionOption } 来自 ./permissionOptions.js，用于校准终端渲染的数据契约。
 import type { FileOperationType, PermissionOption } from './permissionOptions.js';
+// 引入 ToolInput、useFilePermissionDialog，将 ./useFilePermissionDialog.js 中已经封装好的能力接到本文件流程里。
 import { type ToolInput, useFilePermissionDialog } from './useFilePermissionDialog.js';
+// FilePermissionDialogProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type FilePermissionDialogProps<T extends ToolInput = ToolInput> = {
   // Required props from PermissionRequestProps
   toolUseConfirm: ToolUseConfirm;
   toolUseContext: ToolUseContext;
+  // 这个回调绑定到 onDone: () => void;，负责终端渲染在该局部场景下的响应。
   onDone: () => void;
+  // 这个回调绑定到 onReject: () => void;，负责终端渲染在该局部场景下的响应。
   onReject: () => void;
 
   // Dialog customization
@@ -36,6 +58,7 @@ export type FilePermissionDialogProps<T extends ToolInput = ToolInput> = {
 
   // File/directory operations
   path: string | null;
+  // 这个回调绑定到 parseInput: (input: unknown) => T;，负责终端渲染在该局部场景下的响应。
   parseInput: (input: unknown) => T;
   operationType?: FileOperationType;
 
@@ -45,6 +68,7 @@ export type FilePermissionDialogProps<T extends ToolInput = ToolInput> = {
   // Worker badge for teammate permission requests
   workerBadge: WorkerBadgeProps | undefined;
 };
+// FilePermissionDialog 封装权限确认界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function FilePermissionDialog<T extends ToolInput = ToolInput>({
   toolUseConfirm,
   toolUseContext,
@@ -66,27 +90,40 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
   // passes 'python'/'markdown' from cell_type). getLanguageName is async;
   // downstream UnaryEvent.language_name and logPermissionEvent already accept
   // Promise<string>. useMemo keeps the promise stable across renders.
+  // languageName保存`useMemo`，供终端渲染后续处理使用。
   const languageName = useMemo(() => languageNameOverride ?? (path ? getLanguageName(path) : 'none'), [languageNameOverride, path]);
+  // unaryEvent保存`useMemo`，供终端渲染后续处理使用。
   const unaryEvent = useMemo(() => ({
     completion_type: completionType,
     language_name: languageName
   }), [completionType, languageName]);
+  // 调用 usePermissionRequestLogging，触发终端渲染此处需要的副作用。
   usePermissionRequestLogging(toolUseConfirm, unaryEvent);
+  // symlinkTarget保存`useMemo`，供终端渲染后续处理使用。
   const symlinkTarget = useMemo(() => {
+    // 当 `!path || operationType` 匹配 `'read'` 时，终端渲染执行对应分支。
     if (!path || operationType === 'read') {
+      // 返回 `null`，作为终端渲染这次计算的结果。
       return null;
     }
+    // expandedPath 路径数据保存`expandPath`，供终端渲染后续处理使用。
     const expandedPath = expandPath(path);
+    // fs 集合读取`getFsImplementation`，供终端渲染后续处理使用。
     const fs = getFsImplementation();
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       resolvedPath,
       isSymlink
     } = safeResolvePath(fs, expandedPath);
+    // 满足 `isSymlink` 时，终端渲染执行该分支。
     if (isSymlink) {
+      // 返回 `resolvedPath`，作为终端渲染这次计算的结果。
       return resolvedPath;
     }
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }, [path, operationType]);
+  // fileDialogResult 文件数据保存`useFilePermissionDialog`，供终端渲染后续处理使用。
   const fileDialogResult = useFilePermissionDialog({
     filePath: path || '',
     completionType,
@@ -99,6 +136,7 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
   });
 
   // Use file dialog results for options
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     options,
     acceptFeedback,
@@ -111,15 +149,18 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
   } = fileDialogResult;
 
   // Parse input using the provided parser
+  // parsedInput解析`parseInput`，供终端渲染后续处理使用。
   const parsedInput = parseInput(toolUseConfirm.input);
 
   // Set up IDE diff support if enabled. Memoized: getConfig may do disk I/O
   // (FileWrite's getConfig calls readFileSync for the old-content diff).
   // Keyed on the raw input — parseInput is a pure Zod parse whose result
   // depends only on toolUseConfirm.input.
+  // ideDiffConfig 配置保存`useMemo`，供终端渲染后续处理使用。
   const ideDiffConfig = useMemo(() => ideDiffSupport ? ideDiffSupport.getConfig(parseInput(toolUseConfirm.input)) : null, [ideDiffSupport, toolUseConfirm.input]);
 
   // Create diff params based on whether IDE diff is available
+  // diffParams 集合保存`ideDiffConfig ? {`，供终端渲染权限确认界面 File Permission Dialog后续判断或输出使用。
   const diffParams = ideDiffConfig ? {
     onChange: (option: PermissionOption, input: {
       file_path: string;
@@ -129,11 +170,14 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
         replace_all?: boolean;
       }>;
     }) => {
+      // transformedInput保存`applyChanges`，供终端渲染后续处理使用。
       const transformedInput = ideDiffSupport!.applyChanges(parsedInput, input.edits);
+      // 调用 fileDialogResult.onChange，触发终端渲染此处需要的副作用。
       fileDialogResult.onChange(option, transformedInput);
     },
     toolUseContext,
     filePath: ideDiffConfig.filePath,
+    // 这个回调绑定到 edits: (ideDiffConfig.edits || []).map(e => ({，负责终端渲染在该局部场景下的响应。
     edits: (ideDiffConfig.edits || []).map(e => ({
       old_string: e.old_string,
       new_string: e.new_string,
@@ -141,55 +185,80 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
     })),
     editMode: ideDiffConfig.editMode || 'single'
   } : {
+    // 这个回调绑定到 onChange: () => {},，负责终端渲染在该局部场景下的响应。
     onChange: () => {},
     toolUseContext,
     filePath: '',
     edits: [],
     editMode: 'single' as const
   };
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     closeTabInIDE,
     showingDiffInIDE,
     ideName
   } = useDiffInIDE(diffParams);
+  // onChange封装成回调，供终端渲染权限确认界面 File Permission Dialog在事件触发或异步步骤中调用。
   const onChange = (option_0: PermissionOption, feedback?: string) => {
+    // 调用 closeTabInIDE?.();，完成这一处局部操作。
     closeTabInIDE?.();
+    // 调用 fileDialogResult.onChange，触发终端渲染此处需要的副作用。
     fileDialogResult.onChange(option_0, parsedInput, feedback?.trim());
   };
+  // 只有 `showingDiffInIDE && ideDiffConfig && path` 满足时，终端渲染才执行该分支。
   if (showingDiffInIDE && ideDiffConfig && path) {
+    // 返回 `<ShowInIDEPrompt onChange={(option_1: PermissionOption, _input, feedbac...`，作为终端渲染这次计算的结果。
     return <ShowInIDEPrompt onChange={(option_1: PermissionOption, _input, feedback_0?: string) => onChange(option_1, feedback_0)} options={options} filePath={path} input={parsedInput} ideName={ideName} symlinkTarget={symlinkTarget} rejectFeedback={rejectFeedback} acceptFeedback={acceptFeedback} setFocusedOption={setFocusedOption} onInputModeToggle={handleInputModeToggle} focusedOption={focusedOption} yesInputMode={yesInputMode} noInputMode={noInputMode} />;
   }
+  // isSymlinkOutsideCwd记录 `relative` 是否成立，终端渲染随后按该结果分支。
   const isSymlinkOutsideCwd = symlinkTarget != null && relative(getCwd(), symlinkTarget).startsWith('..');
+  // symlinkWarning 警告信息读取`symlinkTarget ? <Box paddingX={1} marginBottom={1}>` 整理出中间结果，供终端渲染权限确认界面 File Permission Dialog后续步骤使用。
   const symlinkWarning = symlinkTarget ? <Box paddingX={1} marginBottom={1}>
       <Text color="warning">
         {isSymlinkOutsideCwd ? `This will modify ${symlinkTarget} (outside working directory) via a symlink` : `Symlink target: ${symlinkTarget}`}
       </Text>
     </Box> : null;
+  // 返回 `<>`，作为终端渲染这次计算的结果。
   return <>
+      {/* 权限确认界面 File Permission Dialog处理 `<PermissionDialog title={title} subtitle={subtitle} innerPaddingX={0} w...`，完成这一小步状态转换。 */}
       <PermissionDialog title={title} subtitle={subtitle} innerPaddingX={0} workerBadge={workerBadge}>
         {symlinkWarning}
         {content}
         <Box flexDirection="column" paddingX={1}>
           {typeof question === 'string' ? <Text>{question}</Text> : question}
+          {/* 这个回调绑定到 <Select options={options} inlineDescriptions onChange={value => {，负责终端渲染在该局部场景下的响应。 */}
           <Select options={options} inlineDescriptions onChange={value => {
+          // selected筛选`options.find`，供终端渲染后续处理使用。
           const selected = options.find(opt => opt.value === value);
+          // 满足 `selected` 时，终端渲染执行该分支。
           if (selected) {
             // For reject option
+            // 当 `selected.option.type` 匹配 `'reject'` 时，终端渲染执行对应分支。
             if (selected.option.type === 'reject') {
+              // trimmedFeedback格式化`rejectFeedback.trim`，供终端渲染后续处理使用。
               const trimmedFeedback = rejectFeedback.trim();
+              // 调用 onChange，触发终端渲染此处需要的副作用。
               onChange(selected.option, trimmedFeedback || undefined);
+              // 权限确认界面 File Permission Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
             // For accept-once option, pass accept feedback if present
+            // 当 `selected.option.type` 匹配 `'accept-once'` 时，终端渲染执行对应分支。
             if (selected.option.type === 'accept-once') {
+              // trimmedFeedback_0格式化`acceptFeedback.trim`，供终端渲染后续处理使用。
               const trimmedFeedback_0 = acceptFeedback.trim();
+              // 调用 onChange，触发终端渲染此处需要的副作用。
               onChange(selected.option, trimmedFeedback_0 || undefined);
+              // 权限确认界面 File Permission Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
+            // 调用 onChange，触发终端渲染此处需要的副作用。
             onChange(selected.option);
           }
+        // 这个回调绑定到 }} onCancel={() => onChange({，负责终端渲染在该局部场景下的响应。
         }} onCancel={() => onChange({
           type: 'reject'
+        // 这个回调绑定到 })} onFocus={value_0 => setFocusedOption(value_0)} onInputModeToggle={handleInputMod…，负责终端渲染在该局部场景下的响应。
         })} onFocus={value_0 => setFocusedOption(value_0)} onInputModeToggle={handleInputModeToggle} />
         </Box>
       </PermissionDialog>

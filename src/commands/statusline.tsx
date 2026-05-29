@@ -1,6 +1,10 @@
+// 类型依赖 { ContentBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准命令处理的数据契约。
 import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 类型依赖 { Command } 来自 ../commands.js，用于校准命令处理的数据契约。
 import type { Command } from '../commands.js';
+// 接入 AGENT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js';
+// statusline 集中保存命令处理斜杠命令 statusline要一起传递的字段。
 const statusline = {
   type: 'prompt',
   description: "Set up Claude Code's status line UI",
@@ -12,8 +16,11 @@ const statusline = {
   allowedTools: [AGENT_TOOL_NAME, 'Read(~/**)', 'Edit(~/.claude/settings.json)'],
   source: 'builtin',
   disableNonInteractive: true,
+  // getPromptForCommand 根据 args 读取或计算命令处理需要的结果。
   async getPromptForCommand(args): Promise<ContentBlockParam[]> {
+    // 提示词格式化`args.trim`，供命令处理后续处理使用。
     const prompt = args.trim() || 'Configure my statusLine from my shell PS1 configuration';
+    // 返回列表结果，保留命令处理已经排好的条目顺序。
     return [{
       type: 'text',
       text: `Create an ${AGENT_TOOL_NAME} with subagent_type "statusline-setup" and the prompt "${prompt}"`

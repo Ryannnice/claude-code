@@ -1,51 +1,85 @@
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import { useEffect, useState } from 'react';
+// 复用 ConfigurableShortcutHint 终端界面组件，避免在这里重复拼装显示逻辑。
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
+// 复用 Byline 终端界面组件，避免在这里重复拼装显示逻辑。
 import { Byline } from '../../components/design-system/Byline.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 引入 useKeybinding、useKeybindings，将 ../../keybindings/useKeybinding.js 中已经封装好的能力接到本文件流程里。
 import { useKeybinding, useKeybindings } from '../../keybindings/useKeybinding.js';
+// 类型依赖 { LoadedPlugin } 来自 ../../types/plugin.js，用于校准命令处理的数据契约。
 import type { LoadedPlugin } from '../../types/plugin.js';
+// 复用 count 工具函数，把通用处理留在 ../../utils/array.js 中维护。
 import { count } from '../../utils/array.js';
+// 复用 openBrowser 工具函数，把通用处理留在 ../../utils/browser.js 中维护。
 import { openBrowser } from '../../utils/browser.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../../utils/debug.js 中维护。
 import { logForDebugging } from '../../utils/debug.js';
+// 复用 errorMessage 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { errorMessage } from '../../utils/errors.js';
+// 复用 clearAllCaches 工具函数，把通用处理留在 ../../utils/plugins/cacheUtils.js 中维护。
 import { clearAllCaches } from '../../utils/plugins/cacheUtils.js';
+// 复用 formatInstallCount、getInstallCounts 工具函数，把通用处理留在 ../../utils/plugins/installCounts.js 中维护。
 import { formatInstallCount, getInstallCounts } from '../../utils/plugins/installCounts.js';
+// 复用 isPluginGloballyInstalled、isPluginInstalled 工具函数，把通用处理留在 ../../utils/plugins/installedPluginsManager.js 中维护。
 import { isPluginGloballyInstalled, isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js';
+// 复用 createPluginId、formatFailureDetails、formatMarketplaceLoadingErrors、getMarketplaceSourceDisplay、loadMarketplacesWithGracefulDegradation 工具函数，把通用处理留在 ../../utils/plugins/marketplaceHelpers.js 中维护。
 import { createPluginId, formatFailureDetails, formatMarketplaceLoadingErrors, getMarketplaceSourceDisplay, loadMarketplacesWithGracefulDegradation } from '../../utils/plugins/marketplaceHelpers.js';
+// 复用 getMarketplace、loadKnownMarketplacesConfig 工具函数，把通用处理留在 ../../utils/plugins/marketplaceManager.js 中维护。
 import { getMarketplace, loadKnownMarketplacesConfig } from '../../utils/plugins/marketplaceManager.js';
+// 复用 OFFICIAL_MARKETPLACE_NAME 工具函数，把通用处理留在 ../../utils/plugins/officialMarketplace.js 中维护。
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js';
+// 复用 installPluginFromMarketplace 工具函数，把通用处理留在 ../../utils/plugins/pluginInstallationHelpers.js 中维护。
 import { installPluginFromMarketplace } from '../../utils/plugins/pluginInstallationHelpers.js';
+// 复用 isPluginBlockedByPolicy 工具函数，把通用处理留在 ../../utils/plugins/pluginPolicy.js 中维护。
 import { isPluginBlockedByPolicy } from '../../utils/plugins/pluginPolicy.js';
+// 复用 plural 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { plural } from '../../utils/stringUtils.js';
+// 复用 truncateToWidth 工具函数，把通用处理留在 ../../utils/truncate.js 中维护。
 import { truncateToWidth } from '../../utils/truncate.js';
+// 引入 findPluginOptionsTarget、PluginOptionsFlow，将 ./PluginOptionsFlow.js 中已经封装好的能力接到本文件流程里。
 import { findPluginOptionsTarget, PluginOptionsFlow } from './PluginOptionsFlow.js';
+// 引入 PluginTrustWarning，将 ./PluginTrustWarning.js 中已经封装好的能力接到本文件流程里。
 import { PluginTrustWarning } from './PluginTrustWarning.js';
+// 引入 buildPluginDetailsMenuOptions、extractGitHubRepo、InstallablePlugin、PluginSelectionKeyHint，将 ./pluginDetailsHelpers.js 中已经封装好的能力接到本文件流程里。
 import { buildPluginDetailsMenuOptions, extractGitHubRepo, type InstallablePlugin, PluginSelectionKeyHint } from './pluginDetailsHelpers.js';
+// 类型依赖 { ViewState as ParentViewState } 来自 ./types.js，用于校准命令处理的数据契约。
 import type { ViewState as ParentViewState } from './types.js';
+// 引入 usePagination，将 ./usePagination.js 中已经封装好的能力接到本文件流程里。
 import { usePagination } from './usePagination.js';
+// Props 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   error: string | null;
+  // 这个回调绑定到 setError: (error: string | null) => void;，负责命令处理在该局部场景下的响应。
   setError: (error: string | null) => void;
   result: string | null;
+  // 这个回调绑定到 setResult: (result: string | null) => void;，负责命令处理在该局部场景下的响应。
   setResult: (result: string | null) => void;
+  // 这个回调绑定到 setViewState: (state: ParentViewState) => void;，负责命令处理在该局部场景下的响应。
   setViewState: (state: ParentViewState) => void;
   onInstallComplete?: () => void | Promise<void>;
   targetMarketplace?: string;
   targetPlugin?: string;
 };
+// ViewState 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type ViewState = 'marketplace-list' | 'plugin-list' | 'plugin-details' | {
   type: 'plugin-options';
   plugin: LoadedPlugin;
   pluginId: string;
 };
+// MarketplaceInfo 固化命令处理里传递的数据形状，帮助调用方按同一结构读写字段。
 type MarketplaceInfo = {
   name: string;
   totalPlugins: number;
   installedCount: number;
   source?: string;
 };
+// BrowseMarketplace 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function BrowseMarketplace({
   error,
   setError,
@@ -57,90 +91,129 @@ export function BrowseMarketplace({
   targetPlugin
 }: Props): React.ReactNode {
   // View state
+  // viewState 状态 由 React state 持有，setViewState 会在用户操作或异步结果返回时触发刷新。
   const [viewState, setViewState] = useState<ViewState>('marketplace-list');
+  // selectedMarketplace 市场数据 由 React state 持有，setSelectedMarketplace 会在用户操作或异步结果返回时触发刷新。
   const [selectedMarketplace, setSelectedMarketplace] = useState<string | null>(null);
+  // selectedPlugin 插件数据 由 React state 持有，setSelectedPlugin 会在用户操作或异步结果返回时触发刷新。
   const [selectedPlugin, setSelectedPlugin] = useState<InstallablePlugin | null>(null);
 
   // Data state
+  // marketplaces 市场数据 由 React state 持有，setMarketplaces 会在用户操作或异步结果返回时触发刷新。
   const [marketplaces, setMarketplaces] = useState<MarketplaceInfo[]>([]);
+  // availablePlugins 插件数据 由 React state 持有，setAvailablePlugins 会在用户操作或异步结果返回时触发刷新。
   const [availablePlugins, setAvailablePlugins] = useState<InstallablePlugin[]>([]);
+  // 加载状态 由 React state 持有，setLoading 会在用户操作或异步结果返回时触发刷新。
   const [loading, setLoading] = useState(true);
+  // 从 `useState<Map<string, number> | null>(null)` 按位置拆出 installCounts、setInstallCounts，让插件命令界面 Browse Marketplace分别处理这些返回值。
   const [installCounts, setInstallCounts] = useState<Map<string, number> | null>(null);
 
   // Selection state
+  // 选中索引 由 React state 持有，setSelectedIndex 会在用户操作或异步结果返回时触发刷新。
   const [selectedIndex, setSelectedIndex] = useState(0);
+  // 从 `useState<Set<string>>(new Set())` 按位置拆出 selectedForInstall、setSelectedForInstall，让插件命令界面 Browse Marketplace分别处理这些返回值。
   const [selectedForInstall, setSelectedForInstall] = useState<Set<string>>(new Set());
+  // 从 `useState<Set<string>>(new Set())` 按位置拆出 installingPlugins、setInstallingPlugins，让插件命令界面 Browse Marketplace分别处理这些返回值。
   const [installingPlugins, setInstallingPlugins] = useState<Set<string>>(new Set());
 
   // Pagination for plugin list (continuous scrolling)
+  // pagination读取 hook 状态，供插件命令界面 Browse Marketplace本轮渲染使用。
   const pagination = usePagination<InstallablePlugin>({
     totalItems: availablePlugins.length,
     selectedIndex
   });
 
   // Details view state
+  // detailsMenuIndex 索引 由 React state 持有，setDetailsMenuIndex 会在用户操作或异步结果返回时触发刷新。
   const [detailsMenuIndex, setDetailsMenuIndex] = useState(0);
+  // isInstalling 由 React state 持有，setIsInstalling 会在用户操作或异步结果返回时触发刷新。
   const [isInstalling, setIsInstalling] = useState(false);
+  // installError 错误信息 由 React state 持有，setInstallError 会在用户操作或异步结果返回时触发刷新。
   const [installError, setInstallError] = useState<string | null>(null);
 
   // Warning state for non-critical errors (e.g., some marketplaces failed to load)
+  // warning 警告信息 由 React state 持有，setWarning 会在用户操作或异步结果返回时触发刷新。
   const [warning, setWarning] = useState<string | null>(null);
 
   // Handle escape to go back - viewState-dependent navigation
+  // handleBack保存`React.useCallback`，供命令处理后续处理使用。
   const handleBack = React.useCallback(() => {
+    // 当 `viewState` 匹配 `'plugin-list'` 时，命令处理执行对应分支。
     if (viewState === 'plugin-list') {
       // If navigated directly to a specific marketplace via targetMarketplace,
       // go back to manage-marketplaces showing that marketplace's details
+      // 满足 `targetMarketplace` 时，命令处理执行该分支。
       if (targetMarketplace) {
+        // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
         setParentViewState({
           type: 'manage-marketplaces',
           targetMarketplace
         });
+      // 插件命令界面 Browse Marketplace在这里处理 `} else if (marketplaces.length === 1) {`，完成这一小步状态转换。
       } else if (marketplaces.length === 1) {
         // If there's only one marketplace, skip the marketplace-list view
         // since we auto-navigated past it on load
+        // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
         setParentViewState({
           type: 'menu'
         });
       } else {
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('marketplace-list');
+        // setSelectedMarketplace 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedMarketplace(null);
+        // setSelectedForInstall 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedForInstall(new Set());
       }
+    // 插件命令界面 Browse Marketplace在这里处理 `} else if (viewState === 'plugin-details') {`，完成这一小步状态转换。
     } else if (viewState === 'plugin-details') {
+      // setViewState 写入新的状态值，使命令处理后续读取保持一致。
       setViewState('plugin-list');
+      // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
       setSelectedPlugin(null);
     } else {
       // At root level (marketplace-list), exit the plugin menu
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     }
   }, [viewState, targetMarketplace, setParentViewState, marketplaces.length]);
+  // 调用 useKeybinding，触发命令处理此处需要的副作用。
   useKeybinding('confirm:no', handleBack, {
     context: 'Confirmation'
   });
 
   // Load marketplaces and count installed plugins
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // loadMarketplaceData 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadMarketplaceData() {
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // 配置读取`loadKnownMarketplacesConfig`，供命令处理后续处理使用。
         const config = await loadKnownMarketplacesConfig();
 
         // Load marketplaces with graceful degradation
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           marketplaces: marketplaces_0,
           failures
         } = await loadMarketplacesWithGracefulDegradation(config);
+        // marketplaceInfos 市场数据 从空数组开始收集，后续循环会按处理顺序追加条目。
         const marketplaceInfos: MarketplaceInfo[] = [];
+        // 调用 for，触发命令处理此处需要的副作用。
         for (const {
           name,
           config: marketplaceConfig,
           data: marketplace
         } of marketplaces_0) {
+          // 满足 `marketplace` 时，命令处理执行该分支。
           if (marketplace) {
             // Count how many plugins from this marketplace are installed
+            // installedFromThisMarketplace 市场数据统计`count`，供命令处理后续处理使用。
             const installedFromThisMarketplace = count(marketplace.plugins, plugin => isPluginInstalled(createPluginId(plugin.name, name)));
+            // marketplaceInfos 市场数据追加新条目，保持收集顺序与输入顺序一致。
             marketplaceInfos.push({
               name,
               totalPlugins: marketplace.plugins.length,
@@ -151,44 +224,70 @@ export function BrowseMarketplace({
         }
 
         // Sort so claude-plugin-directory is always first
+        // 调用 marketplaceInfos.sort，触发命令处理此处需要的副作用。
         marketplaceInfos.sort((a, b) => {
+          // 当 `a.name` 匹配 `'claude-plugin-directory'` 时，命令处理执行对应分支。
           if (a.name === 'claude-plugin-directory') return -1;
+          // 当 `b.name` 匹配 `'claude-plugin-directory'` 时，命令处理执行对应分支。
           if (b.name === 'claude-plugin-directory') return 1;
+          // 返回 `0`，作为命令处理这次计算的结果。
           return 0;
         });
+        // setMarketplaces 写入新的状态值，使命令处理后续读取保持一致。
         setMarketplaces(marketplaceInfos);
 
         // Handle marketplace loading errors/warnings
+        // successCount 数量统计`count`，供命令处理后续处理使用。
         const successCount = count(marketplaces_0, m => m.data !== null);
+        // errorResult 错误信息格式化`formatMarketplaceLoadingErrors`，供命令处理后续处理使用。
         const errorResult = formatMarketplaceLoadingErrors(failures, successCount);
+        // 满足 `errorResult` 时，命令处理执行该分支。
         if (errorResult) {
+          // 当 `errorResult.type` 匹配 `'warning'` 时，命令处理执行对应分支。
           if (errorResult.type === 'warning') {
+            // setWarning 写入新的状态值，使命令处理后续读取保持一致。
             setWarning(errorResult.message + '. Showing available marketplaces.');
           } else {
+            // 抛出 new Error(errorResult.message);，阻止命令处理在无效状态下继续运行。
             throw new Error(errorResult.message);
           }
         }
 
         // Skip marketplace selection if there's only one marketplace
+        // 只有 `marketplaceInfos.length === 1 && !targetMarketpla` 满足时，命令处理才执行该分支。
         if (marketplaceInfos.length === 1 && !targetMarketplace && !targetPlugin) {
+          // singleMarketplace 市场数据保存`marketplaceInfos[0]`，供插件命令界面 Browse Marketplace后续判断或输出使用。
           const singleMarketplace = marketplaceInfos[0];
+          // 满足 `singleMarketplace` 时，命令处理执行该分支。
           if (singleMarketplace) {
+            // setSelectedMarketplace 写入新的状态值，使命令处理后续读取保持一致。
             setSelectedMarketplace(singleMarketplace.name);
+            // setViewState 写入新的状态值，使命令处理后续读取保持一致。
             setViewState('plugin-list');
           }
         }
 
         // Handle targetMarketplace and targetPlugin after marketplaces are loaded
+        // 满足 `targetPlugin` 时，命令处理执行该分支。
         if (targetPlugin) {
           // Search for the plugin across all marketplaces
+          // foundPlugin 插件数据保存`null`，作为后续空值处理的输入。
           let foundPlugin: InstallablePlugin | null = null;
+          // foundMarketplace 市场数据 命名 `null`，让后续代码直接表达这个值的用途。
           let foundMarketplace: string | null = null;
+          // 循环处理 `const [name_0] of Object.entries(config)`，让命令处理把同类条目按顺序走完。
           for (const [name_0] of Object.entries(config)) {
+            // marketplace_0 市场数据读取`getMarketplace`，供命令处理后续处理使用。
             const marketplace_0 = await getMarketplace(name_0);
+            // 满足 `marketplace_0` 时，命令处理执行该分支。
             if (marketplace_0) {
+              // plugin_0 插件数据筛选`plugins.find`，供命令处理后续处理使用。
               const plugin_0 = marketplace_0.plugins.find(p => p.name === targetPlugin);
+              // 满足 `plugin_0` 时，命令处理执行该分支。
               if (plugin_0) {
+                // pluginId 插件数据构建`createPluginId`，供命令处理后续处理使用。
                 const pluginId = createPluginId(plugin_0.name, name_0);
+                // foundPlugin 插件数据更新为 `{`，确保插件命令界面后续读取最新状态。
                 foundPlugin = {
                   entry: plugin_0,
                   marketplaceName: name_0,
@@ -198,11 +297,14 @@ export function BrowseMarketplace({
                   // block — user may want to promote to user scope (gh-29997).
                   isInstalled: isPluginGloballyInstalled(pluginId)
                 };
+                // foundMarketplace 市场数据更新为 `name_0`，确保插件命令界面后续读取最新状态。
                 foundMarketplace = name_0;
+                // 结束这个分支或循环，避免命令处理继续落入后续路径。
                 break;
               }
             }
           }
+          // 只有 `foundPlugin && foundMarketplace` 满足时，命令处理才执行该分支。
           if (foundPlugin && foundMarketplace) {
             // Block only on global (user/managed) install — project/local scope
             // means the user might still want to add a user-scope entry so the
@@ -210,56 +312,88 @@ export function BrowseMarketplace({
             // The plugin-details view offers all three scope options; the backend
             // (installPluginOp → addInstalledPlugin) already supports multiple
             // scope entries per plugin.
+            // pluginId_0 插件数据 命名 `foundPlugin.pluginId`，让后续代码直接表达这个值的用途。
             const pluginId_0 = foundPlugin.pluginId;
+            // globallyInstalled保存`isPluginGloballyInstalled`，供命令处理后续处理使用。
             const globallyInstalled = isPluginGloballyInstalled(pluginId_0);
+            // 满足 `globallyInstalled` 时，命令处理执行该分支。
             if (globallyInstalled) {
+              // setError 写入新的状态值，使命令处理后续读取保持一致。
               setError(`Plugin '${pluginId_0}' is already installed globally. Use '/plugin' to manage existing plugins.`);
             } else {
               // Navigate to the plugin details view
+              // setSelectedMarketplace 写入新的状态值，使命令处理后续读取保持一致。
               setSelectedMarketplace(foundMarketplace);
+              // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
               setSelectedPlugin(foundPlugin);
+              // setViewState 写入新的状态值，使命令处理后续读取保持一致。
               setViewState('plugin-details');
             }
           } else {
+            // setError 写入新的状态值，使命令处理后续读取保持一致。
             setError(`Plugin "${targetPlugin}" not found in any marketplace`);
           }
+        // 插件命令界面 Browse Marketplace在这里处理 `} else if (targetMarketplace) {`，完成这一小步状态转换。
         } else if (targetMarketplace) {
           // Navigate directly to the specified marketplace
+          // marketplaceExists 市场数据筛选`marketplaceInfos.some`，供命令处理后续处理使用。
           const marketplaceExists = marketplaceInfos.some(m_0 => m_0.name === targetMarketplace);
+          // 满足 `marketplaceExists` 时，命令处理执行该分支。
           if (marketplaceExists) {
+            // setSelectedMarketplace 写入新的状态值，使命令处理后续读取保持一致。
             setSelectedMarketplace(targetMarketplace);
+            // setViewState 写入新的状态值，使命令处理后续读取保持一致。
             setViewState('plugin-list');
           } else {
+            // setError 写入新的状态值，使命令处理后续读取保持一致。
             setError(`Marketplace "${targetMarketplace}" not found`);
           }
         }
       } catch (err) {
+        // setError 写入新的状态值，使命令处理后续读取保持一致。
         setError(err instanceof Error ? err.message : 'Failed to load marketplaces');
       } finally {
+        // setLoading 写入新的状态值，使命令处理后续读取保持一致。
         setLoading(false);
       }
     }
+    // 显式忽略 `loadMarketplaceData()` 的返回值，只保留它触发的副作用。
     void loadMarketplaceData();
   }, [setError, targetMarketplace, targetPlugin]);
 
   // Load plugins when a marketplace is selected
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // selectedMarketplace 市场数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!selectedMarketplace) return;
+    // cancelled标记插件命令界面 Browse Marketplace是否启用对应路径。
     let cancelled = false;
+    // loadPluginsForMarketplace 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadPluginsForMarketplace(marketplaceName: string) {
+      // setLoading 写入新的状态值，使命令处理后续读取保持一致。
       setLoading(true);
+      // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
       try {
+        // marketplace_1 市场数据读取`getMarketplace`，供命令处理后续处理使用。
         const marketplace_1 = await getMarketplace(marketplaceName);
+        // 满足 `cancelled` 时，命令处理执行该分支。
         if (cancelled) return;
+        // marketplace_1 市场数据缺失时直接走兜底路径，避免命令处理使用无效输入。
         if (!marketplace_1) {
+          // 抛出 new Error(`Failed to load marketplace: ${marketplaceName}`);，阻止命令处理在无效状态下继续运行。
           throw new Error(`Failed to load marketplace: ${marketplaceName}`);
         }
 
         // Filter out already installed plugins
+        // installablePlugins 插件数据 从空数组开始收集，后续循环会按处理顺序追加条目。
         const installablePlugins: InstallablePlugin[] = [];
+        // 按顺序遍历 `marketplace_1.plugins` 中的entry，逐个交给命令处理处理。
         for (const entry of marketplace_1.plugins) {
+          // pluginId_1 插件数据构建`createPluginId`，供命令处理后续处理使用。
           const pluginId_1 = createPluginId(entry.name, marketplaceName);
+          // 满足 `isPluginBlockedByPolicy(pluginId_1)` 时，命令处理执行该分支。
           if (isPluginBlockedByPolicy(pluginId_1)) continue;
+          // installablePlugins 插件数据追加新条目，保持收集顺序与输入顺序一致。
           installablePlugins.push({
             entry,
             marketplaceName: marketplaceName,
@@ -272,158 +406,239 @@ export function BrowseMarketplace({
         }
 
         // Fetch install counts and sort by popularity
+        // 保护这一段可能失败的命令处理操作，确保异常能进入相邻错误处理。
         try {
+          // counts 数量读取`getInstallCounts`，供命令处理后续处理使用。
           const counts = await getInstallCounts();
+          // 满足 `cancelled` 时，命令处理执行该分支。
           if (cancelled) return;
+          // setInstallCounts 写入新的状态值，使命令处理后续读取保持一致。
           setInstallCounts(counts);
+          // 满足 `counts` 时，命令处理执行该分支。
           if (counts) {
             // Sort by install count (descending), then alphabetically
+            // 调用 installablePlugins.sort，触发命令处理此处需要的副作用。
             installablePlugins.sort((a_1, b_1) => {
+              // countA 数量读取`counts.get`，供命令处理后续处理使用。
               const countA = counts.get(a_1.pluginId) ?? 0;
+              // countB 数量读取`counts.get`，供命令处理后续处理使用。
               const countB = counts.get(b_1.pluginId) ?? 0;
+              // `countA` 与 `countB` 不一致时刷新派生状态，避免使用过期结果。
               if (countA !== countB) return countB - countA;
+              // 返回 `a_1.entry.name.localeCompare(b_1.entry.name)`，作为命令处理这次计算的结果。
               return a_1.entry.name.localeCompare(b_1.entry.name);
             });
           } else {
             // No counts available - sort alphabetically
+            // 调用 installablePlugins.sort，触发命令处理此处需要的副作用。
             installablePlugins.sort((a_2, b_2) => a_2.entry.name.localeCompare(b_2.entry.name));
           }
         } catch (error_0) {
+          // 满足 `cancelled` 时，命令处理执行该分支。
           if (cancelled) return;
           // Log the error, then gracefully degrade to alphabetical sort
+          // 记录命令处理运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Failed to fetch install counts: ${errorMessage(error_0)}`);
+          // 调用 installablePlugins.sort，触发命令处理此处需要的副作用。
           installablePlugins.sort((a_0, b_0) => a_0.entry.name.localeCompare(b_0.entry.name));
         }
+        // setAvailablePlugins 写入新的状态值，使命令处理后续读取保持一致。
         setAvailablePlugins(installablePlugins);
+        // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedIndex(0);
+        // setSelectedForInstall 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedForInstall(new Set());
       } catch (err_0) {
+        // 满足 `cancelled` 时，命令处理执行该分支。
         if (cancelled) return;
+        // setError 写入新的状态值，使命令处理后续读取保持一致。
         setError(err_0 instanceof Error ? err_0.message : 'Failed to load plugins');
       } finally {
+        // setLoading 写入新的状态值，使命令处理后续读取保持一致。
         setLoading(false);
       }
     }
+    // 显式忽略 `loadPluginsForMarketplace(selectedMarketplace)` 的返回值，只保留它触发的副作用。
     void loadPluginsForMarketplace(selectedMarketplace);
+    // 返回 `() => {`，作为命令处理这次计算的结果。
     return () => {
+      // cancelled更新为 `true`，确保插件命令界面后续读取最新状态。
       cancelled = true;
     };
   }, [selectedMarketplace, setError]);
 
   // Install selected plugins
+  // installSelectedPlugins 插件数据保存`async`，供命令处理后续处理使用。
   const installSelectedPlugins = async () => {
+    // 满足 `selectedForInstall.size === 0` 时，命令处理执行该分支。
     if (selectedForInstall.size === 0) return;
+    // pluginsToInstall 插件数据筛选`availablePlugins.filter`，供命令处理后续处理使用。
     const pluginsToInstall = availablePlugins.filter(p_0 => selectedForInstall.has(p_0.pluginId));
+    // setInstallingPlugins 写入新的状态值，使命令处理后续读取保持一致。
     setInstallingPlugins(new Set(pluginsToInstall.map(p_1 => p_1.pluginId)));
+    // successCount_0 数量保存`0`，供后续判断或组装使用。
     let successCount_0 = 0;
+    // failureCount 数量保存`0`，供后续判断或组装使用。
     let failureCount = 0;
+    // newFailedPlugins 插件数据 先占位，稍后的条件分支会根据实际输入补齐它。
     const newFailedPlugins: Array<{
       name: string;
       reason: string;
     }> = [];
+    // 按顺序遍历 `pluginsToInstall` 中的plugin_1 插件数据，逐个交给命令处理处理。
     for (const plugin_1 of pluginsToInstall) {
+      // 结果保存`installPluginFromMarketplace`，供命令处理后续处理使用。
       const result = await installPluginFromMarketplace({
         pluginId: plugin_1.pluginId,
         entry: plugin_1.entry,
         marketplaceName: plugin_1.marketplaceName,
         scope: 'user'
       });
+      // 满足 `result.success` 时，命令处理执行该分支。
       if (result.success) {
+        // 插件命令界面 Browse Marketplace在这里处理 `successCount_0++`，完成这一小步状态转换。
         successCount_0++;
       } else {
+        // 插件命令界面 Browse Marketplace在这里处理 `failureCount++`，完成这一小步状态转换。
         failureCount++;
+        // newFailedPlugins 插件数据追加新条目，保持收集顺序与输入顺序一致。
         newFailedPlugins.push({
           name: plugin_1.entry.name,
           reason: result.error
         });
       }
     }
+    // setInstallingPlugins 写入新的状态值，使命令处理后续读取保持一致。
     setInstallingPlugins(new Set());
+    // setSelectedForInstall 写入新的状态值，使命令处理后续读取保持一致。
     setSelectedForInstall(new Set());
+    // 清理相关缓存，确保命令处理下一次读取时重新加载最新数据。
     clearAllCaches();
 
     // Handle installation results
+    // 满足 `failureCount === 0` 时，命令处理执行该分支。
     if (failureCount === 0) {
       // All succeeded
+      // 消息保存`plural`，供命令处理后续处理使用。
       const message = `✓ Installed ${successCount_0} ${plural(successCount_0, 'plugin')}. ` + `Run /reload-plugins to activate.`;
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(message);
+    // 插件命令界面 Browse Marketplace在这里处理 `} else if (successCount_0 === 0) {`，完成这一小步状态转换。
     } else if (successCount_0 === 0) {
       // All failed - show error with reasons
+      // setError 写入新的状态值，使命令处理后续读取保持一致。
       setError(`Failed to install: ${formatFailureDetails(newFailedPlugins, true)}`);
     } else {
       // Mixed results - show partial success
+      // message_0 消息数据格式化`formatFailureDetails`，供命令处理后续处理使用。
       const message_0 = `✓ Installed ${successCount_0} of ${successCount_0 + failureCount} plugins. ` + `Failed: ${formatFailureDetails(newFailedPlugins, false)}. ` + `Run /reload-plugins to activate successfully installed plugins.`;
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(message_0);
     }
 
     // Handle completion callback and navigation
+    // 满足 `successCount_0 > 0` 时，命令处理执行该分支。
     if (successCount_0 > 0) {
+      // 满足 `onInstallComplete` 时，命令处理执行该分支。
       if (onInstallComplete) {
+        // 等待 `onInstallComplete()` 完成，再继续插件命令界面 Browse Marketplace的异步流程。
         await onInstallComplete();
       }
     }
+    // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
     setParentViewState({
       type: 'menu'
     });
   };
 
   // Install single plugin from details view
+  // handleSinglePluginInstall 插件数据保存`async`，供命令处理后续处理使用。
   const handleSinglePluginInstall = async (plugin_2: InstallablePlugin, scope: 'user' | 'project' | 'local' = 'user') => {
+    // setIsInstalling 写入新的状态值，使命令处理后续读取保持一致。
     setIsInstalling(true);
+    // setInstallError 写入新的状态值，使命令处理后续读取保持一致。
     setInstallError(null);
+    // result_0保存`installPluginFromMarketplace`，供命令处理后续处理使用。
     const result_0 = await installPluginFromMarketplace({
       pluginId: plugin_2.pluginId,
       entry: plugin_2.entry,
       marketplaceName: plugin_2.marketplaceName,
       scope
     });
+    // 满足 `result_0.success` 时，命令处理执行该分支。
     if (result_0.success) {
+      // loaded筛选`findPluginOptionsTarget`，供命令处理后续处理使用。
       const loaded = await findPluginOptionsTarget(plugin_2.pluginId);
+      // 满足 `loaded` 时，命令处理执行该分支。
       if (loaded) {
+        // setIsInstalling 写入新的状态值，使命令处理后续读取保持一致。
         setIsInstalling(false);
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState({
           type: 'plugin-options',
           plugin: loaded,
           pluginId: plugin_2.pluginId
         });
+        // 插件命令界面 Browse Marketplace在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(result_0.message);
+      // 满足 `onInstallComplete` 时，命令处理执行该分支。
       if (onInstallComplete) {
+        // 等待 `onInstallComplete()` 完成，再继续插件命令界面 Browse Marketplace的异步流程。
         await onInstallComplete();
       }
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     } else {
+      // setIsInstalling 写入新的状态值，使命令处理后续读取保持一致。
       setIsInstalling(false);
+      // setInstallError 写入新的状态值，使命令处理后续读取保持一致。
       setInstallError(result_0.error);
     }
   };
 
   // Handle error state
+  // 调用 useEffect，触发命令处理此处需要的副作用。
   useEffect(() => {
+    // 满足 `error` 时，命令处理执行该分支。
     if (error) {
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(error);
     }
   }, [error, setResult]);
 
   // Marketplace-list navigation
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责命令处理在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `selectedIndex > 0` 时，命令处理执行该分支。
       if (selectedIndex > 0) {
+        // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedIndex(selectedIndex - 1);
       }
     },
+    // 这个回调绑定到 'select:next': () => {，负责命令处理在该局部场景下的响应。
     'select:next': () => {
+      // 满足 `selectedIndex < marketplaces.length - 1` 时，命令处理执行该分支。
       if (selectedIndex < marketplaces.length - 1) {
+        // setSelectedIndex 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedIndex(selectedIndex + 1);
       }
     },
+    // 这个回调绑定到 'select:accept': () => {，负责命令处理在该局部场景下的响应。
     'select:accept': () => {
+      // marketplace_2 市场数据读取 `marketplaces[selectedIndex]` 对应条目，后续围绕该成员继续处理。
       const marketplace_2 = marketplaces[selectedIndex];
+      // 满足 `marketplace_2` 时，命令处理执行该分支。
       if (marketplace_2) {
+        // setSelectedMarketplace 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedMarketplace(marketplace_2.name);
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('plugin-list');
       }
     }
@@ -433,33 +648,52 @@ export function BrowseMarketplace({
   });
 
   // Plugin-list navigation
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责命令处理在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `selectedIndex > 0` 时，命令处理执行该分支。
       if (selectedIndex > 0) {
+        // 调用 pagination.handleSelectionChange，触发命令处理此处需要的副作用。
         pagination.handleSelectionChange(selectedIndex - 1, setSelectedIndex);
       }
     },
+    // 这个回调绑定到 'select:next': () => {，负责命令处理在该局部场景下的响应。
     'select:next': () => {
+      // 满足 `selectedIndex < availablePlugins.length - 1` 时，命令处理执行该分支。
       if (selectedIndex < availablePlugins.length - 1) {
+        // 调用 pagination.handleSelectionChange，触发命令处理此处需要的副作用。
         pagination.handleSelectionChange(selectedIndex + 1, setSelectedIndex);
       }
     },
+    // 这个回调绑定到 'select:accept': () => {，负责命令处理在该局部场景下的响应。
     'select:accept': () => {
+      // 只有 `selectedIndex === availablePlugins.length && sele` 满足时，命令处理才执行该分支。
       if (selectedIndex === availablePlugins.length && selectedForInstall.size > 0) {
+        // 显式忽略 `installSelectedPlugins()` 的返回值，只保留它触发的副作用。
         void installSelectedPlugins();
+      // 插件命令界面 Browse Marketplace在这里处理 `} else if (selectedIndex < availablePlugins.length) {`，完成这一小步状态转换。
       } else if (selectedIndex < availablePlugins.length) {
+        // plugin_3 插件数据保存`availablePlugins[selectedIndex]`，供插件命令界面 Browse Marketplace后续判断或输出使用。
         const plugin_3 = availablePlugins[selectedIndex];
+        // 满足 `plugin_3` 时，命令处理执行该分支。
         if (plugin_3) {
+          // 满足 `plugin_3.isInstalled` 时，命令处理执行该分支。
           if (plugin_3.isInstalled) {
+            // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
             setParentViewState({
               type: 'manage-plugins',
               targetPlugin: plugin_3.entry.name,
               targetMarketplace: plugin_3.marketplaceName
             });
           } else {
+            // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
             setSelectedPlugin(plugin_3);
+            // setViewState 写入新的状态值，使命令处理后续读取保持一致。
             setViewState('plugin-details');
+            // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
             setDetailsMenuIndex(0);
+            // setInstallError 写入新的状态值，使命令处理后续读取保持一致。
             setInstallError(null);
           }
         }
@@ -469,23 +703,36 @@ export function BrowseMarketplace({
     context: 'Select',
     isActive: viewState === 'plugin-list'
   });
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'plugin:toggle': () => {，负责命令处理在该局部场景下的响应。
     'plugin:toggle': () => {
+      // 满足 `selectedIndex < availablePlugins.length` 时，命令处理执行该分支。
       if (selectedIndex < availablePlugins.length) {
+        // plugin_4 插件数据 命名 `availablePlugins[selectedIndex]`，让后续代码直接表达这个值的用途。
         const plugin_4 = availablePlugins[selectedIndex];
+        // 只有 `plugin_4 && !plugin_4.isInstalled` 满足时，命令处理才执行该分支。
         if (plugin_4 && !plugin_4.isInstalled) {
+          // newSelection保存`Set`，供命令处理后续处理使用。
           const newSelection = new Set(selectedForInstall);
+          // 满足 `newSelection.has(plugin_4.pluginId)` 时，命令处理执行该分支。
           if (newSelection.has(plugin_4.pluginId)) {
+            // 调用 newSelection.delete，触发命令处理此处需要的副作用。
             newSelection.delete(plugin_4.pluginId);
           } else {
+            // 调用 newSelection.add，触发命令处理此处需要的副作用。
             newSelection.add(plugin_4.pluginId);
           }
+          // setSelectedForInstall 写入新的状态值，使命令处理后续读取保持一致。
           setSelectedForInstall(newSelection);
         }
       }
     },
+    // 这个回调绑定到 'plugin:install': () => {，负责命令处理在该局部场景下的响应。
     'plugin:install': () => {
+      // 满足 `selectedForInstall.size > 0` 时，命令处理执行该分支。
       if (selectedForInstall.size > 0) {
+        // 显式忽略 `installSelectedPlugins()` 的返回值，只保留它触发的副作用。
         void installSelectedPlugins();
       }
     }
@@ -495,40 +742,70 @@ export function BrowseMarketplace({
   });
 
   // Plugin-details navigation
+  // detailsMenuOptions 集合保存`React.useMemo`，供命令处理后续处理使用。
   const detailsMenuOptions = React.useMemo(() => {
+    // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
     if (!selectedPlugin) return [];
+    // hasHomepage标记插件命令界面 Browse Marketplace是否启用对应路径。
     const hasHomepage = selectedPlugin.entry.homepage;
+    // githubRepo保存`extractGitHubRepo`，供命令处理后续处理使用。
     const githubRepo = extractGitHubRepo(selectedPlugin);
+    // 返回 `buildPluginDetailsMenuOptions(hasHomepage, githubRepo)`，作为命令处理这次计算的结果。
     return buildPluginDetailsMenuOptions(hasHomepage, githubRepo);
   }, [selectedPlugin]);
+  // 调用 useKeybindings，触发命令处理此处需要的副作用。
   useKeybindings({
+    // 这个回调绑定到 'select:previous': () => {，负责命令处理在该局部场景下的响应。
     'select:previous': () => {
+      // 满足 `detailsMenuIndex > 0` 时，命令处理执行该分支。
       if (detailsMenuIndex > 0) {
+        // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
         setDetailsMenuIndex(detailsMenuIndex - 1);
       }
     },
+    // 这个回调绑定到 'select:next': () => {，负责命令处理在该局部场景下的响应。
     'select:next': () => {
+      // 满足 `detailsMenuIndex < detailsMenuOptions.length - 1` 时，命令处理执行该分支。
       if (detailsMenuIndex < detailsMenuOptions.length - 1) {
+        // setDetailsMenuIndex 写入新的状态值，使命令处理后续读取保持一致。
         setDetailsMenuIndex(detailsMenuIndex + 1);
       }
     },
+    // 这个回调绑定到 'select:accept': () => {，负责命令处理在该局部场景下的响应。
     'select:accept': () => {
+      // selectedPlugin 插件数据缺失时直接走兜底路径，避免命令处理使用无效输入。
       if (!selectedPlugin) return;
+      // action读取 `detailsMenuOptions[detailsMenuIndex]?.action` 对应条目，后续围绕该成员继续处理。
       const action = detailsMenuOptions[detailsMenuIndex]?.action;
+      // hasHomepage_0标记插件命令界面 Browse Marketplace是否启用对应路径。
       const hasHomepage_0 = selectedPlugin.entry.homepage;
+      // githubRepo_0保存`extractGitHubRepo`，供命令处理后续处理使用。
       const githubRepo_0 = extractGitHubRepo(selectedPlugin);
+      // 当 `action` 匹配 `'install-user'` 时，命令处理执行对应分支。
       if (action === 'install-user') {
+        // 显式忽略 `handleSinglePluginInstall(selectedPlugin, 'user')` 的返回值，只保留它触发的副作用。
         void handleSinglePluginInstall(selectedPlugin, 'user');
+      // 插件命令界面 Browse Marketplace在这里处理 `} else if (action === 'install-project') {`，完成这一小步状态转换。
       } else if (action === 'install-project') {
+        // 显式忽略 `handleSinglePluginInstall(selectedPlugin, 'project')` 的返回值，只保留它触发的副作用。
         void handleSinglePluginInstall(selectedPlugin, 'project');
+      // 插件命令界面 Browse Marketplace在这里处理 `} else if (action === 'install-local') {`，完成这一小步状态转换。
       } else if (action === 'install-local') {
+        // 显式忽略 `handleSinglePluginInstall(selectedPlugin, 'local')` 的返回值，只保留它触发的副作用。
         void handleSinglePluginInstall(selectedPlugin, 'local');
+      // 插件命令界面 Browse Marketplace在这里处理 `} else if (action === 'homepage' && hasHomepage_0) {`，完成这一小步状态转换。
       } else if (action === 'homepage' && hasHomepage_0) {
+        // 显式忽略 `openBrowser(hasHomepage_0)` 的返回值，只保留它触发的副作用。
         void openBrowser(hasHomepage_0);
+      // 插件命令界面 Browse Marketplace在这里处理 `} else if (action === 'github' && githubRepo_0) {`，完成这一小步状态转换。
       } else if (action === 'github' && githubRepo_0) {
+        // 显式忽略 `openBrowser(`https://github.com/${githubRepo_0}`)` 的返回值，只保留它触发的副作用。
         void openBrowser(`https://github.com/${githubRepo_0}`);
+      // 插件命令界面 Browse Marketplace在这里处理 `} else if (action === 'back') {`，完成这一小步状态转换。
       } else if (action === 'back') {
+        // setViewState 写入新的状态值，使命令处理后续读取保持一致。
         setViewState('plugin-list');
+        // setSelectedPlugin 写入新的状态值，使命令处理后续读取保持一致。
         setSelectedPlugin(null);
       }
     }
@@ -536,48 +813,70 @@ export function BrowseMarketplace({
     context: 'Select',
     isActive: viewState === 'plugin-details' && !!selectedPlugin
   });
+  // 只有 `typeof viewState === 'object' && viewState.type =` 满足时，命令处理才执行该分支。
   if (typeof viewState === 'object' && viewState.type === 'plugin-options') {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       plugin: plugin_5,
       pluginId: pluginId_2
     } = viewState;
+    // finish 封装插件命令界面的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     function finish(msg: string): void {
+      // setResult 写入新的状态值，使命令处理后续读取保持一致。
       setResult(msg);
+      // 满足 `onInstallComplete` 时，命令处理执行该分支。
       if (onInstallComplete) {
+        // 显式忽略 `onInstallComplete()` 的返回值，只保留它触发的副作用。
         void onInstallComplete();
       }
+      // setParentViewState 写入新的状态值，使命令处理后续读取保持一致。
       setParentViewState({
         type: 'menu'
       });
     }
+    // 返回 `<PluginOptionsFlow plugin={plugin_5} pluginId={pluginId_2} onDone={(out...`，作为命令处理这次计算的结果。
     return <PluginOptionsFlow plugin={plugin_5} pluginId={pluginId_2} onDone={(outcome, detail) => {
+      // 按照 outcome 的取值选择命令处理的具体处理分支。
       switch (outcome) {
         case 'configured':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`✓ Installed and configured ${plugin_5.name}. Run /reload-plugins to apply.`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
         case 'skipped':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`✓ Installed ${plugin_5.name}. Run /reload-plugins to apply.`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
         case 'error':
+          // 调用 finish，触发命令处理此处需要的副作用。
           finish(`Installed but failed to save config: ${detail}`);
+          // 结束这个分支或循环，避免命令处理继续落入后续路径。
           break;
       }
     }} />;
   }
 
   // Loading state
+  // 满足 `loading` 时，命令处理执行该分支。
   if (loading) {
+    // 返回 `<Text>Loading…</Text>`，作为命令处理这次计算的结果。
     return <Text>Loading…</Text>;
   }
 
   // Error state
+  // 满足 `error` 时，命令处理执行该分支。
   if (error) {
+    // 返回 `<Text color="error">{error}</Text>`，作为命令处理这次计算的结果。
     return <Text color="error">{error}</Text>;
   }
 
   // Marketplace selection view
+  // 当 `viewState` 匹配 `'marketplace-list'` 时，命令处理执行对应分支。
   if (viewState === 'marketplace-list') {
+    // marketplaces 市场数据为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
     if (marketplaces.length === 0) {
+      // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
       return <Box flexDirection="column">
           <Box marginBottom={1}>
             <Text bold>Select marketplace</Text>
@@ -593,6 +892,7 @@ export function BrowseMarketplace({
           </Box>
         </Box>;
     }
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text bold>Select marketplace</Text>
@@ -604,6 +904,7 @@ export function BrowseMarketplace({
               {figures.warning} {warning}
             </Text>
           </Box>}
+        {/* 这个回调绑定到 {marketplaces.map((marketplace_3, index) => <Box key={marketplace_3.name} flexDirect…，负责命令处理在该局部场景下的响应。 */}
         {marketplaces.map((marketplace_3, index) => <Box key={marketplace_3.name} flexDirection="column" marginBottom={index < marketplaces.length - 1 ? 1 : 0}>
             <Box>
               <Text color={selectedIndex === index ? 'suggestion' : undefined}>
@@ -633,10 +934,15 @@ export function BrowseMarketplace({
   }
 
   // Plugin details view
+  // 只有 `viewState === 'plugin-details' && selectedPlugin` 满足时，命令处理才执行该分支。
   if (viewState === 'plugin-details' && selectedPlugin) {
+    // hasHomepage_1标记插件命令界面 Browse Marketplace是否启用对应路径。
     const hasHomepage_1 = selectedPlugin.entry.homepage;
+    // githubRepo_1保存`extractGitHubRepo`，供命令处理后续处理使用。
     const githubRepo_1 = extractGitHubRepo(selectedPlugin);
+    // menuOptions 集合构建`buildPluginDetailsMenuOptions`，供命令处理后续处理使用。
     const menuOptions = buildPluginDetailsMenuOptions(hasHomepage_1, githubRepo_1);
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text bold>Plugin Details</Text>
@@ -700,6 +1006,7 @@ export function BrowseMarketplace({
 
         {/* Menu options */}
         <Box flexDirection="column">
+          {/* 这个回调绑定到 {menuOptions.map((option, index_0) => <Box key={option.action}>，负责命令处理在该局部场景下的响应。 */}
           {menuOptions.map((option, index_0) => <Box key={option.action}>
               {detailsMenuIndex === index_0 && <Text>{'> '}</Text>}
               {detailsMenuIndex !== index_0 && <Text>{'  '}</Text>}
@@ -721,7 +1028,9 @@ export function BrowseMarketplace({
   }
 
   // Plugin installation view
+  // availablePlugins 插件数据为空时立即返回或跳过，避免命令处理把空集合当成可处理内容。
   if (availablePlugins.length === 0) {
+    // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
     return <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text bold>Install plugins</Text>
@@ -739,7 +1048,9 @@ export function BrowseMarketplace({
   }
 
   // Get visible plugins from pagination
+  // visiblePlugins 插件数据读取`pagination.getVisibleItems`，供命令处理后续处理使用。
   const visiblePlugins = pagination.getVisibleItems(availablePlugins);
+  // 返回 `<Box flexDirection="column">`，作为命令处理这次计算的结果。
   return <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text bold>Install Plugins</Text>
@@ -751,12 +1062,19 @@ export function BrowseMarketplace({
         </Box>}
 
       {/* Plugin list */}
+      {/* 这个回调绑定到 {visiblePlugins.map((plugin_6, visibleIndex) => {，负责命令处理在该局部场景下的响应。 */}
       {visiblePlugins.map((plugin_6, visibleIndex) => {
+      // actualIndex 索引保存`pagination.toActualIndex`，供命令处理后续处理使用。
       const actualIndex = pagination.toActualIndex(visibleIndex);
+      // isSelected标记插件命令界面 Browse Marketplace是否启用对应路径。
       const isSelected = selectedIndex === actualIndex;
+      // isSelectedForInstall记录 `selectedForInstall.has` 是否成立，命令处理随后按该结果分支。
       const isSelectedForInstall = selectedForInstall.has(plugin_6.pluginId);
+      // isInstalling_0记录 `installingPlugins.has` 是否成立，命令处理随后按该结果分支。
       const isInstalling_0 = installingPlugins.has(plugin_6.pluginId);
+      // isLast标记插件命令界面 Browse Marketplace是否启用对应路径。
       const isLast = visibleIndex === visiblePlugins.length - 1;
+      // 返回 `<Box key={plugin_6.pluginId} flexDirection="column" marginBottom={isLas...`，作为命令处理这次计算的结果。
       return <Box key={plugin_6.pluginId} flexDirection="column" marginBottom={isLast && !error ? 0 : 1}>
             <Box>
               <Text color={isSelected ? 'suggestion' : undefined}>

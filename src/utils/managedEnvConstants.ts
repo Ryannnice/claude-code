@@ -11,6 +11,7 @@
  * VERTEX_REGION_CLAUDE_* is prefix-matched. New providers or new routing
  * config vars (endpoint, project, region, auth) do.
  */
+// PROVIDER_MANAGED_ENV_VARS 集合保存`Set`，供共享工具后续处理使用。
 const PROVIDER_MANAGED_ENV_VARS = new Set([
   // The flag itself — settings can't unset it once the host set it
   'CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST',
@@ -55,14 +56,18 @@ const PROVIDER_MANAGED_ENV_VARS = new Set([
   'CLAUDE_CODE_SUBAGENT_MODEL',
 ])
 
+// PROVIDER_MANAGED_ENV_PREFIXES 集合 聚合成有序列表，保持后续遍历顺序稳定。
 const PROVIDER_MANAGED_ENV_PREFIXES = [
   // Per-model Vertex region overrides — scales with model releases, so
   // prefix-matched to avoid drift on each launch.
   'VERTEX_REGION_CLAUDE_',
 ]
 
+// isProviderManagedEnvVar 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isProviderManagedEnvVar(key: string): boolean {
+  // upper保存`key.toUpperCase`，供共享工具后续处理使用。
   const upper = key.toUpperCase()
+  // 返回 `(`，作为共享工具这次计算的结果。
   return (
     PROVIDER_MANAGED_ENV_VARS.has(upper) ||
     PROVIDER_MANAGED_ENV_PREFIXES.some(p => upper.startsWith(p))
@@ -72,6 +77,7 @@ export function isProviderManagedEnvVar(key: string): boolean {
 /**
  * Dangerous shell settings that can execute arbitrary shell code
  */
+// DANGEROUS_SHELL_SETTINGS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const DANGEROUS_SHELL_SETTINGS = [
   'apiKeyHelper',
   'awsAuthRefresh',
@@ -105,6 +111,7 @@ export const DANGEROUS_SHELL_SETTINGS = [
  * - ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN
  * - AWS_BEARER_TOKEN_BEDROCK
  */
+// SAFE_ENV_VARS 集合保存`Set`，供共享工具后续处理使用。
 export const SAFE_ENV_VARS = new Set([
   'ANTHROPIC_CUSTOM_HEADERS',
   'ANTHROPIC_CUSTOM_MODEL_OPTION',

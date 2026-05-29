@@ -1,51 +1,100 @@
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 类型依赖 { ContentBlockParam, TextBlockParam } 来自 @anthropic-ai/sdk/resources，用于校准共享工具的数据契约。
 import type { ContentBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources';
+// 使用 Node/Bun 的 crypto 能力处理本地运行时资源。
 import { randomUUID } from 'crypto';
+// 引入 setPromptId，将 src/bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { setPromptId } from 'src/bootstrap/state.js';
+// 引入 builtInCommandNames、Command、CommandBase、findCommand、getCommand、getCommandName、hasCommand、PromptCommand，将 src/commands.js 中已经封装好的能力接到本文件流程里。
 import { builtInCommandNames, type Command, type CommandBase, findCommand, getCommand, getCommandName, hasCommand, type PromptCommand } from 'src/commands.js';
+// 引入 NO_CONTENT_MESSAGE，将 src/constants/messages.js 中已经封装好的能力接到本文件流程里。
 import { NO_CONTENT_MESSAGE } from 'src/constants/messages.js';
+// 类型依赖 { SetToolJSXFn, ToolUseContext } 来自 src/Tool.js，用于校准共享工具的数据契约。
 import type { SetToolJSXFn, ToolUseContext } from 'src/Tool.js';
+// 类型依赖 { AssistantMessage, AttachmentMessage, Message, NormalizedU… 来自 src/types/message.js，用于校准共享工具的数据契约。
 import type { AssistantMessage, AttachmentMessage, Message, NormalizedUserMessage, ProgressMessage, UserMessage } from 'src/types/message.js';
+// 引入 addInvokedSkill、getSessionId，将 ../../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { addInvokedSkill, getSessionId } from '../../bootstrap/state.js';
+// 引入 COMMAND_MESSAGE_TAG、COMMAND_NAME_TAG，将 ../../constants/xml.js 中已经封装好的能力接到本文件流程里。
 import { COMMAND_MESSAGE_TAG, COMMAND_NAME_TAG } from '../../constants/xml.js';
+// 类型依赖 { CanUseToolFn } 来自 ../../hooks/useCanUseTool.js，用于校准共享工具的数据契约。
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED、logEvent 服务层能力，把外部通信或共享状态交给 ../../services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED, logEvent } from '../../services/analytics/index.js';
+// 接入 getDumpPromptsPath 服务层能力，把外部通信或共享状态交给 ../../services/api/dumpPrompts.js 处理。
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js';
+// 接入 buildPostCompactMessages 服务层能力，把外部通信或共享状态交给 ../../services/compact/compact.js 处理。
 import { buildPostCompactMessages } from '../../services/compact/compact.js';
+// 接入 resetMicrocompactState 服务层能力，把外部通信或共享状态交给 ../../services/compact/microCompact.js 处理。
 import { resetMicrocompactState } from '../../services/compact/microCompact.js';
+// 类型依赖 { Progress as AgentProgress } 来自 ../../tools/AgentTool/AgentTool.js，用于校准共享工具的数据契约。
 import type { Progress as AgentProgress } from '../../tools/AgentTool/AgentTool.js';
+// 接入 runAgent 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { runAgent } from '../../tools/AgentTool/runAgent.js';
+// 接入 renderToolUseProgressMessage 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { renderToolUseProgressMessage } from '../../tools/AgentTool/UI.js';
+// 类型依赖 { CommandResultDisplay } 来自 ../../types/command.js，用于校准共享工具的数据契约。
 import type { CommandResultDisplay } from '../../types/command.js';
+// 引入 createAbortController，将 ../abortController.js 中已经封装好的能力接到本文件流程里。
 import { createAbortController } from '../abortController.js';
+// 引入 getAgentContext，将 ../agentContext.js 中已经封装好的能力接到本文件流程里。
 import { getAgentContext } from '../agentContext.js';
+// 引入 createAttachmentMessage、getAttachmentMessages，将 ../attachments.js 中已经封装好的能力接到本文件流程里。
 import { createAttachmentMessage, getAttachmentMessages } from '../attachments.js';
+// 引入 logForDebugging，将 ../debug.js 中已经封装好的能力接到本文件流程里。
 import { logForDebugging } from '../debug.js';
+// 引入 isEnvTruthy，将 ../envUtils.js 中已经封装好的能力接到本文件流程里。
 import { isEnvTruthy } from '../envUtils.js';
+// 引入 AbortError、MalformedCommandError，将 ../errors.js 中已经封装好的能力接到本文件流程里。
 import { AbortError, MalformedCommandError } from '../errors.js';
+// 引入 getDisplayPath，将 ../file.js 中已经封装好的能力接到本文件流程里。
 import { getDisplayPath } from '../file.js';
+// 引入 extractResultText、prepareForkedCommandContext，将 ../forkedAgent.js 中已经封装好的能力接到本文件流程里。
 import { extractResultText, prepareForkedCommandContext } from '../forkedAgent.js';
+// 引入 getFsImplementation，将 ../fsOperations.js 中已经封装好的能力接到本文件流程里。
 import { getFsImplementation } from '../fsOperations.js';
+// 引入 isFullscreenEnvEnabled，将 ../fullscreen.js 中已经封装好的能力接到本文件流程里。
 import { isFullscreenEnvEnabled } from '../fullscreen.js';
+// 引入 toArray，将 ../generators.js 中已经封装好的能力接到本文件流程里。
 import { toArray } from '../generators.js';
+// 引入 registerSkillHooks，将 ../hooks/registerSkillHooks.js 中已经封装好的能力接到本文件流程里。
 import { registerSkillHooks } from '../hooks/registerSkillHooks.js';
+// 引入 logError，将 ../log.js 中已经封装好的能力接到本文件流程里。
 import { logError } from '../log.js';
+// 引入 enqueuePendingNotification，将 ../messageQueueManager.js 中已经封装好的能力接到本文件流程里。
 import { enqueuePendingNotification } from '../messageQueueManager.js';
+// 引入 createCommandInputMessage、createSyntheticUserCaveatMessage、createSystemMessage、createUserInterruptionMessage、createUserMessage、formatCommandInputTags、isCompactBoundaryMessage、isSystemLocalCommandMessage、normalizeMessages、prepareUserContent，将 ../messages.js 中已经封装好的能力接到本文件流程里。
 import { createCommandInputMessage, createSyntheticUserCaveatMessage, createSystemMessage, createUserInterruptionMessage, createUserMessage, formatCommandInputTags, isCompactBoundaryMessage, isSystemLocalCommandMessage, normalizeMessages, prepareUserContent } from '../messages.js';
+// 类型依赖 { ModelAlias } 来自 ../model/aliases.js，用于校准共享工具的数据契约。
 import type { ModelAlias } from '../model/aliases.js';
+// 引入 parseToolListFromCLI，将 ../permissions/permissionSetup.js 中已经封装好的能力接到本文件流程里。
 import { parseToolListFromCLI } from '../permissions/permissionSetup.js';
+// 引入 hasPermissionsToUseTool，将 ../permissions/permissions.js 中已经封装好的能力接到本文件流程里。
 import { hasPermissionsToUseTool } from '../permissions/permissions.js';
+// 引入 isOfficialMarketplaceName、parsePluginIdentifier，将 ../plugins/pluginIdentifier.js 中已经封装好的能力接到本文件流程里。
 import { isOfficialMarketplaceName, parsePluginIdentifier } from '../plugins/pluginIdentifier.js';
+// 引入 isRestrictedToPluginOnly、isSourceAdminTrusted，将 ../settings/pluginOnlyPolicy.js 中已经封装好的能力接到本文件流程里。
 import { isRestrictedToPluginOnly, isSourceAdminTrusted } from '../settings/pluginOnlyPolicy.js';
+// 引入 parseSlashCommand，将 ../slashCommandParsing.js 中已经封装好的能力接到本文件流程里。
 import { parseSlashCommand } from '../slashCommandParsing.js';
+// 引入 sleep，将 ../sleep.js 中已经封装好的能力接到本文件流程里。
 import { sleep } from '../sleep.js';
+// 引入 recordSkillUsage，将 ../suggestions/skillUsageTracking.js 中已经封装好的能力接到本文件流程里。
 import { recordSkillUsage } from '../suggestions/skillUsageTracking.js';
+// 引入 logOTelEvent、redactIfDisabled，将 ../telemetry/events.js 中已经封装好的能力接到本文件流程里。
 import { logOTelEvent, redactIfDisabled } from '../telemetry/events.js';
+// 引入 buildPluginCommandTelemetryFields，将 ../telemetry/pluginTelemetry.js 中已经封装好的能力接到本文件流程里。
 import { buildPluginCommandTelemetryFields } from '../telemetry/pluginTelemetry.js';
+// 引入 getAssistantMessageContentLength，将 ../tokens.js 中已经封装好的能力接到本文件流程里。
 import { getAssistantMessageContentLength } from '../tokens.js';
+// 引入 createAgentId，将 ../uuid.js 中已经封装好的能力接到本文件流程里。
 import { createAgentId } from '../uuid.js';
+// 引入 getWorkload，将 ../workloadContext.js 中已经封装好的能力接到本文件流程里。
 import { getWorkload } from '../workloadContext.js';
+// 类型依赖 { ProcessUserInputBaseResult, ProcessUserInputContext } 来自 ./processUserInput.js，用于校准共享工具的数据契约。
 import type { ProcessUserInputBaseResult, ProcessUserInputContext } from './processUserInput.js';
+// SlashCommandResult 固化共享工具里传递的数据形状，帮助调用方按同一结构读写字段。
 type SlashCommandResult = ProcessUserInputBaseResult & {
   command: Command;
 };
@@ -53,15 +102,21 @@ type SlashCommandResult = ProcessUserInputBaseResult & {
 // Poll interval and deadline for MCP settle before launching a background
 // forked subagent. MCP servers typically connect within 1-3s of startup;
 // 10s headroom covers slow SSE handshakes.
+// MCP_SETTLE_POLL_MS 集合保存`200`，供共享工具 process Slash Command后续判断或输出使用。
 const MCP_SETTLE_POLL_MS = 200;
+// MCP_SETTLE_TIMEOUT_MS 集合保存`10_000`，供共享工具 process Slash Command后续判断或输出使用。
 const MCP_SETTLE_TIMEOUT_MS = 10_000;
 
 /**
  * Executes a slash command with context: fork in a sub-agent.
  */
+// executeForkedSlashCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function executeForkedSlashCommand(command: CommandBase & PromptCommand, args: string, context: ProcessUserInputContext, precedingInputBlocks: ContentBlockParam[], setToolJSX: SetToolJSXFn, canUseTool: CanUseToolFn): Promise<SlashCommandResult> {
+  // agentId构建`createAgentId`，供共享工具后续处理使用。
   const agentId = createAgentId();
+  // pluginMarketplace 插件数据解析`parsePluginIdentifier`，供共享工具后续处理使用。
   const pluginMarketplace = command.pluginInfo ? parsePluginIdentifier(command.pluginInfo.repository).marketplace : undefined;
+  // 记录共享工具运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_slash_command_forked', {
     command_name: command.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     invocation_trigger: 'user-slash' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -73,6 +128,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
       ...buildPluginCommandTelemetryFields(command.pluginInfo)
     })
   });
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     skillContent,
     modifiedGetAppState,
@@ -81,10 +137,12 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   } = await prepareForkedCommandContext(command, args, context);
 
   // Merge skill's effort into the agent definition so runAgent applies it
+  // agentDefinition标记共享工具 process Slash Command是否启用对应路径。
   const agentDefinition = command.effort !== undefined ? {
     ...baseAgent,
     effort: command.effort
   } : baseAgent;
+  // 记录共享工具运行诊断，方便排查异常路径或性能问题。
   logForDebugging(`Executing forked slash command /${command.name} with agent ${agentDefinition.agentType}`);
 
   // Assistant mode: fire-and-forget. Launch subagent in background, return
@@ -99,11 +157,14 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   // isMeta prompts are hidden. Outside assistant mode, context:fork commands
   // are user-invoked skills (/commit etc.) that should run synchronously
   // with the progress UI.
+  // 只有 `feature('KAIROS') && (await context.getAppState()).kairosEnabled` 满足时，共享工具才执行该分支。
   if (feature('KAIROS') && (await context.getAppState()).kairosEnabled) {
     // Standalone abortController — background subagents survive main-thread
     // ESC (same policy as AgentTool's async path). They're cron-driven; if
     // killed mid-run they just re-fire on the next schedule.
+    // bgAbortController构建`createAbortController`，供共享工具后续处理使用。
     const bgAbortController = createAbortController();
+    // commandName 命令数据读取`getCommandName`，供共享工具后续处理使用。
     const commandName = getCommandName(command);
 
     // Workload: handlePromptSubmit wraps the entire turn in runWithWorkload
@@ -115,6 +176,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
     // handlePromptSubmit → fresh runWithWorkload boundary (which always
     // establishes a new context, even for `undefined`) → so it needs its
     // own QueuedCommand.workload tag to preserve attribution.
+    // spawnTimeWorkload读取`getWorkload`，供共享工具后续处理使用。
     const spawnTimeWorkload = getWorkload();
 
     // Re-enter the queue as a hidden prompt. isMeta: hides from queue
@@ -123,6 +185,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
     // drained, this triggers a main-agent turn that sees the result and
     // decides whether to SendUserMessage. Propagate workload so that
     // second turn is also tagged.
+    // enqueueResult保存`enqueuePendingNotification`，供共享工具后续处理使用。
     const enqueueResult = (value: string): void => enqueuePendingNotification({
       value,
       mode: 'prompt',
@@ -131,6 +194,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
       skipSlashCommands: true,
       workload: spawnTimeWorkload
     });
+    // 调用 void，触发共享工具此处需要的副作用。
     void (async () => {
       // Wait for MCP servers to settle. Scheduled tasks fire at startup and
       // all N drain within ~1ms (since we return immediately), capturing
@@ -138,14 +202,22 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
       // accidentally avoided this — tasks serialized, so task N's drain
       // happened after task N-1's 30s run, by which time MCP was up.
       // Poll until no 'pending' clients remain, then refresh.
+      // deadline记录时间`Date.now`，供共享工具后续处理使用。
       const deadline = Date.now() + MCP_SETTLE_TIMEOUT_MS;
+      // 只要 Date.now() < deadline 成立，就持续推进共享工具中的循环处理。
       while (Date.now() < deadline) {
+        // s 集合读取`context.getAppState`，供共享工具后续处理使用。
         const s = context.getAppState();
+        // 满足 `!s.mcp.clients.some(c => c.type === 'pending')` 时，共享工具执行该分支。
         if (!s.mcp.clients.some(c => c.type === 'pending')) break;
+        // 等待 `sleep(MCP_SETTLE_POLL_MS)` 完成，再继续共享工具 process Slash Command的异步流程。
         await sleep(MCP_SETTLE_POLL_MS);
       }
+      // freshTools 集合 命名 `context.options.refreshTools?.() ?? context.options.tools`，让后续代码直接表达这个值的用途。
       const freshTools = context.options.refreshTools?.() ?? context.options.tools;
+      // agentMessages 消息数据 从空数组开始收集，后续循环会按处理顺序追加条目。
       const agentMessages: Message[] = [];
+      // 逐项读取 `runAgent({` 中的消息，按输入顺序推进共享工具 process Slash Command。
       for await (const message of runAgent({
         agentDefinition,
         promptMessages,
@@ -163,18 +235,26 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
           agentId
         }
       })) {
+        // agentMessages 消息数据追加新条目，保持收集顺序与输入顺序一致。
         agentMessages.push(message);
       }
+      // resultText保存`extractResultText`，供共享工具后续处理使用。
       const resultText = extractResultText(agentMessages, 'Command completed');
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logForDebugging(`Background forked command /${commandName} completed (agent ${agentId})`);
+      // 调用 enqueueResult，触发共享工具此处需要的副作用。
       enqueueResult(`<scheduled-task-result command="/${commandName}">\n${resultText}\n</scheduled-task-result>`);
+    // 这个回调绑定到 })().catch(err => {，负责共享工具在该局部场景下的响应。
     })().catch(err => {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logError(err);
+      // 调用 enqueueResult，触发共享工具此处需要的副作用。
       enqueueResult(`<scheduled-task-result command="/${commandName}" status="failed">\n${err instanceof Error ? err.message : String(err)}\n</scheduled-task-result>`);
     });
 
     // Nothing to render, nothing to query — the background runner re-enters
     // the queue on its own schedule.
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [],
       shouldQuery: false,
@@ -183,16 +263,23 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   }
 
   // Collect messages from the forked agent
+  // agentMessages 消息数据 从空数组开始收集，后续循环会按处理顺序追加条目。
   const agentMessages: Message[] = [];
 
   // Build progress messages for the agent progress UI
+  // progressMessages 消息数据 从空数组开始收集，后续循环会按处理顺序追加条目。
   const progressMessages: ProgressMessage<AgentProgress>[] = [];
+  // parentToolUseID固定为 ``forked-command-${command.name}``，作为共享工具 process Slash Command后续展示或比较的基准。
   const parentToolUseID = `forked-command-${command.name}`;
+  // toolUseCounter 数量 命名 `0`，让后续代码直接表达这个值的用途。
   let toolUseCounter = 0;
 
   // Helper to create a progress message from an agent message
+  // createProgressMessage 消息数据保存`(message: AssistantMessage | NormalizedUserMessage): Prog...`，供共享工具 process Slash Command后续判断或输出使用。
   const createProgressMessage = (message: AssistantMessage | NormalizedUserMessage): ProgressMessage<AgentProgress> => {
+    // 共享工具 process Slash Command在这里处理 `toolUseCounter++`，完成这一小步状态转换。
     toolUseCounter++;
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       type: 'progress',
       data: {
@@ -209,7 +296,9 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   };
 
   // Helper to update progress display using agent progress UI
+  // updateProgress 集合封装成回调，供共享工具 process Slash Command在事件触发或异步步骤中调用。
   const updateProgress = (): void => {
+    // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
     setToolJSX({
       jsx: renderToolUseProgressMessage(progressMessages, {
         tools: context.options.tools,
@@ -222,10 +311,13 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   };
 
   // Show initial "Initializing…" state
+  // 调用 updateProgress，触发共享工具此处需要的副作用。
   updateProgress();
 
   // Run the sub-agent
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // 逐项读取 `runAgent({` 中的消息，按输入顺序推进共享工具 process Slash Command。
     for await (const message of runAgent({
       agentDefinition,
       promptMessages,
@@ -239,45 +331,66 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
       model: command.model as ModelAlias | undefined,
       availableTools: context.options.tools
     })) {
+      // agentMessages 消息数据追加新条目，保持收集顺序与输入顺序一致。
       agentMessages.push(message);
+      // normalizedNew保存`normalizeMessages`，供共享工具后续处理使用。
       const normalizedNew = normalizeMessages([message]);
 
       // Add progress message for assistant messages (which contain tool uses)
+      // 当 `message.type` 匹配 `'assistant'` 时，共享工具执行对应分支。
       if (message.type === 'assistant') {
         // Increment token count in spinner for assistant messages
+        // contentLength 数量读取`getAssistantMessageContentLength`，供共享工具后续处理使用。
         const contentLength = getAssistantMessageContentLength(message);
+        // 满足 `contentLength > 0` 时，共享工具执行该分支。
         if (contentLength > 0) {
+          // context.setResponseLength 写入新的状态值，使共享工具后续读取保持一致。
           context.setResponseLength(len => len + contentLength);
         }
+        // normalizedMsg读取 `normalizedNew[0]` 对应条目，后续围绕该成员继续处理。
         const normalizedMsg = normalizedNew[0];
+        // 只有 `normalizedMsg && normalizedMsg.type === 'assistan` 满足时，共享工具才执行该分支。
         if (normalizedMsg && normalizedMsg.type === 'assistant') {
+          // progressMessages 消息数据追加新条目，保持收集顺序与输入顺序一致。
           progressMessages.push(createProgressMessage(message));
+          // 调用 updateProgress，触发共享工具此处需要的副作用。
           updateProgress();
         }
       }
 
       // Add progress message for user messages (which contain tool results)
+      // 当 `message.type` 匹配 `'user'` 时，共享工具执行对应分支。
       if (message.type === 'user') {
+        // normalizedMsg读取 `normalizedNew[0]` 对应条目，后续围绕该成员继续处理。
         const normalizedMsg = normalizedNew[0];
+        // 当 `normalizedMsg && normalizedMsg.type` 匹配 `'user'` 时，共享工具执行对应分支。
         if (normalizedMsg && normalizedMsg.type === 'user') {
+          // progressMessages 消息数据追加新条目，保持收集顺序与输入顺序一致。
           progressMessages.push(createProgressMessage(normalizedMsg));
+          // 调用 updateProgress，触发共享工具此处需要的副作用。
           updateProgress();
         }
       }
     }
   } finally {
     // Clear the progress display
+    // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
     setToolJSX(null);
   }
+  // resultText保存`extractResultText`，供共享工具后续处理使用。
   let resultText = extractResultText(agentMessages, 'Command completed');
+  // 记录共享工具运行诊断，方便排查异常路径或性能问题。
   logForDebugging(`Forked slash command /${command.name} completed with agent ${agentId}`);
 
   // Prepend debug log for ant users so it appears inside the command output
+  // 当 `"external"` 匹配 `'ant'` 时，共享工具执行对应分支。
   if ("external" === 'ant') {
+    // resultText更新为 ``[ANT-ONLY] API calls: ${getDisplayPath(getDumpPromptsPat...`，确保共享工具后续读取最新状态。
     resultText = `[ANT-ONLY] API calls: ${getDisplayPath(getDumpPromptsPath(agentId))}\n${resultText}`;
   }
 
   // Return the result as a user message (simulates the agent's output)
+  // 对话消息 聚合成有序列表，保持后续遍历顺序稳定。
   const messages: UserMessage[] = [createUserMessage({
     content: prepareUserContent({
       inputString: `/${getCommandName(command)} ${args}`.trim(),
@@ -286,6 +399,7 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
   }), createUserMessage({
     content: `<local-command-stdout>\n${resultText}\n</local-command-stdout>`
   })];
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     messages,
     shouldQuery: false,
@@ -301,16 +415,24 @@ async function executeForkedSlashCommand(command: CommandBase & PromptCommand, a
  * @param commandName - The potential command name to check
  * @returns true if it looks like a command name, false if it contains non-command characters
  */
+// looksLikeCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function looksLikeCommand(commandName: string): boolean {
   // Command names should only contain [a-zA-Z0-9:_-]
   // If it contains other characters, it's probably a file path or other input
+  // 返回 `!/[^a-zA-Z0-9:\-_]/.test(commandName)`，作为共享工具这次计算的结果。
   return !/[^a-zA-Z0-9:\-_]/.test(commandName);
 }
+// processSlashCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function processSlashCommand(inputString: string, precedingInputBlocks: ContentBlockParam[], imageContentBlocks: ContentBlockParam[], attachmentMessages: AttachmentMessage[], context: ProcessUserInputContext, setToolJSX: SetToolJSXFn, uuid?: string, isAlreadyProcessing?: boolean, canUseTool?: CanUseToolFn): Promise<ProcessUserInputBaseResult> {
+  // 解析结果解析`parseSlashCommand`，供共享工具后续处理使用。
   const parsed = parseSlashCommand(inputString);
+  // 解析结果缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!parsed) {
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_input_slash_missing', {});
+    // errorMessage 消息数据读取 `'Commands are in the form `/command [args]`'` 对应条目，后续围绕该成员继续处理。
     const errorMessage = 'Commands are in the form `/command [args]`';
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [createSyntheticUserCaveatMessage(), ...attachmentMessages, createUserMessage({
         content: prepareUserContent({
@@ -322,29 +444,40 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
       resultText: errorMessage
     };
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     commandName,
     args: parsedArgs,
     isMcp
   } = parsed;
+  // sanitizedCommandName 命令数据保存`builtInCommandNames`，供共享工具后续处理使用。
   const sanitizedCommandName = isMcp ? 'mcp' : !builtInCommandNames().has(commandName) ? 'custom' : commandName;
 
   // Check if it's a real command before processing
+  // 满足 `!hasCommand(commandName, context.options.commands)` 时，共享工具执行该分支。
   if (!hasCommand(commandName, context.options.commands)) {
     // Check if this looks like a command name vs a file path or other input
     // Also check if it's an actual file path that exists
+    // isFilePath 路径数据标记共享工具 process Slash Command是否启用对应路径。
     let isFilePath = false;
+    // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
     try {
+      // 等待 `getFsImplementation().stat(`/${commandName}`)` 完成，再继续共享工具 process Slash Command的异步流程。
       await getFsImplementation().stat(`/${commandName}`);
+      // isFilePath 路径数据更新为 `true`，确保共享工具后续读取最新状态。
       isFilePath = true;
     } catch {
       // Not a file path — treat as command name
     }
+    // 只有 `looksLikeCommand(commandName) && !isFilePath` 满足时，共享工具才执行该分支。
     if (looksLikeCommand(commandName) && !isFilePath) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_input_slash_invalid', {
         input: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // unknownMessage 消息数据保存``Unknown skill: ${commandName}``，作为后续固定文本处理的输入。
       const unknownMessage = `Unknown skill: ${commandName}`;
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         messages: [createSyntheticUserCaveatMessage(), ...attachmentMessages, createUserMessage({
           content: prepareUserContent({
@@ -359,15 +492,20 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
         resultText: unknownMessage
       };
     }
+    // promptId保存`randomUUID`，供共享工具后续处理使用。
     const promptId = randomUUID();
+    // setPromptId 写入新的状态值，使共享工具后续读取保持一致。
     setPromptId(promptId);
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_input_prompt', {});
     // Log user prompt event for OTLP
+    // 显式忽略 `logOTelEvent('user_prompt', {` 的返回值，只保留它触发的副作用。
     void logOTelEvent('user_prompt', {
       prompt_length: String(inputString.length),
       prompt: redactIfDisabled(inputString),
       'prompt.id': promptId
     });
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [createUserMessage({
         content: prepareUserContent({
@@ -382,6 +520,7 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
 
   // Track slash command usage for feature discovery
 
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     messages: newMessages,
     shouldQuery: messageShouldQuery,
@@ -395,35 +534,50 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
   } = await getMessagesForSlashCommand(commandName, parsedArgs, setToolJSX, context, precedingInputBlocks, imageContentBlocks, isAlreadyProcessing, canUseTool, uuid);
 
   // Local slash commands that skip messages
+  // newMessages 消息数据为空时立即返回或跳过，避免共享工具把空集合当成可处理内容。
   if (newMessages.length === 0) {
+    // eventData 集中保存共享工具 process Slash Command要一起传递的字段。
     const eventData: Record<string, boolean | number | undefined> = {
       input: sanitizedCommandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     };
 
     // Add plugin metadata if this is a plugin command
+    // 只有 `returnedCommand.type === 'prompt' && returnedComm` 满足时，共享工具才执行该分支。
     if (returnedCommand.type === 'prompt' && returnedCommand.pluginInfo) {
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         pluginManifest,
         repository
       } = returnedCommand.pluginInfo;
+      // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
       const {
         marketplace
       } = parsePluginIdentifier(repository);
+      // isOfficial记录 `isOfficialMarketplaceName` 是否成立，共享工具随后按该结果分支。
       const isOfficial = isOfficialMarketplaceName(marketplace);
       // _PROTO_* routes to PII-tagged plugin_name/marketplace_name BQ columns
       // (unredacted, all users); plugin_name/plugin_repository stay in
       // additional_metadata as redacted variants for general-access dashboards.
+      // _PROTO_plugin_name 插件数据更新为 `pluginManifest.name as AnalyticsMetadata_I_VERIFIED_THIS_...`，确保共享工具后续读取最新状态。
       eventData._PROTO_plugin_name = pluginManifest.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED;
+      // 满足 `marketplace` 时，共享工具执行该分支。
       if (marketplace) {
+        // _PROTO_marketplace_name 市场数据更新为 `marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_T...`，确保共享工具后续读取最新状态。
         eventData._PROTO_marketplace_name = marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED;
       }
+      // plugin_repository 插件数据更新为 `(isOfficial ? repository : 'third-party') as AnalyticsMet...`，确保共享工具后续读取最新状态。
       eventData.plugin_repository = (isOfficial ? repository : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
+      // plugin_name 插件数据更新为 `(isOfficial ? pluginManifest.name : 'third-party') as Ana...`，确保共享工具后续读取最新状态。
       eventData.plugin_name = (isOfficial ? pluginManifest.name : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
+      // 只有 `isOfficial && pluginManifest.version` 满足时，共享工具才执行该分支。
       if (isOfficial && pluginManifest.version) {
+        // plugin_version 插件数据更新为 `pluginManifest.version as AnalyticsMetadata_I_VERIFIED_TH...`，确保共享工具后续读取最新状态。
         eventData.plugin_version = pluginManifest.version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
       }
+      // 调用 Object.assign，触发共享工具此处需要的副作用。
       Object.assign(eventData, buildPluginCommandTelemetryFields(returnedCommand.pluginInfo));
     }
+    // 记录共享工具运行诊断，方便排查异常路径或性能问题。
     logEvent('tengu_input_command', {
       ...eventData,
       invocation_trigger: 'user-slash' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -440,6 +594,7 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
         })
       })
     });
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [],
       shouldQuery: false,
@@ -450,14 +605,19 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
   }
 
   // For invalid commands, preserve both the user message and error
+  // 只有 `newMessages.length === 2 && newMessages[1]!.type === 'user' && typeof newMe...` 满足时，共享工具才执行该分支。
   if (newMessages.length === 2 && newMessages[1]!.type === 'user' && typeof newMessages[1]!.message.content === 'string' && newMessages[1]!.message.content.startsWith('Unknown command:')) {
     // Don't log as invalid if it looks like a common file path
+    // looksLikeFilePath 路径数据保存`inputString.startsWith`，供共享工具后续处理使用。
     const looksLikeFilePath = inputString.startsWith('/var') || inputString.startsWith('/tmp') || inputString.startsWith('/private');
+    // looksLikeFilePath 路径数据缺失时直接走兜底路径，避免共享工具使用无效输入。
     if (!looksLikeFilePath) {
+      // 记录共享工具运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_input_slash_invalid', {
         input: commandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
     }
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [createSyntheticUserCaveatMessage(), ...newMessages],
       shouldQuery: messageShouldQuery,
@@ -467,31 +627,45 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
   }
 
   // A valid command
+  // eventData 集中保存共享工具 process Slash Command要一起传递的字段。
   const eventData: Record<string, boolean | number | undefined> = {
     input: sanitizedCommandName as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
   };
 
   // Add plugin metadata if this is a plugin command
+  // 只有 `returnedCommand.type === 'prompt' && returnedComm` 满足时，共享工具才执行该分支。
   if (returnedCommand.type === 'prompt' && returnedCommand.pluginInfo) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       pluginManifest,
       repository
     } = returnedCommand.pluginInfo;
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       marketplace
     } = parsePluginIdentifier(repository);
+    // isOfficial记录 `isOfficialMarketplaceName` 是否成立，共享工具随后按该结果分支。
     const isOfficial = isOfficialMarketplaceName(marketplace);
+    // _PROTO_plugin_name 插件数据更新为 `pluginManifest.name as AnalyticsMetadata_I_VERIFIED_THIS_...`，确保共享工具后续读取最新状态。
     eventData._PROTO_plugin_name = pluginManifest.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED;
+    // 满足 `marketplace` 时，共享工具执行该分支。
     if (marketplace) {
+      // _PROTO_marketplace_name 市场数据更新为 `marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_T...`，确保共享工具后续读取最新状态。
       eventData._PROTO_marketplace_name = marketplace as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED;
     }
+    // plugin_repository 插件数据更新为 `(isOfficial ? repository : 'third-party') as AnalyticsMet...`，确保共享工具后续读取最新状态。
     eventData.plugin_repository = (isOfficial ? repository : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
+    // plugin_name 插件数据更新为 `(isOfficial ? pluginManifest.name : 'third-party') as Ana...`，确保共享工具后续读取最新状态。
     eventData.plugin_name = (isOfficial ? pluginManifest.name : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
+    // 只有 `isOfficial && pluginManifest.version` 满足时，共享工具才执行该分支。
     if (isOfficial && pluginManifest.version) {
+      // plugin_version 插件数据更新为 `pluginManifest.version as AnalyticsMetadata_I_VERIFIED_TH...`，确保共享工具后续读取最新状态。
       eventData.plugin_version = pluginManifest.version as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS;
     }
+    // 调用 Object.assign，触发共享工具此处需要的副作用。
     Object.assign(eventData, buildPluginCommandTelemetryFields(returnedCommand.pluginInfo));
   }
+  // 记录共享工具运行诊断，方便排查异常路径或性能问题。
   logEvent('tengu_input_command', {
     ...eventData,
     invocation_trigger: 'user-slash' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -510,7 +684,9 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
   });
 
   // Check if this is a compact result which handle their own synthetic caveat message ordering
+  // isCompactResult记录 `isCompactBoundaryMessage` 是否成立，共享工具随后按该结果分支。
   const isCompactResult = newMessages.length > 0 && newMessages[0] && isCompactBoundaryMessage(newMessages[0]);
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     messages: messageShouldQuery || newMessages.every(isSystemLocalCommandMessage) || isCompactResult ? newMessages : [createSyntheticUserCaveatMessage(), ...newMessages],
     shouldQuery: messageShouldQuery,
@@ -522,17 +698,23 @@ export async function processSlashCommand(inputString: string, precedingInputBlo
     submitNextInput
   };
 }
+// getMessagesForSlashCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getMessagesForSlashCommand(commandName: string, args: string, setToolJSX: SetToolJSXFn, context: ProcessUserInputContext, precedingInputBlocks: ContentBlockParam[], imageContentBlocks: ContentBlockParam[], _isAlreadyProcessing?: boolean, canUseTool?: CanUseToolFn, uuid?: string): Promise<SlashCommandResult> {
+  // 命令读取`getCommand`，供共享工具后续处理使用。
   const command = getCommand(commandName, context.options.commands);
 
   // Track skill usage for ranking (only for prompt commands that are user-invocable)
+  // 只有 `command.type === 'prompt' && command.userInvocabl` 满足时，共享工具才执行该分支。
   if (command.type === 'prompt' && command.userInvocable !== false) {
+    // 调用 recordSkillUsage，触发共享工具此处需要的副作用。
     recordSkillUsage(commandName);
   }
 
   // Check if the command is user-invocable
   // Skills with userInvocable === false can only be invoked by the model via SkillTool
+  // 满足 `command.userInvocable === false` 时，共享工具执行该分支。
   if (command.userInvocable === false) {
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [createUserMessage({
         content: prepareUserContent({
@@ -546,12 +728,17 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
       command
     };
   }
+  // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
   try {
+    // 按照 command.type 的取值选择共享工具的具体处理分支。
     switch (command.type) {
       case 'local-jsx':
         {
+          // 返回 `new Promise<SlashCommandResult>(resolve => {`，作为共享工具这次计算的结果。
           return new Promise<SlashCommandResult>(resolve => {
+            // doneWasCalled标记共享工具 process Slash Command是否启用对应路径。
             let doneWasCalled = false;
+            // onDone 命名 `(result?: string, options?: {`，让后续代码直接表达这个值的用途。
             const onDone = (result?: string, options?: {
               display?: CommandResultDisplay;
               shouldQuery?: boolean;
@@ -559,9 +746,12 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
               nextInput?: string;
               submitNextInput?: boolean;
             }) => {
+              // doneWasCalled更新为 `true`，确保共享工具后续读取最新状态。
               doneWasCalled = true;
               // If display is 'skip', don't add any messages to the conversation
+              // 当 `options?.display` 匹配 `'skip'` 时，共享工具执行对应分支。
               if (options?.display === 'skip') {
+                // 显式忽略 `resolve({` 的返回值，只保留它触发的副作用。
                 void resolve({
                   messages: [],
                   shouldQuery: false,
@@ -569,10 +759,12 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
                   nextInput: options?.nextInput,
                   submitNextInput: options?.submitNextInput
                 });
+                // 共享工具 process Slash Command在这里结束当前路径，避免继续执行不适用的后续分支。
                 return;
               }
 
               // Meta messages are model-visible but hidden from the user
+              // metaMessages 消息数据派生`map`，供共享工具后续处理使用。
               const metaMessages = (options?.metaMessages ?? []).map((content: string) => createUserMessage({
                 content,
                 isMeta: true
@@ -588,7 +780,9 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
               // commands that early-exit before showing a modal (/ultraplan
               // usage, /rename, /proactive) use display:system for actual
               // output that must reach the transcript.
+              // skipTranscript保存`isFullscreenEnvEnabled`，供共享工具后续处理使用。
               const skipTranscript = isFullscreenEnvEnabled() && typeof result === 'string' && result.endsWith(' dismissed');
+              // 显式忽略 `resolve({` 的返回值，只保留它触发的副作用。
               void resolve({
                 messages: options?.display === 'system' ? skipTranscript ? metaMessages : [createCommandInputMessage(formatCommandInput(command, args)), createCommandInputMessage(`<local-command-stdout>${result}</local-command-stdout>`), ...metaMessages] : [createUserMessage({
                   content: prepareUserContent({
@@ -606,17 +800,23 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
                 submitNextInput: options?.submitNextInput
               });
             };
+            // 这个回调绑定到 void command.load().then(mod => mod.call(onDone, {，负责共享工具在该局部场景下的响应。
             void command.load().then(mod => mod.call(onDone, {
               ...context,
               canUseTool
+            // 这个回调绑定到 }, args)).then(jsx => {，负责共享工具在该局部场景下的响应。
             }, args)).then(jsx => {
+              // 满足 `jsx == null` 时，共享工具执行该分支。
               if (jsx == null) return;
+              // 满足 `context.options.isNonInteractiveSession` 时，共享工具执行该分支。
               if (context.options.isNonInteractiveSession) {
+                // 显式忽略 `resolve({` 的返回值，只保留它触发的副作用。
                 void resolve({
                   messages: [],
                   shouldQuery: false,
                   command
                 });
+                // 共享工具 process Slash Command在这里结束当前路径，避免继续执行不适用的后续分支。
                 return;
               }
               // Guard: if onDone fired during mod.call() (early-exit path
@@ -626,7 +826,9 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
               // its setToolJSX({clearLocalJSX: true}) before we get here.
               // Setting isLocalJSXCommand after clear leaves it stuck true,
               // blocking useQueueProcessor and TextInput focus.
+              // 满足 `doneWasCalled` 时，共享工具执行该分支。
               if (doneWasCalled) return;
+              // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
               setToolJSX({
                 jsx,
                 shouldHidePromptInput: true,
@@ -634,18 +836,24 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
                 isLocalJSXCommand: true,
                 isImmediate: command.immediate === true
               });
+            // 这个回调绑定到 }).catch(e => {，负责共享工具在该局部场景下的响应。
             }).catch(e => {
               // If load()/call() throws and onDone never fired, the outer
               // Promise hangs forever, leaving queryGuard stuck in
               // 'dispatching' and deadlocking the queue processor.
+              // 记录共享工具运行诊断，方便排查异常路径或性能问题。
               logError(e);
+              // 满足 `doneWasCalled` 时，共享工具执行该分支。
               if (doneWasCalled) return;
+              // doneWasCalled更新为 `true`，确保共享工具后续读取最新状态。
               doneWasCalled = true;
+              // setToolJSX 写入新的状态值，使共享工具后续读取保持一致。
               setToolJSX({
                 jsx: null,
                 shouldHidePromptInput: false,
                 clearLocalJSX: true
               });
+              // 显式忽略 `resolve({` 的返回值，只保留它触发的副作用。
               void resolve({
                 messages: [],
                 shouldQuery: false,
@@ -656,18 +864,26 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
         }
       case 'local':
         {
+          // displayArgs 集合格式化`args.trim`，供共享工具后续处理使用。
           const displayArgs = command.isSensitive && args.trim() ? '***' : args;
+          // userMessage 消息数据构建`createUserMessage`，供共享工具后续处理使用。
           const userMessage = createUserMessage({
             content: prepareUserContent({
               inputString: formatCommandInput(command, displayArgs),
               precedingInputBlocks
             })
           });
+          // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
           try {
+            // syntheticCaveatMessage 消息数据构建`createSyntheticUserCaveatMessage`，供共享工具后续处理使用。
             const syntheticCaveatMessage = createSyntheticUserCaveatMessage();
+            // mod读取`command.load`，供共享工具后续处理使用。
             const mod = await command.load();
+            // 结果保存`mod.call`，供共享工具后续处理使用。
             const result = await mod.call(args, context);
+            // 当 `result.type` 匹配 `'skip'` 时，共享工具执行对应分支。
             if (result.type === 'skip') {
+              // 返回结构化结果，集中表达共享工具已经整理出的状态。
               return {
                 messages: [],
                 shouldQuery: false,
@@ -676,9 +892,11 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
             }
 
             // Use discriminated union to handle different result types
+            // 当 `result.type` 匹配 `'compact'` 时，共享工具执行对应分支。
             if (result.type === 'compact') {
               // Append slash command messages to messagesToKeep so that
               // attachments and hookResults come after user messages
+              // slashCommandMessages 命令数据构建`createUserMessage`，供共享工具后续处理使用。
               const slashCommandMessages = [syntheticCaveatMessage, userMessage, ...(result.displayText ? [createUserMessage({
                 content: `<local-command-stdout>${result.displayText}</local-command-stdout>`,
                 // --resume looks at latest timestamp message to determine which message to resume from
@@ -688,6 +906,7 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
                 // This is mostly important for sdk / -p mode
                 timestamp: new Date(Date.now() + 100).toISOString()
               })] : [])];
+              // compactionResultWithSlashMessages 消息数据集中保存共享工具 process Slash Command要一起传递的字段。
               const compactionResultWithSlashMessages = {
                 ...result.compactionResult,
                 messagesToKeep: [...(result.compactionResult.messagesToKeep ?? []), ...slashCommandMessages]
@@ -696,7 +915,9 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
               // messages — old tool IDs are no longer relevant. Budget state
               // (on toolUseContext) needs no reset: stale entries are inert
               // (UUIDs never repeat, so they're never looked up).
+              // 调用 resetMicrocompactState，触发共享工具此处需要的副作用。
               resetMicrocompactState();
+              // 返回结构化结果，集中表达共享工具已经整理出的状态。
               return {
                 messages: buildPostCompactMessages(compactionResultWithSlashMessages),
                 shouldQuery: false,
@@ -705,6 +926,7 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
             }
 
             // Text result — use system message so it doesn't render as a user bubble
+            // 返回结构化结果，集中表达共享工具已经整理出的状态。
             return {
               messages: [userMessage, createCommandInputMessage(`<local-command-stdout>${result.value}</local-command-stdout>`)],
               shouldQuery: false,
@@ -712,7 +934,9 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
               resultText: result.value
             };
           } catch (e) {
+            // 记录共享工具运行诊断，方便排查异常路径或性能问题。
             logError(e);
+            // 返回结构化结果，集中表达共享工具已经整理出的状态。
             return {
               messages: [userMessage, createCommandInputMessage(`<local-command-stderr>${String(e)}</local-command-stderr>`)],
               shouldQuery: false,
@@ -722,15 +946,21 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
         }
       case 'prompt':
         {
+          // 保护这一段可能失败的共享工具操作，确保异常能进入相邻错误处理。
           try {
             // Check if command should run as forked sub-agent
+            // 当 `command.context` 匹配 `'fork'` 时，共享工具执行对应分支。
             if (command.context === 'fork') {
+              // 等待并返回 `executeForkedSlashCommand(command, args, context, precedingIn...`，调用方直接接收异步结果。
               return await executeForkedSlashCommand(command, args, context, precedingInputBlocks, setToolJSX, canUseTool ?? hasPermissionsToUseTool);
             }
+            // 等待并返回 `getMessagesForPromptSlashCommand(command, args, context, prec...`，调用方直接接收异步结果。
             return await getMessagesForPromptSlashCommand(command, args, context, precedingInputBlocks, imageContentBlocks, uuid);
           } catch (e) {
             // Handle abort errors specially to show proper "Interrupted" message
+            // 满足 `e instanceof AbortError` 时，共享工具执行该分支。
             if (e instanceof AbortError) {
+              // 返回结构化结果，集中表达共享工具已经整理出的状态。
               return {
                 messages: [createUserMessage({
                   content: prepareUserContent({
@@ -744,6 +974,7 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
                 command
               };
             }
+            // 返回结构化结果，集中表达共享工具已经整理出的状态。
             return {
               messages: [createUserMessage({
                 content: prepareUserContent({
@@ -760,7 +991,9 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
         }
     }
   } catch (e) {
+    // 满足 `e instanceof MalformedCommandError` 时，共享工具执行该分支。
     if (e instanceof MalformedCommandError) {
+      // 返回结构化结果，集中表达共享工具已经整理出的状态。
       return {
         messages: [createUserMessage({
           content: prepareUserContent({
@@ -772,10 +1005,13 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
         command
       };
     }
+    // 抛出 e;，阻止共享工具在无效状态下继续运行。
     throw e;
   }
 }
+// formatCommandInput 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatCommandInput(command: CommandBase, args: string): string {
+  // 返回 `formatCommandInputTags(getCommandName(command), args)`，作为共享工具这次计算的结果。
   return formatCommandInputTags(getCommandName(command), args);
 }
 
@@ -783,15 +1019,19 @@ function formatCommandInput(command: CommandBase, args: string): string {
  * Formats the metadata for a skill loading message.
  * Used by the Skill tool and for subagent skill preloading.
  */
+// formatSkillLoadingMetadata 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function formatSkillLoadingMetadata(skillName: string, _progressMessage: string = 'loading'): string {
   // Use skill name only - UserCommandMessage renders as "Skill(name)"
+  // 返回列表结果，保留共享工具已经排好的条目顺序。
   return [`<${COMMAND_MESSAGE_TAG}>${skillName}</${COMMAND_MESSAGE_TAG}>`, `<${COMMAND_NAME_TAG}>${skillName}</${COMMAND_NAME_TAG}>`, `<skill-format>true</skill-format>`].join('\n');
 }
 
 /**
  * Formats the metadata for a slash command loading message.
  */
+// formatSlashCommandLoadingMetadata 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatSlashCommandLoadingMetadata(commandName: string, args?: string): string {
+  // 返回列表结果，保留共享工具已经排好的条目顺序。
   return [`<${COMMAND_MESSAGE_TAG}>${commandName}</${COMMAND_MESSAGE_TAG}>`, `<${COMMAND_NAME_TAG}>/${commandName}</${COMMAND_NAME_TAG}>`, args ? `<command-args>${args}</command-args>` : null].filter(Boolean).join('\n');
 }
 
@@ -800,30 +1040,44 @@ function formatSlashCommandLoadingMetadata(commandName: string, args?: string): 
  * User-invocable skills use slash command format (/name), while model-only
  * skills use the skill format ("The X skill is running").
  */
+// formatCommandLoadingMetadata 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function formatCommandLoadingMetadata(command: CommandBase & PromptCommand, args?: string): string {
   // Use command.name (the qualified name including plugin prefix, e.g.
   // "product-management:feature-spec") instead of userFacingName() which may
   // strip the plugin prefix via displayName fallback.
   // User-invocable skills should show as /command-name like regular slash commands
+  // `command.userInvocable` 与 `false` 不一致时刷新派生状态，避免使用过期结果。
   if (command.userInvocable !== false) {
+    // 返回 `formatSlashCommandLoadingMetadata(command.name, args)`，作为共享工具这次计算的结果。
     return formatSlashCommandLoadingMetadata(command.name, args);
   }
   // Model-only skills (userInvocable: false) show as "The X skill is running"
+  // 只有 `command.loadedFrom === 'skills' || command.loaded` 满足时，共享工具才执行该分支。
   if (command.loadedFrom === 'skills' || command.loadedFrom === 'plugin' || command.loadedFrom === 'mcp') {
+    // 返回 `formatSkillLoadingMetadata(command.name, command.progressMessage)`，作为共享工具这次计算的结果。
     return formatSkillLoadingMetadata(command.name, command.progressMessage);
   }
+  // 返回 `formatSlashCommandLoadingMetadata(command.name, args)`，作为共享工具这次计算的结果。
   return formatSlashCommandLoadingMetadata(command.name, args);
 }
+// processPromptSlashCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function processPromptSlashCommand(commandName: string, args: string, commands: Command[], context: ToolUseContext, imageContentBlocks: ContentBlockParam[] = []): Promise<SlashCommandResult> {
+  // 命令筛选`findCommand`，供共享工具后续处理使用。
   const command = findCommand(commandName, commands);
+  // 命令缺失时直接走兜底路径，避免共享工具使用无效输入。
   if (!command) {
+    // 抛出 new MalformedCommandError(`Unknown command: ${commandName}`);，阻止共享工具在无效状态下继续运行。
     throw new MalformedCommandError(`Unknown command: ${commandName}`);
   }
+  // `command.type` 与 `'prompt'` 不一致时刷新派生状态，避免使用过期结果。
   if (command.type !== 'prompt') {
+    // 抛出 new Error(`Unexpected ${command.type} command. Expected 'prompt' command. Use /${commandN…，阻止共享工具在无效状态下继续运行。
     throw new Error(`Unexpected ${command.type} command. Expected 'prompt' command. Use /${commandName} directly in the main conversation.`);
   }
+  // 返回 `getMessagesForPromptSlashCommand(command, args, context, [], imageConte...`，作为共享工具这次计算的结果。
   return getMessagesForPromptSlashCommand(command, args, context, [], imageContentBlocks);
 }
+// getMessagesForPromptSlashCommand 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCommand, args: string, context: ToolUseContext, precedingInputBlocks: ContentBlockParam[] = [], imageContentBlocks: ContentBlockParam[] = [], uuid?: string): Promise<SlashCommandResult> {
   // In coordinator mode (main thread only), skip loading the full skill content
   // and permissions. The coordinator only has Agent + TaskStop tools, so the
@@ -834,24 +1088,37 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
   // parent env, so we also check !context.agentId: agentId is only set for
   // subagents, letting workers fall through to getPromptForCommand and receive
   // the real skill content when they invoke the Skill tool.
+  // 只有 `feature('COORDINATOR_MODE') && isEnvTruthy(process.env.CLAUDE_CODE_COORDINA...` 满足时，共享工具才执行该分支。
   if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE) && !context.agentId) {
+    // metadata格式化`formatCommandLoadingMetadata`，供共享工具后续处理使用。
     const metadata = formatCommandLoadingMetadata(command, args);
+    // 片段列表 聚合成有序列表，保持后续遍历顺序稳定。
     const parts: string[] = [`Skill "/${command.name}" is available for workers.`];
+    // 满足 `command.description` 时，共享工具执行该分支。
     if (command.description) {
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`Description: ${command.description}`);
     }
+    // 满足 `command.whenToUse` 时，共享工具执行该分支。
     if (command.whenToUse) {
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`When to use: ${command.whenToUse}`);
     }
+    // skillAllowedTools 集合 命名 `command.allowedTools ?? []`，让后续代码直接表达这个值的用途。
     const skillAllowedTools = command.allowedTools ?? [];
+    // 满足 `skillAllowedTools.length > 0` 时，共享工具执行该分支。
     if (skillAllowedTools.length > 0) {
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`This skill grants workers additional tool permissions: ${skillAllowedTools.join(', ')}`);
     }
+    // 片段列表追加新条目，保持收集顺序与输入顺序一致。
     parts.push(`\nInstruct a worker to use this skill by including "Use the /${command.name} skill" in your Agent prompt. The worker has access to the Skill tool and will receive the skill's content and permissions when it invokes it.`);
+    // summaryContent 聚合成有序列表，保持后续遍历顺序稳定。
     const summaryContent: ContentBlockParam[] = [{
       type: 'text',
       text: parts.join('\n')
     }];
+    // 返回结构化结果，集中表达共享工具已经整理出的状态。
     return {
       messages: [createUserMessage({
         content: metadata,
@@ -866,27 +1133,38 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
       command
     };
   }
+  // 结果读取`command.getPromptForCommand`，供共享工具后续处理使用。
   const result = await command.getPromptForCommand(args, context);
 
   // Register skill hooks if defined. Under ["hooks"]-only (skills not locked),
   // user skills still load and reach this point — block hook REGISTRATION here
   // where source is known. Mirrors the agent frontmatter gate in runAgent.ts.
+  // hooksAllowedForThisSkill保存`isRestrictedToPluginOnly`，供共享工具后续处理使用。
   const hooksAllowedForThisSkill = !isRestrictedToPluginOnly('hooks') || isSourceAdminTrusted(command.source);
+  // 只有 `command.hooks && hooksAllowedForThisSkill` 满足时，共享工具才执行该分支。
   if (command.hooks && hooksAllowedForThisSkill) {
+    // sessionId 会话数据读取`getSessionId`，供共享工具后续处理使用。
     const sessionId = getSessionId();
+    // 调用 registerSkillHooks，触发共享工具此处需要的副作用。
     registerSkillHooks(context.setAppState, sessionId, command.hooks, command.name, command.type === 'prompt' ? command.skillRoot : undefined);
   }
 
   // Record skill invocation for compaction preservation, scoped by agent context.
   // Skills are tagged with their agentId so only skills belonging to the current
   // agent are restored during compaction (preventing cross-agent leaks).
+  // skillPath 路径数据保存`command.source ? `${command.source}:${command.name}` : co...`，供后续判断或组装使用。
   const skillPath = command.source ? `${command.source}:${command.name}` : command.name;
+  // skillContent筛选`result.filter`，供共享工具后续处理使用。
   const skillContent = result.filter((b): b is TextBlockParam => b.type === 'text').map(b => b.text).join('\n\n');
+  // 调用 addInvokedSkill，触发共享工具此处需要的副作用。
   addInvokedSkill(command.name, skillPath, skillContent, getAgentContext()?.agentId ?? null);
+  // metadata格式化`formatCommandLoadingMetadata`，供共享工具后续处理使用。
   const metadata = formatCommandLoadingMetadata(command, args);
+  // additionalAllowedTools 集合解析`parseToolListFromCLI`，供共享工具后续处理使用。
   const additionalAllowedTools = parseToolListFromCLI(command.allowedTools ?? []);
 
   // Create content for the main message, including any pasted images
+  // mainMessageContent 消息数据标记共享工具 process Slash Command是否启用对应路径。
   const mainMessageContent: ContentBlockParam[] = imageContentBlocks.length > 0 || precedingInputBlocks.length > 0 ? [...imageContentBlocks, ...precedingInputBlocks, ...result] : result;
 
   // Extract attachments from command arguments (@-mentions, MCP resources,
@@ -894,11 +1172,13 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
   // content itself from triggering discovery — it's meta-content, not user
   // intent, and a large SKILL.md (e.g. 110KB) would fire chunked AKI queries
   // adding seconds of latency to every skill invocation.
+  // attachmentMessages 消息数据保存`toArray`，供共享工具后续处理使用。
   const attachmentMessages = await toArray(getAttachmentMessages(result.filter((block): block is TextBlockParam => block.type === 'text').map(block => block.text).join(' '), context, null, [],
   // queuedCommands - handled by query.ts for mid-turn attachments
   context.messages, 'repl_main_thread', {
     skipSkillDiscovery: true
   }));
+  // 对话消息构建`createUserMessage`，供共享工具后续处理使用。
   const messages = [createUserMessage({
     content: metadata,
     uuid
@@ -910,6 +1190,7 @@ async function getMessagesForPromptSlashCommand(command: CommandBase & PromptCom
     allowedTools: additionalAllowedTools,
     model: command.model
   })];
+  // 返回结构化结果，集中表达共享工具已经整理出的状态。
   return {
     messages,
     shouldQuery: true,

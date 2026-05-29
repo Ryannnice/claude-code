@@ -1,69 +1,120 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 feature，将 bun:bundle 中已经封装好的能力接到本文件流程里。
 import { feature } from 'bun:bundle';
+// 引入 APIUserAbortError，将 @anthropic-ai/sdk 中已经封装好的能力接到本文件流程里。
 import { APIUserAbortError } from '@anthropic-ai/sdk';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 useCallback，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback } from 'react';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 接入 sanitizeToolNameForAnalytics 服务层能力，把外部通信或共享状态交给 src/services/analytics/metadata.js 处理。
 import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js';
+// 类型依赖 { ToolUseConfirm } 来自 ../components/permissions/PermissionRequest.js，用于校准React hook 状态流的数据契约。
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 类型依赖 { ToolPermissionContext, Tool as ToolType, ToolUseContext } 来自 ../Tool.js，用于校准React hook 状态流的数据契约。
 import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../Tool.js';
+// 接入 consumeSpeculativeClassifierCheck、peekSpeculativeClassifierCheck 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { consumeSpeculativeClassifierCheck, peekSpeculativeClassifierCheck } from '../tools/BashTool/bashPermissions.js';
+// 接入 BASH_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js';
+// 类型依赖 { AssistantMessage } 来自 ../types/message.js，用于校准React hook 状态流的数据契约。
 import type { AssistantMessage } from '../types/message.js';
+// 复用 recordAutoModeDenial 工具函数，把通用处理留在 ../utils/autoModeDenials.js 中维护。
 import { recordAutoModeDenial } from '../utils/autoModeDenials.js';
+// 复用 clearClassifierChecking、setClassifierApproval、setYoloClassifierApproval 工具函数，把通用处理留在 ../utils/classifierApprovals.js 中维护。
 import { clearClassifierChecking, setClassifierApproval, setYoloClassifierApproval } from '../utils/classifierApprovals.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 ../utils/debug.js 中维护。
 import { logForDebugging } from '../utils/debug.js';
+// 复用 AbortError 工具函数，把通用处理留在 ../utils/errors.js 中维护。
 import { AbortError } from '../utils/errors.js';
+// 复用 logError 工具函数，把通用处理留在 ../utils/log.js 中维护。
 import { logError } from '../utils/log.js';
+// 类型依赖 { PermissionDecision } 来自 ../utils/permissions/PermissionResult.js，用于校准React hook 状态流的数据契约。
 import type { PermissionDecision } from '../utils/permissions/PermissionResult.js';
+// 复用 hasPermissionsToUseTool 工具函数，把通用处理留在 ../utils/permissions/permissions.js 中维护。
 import { hasPermissionsToUseTool } from '../utils/permissions/permissions.js';
+// 复用 jsonStringify 工具函数，把通用处理留在 ../utils/slowOperations.js 中维护。
 import { jsonStringify } from '../utils/slowOperations.js';
+// 引入 handleCoordinatorPermission，将 ./toolPermission/handlers/coordinatorHandler.js 中已经封装好的能力接到本文件流程里。
 import { handleCoordinatorPermission } from './toolPermission/handlers/coordinatorHandler.js';
+// 引入 handleInteractivePermission，将 ./toolPermission/handlers/interactiveHandler.js 中已经封装好的能力接到本文件流程里。
 import { handleInteractivePermission } from './toolPermission/handlers/interactiveHandler.js';
+// 引入 handleSwarmWorkerPermission，将 ./toolPermission/handlers/swarmWorkerHandler.js 中已经封装好的能力接到本文件流程里。
 import { handleSwarmWorkerPermission } from './toolPermission/handlers/swarmWorkerHandler.js';
+// 引入 createPermissionContext、createPermissionQueueOps，将 ./toolPermission/PermissionContext.js 中已经封装好的能力接到本文件流程里。
 import { createPermissionContext, createPermissionQueueOps } from './toolPermission/PermissionContext.js';
+// 引入 logPermissionDecision，将 ./toolPermission/permissionLogging.js 中已经封装好的能力接到本文件流程里。
 import { logPermissionDecision } from './toolPermission/permissionLogging.js';
+// CanUseToolFn 固化React hook 状态流里传递的数据形状，帮助调用方按同一结构读写字段。
 export type CanUseToolFn<Input extends Record<string, unknown> = Record<string, unknown>> = (tool: ToolType, input: Input, toolUseContext: ToolUseContext, assistantMessage: AssistantMessage, toolUseID: string, forceDecision?: PermissionDecision<Input>) => Promise<PermissionDecision<Input>>;
+// useCanUseTool 封装useCanUseTool的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
+  // $保存`_c`，供React hook后续处理使用。
   const $ = _c(3);
+  // t0 暂存 `async (tool, input, toolUseContext, assistantMessage, too...` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== setToolPermissionContext || $[1] !== setToolUseConfirmQueue) {
+    // t0 暂存 `async (tool, input, toolUseContext, assistantMessage, too...` 生成的渲染片段，后续返回路径直接复用。
     t0 = async (tool, input, toolUseContext, assistantMessage, toolUseID, forceDecision) => new Promise(resolve => {
+      // ctx构建`createPermissionContext`，供React hook后续处理使用。
       const ctx = createPermissionContext(tool, input, toolUseContext, assistantMessage, toolUseID, setToolPermissionContext, createPermissionQueueOps(setToolUseConfirmQueue));
+      // 满足 `ctx.resolveIfAborted(resolve)` 时，React hook执行该分支。
       if (ctx.resolveIfAborted(resolve)) {
+        // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // decisionPromise 异步任务保存 `Promise.resolve` 启动的异步任务，稍后再决定等待还是后台完成。
       const decisionPromise = forceDecision !== undefined ? Promise.resolve(forceDecision) : hasPermissionsToUseTool(tool, input, toolUseContext, assistantMessage, toolUseID);
+      // 返回 `decisionPromise.then(async result => {`，作为React hook 状态流这次计算的结果。
       return decisionPromise.then(async result => {
+        // 当 `result.behavior` 匹配 `"allow"` 时，React hook执行对应分支。
         if (result.behavior === "allow") {
+          // 满足 `ctx.resolveIfAborted(resolve)` 时，React hook执行该分支。
           if (ctx.resolveIfAborted(resolve)) {
+            // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
             return;
           }
+          // 组合条件 `feature("TRANSCRIPT_CLASSIFIER") && result.decisionReason?.type === "classifier" ...` 成立时，React hook 状态流才启用这条专门路径。
           if (feature("TRANSCRIPT_CLASSIFIER") && result.decisionReason?.type === "classifier" && result.decisionReason.classifier === "auto-mode") {
+            // setYoloClassifierApproval 写入新的状态值，使React hook 状态流后续读取保持一致。
             setYoloClassifierApproval(toolUseID, result.decisionReason.reason);
           }
+          // 调用 ctx.logDecision，触发React hook此处需要的副作用。
           ctx.logDecision({
             decision: "accept",
             source: "config"
           });
+          // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
           resolve(ctx.buildAllow(result.updatedInput ?? input, {
             decisionReason: result.decisionReason
           }));
+          // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // appState 状态读取`toolUseContext.getAppState`，供React hook后续处理使用。
         const appState = toolUseContext.getAppState();
+        // description保存`tool.description`，供React hook后续处理使用。
         const description = await tool.description(input as never, {
           isNonInteractiveSession: toolUseContext.options.isNonInteractiveSession,
           toolPermissionContext: appState.toolPermissionContext,
           tools: toolUseContext.options.tools
         });
+        // 满足 `ctx.resolveIfAborted(resolve)` 时，React hook执行该分支。
         if (ctx.resolveIfAborted(resolve)) {
+          // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         }
+        // 按照 result.behavior 的取值选择React hook 状态流的具体处理分支。
         switch (result.behavior) {
           case "deny":
             {
+              // 调用 logPermissionDecision，触发React hook此处需要的副作用。
               logPermissionDecision({
                 tool,
                 input,
@@ -74,25 +125,32 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                 decision: "reject",
                 source: "config"
               });
+              // 组合条件 `feature("TRANSCRIPT_CLASSIFIER") && result.decisionReason?.type === "classifier" ...` 成立时，React hook 状态流才启用这条专门路径。
               if (feature("TRANSCRIPT_CLASSIFIER") && result.decisionReason?.type === "classifier" && result.decisionReason.classifier === "auto-mode") {
+                // 调用 recordAutoModeDenial，触发React hook此处需要的副作用。
                 recordAutoModeDenial({
                   toolName: tool.name,
                   display: description,
                   reason: result.decisionReason.reason ?? "",
                   timestamp: Date.now()
                 });
+                // 调用 toolUseContext.addNotification?.({，完成这一处局部操作。
                 toolUseContext.addNotification?.({
                   key: "auto-mode-denied",
                   priority: "immediate",
                   jsx: <><Text color="error">{tool.userFacingName(input).toLowerCase()} denied by auto mode</Text><Text dimColor={true}> · /permissions</Text></>
                 });
               }
+              // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
               resolve(result);
+              // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
           case "ask":
             {
+              // 满足 `appState.toolPermissionContext.awaitAutomatedChec` 时，React hook执行该分支。
               if (appState.toolPermissionContext.awaitAutomatedChecksBeforeDialog) {
+                // coordinatorDecision保存`handleCoordinatorPermission`，供React hook后续处理使用。
                 const coordinatorDecision = await handleCoordinatorPermission({
                   ctx,
                   ...(feature("BASH_CLASSIFIER") ? {
@@ -102,14 +160,20 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                   suggestions: result.suggestions,
                   permissionMode: appState.toolPermissionContext.mode
                 });
+                // 满足 `coordinatorDecision` 时，React hook执行该分支。
                 if (coordinatorDecision) {
+                  // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
                   resolve(coordinatorDecision);
+                  // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
                   return;
                 }
               }
+              // 满足 `ctx.resolveIfAborted(resolve)` 时，React hook执行该分支。
               if (ctx.resolveIfAborted(resolve)) {
+                // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
                 return;
               }
+              // swarmDecision保存`handleSwarmWorkerPermission`，供React hook后续处理使用。
               const swarmDecision = await handleSwarmWorkerPermission({
                 ctx,
                 description,
@@ -119,33 +183,49 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                 updatedInput: result.updatedInput,
                 suggestions: result.suggestions
               });
+              // 满足 `swarmDecision` 时，React hook执行该分支。
               if (swarmDecision) {
+                // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
                 resolve(swarmDecision);
+                // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
                 return;
               }
+              // 组合条件 `feature("BASH_CLASSIFIER") && result.pendingClassifierCheck && tool.name === BASH...` 成立时，React hook 状态流才启用这条专门路径。
               if (feature("BASH_CLASSIFIER") && result.pendingClassifierCheck && tool.name === BASH_TOOL_NAME && !appState.toolPermissionContext.awaitAutomatedChecksBeforeDialog) {
+                // speculativePromise 异步任务保存 `peekSpeculativeClassifierCheck` 启动的异步任务，稍后再决定等待还是后台完成。
                 const speculativePromise = peekSpeculativeClassifierCheck((input as {
                   command: string;
                 }).command);
+                // 满足 `speculativePromise` 时，React hook执行该分支。
                 if (speculativePromise) {
+                  // raceResult保存`Promise.race`，供React hook后续处理使用。
                   const raceResult = await Promise.race([speculativePromise.then(_temp), new Promise(_temp2)]);
+                  // 满足 `ctx.resolveIfAborted(resolve)` 时，React hook执行该分支。
                   if (ctx.resolveIfAborted(resolve)) {
+                    // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
                     return;
                   }
+                  // 组合条件 `raceResult.type === "result" && raceResult.result.matches && raceResult.result.co...` 成立时，React hook 状态流才启用这条专门路径。
                   if (raceResult.type === "result" && raceResult.result.matches && raceResult.result.confidence === "high" && feature("BASH_CLASSIFIER")) {
+                    // 调用 consumeSpeculativeClassifierCheck，触发React hook此处需要的副作用。
                     consumeSpeculativeClassifierCheck((input as {
                       command: string;
                     }).command);
+                    // matchedRule保存`raceResult.result.matchedDescription ?? undefined`，供后续判断或组装使用。
                     const matchedRule = raceResult.result.matchedDescription ?? undefined;
+                    // 满足 `matchedRule` 时，React hook执行该分支。
                     if (matchedRule) {
+                      // setClassifierApproval 写入新的状态值，使React hook 状态流后续读取保持一致。
                       setClassifierApproval(toolUseID, matchedRule);
                     }
+                    // 调用 ctx.logDecision，触发React hook此处需要的副作用。
                     ctx.logDecision({
                       decision: "accept",
                       source: {
                         type: "classifier"
                       }
                     });
+                    // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
                     resolve(ctx.buildAllow(result.updatedInput ?? input as Record<string, unknown>, {
                       decisionReason: {
                         type: "classifier" as const,
@@ -153,10 +233,12 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                         reason: `Allowed by prompt rule: "${raceResult.result.matchedDescription}"`
                       }
                     }));
+                    // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
                     return;
                   }
                 }
               }
+              // 调用 handleInteractivePermission，触发React hook此处需要的副作用。
               handleInteractivePermission({
                 ctx,
                 description,
@@ -165,36 +247,55 @@ function useCanUseTool(setToolUseConfirmQueue, setToolPermissionContext) {
                 bridgeCallbacks: feature("BRIDGE_MODE") ? appState.replBridgePermissionCallbacks : undefined,
                 channelCallbacks: feature("KAIROS") || feature("KAIROS_CHANNELS") ? appState.channelPermissionCallbacks : undefined
               }, resolve);
+              // React hook use Can Use Tool在这里结束当前路径，避免继续执行不适用的后续分支。
               return;
             }
         }
+      // 这个回调绑定到 }).catch(error => {，负责React hook 状态流在该局部场景下的响应。
       }).catch(error => {
+        // 组合条件 `error instanceof AbortError || error instanceof A` 成立时，React hook 状态流才启用这条专门路径。
         if (error instanceof AbortError || error instanceof APIUserAbortError) {
+          // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
           logForDebugging(`Permission check threw ${error.constructor.name} for tool=${tool.name}: ${error.message}`);
+          // 调用 ctx.logCancelled，触发React hook此处需要的副作用。
           ctx.logCancelled();
+          // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
           resolve(ctx.cancelAndAbort(undefined, true));
         } else {
+          // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
           logError(error);
+          // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
           resolve(ctx.cancelAndAbort(undefined, true));
         }
+      // 这个回调绑定到 }).finally(() => {，负责React hook 状态流在该局部场景下的响应。
       }).finally(() => {
+        // 调用 clearClassifierChecking，触发React hook此处需要的副作用。
         clearClassifierChecking(toolUseID);
       });
     });
+    // $[0] 缓存 `setToolPermissionContext`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = setToolPermissionContext;
+    // $[1] 缓存 `setToolUseConfirmQueue`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = setToolUseConfirmQueue;
+    // $[2] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[2];
   }
+  // 返回 `t0`，作为React hook 状态流这次计算的结果。
   return t0;
 }
+// _temp2 封装useCanUseTool的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp2(res) {
+  // 返回 `setTimeout(res, 2000, {`，作为React hook 状态流这次计算的结果。
   return setTimeout(res, 2000, {
     type: "timeout" as const
   });
 }
+// _temp 封装useCanUseTool的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(r) {
+  // 返回结构化结果，集中表达React hook 状态流已经整理出的状态。
   return {
     type: "result" as const,
     result: r

@@ -1,13 +1,23 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 引入 Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../../ink.js';
+// 复用 countCharInString 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { countCharInString } from '../../utils/stringUtils.js';
+// 类型依赖 { Input, Output } 来自 ./RemoteTriggerTool.js，用于校准工具调用的数据契约。
 import type { Input, Output } from './RemoteTriggerTool.js';
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage(input: Partial<Input>): React.ReactNode {
+  // 返回 ``${input.action ?? ''}${input.trigger_id ? ` ${input.trigger_id}` : ''}``，作为工具调用这次计算的结果。
   return `${input.action ?? ''}${input.trigger_id ? ` ${input.trigger_id}` : ''}`;
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage(output: Output): React.ReactNode {
+  // 文本行统计`countCharInString`，供工具调用后续处理使用。
   const lines = countCharInString(output.json, '\n') + 1;
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Text>
         HTTP {output.status} <Text dimColor>({lines} lines)</Text>

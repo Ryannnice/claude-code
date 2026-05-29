@@ -3,26 +3,36 @@
  * for case-insensitive cmdlet matching.
  */
 
+// 使用 Node/Bun 的 path 能力处理本地运行时资源。
 import { resolve } from 'path'
+// 类型依赖 { ToolPermissionContext, ToolUseContext } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import type {
   PermissionDecisionReason,
   PermissionResult,
 } from '../../types/permissions.js'
+// 复用 getCwd 工具函数，把通用处理留在 ../../utils/cwd.js 中维护。
 import { getCwd } from '../../utils/cwd.js'
+// 复用 isCurrentDirectoryBareGitRepo 工具函数，把通用处理留在 ../../utils/git.js 中维护。
 import { isCurrentDirectoryBareGitRepo } from '../../utils/git.js'
+// 类型依赖 { PermissionRule } 来自 ../../utils/permissions/PermissionRule.js，用于校准工具调用的数据契约。
 import type { PermissionRule } from '../../utils/permissions/PermissionRule.js'
+// 类型依赖 { PermissionUpdate } 来自 ../../utils/permissions/PermissionUpdateSchema.js，用于校准工具调用的数据契约。
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   createPermissionRequestMessage,
   getRuleByContentsForToolName,
 } from '../../utils/permissions/permissions.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   matchWildcardPattern,
   parsePermissionRule,
   type ShellPermissionRule,
   suggestionForExactCommand as sharedSuggestionForExactCommand,
 } from '../../utils/permissions/shellRuleMatching.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   classifyCommandName,
   deriveSecurityFlags,
@@ -34,18 +44,24 @@ import {
   parsePowerShellCommand,
   stripModulePrefix,
 } from '../../utils/powershell/parser.js'
+// 复用 containsVulnerableUncPath 工具函数，把通用处理留在 ../../utils/shell/readOnlyCommandValidation.js 中维护。
 import { containsVulnerableUncPath } from '../../utils/shell/readOnlyCommandValidation.js'
+// 引入 isDotGitPathPS、isGitInternalPathPS，将 ./gitSafety.js 中已经封装好的能力接到本文件流程里。
 import { isDotGitPathPS, isGitInternalPathPS } from './gitSafety.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   checkPermissionMode,
   isSymlinkCreatingCommand,
 } from './modeValidation.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   checkPathConstraints,
   dangerousRemovalDeny,
   isDangerousRemovalRawPath,
 } from './pathValidation.js'
+// 引入 powershellCommandIsSafe，将 ./powershellSecurity.js 中已经封装好的能力接到本文件流程里。
 import { powershellCommandIsSafe } from './powershellSecurity.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   argLeaksValue,
   isAllowlistedCommand,
@@ -55,10 +71,12 @@ import {
   isSafeOutputCommand,
   resolveToCanonical,
 } from './readOnlyValidation.js'
+// 引入 POWERSHELL_TOOL_NAME，将 ./toolName.js 中已经封装好的能力接到本文件流程里。
 import { POWERSHELL_TOOL_NAME } from './toolName.js'
 
 // Matches `$var = `, `$var += `, `$env:X = `, `$x ??= ` etc. Used to strip
 // nested assignment prefixes in the parse-failed fallback path.
+// PS_ASSIGN_PREFIX_RE保存`/^\$[\w:]+\s*(?:[+\-*/%]|\?\?)?\s*=\s*/`，供工具实现 powershell Permissions后续判断或输出使用。
 const PS_ASSIGN_PREFIX_RE = /^\$[\w:]+\s*(?:[+\-*/%]|\?\?)?\s*=\s*/
 
 /**
@@ -67,6 +85,7 @@ const PS_ASSIGN_PREFIX_RE = /^\$[\w:]+\s*(?:[+\-*/%]|\?\?)?\s*=\s*/
  * (hooks/, refs/, objects/, HEAD). Non-creating writers (remove-item,
  * clear-content) are intentionally absent — they can't plant new hooks.
  */
+// GIT_SAFETY_WRITE_CMDLETS 命令数据保存`Set`，供工具调用后续处理使用。
 const GIT_SAFETY_WRITE_CMDLETS = new Set([
   'new-item',
   'set-content',
@@ -93,6 +112,7 @@ const GIT_SAFETY_WRITE_CMDLETS = new Set([
  * extraction preceding git must ask. Matched by name only (lowercase,
  * with and without .exe).
  */
+// GIT_SAFETY_ARCHIVE_EXTRACTORS 集合保存`Set`，供工具调用后续处理使用。
 const GIT_SAFETY_ARCHIVE_EXTRACTORS = new Set([
   'tar',
   'tar.exe',
@@ -115,13 +135,20 @@ const GIT_SAFETY_ARCHIVE_EXTRACTORS = new Set([
  * Extract the command name from a PowerShell command string.
  * Uses the parser to get the first command name from the AST.
  */
+// extractCommandName 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function extractCommandName(command: string): Promise<string> {
+  // trimmed格式化`command.trim`，供工具调用后续处理使用。
   const trimmed = command.trim()
+  // trimmed缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!trimmed) {
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return ''
   }
+  // 解析结果解析`parsePowerShellCommand`，供工具调用后续处理使用。
   const parsed = await parsePowerShellCommand(trimmed)
+  // names 集合读取`getAllCommandNames`，供工具调用后续处理使用。
   const names = getAllCommandNames(parsed)
+  // 返回 `names[0] ?? ''`，作为工具调用这次计算的结果。
   return names[0] ?? ''
 }
 
@@ -129,9 +156,11 @@ async function extractCommandName(command: string): Promise<string> {
  * Parse a permission rule string into a structured rule object.
  * Delegates to shared parsePermissionRule.
  */
+// powershellPermissionRule 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function powershellPermissionRule(
   permissionRule: string,
 ): ShellPermissionRule {
+  // 返回 `parsePermissionRule(permissionRule)`，作为工具调用这次计算的结果。
   return parsePermissionRule(permissionRule)
 }
 
@@ -147,16 +176,21 @@ export function powershellPermissionRule(
  *   the incoming `Remove-Item * -Force`. Globs are unsafe to exact-auto-allow
  *   anyway; prefix suggestion still offered. (finding #12)
  */
+// suggestionForExactCommand 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function suggestionForExactCommand(command: string): PermissionUpdate[] {
+  // 只有 `command.includes('\n') || command.includes('*')` 满足时，工具调用才执行该分支。
   if (command.includes('\n') || command.includes('*')) {
+    // 返回列表结果，保留工具调用已经排好的条目顺序。
     return []
   }
+  // 返回 `sharedSuggestionForExactCommand(POWERSHELL_TOOL_NAME, command)`，作为工具调用这次计算的结果。
   return sharedSuggestionForExactCommand(POWERSHELL_TOOL_NAME, command)
 }
 
 /**
  * PowerShell input schema type - simplified for initial implementation
  */
+// PowerShellInput 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type PowerShellInput = {
   command: string
   timeout?: number
@@ -167,18 +201,24 @@ type PowerShellInput = {
  * PowerShell-specific: uses case-insensitive matching throughout.
  * Follows the same structure as BashTool's local filterRulesByContentsMatchingInput.
  */
+// filterRulesByContentsMatchingInput 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function filterRulesByContentsMatchingInput(
   input: PowerShellInput,
   rules: Map<string, PermissionRule>,
   matchMode: 'exact' | 'prefix',
   behavior: 'deny' | 'ask' | 'allow',
 ): PermissionRule[] {
+  // 命令格式化`command.trim`，供工具调用后续处理使用。
   const command = input.command.trim()
 
+  // strEquals 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function strEquals(a: string, b: string): boolean {
+    // 返回 `a.toLowerCase() === b.toLowerCase()`，作为工具调用这次计算的结果。
     return a.toLowerCase() === b.toLowerCase()
   }
+  // strStartsWith 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function strStartsWith(str: string, prefix: string): boolean {
+    // 返回 `str.toLowerCase().startsWith(prefix.toLowerCase())`，作为工具调用这次计算的结果。
     return str.toLowerCase().startsWith(prefix.toLowerCase())
   }
   // SECURITY: stripModulePrefix on RULE names widens the
@@ -186,10 +226,14 @@ function filterRulesByContentsMatchingInput(
   // `rm` is the intent (fail-safe over-match), but an allow rule
   // `ModuleA\Get-Thing:*` also matching `ModuleB\Get-Thing` is fail-OPEN.
   // Deny/ask over-match is fine; allow must never over-match.
+  // stripModulePrefixForRule 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function stripModulePrefixForRule(name: string): string {
+    // 当 `behavior` 匹配 `'allow'` 时，工具调用执行对应分支。
     if (behavior === 'allow') {
+      // 返回 `name`，作为工具调用这次计算的结果。
       return name
     }
+    // 返回 `stripModulePrefix(name)`，作为工具调用这次计算的结果。
     return stripModulePrefix(name)
   }
 
@@ -198,8 +242,11 @@ function filterRulesByContentsMatchingInput(
   // (for canonical resolution) versions. For module-qualified inputs like
   // `Microsoft.PowerShell.Utility\Invoke-Expression foo`, rawCmdName holds the
   // full token so `command.slice(rawCmdName.length)` yields the correct rest.
+  // rawCmdName 命令数据格式化`command.split`，供工具调用后续处理使用。
   const rawCmdName = command.split(/\s+/)[0] ?? ''
+  // inputCmdName 命令数据保存`stripModulePrefix`，供工具调用后续处理使用。
   const inputCmdName = stripModulePrefix(rawCmdName)
+  // inputCanonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const inputCanonical = resolveToCanonical(inputCmdName)
 
   // Build a version of the command with the canonical name substituted
@@ -211,47 +258,68 @@ function filterRulesByContentsMatchingInput(
   // `Remove-Item:*`, while acceptEdits auto-allow (using AST cmd.name) still
   // matches — a deny-rule bypass. Build unconditionally (not just when the
   // canonical differs) so non-space-separated raw commands are also normalized.
+  // rest格式化`command.slice`，供工具调用后续处理使用。
   const rest = command.slice(rawCmdName.length).replace(/^\s+/, ' ')
+  // canonicalCommand 命令数据保存`inputCanonical + rest`，供后续判断或组装使用。
   const canonicalCommand = inputCanonical + rest
 
+  // 返回 `Array.from(rules.entries())`，作为工具调用这次计算的结果。
   return Array.from(rules.entries())
+    // 链式调用 filter，继续加工上一行在工具调用中产生的数据。
     .filter(([ruleContent]) => {
+      // rule保存`powershellPermissionRule`，供工具调用后续处理使用。
       const rule = powershellPermissionRule(ruleContent)
 
       // Also resolve the rule's command name to canonical for cross-matching
       // e.g., a deny rule for 'rm' should also block 'Remove-Item'
+      // matchesCommand 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
       function matchesCommand(cmd: string): boolean {
+        // 按照 rule.type 的取值选择工具调用的具体处理分支。
         switch (rule.type) {
           case 'exact':
+            // 返回 `strEquals(rule.command, cmd)`，作为工具调用这次计算的结果。
             return strEquals(rule.command, cmd)
           case 'prefix':
+            // 按照 matchMode 的取值选择工具调用的具体处理分支。
             switch (matchMode) {
               case 'exact':
+                // 返回 `strEquals(rule.prefix, cmd)`，作为工具调用这次计算的结果。
                 return strEquals(rule.prefix, cmd)
               case 'prefix': {
+                // 满足 `strEquals(cmd, rule.prefix)` 时，工具调用执行该分支。
                 if (strEquals(cmd, rule.prefix)) {
+                  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
                   return true
                 }
+                // 返回 `strStartsWith(cmd, rule.prefix + ' ')`，作为工具调用这次计算的结果。
                 return strStartsWith(cmd, rule.prefix + ' ')
               }
             }
+            // 结束这个分支或循环，避免工具调用继续落入后续路径。
             break
           case 'wildcard':
+            // 当 `matchMode` 匹配 `'exact'` 时，工具调用执行对应分支。
             if (matchMode === 'exact') {
+              // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
               return false
             }
+            // 返回 `matchWildcardPattern(rule.pattern, cmd, true)`，作为工具调用这次计算的结果。
             return matchWildcardPattern(rule.pattern, cmd, true)
         }
       }
 
       // Check against the original command
+      // 满足 `matchesCommand(command)` 时，工具调用执行该分支。
       if (matchesCommand(command)) {
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true
       }
 
       // Also check against the canonical form of the command
       // This ensures 'deny Remove-Item' also blocks 'rm', 'del', 'ri', etc.
+      // 满足 `matchesCommand(canonicalCommand)` 时，工具调用执行该分支。
       if (matchesCommand(canonicalCommand)) {
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true
       }
 
@@ -262,89 +330,121 @@ function filterRulesByContentsMatchingInput(
       // `Microsoft.PowerShell.Management\Remove-Item:*` is bypassed by `rm`,
       // `del`, or plain `Remove-Item` — resolveToCanonical won't match the
       // module-qualified form against COMMON_ALIASES.
+      // 当 `rule.type` 匹配 `'exact'` 时，工具调用执行对应分支。
       if (rule.type === 'exact') {
+        // rawRuleCmdName 命令数据格式化`command.split`，供工具调用后续处理使用。
         const rawRuleCmdName = rule.command.split(/\s+/)[0] ?? ''
+        // ruleCanonical读取`resolveToCanonical`，供工具调用后续处理使用。
         const ruleCanonical = resolveToCanonical(
           stripModulePrefixForRule(rawRuleCmdName),
         )
+        // 满足 `ruleCanonical === inputCanonical` 时，工具调用执行该分支。
         if (ruleCanonical === inputCanonical) {
           // Rule and input resolve to same canonical cmdlet
           // SECURITY: use normalized `rest` not a raw re-slice
           // from `command`. The raw slice preserves tab separators so
           // `Remove-Item\t./secret.txt` vs deny rule `rm ./secret.txt` misses.
           // Normalize both sides identically.
+          // ruleRest保存`rule.command`，供工具实现 powershell Permissions后续判断或输出使用。
           const ruleRest = rule.command
             .slice(rawRuleCmdName.length)
             .replace(/^\s+/, ' ')
+          // inputRest保存`rest`，供后续判断或组装使用。
           const inputRest = rest
+          // 满足 `strEquals(ruleRest, inputRest)` 时，工具调用执行该分支。
           if (strEquals(ruleRest, inputRest)) {
+            // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
             return true
           }
         }
+      // 工具实现 powershell Permissions在这里处理 `} else if (rule.type === 'prefix') {`，完成这一小步状态转换。
       } else if (rule.type === 'prefix') {
+        // rawRuleCmdName 命令数据格式化`prefix.split`，供工具调用后续处理使用。
         const rawRuleCmdName = rule.prefix.split(/\s+/)[0] ?? ''
+        // ruleCanonical读取`resolveToCanonical`，供工具调用后续处理使用。
         const ruleCanonical = resolveToCanonical(
           stripModulePrefixForRule(rawRuleCmdName),
         )
+        // 满足 `ruleCanonical === inputCanonical` 时，工具调用执行该分支。
         if (ruleCanonical === inputCanonical) {
+          // ruleRest保存`rule.prefix`，供工具实现 powershell Permissions后续判断或输出使用。
           const ruleRest = rule.prefix
             .slice(rawRuleCmdName.length)
             .replace(/^\s+/, ' ')
+          // canonicalPrefix保存`inputCanonical + ruleRest`，供工具实现 powershell Permissions后续判断或输出使用。
           const canonicalPrefix = inputCanonical + ruleRest
+          // 当 `matchMode` 匹配 `'exact'` 时，工具调用执行对应分支。
           if (matchMode === 'exact') {
+            // 满足 `strEquals(canonicalPrefix, canonicalCommand)` 时，工具调用执行该分支。
             if (strEquals(canonicalPrefix, canonicalCommand)) {
+              // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
               return true
             }
           } else {
+            // 工具调用在这里按实际状态进入对应分支。
             if (
               strEquals(canonicalCommand, canonicalPrefix) ||
               strStartsWith(canonicalCommand, canonicalPrefix + ' ')
             ) {
+              // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
               return true
             }
           }
         }
+      // 工具实现 powershell Permissions在这里处理 `} else if (rule.type === 'wildcard') {`，完成这一小步状态转换。
       } else if (rule.type === 'wildcard') {
         // Resolve the wildcard pattern's command name to canonical and re-match
         // This ensures 'deny rm *' also blocks 'Remove-Item secret.txt'
+        // rawRuleCmdName 命令数据格式化`pattern.split`，供工具调用后续处理使用。
         const rawRuleCmdName = rule.pattern.split(/\s+/)[0] ?? ''
+        // ruleCanonical读取`resolveToCanonical`，供工具调用后续处理使用。
         const ruleCanonical = resolveToCanonical(
           stripModulePrefixForRule(rawRuleCmdName),
         )
+        // 只有 `ruleCanonical === inputCanonical && matchMode !==` 满足时，工具调用才执行该分支。
         if (ruleCanonical === inputCanonical && matchMode !== 'exact') {
           // Rebuild the pattern with the canonical cmdlet name
           // Normalize separator same as exact and prefix branches.
           // Without this, a wildcard rule `rm\t*` produces canonicalPattern
           // with a literal tab that never matches the space-normalized
           // canonicalCommand.
+          // ruleRest保存`rule.pattern`，供工具实现 powershell Permissions后续判断或输出使用。
           const ruleRest = rule.pattern
             .slice(rawRuleCmdName.length)
             .replace(/^\s+/, ' ')
+          // canonicalPattern保存`inputCanonical + ruleRest`，供后续判断或组装使用。
           const canonicalPattern = inputCanonical + ruleRest
+          // 满足 `matchWildcardPattern(canonicalPattern, canonicalCommand, true)` 时，工具调用执行该分支。
           if (matchWildcardPattern(canonicalPattern, canonicalCommand, true)) {
+            // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
             return true
           }
         }
       }
 
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     })
+    // 链式调用 map，继续加工上一行在工具调用中产生的数据。
     .map(([, rule]) => rule)
 }
 
 /**
  * Get matching rules for input across all rule types (deny, ask, allow)
  */
+// matchingRulesForInput 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function matchingRulesForInput(
   input: PowerShellInput,
   toolPermissionContext: ToolPermissionContext,
   matchMode: 'exact' | 'prefix',
 ) {
+  // denyRuleByContents 集合读取`getRuleByContentsForToolName`，供工具调用后续处理使用。
   const denyRuleByContents = getRuleByContentsForToolName(
     toolPermissionContext,
     POWERSHELL_TOOL_NAME,
     'deny',
   )
+  // matchingDenyRules 集合筛选`filterRulesByContentsMatchingInput`，供工具调用后续处理使用。
   const matchingDenyRules = filterRulesByContentsMatchingInput(
     input,
     denyRuleByContents,
@@ -352,11 +452,13 @@ function matchingRulesForInput(
     'deny',
   )
 
+  // askRuleByContents 集合读取`getRuleByContentsForToolName`，供工具调用后续处理使用。
   const askRuleByContents = getRuleByContentsForToolName(
     toolPermissionContext,
     POWERSHELL_TOOL_NAME,
     'ask',
   )
+  // matchingAskRules 集合筛选`filterRulesByContentsMatchingInput`，供工具调用后续处理使用。
   const matchingAskRules = filterRulesByContentsMatchingInput(
     input,
     askRuleByContents,
@@ -364,11 +466,13 @@ function matchingRulesForInput(
     'ask',
   )
 
+  // allowRuleByContents 集合读取`getRuleByContentsForToolName`，供工具调用后续处理使用。
   const allowRuleByContents = getRuleByContentsForToolName(
     toolPermissionContext,
     POWERSHELL_TOOL_NAME,
     'allow',
   )
+  // matchingAllowRules 集合筛选`filterRulesByContentsMatchingInput`，供工具调用后续处理使用。
   const matchingAllowRules = filterRulesByContentsMatchingInput(
     input,
     allowRuleByContents,
@@ -376,21 +480,27 @@ function matchingRulesForInput(
     'allow',
   )
 
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return { matchingDenyRules, matchingAskRules, matchingAllowRules }
 }
 
 /**
  * Check if the command is an exact match for a permission rule.
  */
+// powershellToolCheckExactMatchPermission 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function powershellToolCheckExactMatchPermission(
   input: PowerShellInput,
   toolPermissionContext: ToolPermissionContext,
 ): PermissionResult {
+  // trimmedCommand 命令数据格式化`command.trim`，供工具调用后续处理使用。
   const trimmedCommand = input.command.trim()
+  // 工具实现 powershell Permissions先整理这一处局部数据，后续分支可以直接读取。
   const { matchingDenyRules, matchingAskRules, matchingAllowRules } =
     matchingRulesForInput(input, toolPermissionContext, 'exact')
 
+  // `matchingDenyRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingDenyRules[0] !== undefined) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'deny',
       message: `Permission to use ${POWERSHELL_TOOL_NAME} with command ${trimmedCommand} has been denied.`,
@@ -398,7 +508,9 @@ export function powershellToolCheckExactMatchPermission(
     }
   }
 
+  // `matchingAskRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingAskRules[0] !== undefined) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'ask',
       message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME),
@@ -406,7 +518,9 @@ export function powershellToolCheckExactMatchPermission(
     }
   }
 
+  // `matchingAllowRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingAllowRules[0] !== undefined) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'allow',
       updatedInput: input,
@@ -414,10 +528,12 @@ export function powershellToolCheckExactMatchPermission(
     }
   }
 
+  // 决策原因 集中保存工具实现 powershell Permissions要一起传递的字段。
   const decisionReason: PermissionDecisionReason = {
     type: 'other' as const,
     reason: 'This command requires approval',
   }
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     behavior: 'passthrough',
     message: createPermissionRequestMessage(
@@ -432,32 +548,40 @@ export function powershellToolCheckExactMatchPermission(
 /**
  * Check permission for a PowerShell command including prefix matches.
  */
+// powershellToolCheckPermission 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function powershellToolCheckPermission(
   input: PowerShellInput,
   toolPermissionContext: ToolPermissionContext,
 ): PermissionResult {
+  // 命令格式化`command.trim`，供工具调用后续处理使用。
   const command = input.command.trim()
 
   // 1. Check exact match first
+  // exactMatchResult保存`powershellToolCheckExactMatchPermission`，供工具调用后续处理使用。
   const exactMatchResult = powershellToolCheckExactMatchPermission(
     input,
     toolPermissionContext,
   )
 
   // 1a. Deny/ask if exact command has a rule
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     exactMatchResult.behavior === 'deny' ||
     exactMatchResult.behavior === 'ask'
   ) {
+    // 返回 `exactMatchResult`，作为工具调用这次计算的结果。
     return exactMatchResult
   }
 
   // 2. Find all matching rules (prefix or exact)
+  // 工具实现 powershell Permissions先整理这一处局部数据，后续分支可以直接读取。
   const { matchingDenyRules, matchingAskRules, matchingAllowRules } =
     matchingRulesForInput(input, toolPermissionContext, 'prefix')
 
   // 2a. Deny if command has a deny rule
+  // `matchingDenyRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingDenyRules[0] !== undefined) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'deny',
       message: `Permission to use ${POWERSHELL_TOOL_NAME} with command ${command} has been denied.`,
@@ -469,7 +593,9 @@ export function powershellToolCheckPermission(
   }
 
   // 2b. Ask if command has an ask rule
+  // `matchingAskRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingAskRules[0] !== undefined) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'ask',
       message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME),
@@ -481,12 +607,16 @@ export function powershellToolCheckPermission(
   }
 
   // 3. Allow if command had an exact match allow
+  // 当 `exactMatchResult.behavior` 匹配 `'allow'` 时，工具调用执行对应分支。
   if (exactMatchResult.behavior === 'allow') {
+    // 返回 `exactMatchResult`，作为工具调用这次计算的结果。
     return exactMatchResult
   }
 
   // 4. Allow if command has an allow rule
+  // `matchingAllowRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingAllowRules[0] !== undefined) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'allow',
       updatedInput: input,
@@ -498,10 +628,12 @@ export function powershellToolCheckPermission(
   }
 
   // 5. Passthrough since no rules match, will trigger permission prompt
+  // 决策原因集中保存工具实现 powershell Permissions要一起传递的字段。
   const decisionReason = {
     type: 'other' as const,
     reason: 'This command requires approval',
   }
+  // 返回结构化结果，集中表达工具调用已经整理出的状态。
   return {
     behavior: 'passthrough',
     message: createPermissionRequestMessage(
@@ -516,6 +648,7 @@ export function powershellToolCheckPermission(
 /**
  * Information about a sub-command for permission checking.
  */
+// SubCommandInfo 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type SubCommandInfo = {
   text: string
   element: ParsedCommandElement
@@ -536,12 +669,15 @@ type SubCommandInfo = {
  * Returns sub-command info including both text and the parsed element for accurate
  * suggestion generation.
  */
+// getSubCommandsForPermissionCheck 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getSubCommandsForPermissionCheck(
   parsed: ParsedPowerShellCommand,
   originalCommand: string,
 ): Promise<SubCommandInfo[]> {
+  // parsed.valid缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!parsed.valid) {
     // Return a fallback element for unparsed commands
+    // 返回列表结果，保留工具调用已经排好的条目顺序。
     return [
       {
         text: originalCommand,
@@ -558,15 +694,21 @@ async function getSubCommandsForPermissionCheck(
     ]
   }
 
+  // subCommands 命令数据 从空数组开始收集，后续循环会按处理顺序追加条目。
   const subCommands: SubCommandInfo[] = []
 
   // Check direct commands in pipelines
+  // 按顺序遍历 `parsed.statements` 中的statement 状态，逐个交给工具调用处理。
   for (const statement of parsed.statements) {
+    // 按顺序遍历 `statement.commands` 中的cmd 命令数据，逐个交给工具调用处理。
     for (const cmd of statement.commands) {
       // Only check actual commands (CommandAst), not expressions
+      // `cmd.elementType` 与 `'CommandAst'` 不一致时刷新派生状态，避免使用过期结果。
       if (cmd.elementType !== 'CommandAst') {
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue
       }
+      // subCommands 命令数据追加新条目，保持收集顺序与输入顺序一致。
       subCommands.push({
         text: cmd.text,
         element: cmd,
@@ -587,8 +729,11 @@ async function getSubCommandsForPermissionCheck(
     }
 
     // Also check nested commands from control flow statements
+    // 满足 `statement.nestedCommands` 时，工具调用执行该分支。
     if (statement.nestedCommands) {
+      // 按顺序遍历 `statement.nestedCommands` 中的cmd 命令数据，逐个交给工具调用处理。
       for (const cmd of statement.nestedCommands) {
+        // subCommands 命令数据追加新条目，保持收集顺序与输入顺序一致。
         subCommands.push({
           text: cmd.text,
           element: cmd,
@@ -602,11 +747,14 @@ async function getSubCommandsForPermissionCheck(
     }
   }
 
+  // 满足 `subCommands.length > 0` 时，工具调用执行该分支。
   if (subCommands.length > 0) {
+    // 返回 `subCommands`，作为工具调用这次计算的结果。
     return subCommands
   }
 
   // Fallback for commands with no sub-commands
+  // 返回列表结果，保留工具调用已经排好的条目顺序。
   return [
     {
       text: originalCommand,
@@ -636,15 +784,20 @@ async function getSubCommandsForPermissionCheck(
  * @param context - The tool use context (for abort signal and session info)
  * @returns Promise resolving to PermissionResult
  */
+// powershellToolHasPermission 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function powershellToolHasPermission(
   input: PowerShellInput,
   context: ToolUseContext,
 ): Promise<PermissionResult> {
+  // toolPermissionContext 权限数据读取`context.getAppState`，供工具调用后续处理使用。
   const toolPermissionContext = context.getAppState().toolPermissionContext
+  // 命令格式化`command.trim`，供工具调用后续处理使用。
   const command = input.command.trim()
 
   // Empty command check
+  // 命令缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!command) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'allow',
       updatedInput: input,
@@ -656,23 +809,28 @@ export async function powershellToolHasPermission(
   }
 
   // Parse the command once and thread through all sub-functions
+  // 解析结果解析`parsePowerShellCommand`，供工具调用后续处理使用。
   const parsed = await parsePowerShellCommand(command)
 
   // SECURITY: Check deny/ask rules BEFORE parse validity check.
   // Deny rules operate on the raw command string and don't need the parsed AST.
   // This ensures explicit deny rules still block commands even when parsing fails.
   // 1. Check exact match first
+  // exactMatchResult保存`powershellToolCheckExactMatchPermission`，供工具调用后续处理使用。
   const exactMatchResult = powershellToolCheckExactMatchPermission(
     input,
     toolPermissionContext,
   )
 
   // Exact command was denied
+  // 当 `exactMatchResult.behavior` 匹配 `'deny'` 时，工具调用执行对应分支。
   if (exactMatchResult.behavior === 'deny') {
+    // 返回 `exactMatchResult`，作为工具调用这次计算的结果。
     return exactMatchResult
   }
 
   // 2. Check prefix/wildcard rules
+  // 从 `matchingRulesForInput(` 解构 matchingDenyRules、matchingAskRules，减少工具实现 powershell Permissions对同一对象的重复访问。
   const { matchingDenyRules, matchingAskRules } = matchingRulesForInput(
     input,
     toolPermissionContext,
@@ -680,7 +838,9 @@ export async function powershellToolHasPermission(
   )
 
   // 2a. Deny if command has a deny rule
+  // `matchingDenyRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingDenyRules[0] !== undefined) {
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       behavior: 'deny',
       message: `Permission to use ${POWERSHELL_TOOL_NAME} with command ${command} has been denied.`,
@@ -698,8 +858,11 @@ export async function powershellToolHasPermission(
   // fired. Now: store the ask, push into decisions[] after parse succeeds.
   // If parse fails, returned before the parse-error ask (preserves the
   // rule-attributed decisionReason when pwsh is unavailable).
+  // preParseAskDecision初始化为空值，后续分支会在有数据时补齐。
   let preParseAskDecision: PermissionResult | null = null
+  // `matchingAskRules[0]` 与 `undefined` 不一致时刷新派生状态，避免使用过期结果。
   if (matchingAskRules[0] !== undefined) {
+    // preParseAskDecision更新为 `{`，确保工具调用后续读取最新状态。
     preParseAskDecision = {
       behavior: 'ask',
       message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME),
@@ -714,7 +877,9 @@ export async function powershellToolHasPermission(
   // and leak NTLM/Kerberos credentials. DEFERRED into decisions[].
   // The raw-string UNC check must not early-return before sub-command deny
   // (step 4+). Same fix as 2b above.
+  // 只有 `preParseAskDecision === null && containsVulnerableUncPath(command)` 满足时，工具调用才执行该分支。
   if (preParseAskDecision === null && containsVulnerableUncPath(command)) {
+    // preParseAskDecision更新为 `{`，确保工具调用后续读取最新状态。
     preParseAskDecision = {
       behavior: 'ask',
       message:
@@ -747,12 +912,14 @@ export async function powershellToolHasPermission(
   // exact-allows downgrade to ask when pwsh is degraded — fail-safe.
   // Module-qualified cmdlets (Module\Cmdlet) also classify 'application'
   // (same `\`); same fail-safe over-fire.
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     exactMatchResult.behavior === 'allow' &&
     !parsed.valid &&
     preParseAskDecision === null &&
     classifyCommandName(command.split(/\s+/)[0] ?? '') !== 'application'
   ) {
+    // 返回 `exactMatchResult`，作为工具调用这次计算的结果。
     return exactMatchResult
   }
 
@@ -761,6 +928,7 @@ export async function powershellToolHasPermission(
   // recommend saving invalid commands to settings
   // NOTE: This check is intentionally AFTER deny/ask rules so explicit rules still work
   // even when the parser fails (e.g., pwsh unavailable).
+  // parsed.valid缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!parsed.valid) {
     // SECURITY: Fallback sub-command deny scan for parse-failed path.
     // The sub-command deny loop at L851+ needs the AST; when parsing fails
@@ -781,11 +949,15 @@ export async function powershellToolHasPermission(
     // pieces. Instead: collapse backtick-newline (line continuation) so
     // `Invoke-Ex`<nl>pression` rejoins, strip remaining backticks (escape
     // chars — ``x → x), then split on actual statement/grouping separators.
+    // backtickStripped保存`command`，供后续判断或组装使用。
     const backtickStripped = command
       .replace(/`[\r\n]+\s*/g, '')
       .replace(/`/g, '')
+    // 逐项读取 `backtickStripped.split(/[;|\n\r{}()&]+/)` 中的fragment，按输入顺序推进工具调用。
     for (const fragment of backtickStripped.split(/[;|\n\r{}()&]+/)) {
+      // trimmedFrag格式化`fragment.trim`，供工具调用后续处理使用。
       const trimmedFrag = fragment.trim()
+      // trimmedFrag缺失时直接走兜底路径，避免工具调用使用无效输入。
       if (!trimmedFrag) continue // skip empty fragments
       // Skip the full command ONLY if it starts with a cmdlet name (no
       // assignment prefix). The full command was already checked at 2a, but
@@ -793,11 +965,13 @@ export async function powershellToolHasPermission(
       // deny(iex:*) rule. If normalization would change the fragment
       // (assignment prefix, dot-source), don't skip — let it be re-checked
       // after normalization. (bug #10/#24)
+      // 工具调用在这里按实际状态进入对应分支。
       if (
         trimmedFrag === command &&
         !/^\$[\w:]/.test(trimmedFrag) &&
         !/^[&.]\s/.test(trimmedFrag)
       ) {
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue
       }
       // SECURITY: Normalize invocation-operator and assignment prefixes before
@@ -813,14 +987,22 @@ export async function powershellToolHasPermission(
       // quotes from rawNameUnstripped; invocation operators are separate AST
       // nodes). This fallback mirrors that normalization.
       // Loop strips nested assignments: $x = $y = iex → $y = iex → iex
+      // normalized格式化`trimmedFrag`，供后续判断或组装使用。
       let normalized = trimmedFrag
+      // m 先占位，稍后的条件分支会根据实际输入补齐它。
       let m: RegExpMatchArray | null
+      // 只要 (m = normalized.match(PS_ASSIGN_PREFIX_RE)) 成立，就持续推进工具调用中的循环处理。
       while ((m = normalized.match(PS_ASSIGN_PREFIX_RE))) {
+        // normalized更新为 `normalized.slice(m[0].length)`，确保工具调用后续读取最新状态。
         normalized = normalized.slice(m[0].length)
       }
+      // normalized更新为 `normalized.replace(/^[&.]\s+/, '') // & cmd, . cmd (dot-s...`，确保工具调用后续读取最新状态。
       normalized = normalized.replace(/^[&.]\s+/, '') // & cmd, . cmd (dot-source)
+      // rawFirst格式化`normalized.split`，供工具调用后续处理使用。
       const rawFirst = normalized.split(/\s+/)[0] ?? ''
+      // firstTok格式化`rawFirst.replace`，供工具调用后续处理使用。
       const firstTok = rawFirst.replace(/^['"]|['"]$/g, '')
+      // normalizedFrag格式化`normalized.slice`，供工具调用后续处理使用。
       const normalizedFrag = firstTok + normalized.slice(rawFirst.length)
       // SECURITY: parse-independent dangerous-removal hard-deny. The
       // isDangerousRemovalPath check in checkPathConstraintsForStatement
@@ -830,20 +1012,28 @@ export async function powershellToolHasPermission(
       // regardless of parser availability. Conservative: only positional
       // args (skip -Param tokens); over-deny in degraded state is safe
       // (same deny-downgrade rationale as the sub-command scan above).
+      // 判断 resolveToCanonical(firstTok) === 'remove-item'，将工具调用分流到只适用于该条件的处理路径。
       if (resolveToCanonical(firstTok) === 'remove-item') {
+        // 遍历 const arg of normalized.split(/\s+/).slice(1)，按顺序处理工具调用中的批量条目。
         for (const arg of normalized.split(/\s+/).slice(1)) {
+          // 判断 PS_TOKENIZER_DASH_CHARS.has(arg[0] ?? '')，将工具调用分流到只适用于该条件的处理路径。
           if (PS_TOKENIZER_DASH_CHARS.has(arg[0] ?? '')) continue
+          // 判断 isDangerousRemovalRawPath(arg)，将工具调用分流到只适用于该条件的处理路径。
           if (isDangerousRemovalRawPath(arg)) {
+            // 返回 dangerousRemovalDeny(arg)，把工具调用这个分支的结果交还调用方。
             return dangerousRemovalDeny(arg)
           }
         }
       }
+      // 从 `matchingRulesForInput(` 解构 matchingDenyRules，减少工具实现 powershell Permissions对同一对象的重复访问。
       const { matchingDenyRules: fragDenyRules } = matchingRulesForInput(
         { command: normalizedFrag },
         toolPermissionContext,
         'prefix',
       )
+      // `fragDenyRules[0]` 与 `undefined` 不一致时刷新派生状态。
       if (fragDenyRules[0] !== undefined) {
+        // 返回 {，把工具调用这个分支的结果交还调用方。
         return {
           behavior: 'deny',
           message: `Permission to use ${POWERSHELL_TOOL_NAME} with command ${command} has been denied.`,
@@ -855,13 +1045,17 @@ export async function powershellToolHasPermission(
     // (2b prefix rule or UNC) carries a better decisionReason than the
     // generic parse-error ask. Sub-command deny can't run the AST loop
     // without a parse, so the fallback scan above is best-effort.
+    // `preParseAskDecision` 与 `null` 不一致时刷新派生状态。
     if (preParseAskDecision !== null) {
+      // 返回 preParseAskDecision，把工具调用这个分支的结果交还调用方。
       return preParseAskDecision
     }
+    // decisionReason集中保存工具实现 powershell Permissions要一起传递的字段。
     const decisionReason = {
       type: 'other' as const,
       reason: `Command contains malformed syntax that cannot be parsed: ${parsed.errors[0]?.message ?? 'unknown error'}`,
     }
+    // 返回 {，把工具调用这个分支的结果交还调用方。
     return {
       behavior: 'ask',
       decisionReason,
@@ -895,22 +1089,29 @@ export async function powershellToolHasPermission(
   // are now deferred here so sub-command deny (step 4) beats them.
 
   // Gather sub-commands once (used by decisions 3, 4, and fallthrough step 5).
+  // allSubCommands 命令数据读取`getSubCommandsForPermissionCheck`，供工具调用后续处理使用。
   const allSubCommands = await getSubCommandsForPermissionCheck(parsed, command)
 
+  // decisions 集合从空数组开始收集，后续按处理顺序追加条目。
   const decisions: PermissionResult[] = []
 
   // Decision: deferred pre-parse ask (2b prefix ask or UNC path).
   // Pushed first so its message wins over later asks (first-of-behavior wins),
   // but the reduce ensures any deny in decisions[] still beats it.
+  // `preParseAskDecision` 与 `null` 不一致时刷新派生状态。
   if (preParseAskDecision !== null) {
+    // decisions 集合追加新条目，保持收集顺序与输入顺序一致。
     decisions.push(preParseAskDecision)
   }
 
   // Decision: security check — was step 3 (:630-650).
   // powershellCommandIsSafe returns 'ask' for subexpressions, script blocks,
   // encoded commands, download cradles, etc. Only 'ask' | 'passthrough'.
+  // safetyResult保存`powershellCommandIsSafe`，供工具调用后续处理使用。
   const safetyResult = powershellCommandIsSafe(command, parsed)
+  // `safetyResult.behavior` 与 `'passthrough'` 不一致时刷新派生状态。
   if (safetyResult.behavior !== 'passthrough') {
+    // decisionReason集中保存工具实现 powershell Permissions要一起传递的字段。
     const decisionReason: PermissionDecisionReason = {
       type: 'other' as const,
       reason:
@@ -918,6 +1119,7 @@ export async function powershellToolHasPermission(
           ? safetyResult.message
           : 'This command contains patterns that could pose security risks and requires approval',
     }
+    // decisions 集合追加新条目，保持收集顺序与输入顺序一致。
     decisions.push({
       behavior: 'ask',
       message: createPermissionRequestMessage(
@@ -937,12 +1139,15 @@ export async function powershellToolHasPermission(
   // Process-BlockStatements and all downstream command walkers never see them.
   // Without this check, a decoy cmdlet like Get-Process fills subCommands,
   // bypassing the empty-statement fallback, and isReadOnlyCommand auto-allows.
+  // 满足 `parsed.hasUsingStatements` 时，工具调用执行该分支。
   if (parsed.hasUsingStatements) {
+    // decisionReason集中保存工具实现 powershell Permissions要一起传递的字段。
     const decisionReason: PermissionDecisionReason = {
       type: 'other' as const,
       reason:
         'Command contains a `using` statement that may load external code (module or assembly)',
     }
+    // decisions 集合追加新条目，保持收集顺序与输入顺序一致。
     decisions.push({
       behavior: 'ask',
       message: createPermissionRequestMessage(
@@ -953,12 +1158,15 @@ export async function powershellToolHasPermission(
       suggestions: suggestionForExactCommand(command),
     })
   }
+  // 满足 `parsed.hasScriptRequirements` 时，工具调用执行该分支。
   if (parsed.hasScriptRequirements) {
+    // decisionReason集中保存工具实现 powershell Permissions要一起传递的字段。
     const decisionReason: PermissionDecisionReason = {
       type: 'other' as const,
       reason:
         'Command contains a `#Requires` directive that may trigger module loading',
     }
+    // decisions 集合追加新条目，保持收集顺序与输入顺序一致。
     decisions.push({
       behavior: 'ask',
       message: createPermissionRequestMessage(
@@ -980,24 +1188,32 @@ export async function powershellToolHasPermission(
   // fully-qualified form (`Microsoft.PowerShell.Core\Registry::HKLM\...`).
   // The optional `(?:[\w.]+\\)?` handles the module-qualified prefix; `::?`
   // matches either single-colon drive syntax or double-colon provider syntax.
+  // NON_FS_PROVIDER_PATTERN 的表达式跨多行展开，这里先建立变量再在后续行完成计算。
   const NON_FS_PROVIDER_PATTERN =
     /^(?:[\w.]+\\)?(env|hklm|hkcu|function|alias|variable|cert|wsman|registry)::?/i
+  // extractProviderPathFromArg 承担工具调用中的独立步骤，串起工具实现 powershell Permissions需要的输入整理、状态更新和结果输出。
   function extractProviderPathFromArg(arg: string): string {
     // Handle colon parameter syntax: -Path:env:HOME → extract 'env:HOME'.
     // SECURITY: PowerShell's tokenizer accepts en-dash/em-dash/horizontal-bar
     // (U+2013/2014/2015) as parameter prefixes. `–Path:env:HOME` (en-dash)
     // must also strip the `–Path:` prefix or NON_FS_PROVIDER_PATTERN won't
     // match (pattern is `^(env|...):` which fails on `–Path:env:...`).
+    // s 集合保存`arg`，供工具实现 powershell Permissions后续步骤使用。
     let s = arg
+    // 判断 s.length > 0 && PS_TOKENIZER_DASH_CHARS.has(s[0]!)，将工具调用分流到只适用于该条件的处理路径。
     if (s.length > 0 && PS_TOKENIZER_DASH_CHARS.has(s[0]!)) {
+      // colonIdx保存`s.indexOf`，供工具调用后续处理使用。
       const colonIdx = s.indexOf(':', 1) // skip the leading dash
+      // 满足 `colonIdx > 0` 时，工具调用执行该分支。
       if (colonIdx > 0) {
+        // s 集合更新为 `s.substring(colonIdx + 1)`，确保工具调用后续读取最新状态。
         s = s.substring(colonIdx + 1)
       }
     }
     // Strip backtick escapes before matching: `Registry`::HKLM\...` has a
     // backtick before `::` that the PS tokenizer removes at runtime but that
     // would otherwise prevent the ^-anchored pattern from matching.
+    // 返回 s.replace(/`/g, '')，把工具调用这个分支的结果交还调用方。
     return s.replace(/`/g, '')
   }
   function providerOrUncDecisionForArg(arg: string): PermissionResult | null {

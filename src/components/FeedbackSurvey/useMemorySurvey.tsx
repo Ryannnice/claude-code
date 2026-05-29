@@ -1,49 +1,87 @@
+// 引入 useCallback、useEffect、useMemo、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+// 接入 isFeedbackSurveyDisabled 服务层能力，把外部通信或共享状态交给 src/services/analytics/config.js 处理。
 import { isFeedbackSurveyDisabled } from 'src/services/analytics/config.js';
+// 接入 getFeatureValue_CACHED_MAY_BE_STALE 服务层能力，把外部通信或共享状态交给 src/services/analytics/growthbook.js 处理。
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
+// 接入 AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS、logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
+// 引入 isAutoMemoryEnabled，将 ../../memdir/paths.js 中已经封装好的能力接到本文件流程里。
 import { isAutoMemoryEnabled } from '../../memdir/paths.js';
+// 接入 isPolicyAllowed 服务层能力，把外部通信或共享状态交给 ../../services/policyLimits/index.js 处理。
 import { isPolicyAllowed } from '../../services/policyLimits/index.js';
+// 接入 FILE_READ_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js';
+// 类型依赖 { Message } 来自 ../../types/message.js，用于校准终端渲染的数据契约。
 import type { Message } from '../../types/message.js';
+// 复用 getGlobalConfig、saveGlobalConfig 工具函数，把通用处理留在 ../../utils/config.js 中维护。
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+// 复用 isEnvTruthy 工具函数，把通用处理留在 ../../utils/envUtils.js 中维护。
 import { isEnvTruthy } from '../../utils/envUtils.js';
+// 复用 isAutoManagedMemoryFile 工具函数，把通用处理留在 ../../utils/memoryFileDetection.js 中维护。
 import { isAutoManagedMemoryFile } from '../../utils/memoryFileDetection.js';
+// 复用 extractTextContent、getLastAssistantMessage 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { extractTextContent, getLastAssistantMessage } from '../../utils/messages.js';
+// 复用 logOTelEvent 工具函数，把通用处理留在 ../../utils/telemetry/events.js 中维护。
 import { logOTelEvent } from '../../utils/telemetry/events.js';
+// 引入 submitTranscriptShare，将 ./submitTranscriptShare.js 中已经封装好的能力接到本文件流程里。
 import { submitTranscriptShare } from './submitTranscriptShare.js';
+// 类型依赖 { TranscriptShareResponse } 来自 ./TranscriptSharePrompt.js，用于校准终端渲染的数据契约。
 import type { TranscriptShareResponse } from './TranscriptSharePrompt.js';
+// 引入 useSurveyState，将 ./useSurveyState.js 中已经封装好的能力接到本文件流程里。
 import { useSurveyState } from './useSurveyState.js';
+// 类型依赖 { FeedbackSurveyResponse } 来自 ./utils.js，用于校准终端渲染的数据契约。
 import type { FeedbackSurveyResponse } from './utils.js';
+// HIDE_THANKS_AFTER_MS 集合 命名 `3000`，让后续代码直接表达这个值的用途。
 const HIDE_THANKS_AFTER_MS = 3000;
+// MEMORY_SURVEY_GATE保存`'tengu_dunwich_bell'`，作为后续固定文本处理的输入。
 const MEMORY_SURVEY_GATE = 'tengu_dunwich_bell';
+// MEMORY_SURVEY_EVENT保存`'tengu_memory_survey_event'`，作为后续固定文本处理的输入。
 const MEMORY_SURVEY_EVENT = 'tengu_memory_survey_event';
+// SURVEY_PROBABILITY保存`0.2`，供后续判断或组装使用。
 const SURVEY_PROBABILITY = 0.2;
+// TRANSCRIPT_SHARE_TRIGGER保存`'memory_survey'`，作为后续固定文本处理的输入。
 const TRANSCRIPT_SHARE_TRIGGER = 'memory_survey';
+// MEMORY_WORD_RE保存`bmemor`，供终端渲染后续处理使用。
 const MEMORY_WORD_RE = /\bmemor(?:y|ies)\b/i;
+// hasMemoryFileRead 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function hasMemoryFileRead(messages: Message[]): boolean {
+  // 按顺序遍历 `messages` 中的消息，逐个交给终端渲染处理。
   for (const message of messages) {
+    // `message.type` 与 `'assistant'` 不一致时刷新派生状态，避免使用过期结果。
     if (message.type !== 'assistant') {
+      // 跳过当前项，继续处理终端渲染中的下一轮循环。
       continue;
     }
+    // 文本内容保存`message.message.content`，供后续判断或组装使用。
     const content = message.message.content;
+    // 满足 `!Array.isArray(content)` 时，终端渲染执行该分支。
     if (!Array.isArray(content)) {
+      // 跳过当前项，继续处理终端渲染中的下一轮循环。
       continue;
     }
+    // 按顺序遍历 `content` 中的block，逐个交给终端渲染处理。
     for (const block of content) {
+      // `block.type` 与 `'tool_use' || block.name !== FI...` 不一致时刷新派生状态，避免使用过期结果。
       if (block.type !== 'tool_use' || block.name !== FILE_READ_TOOL_NAME) {
+        // 跳过当前项，继续处理终端渲染中的下一轮循环。
         continue;
       }
+      // 用户输入 命名 `block.input as {`，让后续代码直接表达这个值的用途。
       const input = block.input as {
         file_path?: unknown;
       };
+      // 只有 `typeof input.file_path === 'string' && isAutoManagedMemoryFile(input.file_p...` 满足时，终端渲染才执行该分支。
       if (typeof input.file_path === 'string' && isAutoManagedMemoryFile(input.file_path)) {
+        // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
         return true;
       }
     }
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false;
 }
+// useMemorySurvey 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useMemorySurvey(messages: Message[], isLoading: boolean, hasActivePrompt = false, {
   enabled = true
 }: {
@@ -51,34 +89,46 @@ export function useMemorySurvey(messages: Message[], isLoading: boolean, hasActi
 } = {}): {
   state: 'closed' | 'open' | 'thanks' | 'transcript_prompt' | 'submitting' | 'submitted';
   lastResponse: FeedbackSurveyResponse | null;
+  // 这个回调绑定到 handleSelect: (selected: FeedbackSurveyResponse) => void;，负责终端渲染在该局部场景下的响应。
   handleSelect: (selected: FeedbackSurveyResponse) => void;
+  // 这个回调绑定到 handleTranscriptSelect: (selected: TranscriptShareResponse) => void;，负责终端渲染在该局部场景下的响应。
   handleTranscriptSelect: (selected: TranscriptShareResponse) => void;
 } {
   // Track assistant message UUIDs that were already evaluated so we don't
   // re-roll probability on re-renders or re-scan messages for the same turn.
+  // seenAssistantUuids 集合保存`Set`，供终端渲染后续处理使用。
   const seenAssistantUuids = useRef<Set<string>>(new Set());
   // Once a memory file read is observed it stays true for the session —
   // skip the O(n) scan on subsequent turns.
+  // memoryReadSeen保存`useRef`，供终端渲染后续处理使用。
   const memoryReadSeen = useRef(false);
+  // messagesRef 引用保存`useRef`，供终端渲染后续处理使用。
   const messagesRef = useRef(messages);
+  // current更新为 `messages`，确保终端 UI后续读取最新状态。
   messagesRef.current = messages;
+  // onOpen保存`useCallback`，供终端渲染后续处理使用。
   const onOpen = useCallback((appearanceId: string) => {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent(MEMORY_SURVEY_EVENT, {
       event_type: 'appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 显式忽略 `logOTelEvent('feedback_survey', {` 的返回值，只保留它触发的副作用。
     void logOTelEvent('feedback_survey', {
       event_type: 'appeared',
       appearance_id: appearanceId,
       survey_type: 'memory'
     });
   }, []);
+  // onSelect保存`useCallback`，供终端渲染后续处理使用。
   const onSelect = useCallback((appearanceId_0: string, selected: FeedbackSurveyResponse) => {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent(MEMORY_SURVEY_EVENT, {
       event_type: 'responded' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_0 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       response: selected as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 显式忽略 `logOTelEvent('feedback_survey', {` 的返回值，只保留它触发的副作用。
     void logOTelEvent('feedback_survey', {
       event_type: 'responded',
       appearance_id: appearanceId_0,
@@ -86,56 +136,79 @@ export function useMemorySurvey(messages: Message[], isLoading: boolean, hasActi
       survey_type: 'memory'
     });
   }, []);
+  // shouldShowTranscriptPrompt记录 `useCallback` 是否成立，终端渲染随后按该结果分支。
   const shouldShowTranscriptPrompt = useCallback((selected_0: FeedbackSurveyResponse) => {
+    // `"external"` 与 `'ant'` 不一致时刷新派生状态，避免使用过期结果。
     if ("external" !== 'ant') {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // `selected_0` 与 `'bad' && selected_0 !== 'good'` 不一致时刷新派生状态，避免使用过期结果。
     if (selected_0 !== 'bad' && selected_0 !== 'good') {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 满足 `getGlobalConfig().transcriptShareDismissed` 时，终端渲染执行该分支。
     if (getGlobalConfig().transcriptShareDismissed) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 满足 `!isPolicyAllowed('allow_product_feedback')` 时，终端渲染执行该分支。
     if (!isPolicyAllowed('allow_product_feedback')) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false;
     }
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   }, []);
+  // onTranscriptPromptShown保存`useCallback`，供终端渲染后续处理使用。
   const onTranscriptPromptShown = useCallback((appearanceId_1: string) => {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent(MEMORY_SURVEY_EVENT, {
       event_type: 'transcript_prompt_appeared' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_1 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       trigger: TRANSCRIPT_SHARE_TRIGGER as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 显式忽略 `logOTelEvent('feedback_survey', {` 的返回值，只保留它触发的副作用。
     void logOTelEvent('feedback_survey', {
       event_type: 'transcript_prompt_appeared',
       appearance_id: appearanceId_1,
       survey_type: 'memory'
     });
   }, []);
+  // onTranscriptSelect保存`useCallback`，供终端渲染后续处理使用。
   const onTranscriptSelect = useCallback(async (appearanceId_2: string, selected_1: TranscriptShareResponse): Promise<boolean> => {
+    // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
     logEvent(MEMORY_SURVEY_EVENT, {
       event_type: `transcript_share_${selected_1}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       appearance_id: appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       trigger: TRANSCRIPT_SHARE_TRIGGER as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
+    // 当 `selected_1` 匹配 `'dont_ask_again'` 时，终端渲染执行对应分支。
     if (selected_1 === 'dont_ask_again') {
+      // 调用 saveGlobalConfig，触发终端渲染此处需要的副作用。
       saveGlobalConfig(current => ({
         ...current,
         transcriptShareDismissed: true
       }));
     }
+    // 当 `selected_1` 匹配 `'yes'` 时，终端渲染执行对应分支。
     if (selected_1 === 'yes') {
+      // 结果保存`submitTranscriptShare`，供终端渲染后续处理使用。
       const result = await submitTranscriptShare(messagesRef.current, TRANSCRIPT_SHARE_TRIGGER, appearanceId_2);
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent(MEMORY_SURVEY_EVENT, {
         event_type: (result.success ? 'transcript_share_submitted' : 'transcript_share_failed') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         appearance_id: appearanceId_2 as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         trigger: TRANSCRIPT_SHARE_TRIGGER as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       });
+      // 返回 `result.success`，作为终端渲染这次计算的结果。
       return result.success;
     }
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false;
   }, []);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     state,
     lastResponse,
@@ -150,59 +223,91 @@ export function useMemorySurvey(messages: Message[], isLoading: boolean, hasActi
     onTranscriptPromptShown,
     onTranscriptSelect
   });
+  // lastAssistant保存`useMemo`，供终端渲染后续处理使用。
   const lastAssistant = useMemo(() => getLastAssistantMessage(messages), [messages]);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // enabled缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!enabled) return;
 
     // /clear resets messages but REPL stays mounted — reset refs so a memory
     // read from the previous conversation doesn't leak into the new one.
+    // 对话消息为空时立即返回或跳过，避免终端渲染把空集合当成可处理内容。
     if (messages.length === 0) {
+      // current更新为 `false`，确保终端 UI后续读取最新状态。
       memoryReadSeen.current = false;
+      // 调用 seenAssistantUuids.current.clear，触发终端渲染此处需要的副作用。
       seenAssistantUuids.current.clear();
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // `state` 与 `'closed' || isLoading || hasAct...` 不一致时刷新派生状态，避免使用过期结果。
     if (state !== 'closed' || isLoading || hasActivePrompt) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // 3P default: survey off (no GrowthBook on Bedrock/Vertex/Foundry).
+    // 满足 `!getFeatureValue_CACHED_MAY_BE_STALE(MEMORY_SURVEY_GATE, false)` 时，终端渲染执行该分支。
     if (!getFeatureValue_CACHED_MAY_BE_STALE(MEMORY_SURVEY_GATE, false)) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `!isAutoMemoryEnabled()` 时，终端渲染执行该分支。
     if (!isAutoMemoryEnabled()) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `isFeedbackSurveyDisabled()` 时，终端渲染执行该分支。
     if (isFeedbackSurveyDisabled()) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `!isPolicyAllowed('allow_product_feedback')` 时，终端渲染执行该分支。
     if (!isPolicyAllowed('allow_product_feedback')) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY)` 时，终端渲染执行该分支。
     if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY)) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 只有 `!lastAssistant || seenAssistantUuids.current.has(lastAssistant.uuid)` 满足时，终端渲染才执行该分支。
     if (!lastAssistant || seenAssistantUuids.current.has(lastAssistant.uuid)) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 文本保存`extractTextContent`，供终端渲染后续处理使用。
     const text = extractTextContent(lastAssistant.message.content, ' ');
+    // 满足 `!MEMORY_WORD_RE.test(text)` 时，终端渲染执行该分支。
     if (!MEMORY_WORD_RE.test(text)) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
 
     // Mark as evaluated before the memory-read scan so a turn that mentions
     // "memory" but has no memory read doesn't trigger repeated O(n) scans
     // on subsequent renders with the same last assistant message.
+    // 调用 seenAssistantUuids.current.add，触发终端渲染此处需要的副作用。
     seenAssistantUuids.current.add(lastAssistant.uuid);
+    // memoryReadSeen.current缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!memoryReadSeen.current) {
+      // current更新为 `hasMemoryFileRead(messages)`，确保终端 UI后续读取最新状态。
       memoryReadSeen.current = hasMemoryFileRead(messages);
     }
+    // memoryReadSeen.current缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!memoryReadSeen.current) {
+      // 终端 UI 组件 use Memory Survey在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
+    // 满足 `Math.random() < SURVEY_PROBABILITY` 时，终端渲染执行该分支。
     if (Math.random() < SURVEY_PROBABILITY) {
+      // 调用 open，触发终端渲染此处需要的副作用。
       open();
     }
   }, [enabled, state, isLoading, hasActivePrompt, lastAssistant, messages, open]);
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     state,
     lastResponse,

@@ -1,6 +1,9 @@
+// 接入 AGENT_TOOL_NAME 工具实现，后续工具池会按权限和开关决定是否暴露。
 import { AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js'
+// 引入 registerBundledSkill，将 ../bundledSkills.js 中已经封装好的能力接到本文件流程里。
 import { registerBundledSkill } from '../bundledSkills.js'
 
+// SIMPLIFY_PROMPT保存``# Simplify: Code Review and Cleanup`，作为后续固定文本处理的输入。
 const SIMPLIFY_PROMPT = `# Simplify: Code Review and Cleanup
 
 Review all changed files for reuse, quality, and efficiency. Fix any issues found.
@@ -52,17 +55,24 @@ Wait for all three agents to complete. Aggregate their findings and fix each iss
 When done, briefly summarize what was fixed (or confirm the code was already clean).
 `
 
+// registerSimplifySkill 封装simplify的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function registerSimplifySkill(): void {
+  // 调用 registerBundledSkill，触发simplify此处需要的副作用。
   registerBundledSkill({
     name: 'simplify',
     description:
       'Review changed code for reuse, quality, and efficiency, then fix any issues found.',
     userInvocable: true,
+    // getPromptForCommand 根据 args 读取或计算simplify需要的结果。
     async getPromptForCommand(args) {
+      // 提示词保存`SIMPLIFY_PROMPT`，供simplify后续判断或输出使用。
       let prompt = SIMPLIFY_PROMPT
+      // 满足 `args` 时，simplify执行该分支。
       if (args) {
+        // simplify在这里处理 `prompt += `\n\n## Additional Focus\n\n${args}``，完成这一小步状态转换。
         prompt += `\n\n## Additional Focus\n\n${args}`
       }
+      // 返回列表结果，保留simplify已经排好的条目顺序。
       return [{ type: 'text', text: prompt }]
     },
   })

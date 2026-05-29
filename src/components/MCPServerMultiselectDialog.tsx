@@ -1,130 +1,222 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 partition，将 lodash-es/partition.js 中已经封装好的能力接到本文件流程里。
 import partition from 'lodash-es/partition.js';
+// 引入 React、useCallback，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useCallback } from 'react';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 复用 getSettings_DEPRECATED、updateSettingsForSource 工具函数，把通用处理留在 ../utils/settings/settings.js 中维护。
 import { getSettings_DEPRECATED, updateSettingsForSource } from '../utils/settings/settings.js';
+// 引入 ConfigurableShortcutHint，将 ./ConfigurableShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
+// 引入 SelectMulti，将 ./CustomSelect/SelectMulti.js 中已经封装好的能力接到本文件流程里。
 import { SelectMulti } from './CustomSelect/SelectMulti.js';
+// 引入 Byline，将 ./design-system/Byline.js 中已经封装好的能力接到本文件流程里。
 import { Byline } from './design-system/Byline.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// 引入 KeyboardShortcutHint，将 ./design-system/KeyboardShortcutHint.js 中已经封装好的能力接到本文件流程里。
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
+// 引入 MCPServerDialogCopy，将 ./MCPServerDialogCopy.js 中已经封装好的能力接到本文件流程里。
 import { MCPServerDialogCopy } from './MCPServerDialogCopy.js';
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   serverNames: string[];
   onDone(): void;
 };
+// MCPServerMultiselectDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function MCPServerMultiselectDialog(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(21);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     serverNames,
     onDone
   } = t0;
+  // t1 暂存 `function onSubmit(selectedServers) {` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== onDone || $[1] !== serverNames) {
+    // t1 暂存 `function onSubmit(selectedServers) {` 生成的渲染片段，后续返回路径直接复用。
     t1 = function onSubmit(selectedServers) {
+      // currentSettings 集合读取`getSettings_DEPRECATED`，供终端渲染后续处理使用。
       const currentSettings = getSettings_DEPRECATED() || {};
+      // enabledServers 集合标记终端 UI MCPServer Multiselec...是否启用对应路径。
       const enabledServers = currentSettings.enabledMcpjsonServers || [];
+      // disabledServers 集合标记终端 UI MCPServer Multiselec...是否启用对应路径。
       const disabledServers = currentSettings.disabledMcpjsonServers || [];
+      // 这个回调绑定到 const [approvedServers, rejectedServers] = partition(serverNames, server => selected…，负责终端渲染在该局部场景下的响应。
       const [approvedServers, rejectedServers] = partition(serverNames, server => selectedServers.includes(server));
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent("tengu_mcp_multidialog_choice", {
         approved: approvedServers.length,
         rejected: rejectedServers.length
       });
+      // 满足 `approvedServers.length > 0` 时，终端渲染执行该分支。
       if (approvedServers.length > 0) {
+        // newEnabledServers 集合保存`Set`，供终端渲染后续处理使用。
         const newEnabledServers = [...new Set([...enabledServers, ...approvedServers])];
+        // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
         updateSettingsForSource("localSettings", {
           enabledMcpjsonServers: newEnabledServers
         });
       }
+      // 满足 `rejectedServers.length > 0` 时，终端渲染执行该分支。
       if (rejectedServers.length > 0) {
+        // newDisabledServers 集合保存`Set`，供终端渲染后续处理使用。
         const newDisabledServers = [...new Set([...disabledServers, ...rejectedServers])];
+        // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
         updateSettingsForSource("localSettings", {
           disabledMcpjsonServers: newDisabledServers
         });
       }
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
     };
+    // $[0] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = onDone;
+    // $[1] 缓存 `serverNames`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = serverNames;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // onSubmit 命名 `t1`，让后续代码直接表达这个值的用途。
   const onSubmit = t1;
+  // t2 暂存 `() => {` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== onDone || $[4] !== serverNames) {
+    // t2 暂存 `() => {` 生成的渲染片段，后续返回路径直接复用。
     t2 = () => {
+      // currentSettings_0读取`getSettings_DEPRECATED`，供终端渲染后续处理使用。
       const currentSettings_0 = getSettings_DEPRECATED() || {};
+      // disabledServers_0标记终端 UI MCPServer Multiselec...是否启用对应路径。
       const disabledServers_0 = currentSettings_0.disabledMcpjsonServers || [];
+      // newDisabledServers_0保存`Set`，供终端渲染后续处理使用。
       const newDisabledServers_0 = [...new Set([...disabledServers_0, ...serverNames])];
+      // 调用 updateSettingsForSource，触发终端渲染此处需要的副作用。
       updateSettingsForSource("localSettings", {
         disabledMcpjsonServers: newDisabledServers_0
       });
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone();
     };
+    // $[3] 缓存 `onDone`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = onDone;
+    // $[4] 缓存 `serverNames`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = serverNames;
+    // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[5];
   }
+  // handleEscRejectAll保存`t2`，作为后续临时缓存值处理的输入。
   const handleEscRejectAll = t2;
+  // 临时值 t3 命名 ``${serverNames.length} new MCP servers found in .mcp.json``，让后续代码直接表达这个值的用途。
   const t3 = `${serverNames.length} new MCP servers found in .mcp.json`;
+  // t4 暂存 `<MCPServerDialogCopy />` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+    // t4 暂存 `<MCPServerDialogCopy />` 生成的渲染片段，后续返回路径直接复用。
     t4 = <MCPServerDialogCopy />;
+    // $[6] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[6] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[6] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[6];
   }
+  // t5 暂存 `serverNames.map(_temp)` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[7] !== serverNames) {
+    // t5 暂存 `serverNames.map(_temp)` 生成的渲染片段，后续返回路径直接复用。
     t5 = serverNames.map(_temp);
+    // $[7] 缓存 `serverNames`，下次依赖未变时 React 编译产物可直接复用。
     $[7] = serverNames;
+    // $[8] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[8] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[8];
   }
+  // t6 暂存 `<SelectMulti options={t5} defaultValue={serverNames} onSu...` 的派生结果，便于缓存命中时直接复用。
   let t6;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[9] !== handleEscRejectAll || $[10] !== onSubmit || $[11] !== serverNames || $[12] !== t5) {
+    // t6 暂存 `<SelectMulti options={t5} defaultValue={serverNames} onSu...` 生成的渲染片段，后续返回路径直接复用。
     t6 = <SelectMulti options={t5} defaultValue={serverNames} onSubmit={onSubmit} onCancel={handleEscRejectAll} hideIndexes={true} />;
+    // $[9] 缓存 `handleEscRejectAll`，下次依赖未变时 React 编译产物可直接复用。
     $[9] = handleEscRejectAll;
+    // $[10] 缓存 `onSubmit`，下次依赖未变时 React 编译产物可直接复用。
     $[10] = onSubmit;
+    // $[11] 缓存 `serverNames`，下次依赖未变时 React 编译产物可直接复用。
     $[11] = serverNames;
+    // $[12] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[12] = t5;
+    // $[13] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[13] = t6;
   } else {
+    // t6 从 React 编译缓存槽 $[13] 取回渲染片段，避免依赖未变时重建 JSX。
     t6 = $[13];
   }
+  // t7 暂存 `<Dialog title={t3} subtitle="Select any you wish to enabl...` 的派生结果，便于缓存命中时直接复用。
   let t7;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[14] !== handleEscRejectAll || $[15] !== t3 || $[16] !== t6) {
+    // t7 暂存 `<Dialog title={t3} subtitle="Select any you wish to enabl...` 生成的渲染片段，后续返回路径直接复用。
     t7 = <Dialog title={t3} subtitle="Select any you wish to enable." color="warning" onCancel={handleEscRejectAll} hideInputGuide={true}>{t4}{t6}</Dialog>;
+    // $[14] 缓存 `handleEscRejectAll`，下次依赖未变时 React 编译产物可直接复用。
     $[14] = handleEscRejectAll;
+    // $[15] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[15] = t3;
+    // $[16] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
     $[16] = t6;
+    // $[17] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[17] = t7;
   } else {
+    // t7 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
     t7 = $[17];
   }
+  // t8 暂存 `<Box paddingX={1}><Text dimColor={true} italic={true}><By...` 的派生结果，便于缓存命中时直接复用。
   let t8;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
+    // t8 暂存 `<Box paddingX={1}><Text dimColor={true} italic={true}><By...` 生成的渲染片段，后续返回路径直接复用。
     t8 = <Box paddingX={1}><Text dimColor={true} italic={true}><Byline><KeyboardShortcutHint shortcut="Space" action="select" /><KeyboardShortcutHint shortcut="Enter" action="confirm" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="reject all" /></Byline></Text></Box>;
+    // $[18] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
     $[18] = t8;
   } else {
+    // t8 从 React 编译缓存槽 $[18] 取回渲染片段，避免依赖未变时重建 JSX。
     t8 = $[18];
   }
+  // t9 暂存 `<>{t7}{t8}</>` 的派生结果，便于缓存命中时直接复用。
   let t9;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[19] !== t7) {
+    // t9 暂存 `<>{t7}{t8}</>` 生成的渲染片段，后续返回路径直接复用。
     t9 = <>{t7}{t8}</>;
+    // $[19] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
     $[19] = t7;
+    // $[20] 缓存 `t9`，下次依赖未变时 React 编译产物可直接复用。
     $[20] = t9;
   } else {
+    // t9 从 React 编译缓存槽 $[20] 取回渲染片段，避免依赖未变时重建 JSX。
     t9 = $[20];
   }
+  // 返回 `t9`，作为终端渲染这次计算的结果。
   return t9;
 }
+// _temp 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function _temp(server_0) {
+  // 返回结构化结果，集中表达终端渲染已经整理出的状态。
   return {
     label: server_0,
     value: server_0

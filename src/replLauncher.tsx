@@ -1,21 +1,33 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 类型依赖 { StatsStore } 来自 ./context/stats.js，用于校准repl Launcher的数据契约。
 import type { StatsStore } from './context/stats.js';
+// 类型依赖 { Root } 来自 ./ink.js，用于校准repl Launcher的数据契约。
 import type { Root } from './ink.js';
+// 类型依赖 { Props as REPLProps } 来自 ./screens/REPL.js，用于校准repl Launcher的数据契约。
 import type { Props as REPLProps } from './screens/REPL.js';
+// 类型依赖 { AppState } 来自 ./state/AppStateStore.js，用于校准repl Launcher的数据契约。
 import type { AppState } from './state/AppStateStore.js';
+// 类型依赖 { FpsMetrics } 来自 ./utils/fpsTracker.js，用于校准repl Launcher的数据契约。
 import type { FpsMetrics } from './utils/fpsTracker.js';
+// AppWrapperProps 固化repl Launcher里传递的数据形状，帮助调用方按同一结构读写字段。
 type AppWrapperProps = {
+  // 这个回调绑定到 getFpsMetrics: () => FpsMetrics | undefined;，负责repl Launcher在该局部场景下的响应。
   getFpsMetrics: () => FpsMetrics | undefined;
   stats?: StatsStore;
   initialState: AppState;
 };
+// launchRepl 封装replLauncher的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function launchRepl(root: Root, appProps: AppWrapperProps, replProps: REPLProps, renderAndRun: (root: Root, element: React.ReactNode) => Promise<void>): Promise<void> {
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     App
   } = await import('./components/App.js');
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     REPL
   } = await import('./screens/REPL.js');
+  // 等待 `renderAndRun(root, <App {...appProps}>` 完成，再继续repl Launcher的异步流程。
   await renderAndRun(root, <App {...appProps}>
       <REPL {...replProps} />
     </App>);

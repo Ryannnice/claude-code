@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 import { LayoutEdge, type LayoutNode } from './layout/node.js'
 
 /**
@@ -14,7 +15,9 @@ import { LayoutEdge, type LayoutNode } from './layout/node.js'
  * use this for wrapping should clamp to actual available screen space so
  * the rendered line count stays consistent with the layout height.
  */
+// getMaxWidth封装成回调，供Ink 渲染层 get max width在事件触发或异步步骤中调用。
 const getMaxWidth = (yogaNode: LayoutNode): number => {
+  // 返回 `(`，作为终端渲染这次计算的结果。
   return (
     yogaNode.getComputedWidth() -
     yogaNode.getComputedPadding(LayoutEdge.Left) -

@@ -4,14 +4,18 @@
  * Cmdlets are case-insensitive; all matching is done in lowercase.
  */
 
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import type {
   ParsedCommandElement,
   ParsedPowerShellCommand,
 } from '../../utils/powershell/parser.js'
 
+// ParsedStatement 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type ParsedStatement = ParsedPowerShellCommand['statements'][number]
 
+// 复用 getPlatform 工具函数，把通用处理留在 ../../utils/platform.js 中维护。
 import { getPlatform } from '../../utils/platform.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   COMMON_ALIASES,
   deriveSecurityFlags,
@@ -19,7 +23,9 @@ import {
   isNullRedirectionTarget,
   isPowerShellParameter,
 } from '../../utils/powershell/parser.js'
+// 类型依赖 { ExternalCommandConfig } 来自 ../../utils/shell/readOnlyCommandValidation.js，用于校准工具调用的数据契约。
 import type { ExternalCommandConfig } from '../../utils/shell/readOnlyCommandValidation.js'
+// 整理这一组导入，让工具调用后续逻辑可以直接复用这些外部能力。
 import {
   DOCKER_READ_ONLY_COMMANDS,
   EXTERNAL_READONLY_COMMANDS,
@@ -27,8 +33,10 @@ import {
   GIT_READ_ONLY_COMMANDS,
   validateFlags,
 } from '../../utils/shell/readOnlyCommandValidation.js'
+// 引入 COMMON_PARAMETERS，将 ./commonParameters.js 中已经封装好的能力接到本文件流程里。
 import { COMMON_PARAMETERS } from './commonParameters.js'
 
+// DOTNET_READ_ONLY_FLAGS 集合保存`Set`，供工具调用后续处理使用。
 const DOTNET_READ_ONLY_FLAGS = new Set([
   '--version',
   '--info',
@@ -36,6 +44,7 @@ const DOTNET_READ_ONLY_FLAGS = new Set([
   '--list-sdks',
 ])
 
+// CommandConfig 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type CommandConfig = {
   /** Safe subcommands or flags for this command */
   safeFlags?: string[]
@@ -49,6 +58,7 @@ type CommandConfig = {
   /** Regex constraint on the original command */
   regex?: RegExp
   /** Additional validation callback - returns true if command is dangerous */
+  // 工具实现 read Only Validation在这里处理 `additionalCommandIsDangerousCallback?: (`，完成这一小步状态转换。
   additionalCommandIsDangerousCallback?: (
     command: string,
     element?: ParsedCommandElement,
@@ -73,14 +83,20 @@ type CommandConfig = {
  *    anything other than StringConstant (Variable, ParenExpression wrapping
  *    arbitrary pipelines, Hashtable, etc.) is a leak vector.
  */
+// argLeaksValue 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function argLeaksValue(
   _cmd: string,
   element?: ParsedCommandElement,
 ): boolean {
+  // argTypes 集合格式化`slice`，供工具调用后续处理使用。
   const argTypes = (element?.elementTypes ?? []).slice(1)
+  // 参数列表保存`element?.args ?? []`，供工具实现 read Only Validation后续判断或输出使用。
   const args = element?.args ?? []
+  // 子节点 命名 `element?.children`，让后续代码直接表达这个值的用途。
   const children = element?.children
+  // 按索引扫描 `argTypes.length`，需要消费相邻参数时可以精确移动游标。
   for (let i = 0; i < argTypes.length; i++) {
+    // `argTypes[i]` 与 `'StringConstant' && argTypes[i]...` 不一致时刷新派生状态，避免使用过期结果。
     if (argTypes[i] !== 'StringConstant' && argTypes[i] !== 'Parameter') {
       // ArrayLiteralAst (`Select-Object Name, Id`) maps to 'Other' — the
       // parse script only populates children for CommandParameterAst.Argument,
@@ -88,29 +104,42 @@ export function argLeaksValue(
       // extent text: Hashtable has `@{`, ParenExpr has `(`, variables have
       // `$`, type literals have `[`, scriptblocks have `{`. A comma-list of
       // bare identifiers has none. `Name, $x` still rejects on `$`.
+      // 满足 `!/[$(@{[]/.test(args[i] ?? '')` 时，工具调用执行该分支。
       if (!/[$(@{[]/.test(args[i] ?? '')) {
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue
       }
+      // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
       return true
     }
+    // 当 `argTypes[i]` 匹配 `'Parameter'` 时，工具调用执行对应分支。
     if (argTypes[i] === 'Parameter') {
+      // paramChildren读取 `children?.[i]` 对应条目，后续围绕该成员继续处理。
       const paramChildren = children?.[i]
+      // 满足 `paramChildren` 时，工具调用执行该分支。
       if (paramChildren) {
+        // `paramChildren.some(c => c.type` 与 `'StringConstant')` 不一致时刷新派生状态，避免使用过期结果。
         if (paramChildren.some(c => c.type !== 'StringConstant')) {
+          // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
           return true
         }
       } else {
         // Fallback: string-archaeology on arg text (pre-children parsers).
         // Reject `$` (variable), `(` (ParenExpressionAst), `@` (hash/array
         // sub), `{` (scriptblock), `[` (type literal/static method).
+        // 当前参数读取 `args[i] ?? ''` 对应条目，后续围绕该成员继续处理。
         const arg = args[i] ?? ''
+        // colonIdx保存`arg.indexOf`，供工具调用后续处理使用。
         const colonIdx = arg.indexOf(':')
+        // 只有 `colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))` 满足时，工具调用才执行该分支。
         if (colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))) {
+          // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
           return true
         }
       }
     }
   }
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -126,6 +155,7 @@ export function argLeaksValue(
  * undefined, not inherited Object.prototype properties. Same defense as
  * COMMON_ALIASES in parser.ts.
  */
+// CMDLET_ALLOWLIST 命令数据 命名 `Object.assign(`，让后续代码直接表达这个值的用途。
 export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
   Object.create(null) as Record<string, CommandConfig>,
   {
@@ -702,11 +732,14 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
       // `ipconfig /all` (read-only display) allowed. Windows ipconfig only uses
       // /flags (display), macOS ipconfig uses subcommands (get/set/waitall).
       safeFlags: ['/all', '/displaydns', '/allcompartments'],
+      // 工具实现 read Only Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
       additionalCommandIsDangerousCallback: (
         _cmd: string,
         element?: ParsedCommandElement,
       ) => {
+        // 返回 `(element?.args ?? []).some(`，作为工具调用这次计算的结果。
         return (element?.args ?? []).some(
+          // a更新为 `> !a.startsWith('/') && !a.startsWith('-')`，确保工具调用后续读取最新状态。
           a => !a.startsWith('/') && !a.startsWith('-'),
         )
       },
@@ -746,11 +779,13 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
       // system config). `hostname -F FILE` / `--file=FILE` also sets from file.
       // Only allow bare `hostname` and known read-only flags.
       safeFlags: ['-a', '-d', '-f', '-i', '-I', '-s', '-y', '-A'],
+      // 工具实现 read Only Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
       additionalCommandIsDangerousCallback: (
         _cmd: string,
         element?: ParsedCommandElement,
       ) => {
         // Reject any positional (non-flag) argument — sets hostname.
+        // 返回 `(element?.args ?? []).some(a => !a.startsWith('-'))`，作为工具调用这次计算的结果。
         return (element?.args ?? []).some(a => !a.startsWith('-'))
       },
     },
@@ -774,6 +809,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
     },
     route: {
       safeFlags: ['print', 'PRINT', '-4', '-6'],
+      // 工具实现 read Only Validation在这里处理 `additionalCommandIsDangerousCallback: (`，完成这一小步状态转换。
       additionalCommandIsDangerousCallback: (
         _cmd: string,
         element?: ParsedCommandElement,
@@ -783,10 +819,14 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
         // 255.0.0.0 192.168.1.1 print` adds a route (print is a trailing display
         // modifier). The old check used args.some('print') which matched 'print'
         // anywhere — position-insensitive.
+        // element缺失时直接走兜底路径，避免工具调用使用无效输入。
         if (!element) {
+          // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
           return true
         }
+        // verb筛选`args.find`，供工具调用后续处理使用。
         const verb = element.args.find(a => !a.startsWith('-'))
+        // 返回 `verb?.toLowerCase() !== 'print'`，作为工具调用这次计算的结果。
         return verb?.toLowerCase() !== 'print'
       },
     },
@@ -885,6 +925,7 @@ export const CMDLET_ALLOWLIST: Record<string, CommandConfig> = Object.assign(
  * Safe output/formatting cmdlets that can receive piped input.
  * Stored as canonical cmdlet names in lowercase.
  */
+// SAFE_OUTPUT_CMDLETS 命令数据保存`Set`，供工具调用后续处理使用。
 const SAFE_OUTPUT_CMDLETS = new Set([
   'out-null',
   // NOT out-string/out-host — both accept -InputObject which leaks args the
@@ -928,6 +969,7 @@ const SAFE_OUTPUT_CMDLETS = new Set([
  * "skip harmless pipeline tail" behavior as SAFE_OUTPUT_CMDLETS but with
  * the argLeaksValue guard.
  */
+// PIPELINE_TAIL_CMDLETS 命令数据保存`Set`，供工具调用后续处理使用。
 const PIPELINE_TAIL_CMDLETS = new Set([
   'format-table',
   'format-list',
@@ -961,6 +1003,7 @@ const PIPELINE_TAIL_CMDLETS = new Set([
  * Each entry here MUST have a matching CMDLET_ALLOWLIST entry for flag
  * validation.
  */
+// SAFE_EXTERNAL_EXES 集合保存`Set`，供工具调用后续处理使用。
 const SAFE_EXTERNAL_EXES = new Set(['where.exe'])
 
 /**
@@ -970,6 +1013,7 @@ const SAFE_EXTERNAL_EXES = new Set(['where.exe'])
  * .ps1 is intentionally excluded — a script named git.ps1 is not the git
  * binary and does not trigger git's hook mechanism.
  */
+// WINDOWS_PATHEXT 路径数据保存`/\.(exe|cmd|bat|com)$/`，供工具实现 read Only Validation后续判断或输出使用。
 const WINDOWS_PATHEXT = /\.(exe|cmd|bat|com)$/
 
 /**
@@ -981,17 +1025,25 @@ const WINDOWS_PATHEXT = /\.(exe|cmd|bat|com)$/
  * (runs a local script, not PATH-resolved git) and must NOT canonicalise to
  * `git`. Returns lowercase canonical name.
  */
+// resolveToCanonical 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function resolveToCanonical(name: string): string {
+  // lower保存`name.toLowerCase`，供工具调用后续处理使用。
   let lower = name.toLowerCase()
   // Only strip PATHEXT on bare names — paths run a specific file, not the
   // PATH-resolved executable the guards are protecting against.
+  // 只有 `!lower.includes('\\') && !lower.includes('/')` 满足时，工具调用才执行该分支。
   if (!lower.includes('\\') && !lower.includes('/')) {
+    // lower更新为 `lower.replace(WINDOWS_PATHEXT, '')`，确保工具调用后续读取最新状态。
     lower = lower.replace(WINDOWS_PATHEXT, '')
   }
+  // alias 集合保存`COMMON_ALIASES[lower]`，供工具实现 read Only Validation后续判断或输出使用。
   const alias = COMMON_ALIASES[lower]
+  // 满足 `alias` 时，工具调用执行该分支。
   if (alias) {
+    // 返回 `alias.toLowerCase()`，作为工具调用这次计算的结果。
     return alias.toLowerCase()
   }
+  // 返回 `lower`，作为工具调用这次计算的结果。
   return lower
 }
 
@@ -1014,8 +1066,11 @@ export function resolveToCanonical(name: string): string {
  * Name kept for BashTool parity (isCwdChangingCmdlet ↔ compoundCommandHasCd);
  * semantically this is "alters path-resolution namespace".
  */
+// isCwdChangingCmdlet 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isCwdChangingCmdlet(name: string): boolean {
+  // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const canonical = resolveToCanonical(name)
+  // 返回 `(`，作为工具调用这次计算的结果。
   return (
     canonical === 'set-location' ||
     canonical === 'push-location' ||
@@ -1035,8 +1090,11 @@ export function isCwdChangingCmdlet(name: string): boolean {
 /**
  * Checks if a command name (after alias resolution) is a safe output cmdlet.
  */
+// isSafeOutputCommand 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isSafeOutputCommand(name: string): boolean {
+  // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const canonical = resolveToCanonical(name)
+  // 返回 `SAFE_OUTPUT_CMDLETS.has(canonical)`，作为工具调用这次计算的结果。
   return SAFE_OUTPUT_CMDLETS.has(canonical)
 }
 
@@ -1049,14 +1107,19 @@ export function isSafeOutputCommand(name: string): boolean {
  * "skip harmless pipeline tail" behavior for Format-Table / Select-Object / etc.
  * Does NOT match the full CMDLET_ALLOWLIST — only the migrated transformers.
  */
+// isAllowlistedPipelineTail 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isAllowlistedPipelineTail(
   cmd: ParsedCommandElement,
   originalCommand: string,
 ): boolean {
+  // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const canonical = resolveToCanonical(cmd.name)
+  // 满足 `!PIPELINE_TAIL_CMDLETS.has(canonical)` 时，工具调用执行该分支。
   if (!PIPELINE_TAIL_CMDLETS.has(canonical)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
+  // 返回 `isAllowlistedCommand(cmd, originalCommand)`，作为工具调用这次计算的结果。
   return isAllowlistedCommand(cmd, originalCommand)
 }
 
@@ -1069,15 +1132,21 @@ export function isAllowlistedPipelineTail(
  * Single code path to true. New AST types added to PowerShell fall
  * through to false by construction.
  */
+// isProvablySafeStatement 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isProvablySafeStatement(stmt: ParsedStatement): boolean {
+  // `stmt.statementType` 与 `'PipelineAst'` 不一致时刷新派生状态，避免使用过期结果。
   if (stmt.statementType !== 'PipelineAst') return false
   // Empty commands → vacuously passes the loop below. PowerShell's
   // parser guarantees PipelineAst.PipelineElements ≥ 1 for valid source,
   // but this gate is the linchpin — defend against parser/JSON edge cases.
+  // stmt.commands 命令数据为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (stmt.commands.length === 0) return false
+  // 按顺序遍历 `stmt.commands` 中的cmd 命令数据，逐个交给工具调用处理。
   for (const cmd of stmt.commands) {
+    // `cmd.elementType` 与 `'CommandAst'` 不一致时刷新派生状态，避免使用过期结果。
     if (cmd.elementType !== 'CommandAst') return false
   }
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true
 }
 
@@ -1085,18 +1154,27 @@ export function isProvablySafeStatement(stmt: ParsedStatement): boolean {
  * Looks up a command in the allowlist, resolving aliases first.
  * Returns the config if found, or undefined.
  */
+// lookupAllowlist 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function lookupAllowlist(name: string): CommandConfig | undefined {
+  // lower保存`name.toLowerCase`，供工具调用后续处理使用。
   const lower = name.toLowerCase()
   // Direct lookup first
+  // direct 命名 `CMDLET_ALLOWLIST[lower]`，让后续代码直接表达这个值的用途。
   const direct = CMDLET_ALLOWLIST[lower]
+  // 满足 `direct` 时，工具调用执行该分支。
   if (direct) {
+    // 返回 `direct`，作为工具调用这次计算的结果。
     return direct
   }
   // Resolve alias to canonical and look up
+  // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const canonical = resolveToCanonical(lower)
+  // `canonical` 与 `lower` 不一致时刷新派生状态，避免使用过期结果。
   if (canonical !== lower) {
+    // 返回 `CMDLET_ALLOWLIST[canonical]`，作为工具调用这次计算的结果。
     return CMDLET_ALLOWLIST[canonical]
   }
+  // 返回 `undefined`，作为工具调用这次计算的结果。
   return undefined
 }
 
@@ -1109,14 +1187,20 @@ function lookupAllowlist(name: string): CommandConfig | undefined {
  * Returns true if the command contains patterns that indicate it should NOT
  * be considered read-only, even if the cmdlet is in the allowlist.
  */
+// hasSyncSecurityConcerns 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function hasSyncSecurityConcerns(command: string): boolean {
+  // trimmed格式化`command.trim`，供工具调用后续处理使用。
   const trimmed = command.trim()
+  // trimmed缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!trimmed) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // Subexpressions: $(...) can execute arbitrary code
+  // 满足 `/\$\(/.test(trimmed)` 时，工具调用执行该分支。
   if (/\$\(/.test(trimmed)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
@@ -1124,37 +1208,50 @@ export function hasSyncSecurityConcerns(command: string): boolean {
   // token-start only — `@` preceded by whitespace/separator/start, not mid-word.
   // `[^\w.]` excludes word chars and `.` so `user@example.com` (email) and
   // `file.@{u}` don't match, but ` @splat` / `;@splat` / `^@splat` do.
+  // 满足 `/(?:^|[^\w.])@\w+/.test(trimmed)` 时，工具调用执行该分支。
   if (/(?:^|[^\w.])@\w+/.test(trimmed)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // Member invocations: .Method() can call arbitrary .NET methods
+  // 满足 `/\.\w+\s*\(/.test(trimmed)` 时，工具调用执行该分支。
   if (/\.\w+\s*\(/.test(trimmed)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // Assignments: $var = ... can modify state
+  // 满足 `/\$\w+\s*[+\-*/]?=/.test(trimmed)` 时，工具调用执行该分支。
   if (/\$\w+\s*[+\-*/]?=/.test(trimmed)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // Stop-parsing symbol: --% passes everything raw to native commands
+  // 满足 `/--%/.test(trimmed)` 时，工具调用执行该分支。
   if (/--%/.test(trimmed)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // UNC paths: \\server\share or //server/share can trigger network requests
   // and leak NTLM/Kerberos credentials
   // eslint-disable-next-line custom-rules/no-lookbehind-regex -- .test() with atom search, short command strings
+  // 只有 `/\\\\/.test(trimmed) || /(?<!:)\/\//.test(trimmed)` 满足时，工具调用才执行该分支。
   if (/\\\\/.test(trimmed) || /(?<!:)\/\//.test(trimmed)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // Static method calls: [Type]::Method() can invoke arbitrary .NET methods
+  // 满足 `/::/.test(trimmed)` 时，工具调用执行该分支。
   if (/::/.test(trimmed)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
+  // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
   return false
 }
 
@@ -1165,29 +1262,39 @@ export function hasSyncSecurityConcerns(command: string): boolean {
  * @param parsed - The AST-parsed representation of the command
  * @returns true if the command is read-only, false otherwise
  */
+// isReadOnlyCommand 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isReadOnlyCommand(
   command: string,
   parsed?: ParsedPowerShellCommand,
 ): boolean {
+  // trimmedCommand 命令数据格式化`command.trim`，供工具调用后续处理使用。
   const trimmedCommand = command.trim()
+  // trimmedCommand 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!trimmedCommand) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // If no parsed AST available, conservatively return false
+  // 解析结果缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!parsed) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // If parsing failed, reject
+  // parsed.valid缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!parsed.valid) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
+  // security保存`deriveSecurityFlags`，供工具调用后续处理使用。
   const security = deriveSecurityFlags(parsed)
   // Reject commands with script blocks — we can't verify the code inside them
   // e.g., Get-Process | ForEach-Object { Remove-Item C:\foo } looks like a safe pipeline
   // but the script block contains destructive code
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     security.hasScriptBlocks ||
     security.hasSubExpressions ||
@@ -1197,12 +1304,16 @@ export function isReadOnlyCommand(
     security.hasAssignments ||
     security.hasStopParsing
   ) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
+  // segments 集合读取`getPipelineSegments`，供工具调用后续处理使用。
   const segments = getPipelineSegments(parsed)
 
+  // segments 集合为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (segments.length === 0) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
@@ -1220,43 +1331,63 @@ export function isReadOnlyCommand(
   // read-only when other statements may use relative paths — those paths
   // resolve differently at runtime than at validation time. BashTool has the
   // equivalent guard via compoundCommandHasCd threading into path validation.
+  // totalCommands 命令数据派生`segments.reduce`，供工具调用后续处理使用。
   const totalCommands = segments.reduce(
+    // 这个回调绑定到 (sum, seg) => sum + seg.commands.length,，负责工具调用在该局部场景下的响应。
     (sum, seg) => sum + seg.commands.length,
     0,
   )
+  // 满足 `totalCommands > 1` 时，工具调用执行该分支。
   if (totalCommands > 1) {
+    // hasCd记录 `segments.some` 是否成立，工具调用随后按该结果分支。
     const hasCd = segments.some(seg =>
+      // 调用 seg.commands.some，触发工具调用此处需要的副作用。
       seg.commands.some(cmd => isCwdChangingCmdlet(cmd.name)),
     )
+    // 满足 `hasCd` 时，工具调用执行该分支。
     if (hasCd) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
   }
 
   // Check each statement individually - all must be read-only
+  // 按顺序遍历 `segments` 中的pipeline，逐个交给工具调用处理。
   for (const pipeline of segments) {
+    // !pipeline || pipeline.commands 命令数据为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
     if (!pipeline || pipeline.commands.length === 0) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
 
     // Reject file redirections (writing to files). `> $null` discards output
     // and is not a filesystem write, so it doesn't disqualify read-only status.
+    // 满足 `pipeline.redirections.length > 0` 时，工具调用执行该分支。
     if (pipeline.redirections.length > 0) {
+      // hasFileRedirection 文件数据记录 `redirections.some` 是否成立，工具调用随后按该结果分支。
       const hasFileRedirection = pipeline.redirections.some(
+        // r更新为 `> !r.isMerging && !isNullRedirectionTarget(r.target)`，确保工具调用后续读取最新状态。
         r => !r.isMerging && !isNullRedirectionTarget(r.target),
       )
+      // 满足 `hasFileRedirection` 时，工具调用执行该分支。
       if (hasFileRedirection) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
     }
 
     // First command must be in the allowlist
+    // firstCmd 命令数据读取 `pipeline.commands[0]` 对应条目，后续围绕该成员继续处理。
     const firstCmd = pipeline.commands[0]
+    // firstCmd 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!firstCmd) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
 
+    // 满足 `!isAllowlistedCommand(firstCmd, command)` 时，工具调用执行该分支。
     if (!isAllowlistedCommand(firstCmd, command)) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
 
@@ -1269,9 +1400,13 @@ export function isReadOnlyCommand(
     // (raw name has path chars → 'application'). cmd.name is stripped to
     // 'Out-Null' which would match SAFE_OUTPUT_CMDLETS, but PowerShell runs
     // scripts\\Out-Null.ps1.
+    // 循环处理 `let i = 1; i < pipeline.commands.length; i++`，让工具调用逐项把同类条目按顺序走完。
     for (let i = 1; i < pipeline.commands.length; i++) {
+      // cmd 命令数据 命名 `pipeline.commands[i]`，让后续代码直接表达这个值的用途。
       const cmd = pipeline.commands[i]
+      // 当 `!cmd || cmd.nameType` 匹配 `'application'` 时，工具调用执行对应分支。
       if (!cmd || cmd.nameType === 'application') {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
       // SECURITY: isSafeOutputCommand is name-only; only short-circuit for
@@ -1282,10 +1417,14 @@ export function isReadOnlyCommand(
       // CMDLET_ALLOWLIST so any args will reject.
       //   PoC: Get-Process | Out-String -InputObject:(Remove-Item /tmp/x)
       //   → auto-allow → Remove-Item runs.
+      // isSafeOutputCommand(cmd.name) &... 命令数据为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
       if (isSafeOutputCommand(cmd.name) && cmd.args.length === 0) {
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue
       }
+      // 满足 `!isAllowlistedCommand(cmd, command)` 时，工具调用执行该分支。
       if (!isAllowlistedCommand(cmd, command)) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
     }
@@ -1296,17 +1435,21 @@ export function isReadOnlyCommand(
     // A statement with nestedCommands is by definition not a simple read-only
     // invocation — it contains executable sub-pipelines that bypass the
     // per-command allowlist check above.
+    // 只有 `pipeline.nestedCommands && pipeline.nestedCommand` 满足时，工具调用才执行该分支。
     if (pipeline.nestedCommands && pipeline.nestedCommands.length > 0) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
   }
 
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true
 }
 
 /**
  * Checks if a single command element is in the allowlist and passes flag validation.
  */
+// isAllowlistedCommand 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function isAllowlistedCommand(
   cmd: ParsedCommandElement,
   originalCommand: string,
@@ -1319,31 +1462,42 @@ export function isAllowlistedCommand(
   // Known collateral: 'Microsoft.PowerShell.Management\\Get-ChildItem' also
   // classifies as 'application' (contains . and \\) and will prompt. Acceptable
   // since module-qualified names are rare in practice and prompting is safe.
+  // 当 `cmd.nameType` 匹配 `'application'` 时，工具调用执行对应分支。
   if (cmd.nameType === 'application') {
     // Bypass for explicit safe .exe names (bash `which` parity — see
     // SAFE_EXTERNAL_EXES). SECURITY: match the raw first token of cmd.text,
     // not cmd.name. stripModulePrefix collapses scripts\where.exe →
     // cmd.name='where.exe', but cmd.text preserves 'scripts\where.exe ...'.
+    // rawFirstToken格式化`text.split`，供工具调用后续处理使用。
     const rawFirstToken = cmd.text.split(/\s/, 1)[0]?.toLowerCase() ?? ''
+    // 满足 `!SAFE_EXTERNAL_EXES.has(rawFirstToken)` 时，工具调用执行该分支。
     if (!SAFE_EXTERNAL_EXES.has(rawFirstToken)) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
     // Fall through to lookupAllowlist — CMDLET_ALLOWLIST['where.exe'] handles
     // flag validation (empty config = all flags OK, matching bash's `which`).
   }
 
+  // 配置读取`lookupAllowlist`，供工具调用后续处理使用。
   const config = lookupAllowlist(cmd.name)
+  // 配置缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!config) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // If there's a regex constraint, check it against the original command
+  // 只有 `config.regex && !config.regex.test(originalCommand)` 满足时，工具调用才执行该分支。
   if (config.regex && !config.regex.test(originalCommand)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // If there's an additional callback, check it
+  // 满足 `config.additionalCommandIsDangerousCallback?.(originalCommand, cmd)` 时，工具调用执行该分支。
   if (config.additionalCommandIsDangerousCallback?.(originalCommand, cmd)) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
@@ -1377,20 +1531,28 @@ export function isAllowlistedCommand(
   // malformed element. Previously skipped (fail-open) for test-helper
   // convenience; test helpers now set elementTypes explicitly.
   // elementTypes[0] is the command name; args start at elementTypes[1].
+  // cmd.elementTypes 命令数据缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!cmd.elementTypes) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
   {
+    // 循环处理 `let i = 1; i < cmd.elementTypes.length; i++`，让工具调用逐项把同类条目按顺序走完。
     for (let i = 1; i < cmd.elementTypes.length; i++) {
+      // t 命名 `cmd.elementTypes[i]`，让后续代码直接表达这个值的用途。
       const t = cmd.elementTypes[i]
+      // `t` 与 `'StringConstant' && t !== 'Para...` 不一致时刷新派生状态，避免使用过期结果。
       if (t !== 'StringConstant' && t !== 'Parameter') {
         // ArrayLiteralAst (`Get-Process Name, Id`) maps to 'Other'. The
         // leak vectors enumerated above all have a metachar in their extent
         // text: Hashtable `@{`, Convert `[`, BinaryExpr-with-var `$`,
         // ParenExpr `(`. A bare comma-list of identifiers has none.
+        // 满足 `!/[$(@{[]/.test(cmd.args[i - 1] ?? '')` 时，工具调用执行该分支。
         if (!/[$(@{[]/.test(cmd.args[i - 1] ?? '')) {
+          // 跳过当前项，继续处理工具调用中的下一轮循环。
           continue
         }
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
       // Colon-bound parameter (`-Flag:$env:SECRET`) is a SINGLE
@@ -1406,19 +1568,28 @@ export function isAllowlistedCommand(
       // `-Name:('payload' > file)` (ParenExpressionAst with redirection).
       // Fallback to the extended metachar check when children is undefined
       // (backward compat / test helpers that don't set it).
+      // 当 `t` 匹配 `'Parameter'` 时，工具调用执行对应分支。
       if (t === 'Parameter') {
+        // paramChildren保存`cmd.children?.[i - 1]`，供工具实现 read Only Validation后续判断或输出使用。
         const paramChildren = cmd.children?.[i - 1]
+        // 满足 `paramChildren` 时，工具调用执行该分支。
         if (paramChildren) {
+          // `paramChildren.some(c => c.type` 与 `'StringConstant')` 不一致时刷新派生状态，避免使用过期结果。
           if (paramChildren.some(c => c.type !== 'StringConstant')) {
+            // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
             return false
           }
         } else {
           // Fallback: string-archaeology on arg text (pre-children parsers).
           // Reject `$` (variable), `(` (ParenExpressionAst), `@` (hash/array
           // sub), `{` (scriptblock), `[` (type literal/static method).
+          // 当前参数保存`cmd.args[i - 1] ?? ''`，供工具实现 read Only Validation后续判断或输出使用。
           const arg = cmd.args[i - 1] ?? ''
+          // colonIdx保存`arg.indexOf`，供工具调用后续处理使用。
           const colonIdx = arg.indexOf(':')
+          // 只有 `colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))` 满足时，工具调用才执行该分支。
           if (colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))) {
+            // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
             return false
           }
         }
@@ -1426,15 +1597,18 @@ export function isAllowlistedCommand(
     }
   }
 
+  // canonical读取`resolveToCanonical`，供工具调用后续处理使用。
   const canonical = resolveToCanonical(cmd.name)
 
   // Handle external commands via shared validation
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     canonical === 'git' ||
     canonical === 'gh' ||
     canonical === 'docker' ||
     canonical === 'dotnet'
   ) {
+    // 返回 `isExternalCommandSafe(canonical, cmd.args)`，作为工具调用这次计算的结果。
     return isExternalCommandSafe(canonical, cmd.args)
   }
 
@@ -1442,27 +1616,36 @@ export function isAllowlistedCommand(
   // But PowerShell cmdlets always use - prefixed parameters, so /tmp is a path,
   // not a flag. We detect cmdlets by checking if the command resolves to a
   // Verb-Noun canonical name (either directly or via alias).
+  // isCmdlet 命令数据记录 `canonical.includes` 是否成立，工具调用随后按该结果分支。
   const isCmdlet = canonical.includes('-')
 
   // SECURITY: if allowAllFlags is set, skip flag validation (command's entire
   // flag surface is read-only). Otherwise, missing/empty safeFlags means
   // "positional args only, reject all flags" — NOT "accept everything".
+  // 满足 `config.allowAllFlags` 时，工具调用执行该分支。
   if (config.allowAllFlags) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
+  // !config.safeFlags || config.saf... 配置为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (!config.safeFlags || config.safeFlags.length === 0) {
     // No safeFlags defined and allowAllFlags not set: reject any flags.
     // Positional-only args are still allowed (the loop below won't fire).
     // This is the safe default — commands must opt in to flag acceptance.
+    // hasFlags 集合记录 `args.some` 是否成立，工具调用随后按该结果分支。
     const hasFlags = cmd.args.some((arg, i) => {
+      // 满足 `isCmdlet` 时，工具调用执行该分支。
       if (isCmdlet) {
+        // 返回 `isPowerShellParameter(arg, cmd.elementTypes?.[i + 1])`，作为工具调用这次计算的结果。
         return isPowerShellParameter(arg, cmd.elementTypes?.[i + 1])
       }
+      // 返回 `(`，作为工具调用这次计算的结果。
       return (
         arg.startsWith('-') ||
         (process.platform === 'win32' && arg.startsWith('/'))
       )
     })
+    // 返回 `!hasFlags`，作为工具调用这次计算的结果。
     return !hasFlags
   }
 
@@ -1473,22 +1656,30 @@ export function isAllowlistedCommand(
   // startsWith('-') check misses `–ComputerName` (en-dash). The parser maps
   // CommandParameterAst → 'Parameter' regardless of dash char.
   // elementTypes[0] is the name element; args start at elementTypes[1].
+  // 按索引扫描 `cmd.args.length`，需要消费相邻参数时可以精确移动游标。
   for (let i = 0; i < cmd.args.length; i++) {
+    // 当前参数保存`cmd.args[i]!`，供工具实现 read Only Validation后续判断或输出使用。
     const arg = cmd.args[i]!
     // For cmdlets: trust elementTypes (AST ground truth, catches Unicode dashes).
     // For native exes on Windows: also check `/` prefix (argv convention, not
     // tokenizer — the parser sees `/S` as a positional, not CommandParameterAst).
+    // isFlag标记工具实现 read Only Validation是否启用对应路径。
     const isFlag = isCmdlet
       ? isPowerShellParameter(arg, cmd.elementTypes?.[i + 1])
       : arg.startsWith('-') ||
         (process.platform === 'win32' && arg.startsWith('/'))
+    // 满足 `isFlag` 时，工具调用执行该分支。
     if (isFlag) {
       // For cmdlets, normalize Unicode dash to ASCII hyphen for safeFlags
       // comparison (safeFlags entries are always written with ASCII `-`).
       // Native-exe safeFlags are stored with `/` (e.g. '/FO') — don't touch.
+      // paramName格式化`arg.slice`，供工具调用后续处理使用。
       let paramName = isCmdlet ? '-' + arg.slice(1) : arg
+      // colonIndex 索引保存`paramName.indexOf`，供工具调用后续处理使用。
       const colonIndex = paramName.indexOf(':')
+      // 满足 `colonIndex > 0` 时，工具调用执行该分支。
       if (colonIndex > 0) {
+        // paramName更新为 `paramName.substring(0, colonIndex)`，确保工具调用后续读取最新状态。
         paramName = paramName.substring(0, colonIndex)
       }
 
@@ -1499,19 +1690,27 @@ export function isAllowlistedCommand(
       // the same merge for safeFlags. Without it, `Get-Content file.txt
       // -ErrorAction SilentlyContinue` prompts despite Get-Content being
       // allowlisted. Only for cmdlets — native exes don't have common params.
+      // paramLower保存`paramName.toLowerCase`，供工具调用后续处理使用。
       const paramLower = paramName.toLowerCase()
+      // 只有 `isCmdlet && COMMON_PARAMETERS.has(paramLower)` 满足时，工具调用才执行该分支。
       if (isCmdlet && COMMON_PARAMETERS.has(paramLower)) {
+        // 跳过当前项，继续处理工具调用中的下一轮循环。
         continue
       }
+      // isSafe记录 `safeFlags.some` 是否成立，工具调用随后按该结果分支。
       const isSafe = config.safeFlags.some(
+        // flag更新为 `> flag.toLowerCase() === paramLower`，确保工具调用后续读取最新状态。
         flag => flag.toLowerCase() === paramLower,
       )
+      // isSafe缺失时直接走兜底路径，避免工具调用使用无效输入。
       if (!isSafe) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
     }
   }
 
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true
 }
 
@@ -1519,21 +1718,29 @@ export function isAllowlistedCommand(
 // External command validation (git, gh, docker) using shared configs
 // ---------------------------------------------------------------------------
 
+// isExternalCommandSafe 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isExternalCommandSafe(command: string, args: string[]): boolean {
+  // 按照 command 的取值选择工具调用的具体处理分支。
   switch (command) {
     case 'git':
+      // 返回 `isGitSafe(args)`，作为工具调用这次计算的结果。
       return isGitSafe(args)
     case 'gh':
+      // 返回 `isGhSafe(args)`，作为工具调用这次计算的结果。
       return isGhSafe(args)
     case 'docker':
+      // 返回 `isDockerSafe(args)`，作为工具调用这次计算的结果。
       return isDockerSafe(args)
     case 'dotnet':
+      // 返回 `isDotnetSafe(args)`，作为工具调用这次计算的结果。
       return isDotnetSafe(args)
     default:
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
   }
 }
 
+// DANGEROUS_GIT_GLOBAL_FLAGS 集合保存`Set`，供工具调用后续处理使用。
 const DANGEROUS_GIT_GLOBAL_FLAGS = new Set([
   '-c',
   '-C',
@@ -1563,6 +1770,7 @@ const DANGEROUS_GIT_GLOBAL_FLAGS = new Set([
 // (-p/--bare/--no-*/--*-pathspecs/--html-path/etc.) advance by 1 via the
 // default path. --attr-source REMOVED: it also triggers pathspec parsing,
 // creating a second differential — moved to DANGEROUS_GIT_GLOBAL_FLAGS above.
+// GIT_GLOBAL_FLAGS_WITH_VALUES 集合保存`Set`，供工具调用后续处理使用。
 const GIT_GLOBAL_FLAGS_WITH_VALUES = new Set([
   '-c',
   '-C',
@@ -1579,10 +1787,14 @@ const GIT_GLOBAL_FLAGS_WITH_VALUES = new Set([
 // flag letter and value). Long options (--git-dir etc.) require `=` or space,
 // so the split-on-`=` check handles them. But `-ccore.pager=sh` and `-C/path`
 // need prefix matching: git parses `-c<name>=<value>` and `-C<path>` directly.
+// DANGEROUS_GIT_SHORT_FLAGS_ATTACHED 聚合成有序列表，保持后续遍历顺序稳定。
 const DANGEROUS_GIT_SHORT_FLAGS_ATTACHED = ['-c', '-C']
 
+// isGitSafe 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isGitSafe(args: string[]): boolean {
+  // 参数列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (args.length === 0) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
@@ -1596,8 +1808,11 @@ function isGitSafe(args: string[]): boolean {
   // This generalizes the ls-remote inline `$` guard below to all git subcommands.
   // Bash equivalent: BashTool blanket
   // `$` rejection at readOnlyValidation.ts:~1352. isGhSafe has the same guard.
+  // 按顺序遍历 `args` 中的当前参数，逐个交给工具调用处理。
   for (const arg of args) {
+    // 满足 `arg.includes('$')` 时，工具调用执行该分支。
     if (arg.includes('$')) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
   }
@@ -1605,10 +1820,15 @@ function isGitSafe(args: string[]): boolean {
   // Skip over global flags before the subcommand, rejecting dangerous ones.
   // Flags that take space-separated values must consume the next token so it
   // isn't mistaken for the subcommand (e.g. `git --namespace foo status`).
+  // idx 命名 `0`，让后续代码直接表达这个值的用途。
   let idx = 0
+  // while 使用 idx < args.length 完成工具调用里的对应操作。
   while (idx < args.length) {
+    // 当前参数保存`args[idx]`，供工具实现 read Only Validation后续判断或输出使用。
     const arg = args[idx]
+    // 只有 `!arg || !arg.startsWith('-')` 满足时，工具调用才执行该分支。
     if (!arg || !arg.startsWith('-')) {
+      // 结束这个分支或循环，避免工具调用继续落入后续路径。
       break
     }
     // SECURITY: Attached-form short flags. `-ccore.pager=sh` splits on `=` to
@@ -1619,53 +1839,77 @@ function isGitSafe(args: string[]): boolean {
     // (git config keys never start with `-`, so `-c-key` is implausible).
     // It does NOT apply to `-C` — directory paths CAN start with `-`, so
     // `git -C-trap status` must reject. `git -ccore.pager=sh log` spawns a shell.
+    // 按顺序遍历 `DANGEROUS_GIT_SHORT_FLAGS_ATTA` 中的shortFlag，逐个交给工具调用处理。
     for (const shortFlag of DANGEROUS_GIT_SHORT_FLAGS_ATTACHED) {
+      // 工具调用在这里按实际状态进入对应分支。
       if (
         arg.length > shortFlag.length &&
         arg.startsWith(shortFlag) &&
         (shortFlag === '-C' || arg[shortFlag.length] !== '-')
       ) {
+        // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
         return false
       }
     }
+    // hasInlineValue记录 `arg.includes` 是否成立，工具调用随后按该结果分支。
     const hasInlineValue = arg.includes('=')
+    // flagName格式化`arg.split`，供工具调用后续处理使用。
     const flagName = hasInlineValue ? arg.split('=')[0] || '' : arg
+    // 满足 `DANGEROUS_GIT_GLOBAL_FLAGS.has(flagName)` 时，工具调用执行该分支。
     if (DANGEROUS_GIT_GLOBAL_FLAGS.has(flagName)) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
     // Consume the next token if the flag takes a separate value
+    // 只有 `!hasInlineValue && GIT_GLOBAL_FLAGS_WITH_VALUES.has(flagName)` 满足时，工具调用才执行该分支。
     if (!hasInlineValue && GIT_GLOBAL_FLAGS_WITH_VALUES.has(flagName)) {
+      // 工具实现 read Only Validation在这里处理 `idx += 2`，完成这一小步状态转换。
       idx += 2
     } else {
+      // 工具实现 read Only Validation在这里处理 `idx++`，完成这一小步状态转换。
       idx++
     }
   }
 
+  // 满足 `idx >= args.length` 时，工具调用执行该分支。
   if (idx >= args.length) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // Try multi-word subcommand first (e.g. 'stash list', 'config --get', 'remote show')
+  // first保存`toLowerCase`，供工具调用后续处理使用。
   const first = args[idx]?.toLowerCase() || ''
+  // second保存`toLowerCase`，供工具调用后续处理使用。
   const second = idx + 1 < args.length ? args[idx + 1]?.toLowerCase() || '' : ''
 
   // GIT_READ_ONLY_COMMANDS keys are like 'git diff', 'git stash list'
+  // twoWordKey固定为 ``git ${first} ${second}``，作为工具实现 read Only Validation后续展示或比较的基准。
   const twoWordKey = `git ${first} ${second}`
+  // oneWordKey固定为 ``git ${first}``，作为工具实现 read Only Validation后续展示或比较的基准。
   const oneWordKey = `git ${first}`
 
+  // 配置 先占位，稍后的条件分支会根据实际输入补齐它。
   let config: ExternalCommandConfig | undefined =
     GIT_READ_ONLY_COMMANDS[twoWordKey]
+  // subcommandTokens 命令数据保存`2`，供工具实现 read Only Validation后续判断或输出使用。
   let subcommandTokens = 2
 
+  // 配置缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!config) {
+    // 配置更新为 `GIT_READ_ONLY_COMMANDS[oneWordKey]`，确保工具调用后续读取最新状态。
     config = GIT_READ_ONLY_COMMANDS[oneWordKey]
+    // subcommandTokens 命令数据更新为 `1`，确保工具调用后续读取最新状态。
     subcommandTokens = 1
   }
 
+  // 配置缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!config) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
+  // flagArgs 集合格式化`args.slice`，供工具调用后续处理使用。
   const flagArgs = args.slice(idx + subcommandTokens)
 
   // git ls-remote URL rejection — ported from BashTool's inline guard
@@ -1676,61 +1920,87 @@ function isGitSafe(args: string[]): boolean {
   // literal string '$env:URL' when the arg's elementType is Variable; the
   // security-flag checks don't gate bare Variable positionals passed to
   // external commands).
+  // 当 `first` 匹配 `'ls-remote'` 时，工具调用执行对应分支。
   if (first === 'ls-remote') {
+    // 按顺序遍历 `flagArgs` 中的当前参数，逐个交给工具调用处理。
     for (const arg of flagArgs) {
+      // 满足 `!arg.startsWith('-')` 时，工具调用执行该分支。
       if (!arg.startsWith('-')) {
+        // 工具调用在这里按实际状态进入对应分支。
         if (
           arg.includes('://') ||
           arg.includes('@') ||
           arg.includes(':') ||
           arg.includes('$')
         ) {
+          // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
           return false
         }
       }
     }
   }
 
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     config.additionalCommandIsDangerousCallback &&
     config.additionalCommandIsDangerousCallback('', flagArgs)
   ) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
+  // 返回 `validateFlags(flagArgs, 0, config, { commandName: 'git' })`，作为工具调用这次计算的结果。
   return validateFlags(flagArgs, 0, config, { commandName: 'git' })
 }
 
+// isGhSafe 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isGhSafe(args: string[]): boolean {
   // gh commands are network-dependent; only allow for ant users
+  // `process.env.USER_TYPE` 与 `'ant'` 不一致时刷新派生状态，避免使用过期结果。
   if (process.env.USER_TYPE !== 'ant') {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
+  // 参数列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (args.length === 0) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // Try two-word subcommand first (e.g. 'pr view')
+  // 配置 先占位，稍后的条件分支会根据实际输入补齐它。
   let config: ExternalCommandConfig | undefined
+  // subcommandTokens 命令数据保存`0`，供工具实现 read Only Validation后续判断或输出使用。
   let subcommandTokens = 0
 
+  // 满足 `args.length >= 2` 时，工具调用执行该分支。
   if (args.length >= 2) {
+    // twoWordKey保存`toLowerCase`，供工具调用后续处理使用。
     const twoWordKey = `gh ${args[0]?.toLowerCase()} ${args[1]?.toLowerCase()}`
+    // 配置更新为 `GH_READ_ONLY_COMMANDS[twoWordKey]`，确保工具调用后续读取最新状态。
     config = GH_READ_ONLY_COMMANDS[twoWordKey]
+    // subcommandTokens 命令数据更新为 `2`，确保工具调用后续读取最新状态。
     subcommandTokens = 2
   }
 
   // Try single-word subcommand (e.g. 'gh version')
+  // 只有 `!config && args.length >= 1` 满足时，工具调用才执行该分支。
   if (!config && args.length >= 1) {
+    // oneWordKey保存`toLowerCase`，供工具调用后续处理使用。
     const oneWordKey = `gh ${args[0]?.toLowerCase()}`
+    // 配置更新为 `GH_READ_ONLY_COMMANDS[oneWordKey]`，确保工具调用后续读取最新状态。
     config = GH_READ_ONLY_COMMANDS[oneWordKey]
+    // subcommandTokens 命令数据更新为 `1`，确保工具调用后续读取最新状态。
     subcommandTokens = 1
   }
 
+  // 配置缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!config) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
+  // flagArgs 集合格式化`args.slice`，供工具调用后续处理使用。
   const flagArgs = args.slice(subcommandTokens)
 
   // SECURITY: Reject any arg containing `$` (variable reference). Bare
@@ -1742,22 +2012,31 @@ function isGhSafe(args: string[]): boolean {
   //   → PowerShell expands at runtime → secret sent to GitHub API.
   // git ls-remote has an equivalent inline guard; this generalizes it for gh.
   // Bash equivalent: BashTool blanket `$` rejection at readOnlyValidation.ts:~1352.
+  // 按顺序遍历 `flagArgs` 中的当前参数，逐个交给工具调用处理。
   for (const arg of flagArgs) {
+    // 满足 `arg.includes('$')` 时，工具调用执行该分支。
     if (arg.includes('$')) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
   }
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     config.additionalCommandIsDangerousCallback &&
     config.additionalCommandIsDangerousCallback('', flagArgs)
   ) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
+  // 返回 `validateFlags(flagArgs, 0, config)`，作为工具调用这次计算的结果。
   return validateFlags(flagArgs, 0, config)
 }
 
+// isDockerSafe 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isDockerSafe(args: string[]): boolean {
+  // 参数列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (args.length === 0) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
@@ -1773,51 +2052,71 @@ function isDockerSafe(args: string[]): boolean {
   // applicable here: this function receives string[] (post-stringify), not
   // ParsedCommandElement; the isAllowlistedCommand caller applies the
   // elementTypes gate one layer up.
+  // 按顺序遍历 `args` 中的当前参数，逐个交给工具调用处理。
   for (const arg of args) {
+    // 满足 `arg.includes('$')` 时，工具调用执行该分支。
     if (arg.includes('$')) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
   }
 
+  // oneWordKey保存`toLowerCase`，供工具调用后续处理使用。
   const oneWordKey = `docker ${args[0]?.toLowerCase()}`
 
   // Fast path: EXTERNAL_READONLY_COMMANDS entries ('docker ps', 'docker images')
   // have no flag constraints — allow unconditionally (after $ guard above).
+  // 满足 `EXTERNAL_READONLY_COMMANDS.includes(oneWordKey)` 时，工具调用执行该分支。
   if (EXTERNAL_READONLY_COMMANDS.includes(oneWordKey)) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true
   }
 
   // DOCKER_READ_ONLY_COMMANDS entries ('docker logs', 'docker inspect') have
   // per-flag configs. Mirrors isGhSafe: look up config, then validateFlags.
+  // 配置 先占位，稍后的条件分支会根据实际输入补齐它。
   const config: ExternalCommandConfig | undefined =
     DOCKER_READ_ONLY_COMMANDS[oneWordKey]
+  // 配置缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!config) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
+  // flagArgs 集合格式化`args.slice`，供工具调用后续处理使用。
   const flagArgs = args.slice(1)
 
+  // 工具调用在这里按实际状态进入对应分支。
   if (
     config.additionalCommandIsDangerousCallback &&
     config.additionalCommandIsDangerousCallback('', flagArgs)
   ) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
+  // 返回 `validateFlags(flagArgs, 0, config)`，作为工具调用这次计算的结果。
   return validateFlags(flagArgs, 0, config)
 }
 
+// isDotnetSafe 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function isDotnetSafe(args: string[]): boolean {
+  // 参数列表为空时立即返回或跳过，避免工具调用把空集合当成可处理内容。
   if (args.length === 0) {
+    // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
     return false
   }
 
   // dotnet uses top-level flags like --version, --info, --list-runtimes
   // All args must be in the safe set
+  // 按顺序遍历 `args` 中的当前参数，逐个交给工具调用处理。
   for (const arg of args) {
+    // 满足 `!DOTNET_READ_ONLY_FLAGS.has(arg.toLowerCase())` 时，工具调用执行该分支。
     if (!DOTNET_READ_ONLY_FLAGS.has(arg.toLowerCase())) {
+      // 返回 false 表示当前检查未通过，调用方会跳过或拒绝该路径。
       return false
     }
   }
 
+  // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
   return true
 }

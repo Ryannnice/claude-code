@@ -1,207 +1,338 @@
+// 引入 React、useEffect、useState，将 react 中已经封装好的能力接到本文件流程里。
 import React, { useEffect, useState } from 'react';
+// 类型依赖 { CommandResultDisplay } 来自 src/commands.js，用于校准终端渲染的数据契约。
 import type { CommandResultDisplay } from 'src/commands.js';
+// 接入 logEvent 服务层能力，把外部通信或共享状态交给 src/services/analytics/index.js 处理。
 import { logEvent } from 'src/services/analytics/index.js';
+// 复用 logForDebugging 工具函数，把通用处理留在 src/utils/debug.js 中维护。
 import { logForDebugging } from 'src/utils/debug.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 复用 execFileNoThrow 工具函数，把通用处理留在 ../utils/execFileNoThrow.js 中维护。
 import { execFileNoThrow } from '../utils/execFileNoThrow.js';
+// 复用 getPlansDirectory 工具函数，把通用处理留在 ../utils/plans.js 中维护。
 import { getPlansDirectory } from '../utils/plans.js';
+// 复用 setCwd 工具函数，把通用处理留在 ../utils/Shell.js 中维护。
 import { setCwd } from '../utils/Shell.js';
+// 复用 cleanupWorktree、getCurrentWorktreeSession、keepWorktree、killTmuxSession 工具函数，把通用处理留在 ../utils/worktree.js 中维护。
 import { cleanupWorktree, getCurrentWorktreeSession, keepWorktree, killTmuxSession } from '../utils/worktree.js';
+// 引入 Select，将 ./CustomSelect/select.js 中已经封装好的能力接到本文件流程里。
 import { Select } from './CustomSelect/select.js';
+// 引入 Dialog，将 ./design-system/Dialog.js 中已经封装好的能力接到本文件流程里。
 import { Dialog } from './design-system/Dialog.js';
+// 引入 Spinner，将 ./Spinner.js 中已经封装好的能力接到本文件流程里。
 import { Spinner } from './Spinner.js';
 
 // Inline require breaks the cycle this file would otherwise close:
 // sessionStorage → commands → exit → ExitFlow → here. All call sites
 // are inside callbacks, so the lazy require never sees an undefined import.
+// recordWorktreeExit 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function recordWorktreeExit(): void {
   /* eslint-disable @typescript-eslint/no-require-imports */
+  // 终端 UI 组件 Worktree Exit Dialog在这里处理 ``，完成这一小步状态转换。
   ;
+  // 终端 UI 组件 Worktree Exit Dialog在这里处理 `(require('../utils/sessionStorage.js') as typeof import('../utils/sessi...`，完成这一小步状态转换。
   (require('../utils/sessionStorage.js') as typeof import('../utils/sessionStorage.js')).saveWorktreeState(null);
   /* eslint-enable @typescript-eslint/no-require-imports */
 }
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   onDone: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
   onCancel?: () => void;
 };
+// WorktreeExitDialog 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function WorktreeExitDialog({
   onDone,
   onCancel
 }: Props): React.ReactNode {
+  // status 集合 由 React state 持有，setStatus 会在用户操作或异步结果返回时触发刷新。
   const [status, setStatus] = useState<'loading' | 'asking' | 'keeping' | 'removing' | 'done'>('loading');
+  // changes 集合 由 React state 持有，setChanges 会在用户操作或异步结果返回时触发刷新。
   const [changes, setChanges] = useState<string[]>([]);
+  // commitCount 数量 由 React state 持有，setCommitCount 会在用户操作或异步结果返回时触发刷新。
   const [commitCount, setCommitCount] = useState<number>(0);
+  // resultMessage 消息数据 由 React state 持有，setResultMessage 会在用户操作或异步结果返回时触发刷新。
   const [resultMessage, setResultMessage] = useState<string | undefined>();
+  // worktreeSession 会话数据读取`getCurrentWorktreeSession`，供终端渲染后续处理使用。
   const worktreeSession = getCurrentWorktreeSession();
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // loadChanges 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
     async function loadChanges() {
+      // changeLines 集合 从空数组开始收集，后续循环会按处理顺序追加条目。
       let changeLines: string[] = [];
+      // gitStatus 集合保存`execFileNoThrow`，供终端渲染后续处理使用。
       const gitStatus = await execFileNoThrow('git', ['status', '--porcelain']);
+      // 满足 `gitStatus.stdout` 时，终端渲染执行该分支。
       if (gitStatus.stdout) {
+        // changeLines 集合更新为 `gitStatus.stdout.split('\n').filter(_ => _.trim() !== '')`，确保终端 UI后续读取最新状态。
         changeLines = gitStatus.stdout.split('\n').filter(_ => _.trim() !== '');
+        // setChanges 写入新的状态值，使终端渲染后续读取保持一致。
         setChanges(changeLines);
       }
 
       // Check for commits to eject
+      // 满足 `worktreeSession` 时，终端渲染执行该分支。
       if (worktreeSession) {
         // Get commits in worktree that are not in original branch
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           stdout: commitsStr
         } = await execFileNoThrow('git', ['rev-list', '--count', `${worktreeSession.originalHeadCommit}..HEAD`]);
+        // 计数解析`parseInt`，供终端渲染后续处理使用。
         const count = parseInt(commitsStr.trim()) || 0;
+        // setCommitCount 写入新的状态值，使终端渲染后续读取保持一致。
         setCommitCount(count);
 
         // If no changes and no commits, clean up silently
+        // 只有 `changeLines.length === 0 && count === 0` 满足时，终端渲染才执行该分支。
         if (changeLines.length === 0 && count === 0) {
+          // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
           setStatus('removing');
+          // 这个回调绑定到 void cleanupWorktree().then(() => {，负责终端渲染在该局部场景下的响应。
           void cleanupWorktree().then(() => {
+            // 调用 process.chdir，触发终端渲染此处需要的副作用。
             process.chdir(worktreeSession.originalCwd);
+            // setCwd 写入新的状态值，使终端渲染后续读取保持一致。
             setCwd(worktreeSession.originalCwd);
+            // 调用 recordWorktreeExit，触发终端渲染此处需要的副作用。
             recordWorktreeExit();
+            // 调用 getPlansDirectory.cache.clear?.();，完成这一处局部操作。
             getPlansDirectory.cache.clear?.();
+            // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
             setResultMessage('Worktree removed (no changes)');
+          // 这个回调绑定到 }).catch(error => {，负责终端渲染在该局部场景下的响应。
           }).catch(error => {
+            // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
             logForDebugging(`Failed to clean up worktree: ${error}`, {
               level: 'error'
             });
+            // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
             setResultMessage('Worktree cleanup failed, exiting anyway');
+          // 这个回调绑定到 }).then(() => {，负责终端渲染在该局部场景下的响应。
           }).then(() => {
+            // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
             setStatus('done');
           });
+          // 终端 UI 组件 Worktree Exit Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
           return;
         } else {
+          // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
           setStatus('asking');
         }
       }
     }
+    // 显式忽略 `loadChanges()` 的返回值，只保留它触发的副作用。
     void loadChanges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   }, [worktreeSession]);
+  // 调用 useEffect，触发终端渲染此处需要的副作用。
   useEffect(() => {
+    // 当 `status` 匹配 `'done'` 时，终端渲染执行对应分支。
     if (status === 'done') {
+      // 调用 onDone，触发终端渲染此处需要的副作用。
       onDone(resultMessage);
     }
   }, [status, onDone, resultMessage]);
+  // worktreeSession 会话数据缺失时直接走兜底路径，避免终端渲染使用无效输入。
   if (!worktreeSession) {
+    // 调用 onDone，触发终端渲染此处需要的副作用。
     onDone('No active worktree session found', {
       display: 'system'
     });
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // 当 `status` 匹配 `'loading' || status === 'do...` 时，终端渲染执行对应分支。
   if (status === 'loading' || status === 'done') {
+    // 返回 `null`，作为终端渲染这次计算的结果。
     return null;
   }
+  // handleSelect 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   async function handleSelect(value: string) {
+    // worktreeSession 会话数据缺失时直接走兜底路径，避免终端渲染使用无效输入。
     if (!worktreeSession) return;
+    // hasTmux记录 `Boolean` 是否成立，终端渲染随后按该结果分支。
     const hasTmux = Boolean(worktreeSession.tmuxSessionName);
+    // 当 `value` 匹配 `'keep' || value === 'keep-w...` 时，终端渲染执行对应分支。
     if (value === 'keep' || value === 'keep-with-tmux') {
+      // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setStatus('keeping');
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_worktree_kept', {
         commits: commitCount,
         changed_files: changes.length
       });
+      // 等待 `keepWorktree()` 完成，再继续终端 UI 组件 Worktree Exit Dialog的异步流程。
       await keepWorktree();
+      // 调用 process.chdir，触发终端渲染此处需要的副作用。
       process.chdir(worktreeSession.originalCwd);
+      // setCwd 写入新的状态值，使终端渲染后续读取保持一致。
       setCwd(worktreeSession.originalCwd);
+      // 调用 recordWorktreeExit，触发终端渲染此处需要的副作用。
       recordWorktreeExit();
+      // 调用 getPlansDirectory.cache.clear?.();，完成这一处局部操作。
       getPlansDirectory.cache.clear?.();
+      // 满足 `hasTmux` 时，终端渲染执行该分支。
       if (hasTmux) {
+        // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
         setResultMessage(`Worktree kept. Your work is saved at ${worktreeSession.worktreePath} on branch ${worktreeSession.worktreeBranch}. Reattach to tmux session with: tmux attach -t ${worktreeSession.tmuxSessionName}`);
       } else {
+        // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
         setResultMessage(`Worktree kept. Your work is saved at ${worktreeSession.worktreePath} on branch ${worktreeSession.worktreeBranch}`);
       }
+      // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setStatus('done');
+    // 终端 UI 组件 Worktree Exit Dialog在这里处理 `} else if (value === 'keep-kill-tmux') {`，完成这一小步状态转换。
     } else if (value === 'keep-kill-tmux') {
+      // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setStatus('keeping');
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_worktree_kept', {
         commits: commitCount,
         changed_files: changes.length
       });
+      // 满足 `worktreeSession.tmuxSessionName` 时，终端渲染执行该分支。
       if (worktreeSession.tmuxSessionName) {
+        // 等待 `killTmuxSession(worktreeSession.tmuxSessionName)` 完成，再继续终端 UI 组件 Worktree Exit Dialog的异步流程。
         await killTmuxSession(worktreeSession.tmuxSessionName);
       }
+      // 等待 `keepWorktree()` 完成，再继续终端 UI 组件 Worktree Exit Dialog的异步流程。
       await keepWorktree();
+      // 调用 process.chdir，触发终端渲染此处需要的副作用。
       process.chdir(worktreeSession.originalCwd);
+      // setCwd 写入新的状态值，使终端渲染后续读取保持一致。
       setCwd(worktreeSession.originalCwd);
+      // 调用 recordWorktreeExit，触发终端渲染此处需要的副作用。
       recordWorktreeExit();
+      // 调用 getPlansDirectory.cache.clear?.();，完成这一处局部操作。
       getPlansDirectory.cache.clear?.();
+      // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
       setResultMessage(`Worktree kept at ${worktreeSession.worktreePath} on branch ${worktreeSession.worktreeBranch}. Tmux session terminated.`);
+      // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setStatus('done');
+    // 终端 UI 组件 Worktree Exit Dialog在这里处理 `} else if (value === 'remove' || value === 'remove-with-tmux') {`，完成这一小步状态转换。
     } else if (value === 'remove' || value === 'remove-with-tmux') {
+      // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setStatus('removing');
+      // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
       logEvent('tengu_worktree_removed', {
         commits: commitCount,
         changed_files: changes.length
       });
+      // 满足 `worktreeSession.tmuxSessionName` 时，终端渲染执行该分支。
       if (worktreeSession.tmuxSessionName) {
+        // 等待 `killTmuxSession(worktreeSession.tmuxSessionName)` 完成，再继续终端 UI 组件 Worktree Exit Dialog的异步流程。
         await killTmuxSession(worktreeSession.tmuxSessionName);
       }
+      // 保护这一段可能失败的终端渲染操作，确保异常能进入相邻错误处理。
       try {
+        // 等待 `cleanupWorktree()` 完成，再继续终端 UI 组件 Worktree Exit Dialog的异步流程。
         await cleanupWorktree();
+        // 调用 process.chdir，触发终端渲染此处需要的副作用。
         process.chdir(worktreeSession.originalCwd);
+        // setCwd 写入新的状态值，使终端渲染后续读取保持一致。
         setCwd(worktreeSession.originalCwd);
+        // 调用 recordWorktreeExit，触发终端渲染此处需要的副作用。
         recordWorktreeExit();
+        // 调用 getPlansDirectory.cache.clear?.();，完成这一处局部操作。
         getPlansDirectory.cache.clear?.();
       } catch (error) {
+        // 记录终端渲染运行诊断，方便排查异常路径或性能问题。
         logForDebugging(`Failed to clean up worktree: ${error}`, {
           level: 'error'
         });
+        // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
         setResultMessage('Worktree cleanup failed, exiting anyway');
+        // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
         setStatus('done');
+        // 终端 UI 组件 Worktree Exit Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // tmuxNote保存`hasTmux ? ' Tmux session terminated.' : ''`，供终端 UI Worktree Exit Dialog后续判断或输出使用。
       const tmuxNote = hasTmux ? ' Tmux session terminated.' : '';
+      // 只有 `commitCount > 0 && changes.length > 0` 满足时，终端渲染才执行该分支。
       if (commitCount > 0 && changes.length > 0) {
+        // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
         setResultMessage(`Worktree removed. ${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} and uncommitted changes were discarded.${tmuxNote}`);
+      // 终端 UI 组件 Worktree Exit Dialog在这里处理 `} else if (commitCount > 0) {`，完成这一小步状态转换。
       } else if (commitCount > 0) {
+        // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
         setResultMessage(`Worktree removed. ${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} on ${worktreeSession.worktreeBranch} ${commitCount === 1 ? 'was' : 'were'} discarded.${tmuxNote}`);
+      // 终端 UI 组件 Worktree Exit Dialog在这里处理 `} else if (changes.length > 0) {`，完成这一小步状态转换。
       } else if (changes.length > 0) {
+        // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
         setResultMessage(`Worktree removed. Uncommitted changes were discarded.${tmuxNote}`);
       } else {
+        // setResultMessage 写入新的状态值，使终端渲染后续读取保持一致。
         setResultMessage(`Worktree removed.${tmuxNote}`);
       }
+      // setStatus 写入新的状态值，使终端渲染后续读取保持一致。
       setStatus('done');
     }
   }
+  // 当 `status` 匹配 `'keeping'` 时，终端渲染执行对应分支。
   if (status === 'keeping') {
+    // 返回 `<Box flexDirection="row" marginY={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="row" marginY={1}>
         <Spinner />
         <Text>Keeping worktree…</Text>
       </Box>;
   }
+  // 当 `status` 匹配 `'removing'` 时，终端渲染执行对应分支。
   if (status === 'removing') {
+    // 返回 `<Box flexDirection="row" marginY={1}>`，作为终端渲染这次计算的结果。
     return <Box flexDirection="row" marginY={1}>
         <Spinner />
         <Text>Removing worktree…</Text>
       </Box>;
   }
+  // branchName 命名 `worktreeSession.worktreeBranch`，让后续代码直接表达这个值的用途。
   const branchName = worktreeSession.worktreeBranch;
+  // hasUncommitted标记终端 UI Worktree Exit Dialog是否启用对应路径。
   const hasUncommitted = changes.length > 0;
+  // hasCommits 集合标记终端 UI Worktree Exit Dialog是否启用对应路径。
   const hasCommits = commitCount > 0;
+  // subtitle 标题 命名 `''`，让后续代码直接表达这个值的用途。
   let subtitle = '';
+  // 只有 `hasUncommitted && hasCommits` 满足时，终端渲染才执行该分支。
   if (hasUncommitted && hasCommits) {
+    // subtitle 标题更新为 ``You have ${changes.length} uncommitted ${changes.length ...`，确保终端 UI后续读取最新状态。
     subtitle = `You have ${changes.length} uncommitted ${changes.length === 1 ? 'file' : 'files'} and ${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} on ${branchName}. All will be lost if you remove.`;
+  // 终端 UI 组件 Worktree Exit Dialog在这里处理 `} else if (hasUncommitted) {`，完成这一小步状态转换。
   } else if (hasUncommitted) {
+    // subtitle 标题更新为 ``You have ${changes.length} uncommitted ${changes.length ...`，确保终端 UI后续读取最新状态。
     subtitle = `You have ${changes.length} uncommitted ${changes.length === 1 ? 'file' : 'files'}. These will be lost if you remove the worktree.`;
+  // 终端 UI 组件 Worktree Exit Dialog在这里处理 `} else if (hasCommits) {`，完成这一小步状态转换。
   } else if (hasCommits) {
+    // subtitle 标题更新为 ``You have ${commitCount} ${commitCount === 1 ? 'commit' :...`，确保终端 UI后续读取最新状态。
     subtitle = `You have ${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} on ${branchName}. The branch will be deleted if you remove the worktree.`;
   } else {
+    // subtitle 标题更新为 `'You are working in a worktree. Keep it to continue worki...`，确保终端 UI后续读取最新状态。
     subtitle = 'You are working in a worktree. Keep it to continue working there, or remove it to clean up.';
   }
+  // handleCancel 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
   function handleCancel() {
+    // 满足 `onCancel` 时，终端渲染执行该分支。
     if (onCancel) {
       // Abort exit and return to the session
+      // 调用 onCancel，触发终端渲染此处需要的副作用。
       onCancel();
+      // 终端 UI 组件 Worktree Exit Dialog在这里结束当前路径，避免继续执行不适用的后续分支。
       return;
     }
     // Fallback: treat Escape as "keep" if no onCancel provided
+    // 显式忽略 `handleSelect('keep')` 的返回值，只保留它触发的副作用。
     void handleSelect('keep');
   }
+  // removeDescription标记终端 UI Worktree Exit Dialog是否启用对应路径。
   const removeDescription = hasUncommitted || hasCommits ? 'All changes and commits will be lost.' : 'Clean up the worktree directory.';
+  // hasTmuxSession 会话数据记录 `Boolean` 是否成立，终端渲染随后按该结果分支。
   const hasTmuxSession = Boolean(worktreeSession.tmuxSessionName);
+  // 选项保存`hasTmuxSession ? [{`，供终端 UI Worktree Exit Dialog后续判断或输出使用。
   const options = hasTmuxSession ? [{
     label: 'Keep worktree and tmux session',
     value: 'keep-with-tmux',
@@ -223,7 +354,9 @@ export function WorktreeExitDialog({
     value: 'remove',
     description: removeDescription
   }];
+  // defaultValue保存`hasTmuxSession ? 'keep-with-tmux' : 'keep'`，供后续判断或组装使用。
   const defaultValue = hasTmuxSession ? 'keep-with-tmux' : 'keep';
+  // 返回 `<Dialog title="Exiting worktree session" subtitle={subtitle} onCancel={...`，作为终端渲染这次计算的结果。
   return <Dialog title="Exiting worktree session" subtitle={subtitle} onCancel={handleCancel}>
       <Select defaultFocusValue={defaultValue} options={options} onChange={handleSelect} />
     </Dialog>;

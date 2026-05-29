@@ -1,7 +1,12 @@
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 复用 RemoteEnvironmentDialog 终端界面组件，避免在这里重复拼装显示逻辑。
 import { RemoteEnvironmentDialog } from '../../components/RemoteEnvironmentDialog.js';
+// 类型依赖 { LocalJSXCommandOnDone } 来自 ../../types/command.js，用于校准命令处理的数据契约。
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
+// call 封装斜杠命令的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNode> {
+  // 返回 `<RemoteEnvironmentDialog onDone={onDone} />`，作为命令处理这次计算的结果。
   return <RemoteEnvironmentDialog onDone={onDone} />;
 }
 //# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJSZWFjdCIsIlJlbW90ZUVudmlyb25tZW50RGlhbG9nIiwiTG9jYWxKU1hDb21tYW5kT25Eb25lIiwiY2FsbCIsIm9uRG9uZSIsIlByb21pc2UiLCJSZWFjdE5vZGUiXSwic291cmNlcyI6WyJyZW1vdGUtZW52LnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgKiBhcyBSZWFjdCBmcm9tICdyZWFjdCdcbmltcG9ydCB7IFJlbW90ZUVudmlyb25tZW50RGlhbG9nIH0gZnJvbSAnLi4vLi4vY29tcG9uZW50cy9SZW1vdGVFbnZpcm9ubWVudERpYWxvZy5qcydcbmltcG9ydCB0eXBlIHsgTG9jYWxKU1hDb21tYW5kT25Eb25lIH0gZnJvbSAnLi4vLi4vdHlwZXMvY29tbWFuZC5qcydcblxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIGNhbGwoXG4gIG9uRG9uZTogTG9jYWxKU1hDb21tYW5kT25Eb25lLFxuKTogUHJvbWlzZTxSZWFjdC5SZWFjdE5vZGU+IHtcbiAgcmV0dXJuIDxSZW1vdGVFbnZpcm9ubWVudERpYWxvZyBvbkRvbmU9e29uRG9uZX0gLz5cbn1cbiJdLCJtYXBwaW5ncyI6IkFBQUEsT0FBTyxLQUFLQSxLQUFLLE1BQU0sT0FBTztBQUM5QixTQUFTQyx1QkFBdUIsUUFBUSw2Q0FBNkM7QUFDckYsY0FBY0MscUJBQXFCLFFBQVEsd0JBQXdCO0FBRW5FLE9BQU8sZUFBZUMsSUFBSUEsQ0FDeEJDLE1BQU0sRUFBRUYscUJBQXFCLENBQzlCLEVBQUVHLE9BQU8sQ0FBQ0wsS0FBSyxDQUFDTSxTQUFTLENBQUMsQ0FBQztFQUMxQixPQUFPLENBQUMsdUJBQXVCLENBQUMsTUFBTSxDQUFDLENBQUNGLE1BQU0sQ0FBQyxHQUFHO0FBQ3BEIiwiaWdub3JlTGlzdCI6W119

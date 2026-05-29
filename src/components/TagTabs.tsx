@@ -1,22 +1,38 @@
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 复用 stringWidth 终端界面组件，避免在这里重复拼装显示逻辑。
 import { stringWidth } from '../ink/stringWidth.js';
+// 引入 Box、Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../ink.js';
+// 复用 truncateToWidth 工具函数，把通用处理留在 ../utils/format.js 中维护。
 import { truncateToWidth } from '../utils/format.js';
 
 // Constants for width calculations - derived from actual rendered strings
+// ALL_TAB_LABEL固定为 `'All'`，作为终端 UI Tag Tabs后续展示或比较的基准。
 const ALL_TAB_LABEL = 'All';
+// TAB_PADDING保存`2; // Space before and after tab text: " {tab} "`，供终端 UI Tag Tabs后续判断或输出使用。
 const TAB_PADDING = 2; // Space before and after tab text: " {tab} "
+// HASH_PREFIX_LENGTH 数量保存`1; // "#" prefix for non-All tabs`，供后续判断或组装使用。
 const HASH_PREFIX_LENGTH = 1; // "#" prefix for non-All tabs
+// LEFT_ARROW_PREFIX保存`'← '`，作为后续固定文本处理的输入。
 const LEFT_ARROW_PREFIX = '← ';
+// RIGHT_HINT_WITH_COUNT_PREFIX 数量固定为 `'→'`，作为终端 UI Tag Tabs后续展示或比较的基准。
 const RIGHT_HINT_WITH_COUNT_PREFIX = '→';
+// RIGHT_HINT_SUFFIX固定为 `' (tab to cycle)'`，作为终端 UI Tag Tabs后续展示或比较的基准。
 const RIGHT_HINT_SUFFIX = ' (tab to cycle)';
+// RIGHT_HINT_NO_COUNT 数量保存`'(tab to cycle)'`，作为后续固定文本处理的输入。
 const RIGHT_HINT_NO_COUNT = '(tab to cycle)';
+// MAX_OVERFLOW_DIGITS 集合 命名 `2; // Assume max 99 hidden tabs for width calculation`，让后续代码直接表达这个值的用途。
 const MAX_OVERFLOW_DIGITS = 2; // Assume max 99 hidden tabs for width calculation
 
 // Computed widths
+// LEFT_ARROW_WIDTH 命名 `LEFT_ARROW_PREFIX.length + MAX_OVERFLOW_DIGITS + 1; // "←...`，让后续代码直接表达这个值的用途。
 const LEFT_ARROW_WIDTH = LEFT_ARROW_PREFIX.length + MAX_OVERFLOW_DIGITS + 1; // "← NN " with gap
+// RIGHT_HINT_WIDTH_WITH_COUNT 数量保存`NN`，供终端渲染后续处理使用。
 const RIGHT_HINT_WIDTH_WITH_COUNT = RIGHT_HINT_WITH_COUNT_PREFIX.length + MAX_OVERFLOW_DIGITS + RIGHT_HINT_SUFFIX.length; // "→NN (tab to cycle)"
+// RIGHT_HINT_WIDTH_NO_COUNT 数量记录 `RIGHT_HINT_NO_COUNT.length` 是否成立，下一步按该结果分支。
 const RIGHT_HINT_WIDTH_NO_COUNT = RIGHT_HINT_NO_COUNT.length;
+// Props 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 type Props = {
   tabs: string[];
   selectedIndex: number;
@@ -27,103 +43,158 @@ type Props = {
 /**
  * Calculate the display width of a tab
  */
+// getTabWidth 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function getTabWidth(tab: string, maxWidth?: number): number {
+  // 满足 `tab === ALL_TAB_LABEL` 时，终端渲染执行该分支。
   if (tab === ALL_TAB_LABEL) {
+    // 返回 `ALL_TAB_LABEL.length + TAB_PADDING`，作为终端渲染这次计算的结果。
     return ALL_TAB_LABEL.length + TAB_PADDING;
   }
   // For non-All tabs: " #{tag} " but truncate tag if needed
+  // tagWidth保存`stringWidth`，供终端渲染后续处理使用。
   const tagWidth = stringWidth(tab);
+  // effectiveTagWidth保存`Math.min`，供终端渲染后续处理使用。
   const effectiveTagWidth = maxWidth ? Math.min(tagWidth, maxWidth - TAB_PADDING - HASH_PREFIX_LENGTH) : tagWidth;
+  // 返回 `Math.max(0, effectiveTagWidth) + TAB_PADDING + HASH_PREFIX_LENGTH`，作为终端渲染这次计算的结果。
   return Math.max(0, effectiveTagWidth) + TAB_PADDING + HASH_PREFIX_LENGTH;
 }
 
 /**
  * Truncate a tag to fit within maxWidth, accounting for padding and hash prefix
  */
+// truncateTag 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function truncateTag(tag: string, maxWidth: number): string {
   // Available space for the tag text itself: maxWidth - " #" - " "
+  // availableForTag 命名 `maxWidth - TAB_PADDING - HASH_PREFIX_LENGTH`，让后续代码直接表达这个值的用途。
   const availableForTag = maxWidth - TAB_PADDING - HASH_PREFIX_LENGTH;
+  // 满足 `stringWidth(tag) <= availableForTag` 时，终端渲染执行该分支。
   if (stringWidth(tag) <= availableForTag) {
+    // 返回 `tag`，作为终端渲染这次计算的结果。
     return tag;
   }
+  // 满足 `availableForTag <= 1` 时，终端渲染执行该分支。
   if (availableForTag <= 1) {
+    // 返回 `tag.charAt(0)`，作为终端渲染这次计算的结果。
     return tag.charAt(0);
   }
+  // 返回 `truncateToWidth(tag, availableForTag)`，作为终端渲染这次计算的结果。
   return truncateToWidth(tag, availableForTag);
 }
+// TagTabs 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function TagTabs({
   tabs,
   selectedIndex,
   availableWidth,
   showAllProjects = false
 }: Props): React.ReactNode {
+  // resumeLabel保存`Resume`，供终端渲染后续处理使用。
   const resumeLabel = showAllProjects ? 'Resume (All Projects)' : 'Resume';
+  // resumeLabelWidth记录 `resumeLabel.length + 1; // +1 for gap` 是否成立，下一步按该结果分支。
   const resumeLabelWidth = resumeLabel.length + 1; // +1 for gap
 
   // Calculate how much space we have for tabs (use worst-case hint width)
+  // rightHintWidth保存`Math.max`，供终端渲染后续处理使用。
   const rightHintWidth = Math.max(RIGHT_HINT_WIDTH_WITH_COUNT, RIGHT_HINT_WIDTH_NO_COUNT);
+  // maxTabsWidth保存`availableWidth - resumeLabelWidth - rightHintWidth - 2; /...`，供终端 UI Tag Tabs后续判断或输出使用。
   const maxTabsWidth = availableWidth - resumeLabelWidth - rightHintWidth - 2; // 2 for gaps
 
   // Clamp selectedIndex to valid range
+  // safeSelectedIndex 索引保存`Math.max`，供终端渲染后续处理使用。
   const safeSelectedIndex = Math.max(0, Math.min(selectedIndex, tabs.length - 1));
 
   // Calculate width of each tab, with truncation for very long tags
+  // maxSingleTabWidth保存`Math.max`，供终端渲染后续处理使用。
   const maxSingleTabWidth = Math.max(20, Math.floor(maxTabsWidth / 2)); // At least show half the space for one tab
+  // tabWidths 集合派生`tabs.map`，供终端渲染后续处理使用。
   const tabWidths = tabs.map(tab => getTabWidth(tab, maxSingleTabWidth));
 
   // Find a window of tabs that fits, centered around selectedIndex
+  // startIndex 索引 命名 `0`，让后续代码直接表达这个值的用途。
   let startIndex = 0;
+  // endIndex 索引保存 `tabs.length` 的判断结果，供终端 UI Tag Tabs后续分支直接复用。
   let endIndex = tabs.length;
 
   // Calculate total width of all tabs
+  // totalTabsWidth派生`tabWidths.reduce`，供终端渲染后续处理使用。
   const totalTabsWidth = tabWidths.reduce((sum, w, i) => sum + w + (i < tabWidths.length - 1 ? 1 : 0), 0); // +1 for gaps between tabs
 
+  // 满足 `totalTabsWidth > maxTabsWidth` 时，终端渲染执行该分支。
   if (totalTabsWidth > maxTabsWidth) {
     // Need to show a subset - account for left arrow when not at start
+    // effectiveMaxWidth 命名 `maxTabsWidth - LEFT_ARROW_WIDTH`，让后续代码直接表达这个值的用途。
     const effectiveMaxWidth = maxTabsWidth - LEFT_ARROW_WIDTH;
 
     // Start with the selected tab
+    // windowWidth读取 `tabWidths[safeSelectedIndex] ?? 0` 对应条目，后续围绕该成员继续处理。
     let windowWidth = tabWidths[safeSelectedIndex] ?? 0;
+    // startIndex 索引更新为 `safeSelectedIndex`，确保终端 UI后续读取最新状态。
     startIndex = safeSelectedIndex;
+    // endIndex 索引更新为 `safeSelectedIndex + 1`，确保终端 UI后续读取最新状态。
     endIndex = safeSelectedIndex + 1;
 
     // Expand window to include more tabs
+    // while 使用 startIndex > 0 || endIndex < tabs.length 完成终端渲染里的对应操作。
     while (startIndex > 0 || endIndex < tabs.length) {
+      // canExpandLeft标记终端 UI Tag Tabs是否启用对应路径。
       const canExpandLeft = startIndex > 0;
+      // canExpandRight标记终端 UI Tag Tabs是否启用对应路径。
       const canExpandRight = endIndex < tabs.length;
+      // 满足 `canExpandLeft` 时，终端渲染执行该分支。
       if (canExpandLeft) {
+        // leftWidth读取 `(tabWidths[startIndex - 1] ?? 0) + 1; // +1 for gap` 对应条目，后续围绕该成员继续处理。
         const leftWidth = (tabWidths[startIndex - 1] ?? 0) + 1; // +1 for gap
+        // 满足 `windowWidth + leftWidth <= effectiveMaxWidth` 时，终端渲染执行该分支。
         if (windowWidth + leftWidth <= effectiveMaxWidth) {
+          // 终端 UI 组件 Tag Tabs在这里处理 `startIndex--`，完成这一小步状态转换。
           startIndex--;
+          // 终端 UI 组件 Tag Tabs在这里处理 `windowWidth += leftWidth`，完成这一小步状态转换。
           windowWidth += leftWidth;
+          // 跳过当前项，继续处理终端渲染中的下一轮循环。
           continue;
         }
       }
+      // 满足 `canExpandRight` 时，终端渲染执行该分支。
       if (canExpandRight) {
+        // rightWidth读取 `(tabWidths[endIndex] ?? 0) + 1; // +1 for gap` 对应条目，后续围绕该成员继续处理。
         const rightWidth = (tabWidths[endIndex] ?? 0) + 1; // +1 for gap
+        // 满足 `windowWidth + rightWidth <= effectiveMaxWidth` 时，终端渲染执行该分支。
         if (windowWidth + rightWidth <= effectiveMaxWidth) {
+          // 终端 UI 组件 Tag Tabs在这里处理 `endIndex++`，完成这一小步状态转换。
           endIndex++;
+          // 终端 UI 组件 Tag Tabs在这里处理 `windowWidth += rightWidth`，完成这一小步状态转换。
           windowWidth += rightWidth;
+          // 跳过当前项，继续处理终端渲染中的下一轮循环。
           continue;
         }
       }
+      // 结束这个分支或循环，避免终端渲染继续落入后续路径。
       break;
     }
   }
+  // hiddenLeft保存`startIndex`，供终端 UI Tag Tabs后续判断或输出使用。
   const hiddenLeft = startIndex;
+  // hiddenRight 命名 `tabs.length - endIndex`，让后续代码直接表达这个值的用途。
   const hiddenRight = tabs.length - endIndex;
+  // visibleTabs 集合格式化`tabs.slice`，供终端渲染后续处理使用。
   const visibleTabs = tabs.slice(startIndex, endIndex);
+  // visibleIndices 集合派生`visibleTabs.map`，供终端渲染后续处理使用。
   const visibleIndices = visibleTabs.map((_, i_0) => startIndex + i_0);
+  // 返回 `<Box flexDirection="row" gap={1}>`，作为终端渲染这次计算的结果。
   return <Box flexDirection="row" gap={1}>
       <Text color="suggestion">{resumeLabel}</Text>
       {hiddenLeft > 0 && <Text dimColor>
           {LEFT_ARROW_PREFIX}
           {hiddenLeft}
         </Text>}
+      {/* 这个回调绑定到 {visibleTabs.map((tab_0, i_1) => {，负责终端渲染在该局部场景下的响应。 */}
       {visibleTabs.map((tab_0, i_1) => {
+      // actualIndex 索引读取 `visibleIndices[i_1]!` 对应条目，后续围绕该成员继续处理。
       const actualIndex = visibleIndices[i_1]!;
+      // isSelected标记终端 UI Tag Tabs是否启用对应路径。
       const isSelected = actualIndex === safeSelectedIndex;
+      // displayText保存`truncateTag`，供终端渲染后续处理使用。
       const displayText = tab_0 === ALL_TAB_LABEL ? tab_0 : `#${truncateTag(tab_0, maxSingleTabWidth - TAB_PADDING)}`;
+      // 返回 `<Text key={tab_0} backgroundColor={isSelected ? 'suggestion' : undefine...`，作为终端渲染这次计算的结果。
       return <Text key={tab_0} backgroundColor={isSelected ? 'suggestion' : undefined} color={isSelected ? 'inverseText' : undefined} bold={isSelected}>
             {' '}
             {displayText}{' '}

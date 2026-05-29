@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 import { z } from 'zod/v4'
 
 /**
@@ -23,14 +24,20 @@ import { z } from 'zod/v4'
  *   semanticNumber(z.number().optional())         → number | undefined
  *   semanticNumber(z.number().default(0))         → number
  */
+// semanticNumber 封装共享工具的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function semanticNumber<T extends z.ZodType>(
   inner: T = z.number() as unknown as T,
 ) {
+  // 返回 `z.preprocess((v: unknown) => {`，作为共享工具这次计算的结果。
   return z.preprocess((v: unknown) => {
+    // 只有 `typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)` 满足时，共享工具才执行该分支。
     if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) {
+      // n保存`Number`，供共享工具后续处理使用。
       const n = Number(v)
+      // 满足 `Number.isFinite(n)` 时，共享工具执行该分支。
       if (Number.isFinite(n)) return n
     }
+    // 返回 `v`，作为共享工具这次计算的结果。
     return v
   }, inner)
 }

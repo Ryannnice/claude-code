@@ -1,3 +1,4 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
 /**
  * Shared state machine + install helper for plugin-recommendation hooks
@@ -5,14 +6,23 @@ import { c as _c } from "react/compiler-runtime";
  * and success/failure notification JSX so new sources stay small.
  */
 
+// 引入 figures，将 figures 中已经封装好的能力接到本文件流程里。
 import figures from 'figures';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 引入 getIsRemoteMode，将 ../bootstrap/state.js 中已经封装好的能力接到本文件流程里。
 import { getIsRemoteMode } from '../bootstrap/state.js';
+// 类型依赖 { useNotifications } 来自 ../context/notifications.js，用于校准React hook 状态流的数据契约。
 import type { useNotifications } from '../context/notifications.js';
+// 引入 Text，将 ../ink.js 中已经封装好的能力接到本文件流程里。
 import { Text } from '../ink.js';
+// 复用 logError 工具函数，把通用处理留在 ../utils/log.js 中维护。
 import { logError } from '../utils/log.js';
+// 复用 getPluginById 工具函数，把通用处理留在 ../utils/plugins/marketplaceManager.js 中维护。
 import { getPluginById } from '../utils/plugins/marketplaceManager.js';
+// AddNotification 固化React hook 状态流里传递的数据形状，帮助调用方按同一结构读写字段。
 type AddNotification = ReturnType<typeof useNotifications>['addNotification'];
+// PluginData 固化React hook 状态流里传递的数据形状，帮助调用方按同一结构读写字段。
 type PluginData = NonNullable<Awaited<ReturnType<typeof getPluginById>>>;
 
 /**
@@ -21,69 +31,113 @@ type PluginData = NonNullable<Awaited<ReturnType<typeof getPluginById>>>;
  * becomes the recommendation. Include tryResolve in effect deps — its
  * identity tracks recommendation, so clearing re-triggers resolution.
  */
+// usePluginRecommendationBase 封装usePluginRecommendationBase的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function usePluginRecommendationBase() {
+  // $保存`_c`，供React hook后续处理使用。
   const $ = _c(6);
+  // 从 `React.useState(null)` 按位置拆出 recommendation、setRecommendation，让React hook use Plugin Recommendatio...分别处理这些返回值。
   const [recommendation, setRecommendation] = React.useState(null);
+  // isCheckingRef 引用记录 `React.useRef` 是否成立，React hook随后按该结果分支。
   const isCheckingRef = React.useRef(false);
+  // t0 暂存 `resolve => {` 的派生结果，便于缓存命中时直接复用。
   let t0;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== recommendation) {
+    // t0 暂存 `resolve => {` 生成的渲染片段，后续返回路径直接复用。
     t0 = resolve => {
+      // 满足 `getIsRemoteMode()` 时，React hook执行该分支。
       if (getIsRemoteMode()) {
+        // React hook use Plugin Recommendatio...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `recommendation` 时，React hook执行该分支。
       if (recommendation) {
+        // React hook use Plugin Recommendatio...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // 满足 `isCheckingRef.current` 时，React hook执行该分支。
       if (isCheckingRef.current) {
+        // React hook use Plugin Recommendatio...在这里结束当前路径，避免继续执行不适用的后续分支。
         return;
       }
+      // current更新为 `true`，确保usePluginRecommendationBase后续读取最新状态。
       isCheckingRef.current = true;
+      // resolve 结算当前 Promise，唤醒等待这个异步结果的调用方。
       resolve().then(rec => {
+        // 满足 `rec` 时，React hook执行该分支。
         if (rec) {
+          // setRecommendation 写入新的状态值，使React hook 状态流后续读取保持一致。
           setRecommendation(rec);
         }
+      // 这个回调绑定到 }).catch(logError).finally(() => {，负责React hook 状态流在该局部场景下的响应。
       }).catch(logError).finally(() => {
+        // current更新为 `false`，确保usePluginRecommendationBase后续读取最新状态。
         isCheckingRef.current = false;
       });
     };
+    // $[0] 缓存 `recommendation`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = recommendation;
+    // $[1] 缓存 `t0`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t0;
   } else {
+    // t0 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t0 = $[1];
   }
+  // tryResolve保存`t0`，作为后续临时缓存值处理的输入。
   const tryResolve = t0;
+  // t1 暂存 `() => setRecommendation(null)` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+    // t1 暂存 `() => setRecommendation(null)` 生成的渲染片段，后续返回路径直接复用。
     t1 = () => setRecommendation(null);
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // clearRecommendation沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const clearRecommendation = t1;
+  // t2 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== recommendation || $[4] !== tryResolve) {
+    // t2 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t2 = {
       recommendation,
       clearRecommendation,
       tryResolve
     };
+    // $[3] 缓存 `recommendation`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = recommendation;
+    // $[4] 缓存 `tryResolve`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = tryResolve;
+    // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[5];
   }
+  // 返回 `t2`，作为React hook 状态流这次计算的结果。
   return t2;
 }
 
 /** Look up plugin, run install(), emit standard success/failure notification. */
+// installPluginAndNotify 封装usePluginRecommendationBase的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export async function installPluginAndNotify(pluginId: string, pluginName: string, keyPrefix: string, addNotification: AddNotification, install: (pluginData: PluginData) => Promise<void>): Promise<void> {
+  // 保护这一段可能失败的React hook 状态流操作，确保异常能进入相邻错误处理。
   try {
+    // pluginData 插件数据读取`getPluginById`，供React hook后续处理使用。
     const pluginData = await getPluginById(pluginId);
+    // pluginData 插件数据缺失时提前走兜底路径，避免React hook 状态流继续依赖无效输入。
     if (!pluginData) {
+      // 抛出 new Error(`Plugin ${pluginId} not found in marketplace`);，阻止React hook 状态流在无效状态下继续运行。
       throw new Error(`Plugin ${pluginId} not found in marketplace`);
     }
+    // 等待 `install(pluginData)` 完成，再继续React hook use Plugin Recommendatio...的异步流程。
     await install(pluginData);
+    // 调用 addNotification，触发React hook此处需要的副作用。
     addNotification({
       key: `${keyPrefix}-installed`,
       jsx: <Text color="success">
@@ -93,7 +147,9 @@ export async function installPluginAndNotify(pluginId: string, pluginName: strin
       timeoutMs: 5000
     });
   } catch (error) {
+    // 记录React hook 状态流运行诊断，方便排查异常路径或性能问题。
     logError(error);
+    // 调用 addNotification，触发React hook此处需要的副作用。
     addNotification({
       key: `${keyPrefix}-install-failed`,
       jsx: <Text color="error">Failed to install {pluginName}</Text>,

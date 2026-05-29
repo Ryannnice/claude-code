@@ -1,3 +1,4 @@
+// 本文件集中定义模块常量、转发导出或副作用入口，供项目其他部分复用。
 /**
  * Pattern lists for dangerous shell-tool allow-rule prefixes.
  *
@@ -15,6 +16,7 @@
  * Cross-platform code-execution entry points present on both Unix and Windows.
  * Shared to prevent the two lists drifting apart on interpreter additions.
  */
+// CROSS_PLATFORM_CODE_EXEC 聚合成有序列表，保持后续遍历顺序稳定。
 export const CROSS_PLATFORM_CODE_EXEC = [
   // Interpreters
   'python',
@@ -41,6 +43,7 @@ export const CROSS_PLATFORM_CODE_EXEC = [
   'ssh',
 ] as const
 
+// DANGEROUS_BASH_PATTERNS 集合 聚合成有序列表，保持后续遍历顺序稳定。
 export const DANGEROUS_BASH_PATTERNS: readonly string[] = [
   ...CROSS_PLATFORM_CODE_EXEC,
   'zsh',

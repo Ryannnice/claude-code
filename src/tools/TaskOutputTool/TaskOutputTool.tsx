@@ -1,41 +1,74 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React，将 react 中已经封装好的能力接到本文件流程里。
 import React from 'react';
+// 引入 z，将 zod/v4 中已经封装好的能力接到本文件流程里。
 import { z } from 'zod/v4';
+// 复用 FallbackToolUseErrorMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
+// 复用 FallbackToolUseRejectedMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FallbackToolUseRejectedMessage } from '../../components/FallbackToolUseRejectedMessage.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 引入 useShortcutDisplay，将 ../../keybindings/useShortcutDisplay.js 中已经封装好的能力接到本文件流程里。
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js';
+// 类型依赖 { TaskType } 来自 ../../Task.js，用于校准工具调用的数据契约。
 import type { TaskType } from '../../Task.js';
+// 类型依赖 { Tool } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { Tool } from '../../Tool.js';
+// 引入 buildTool、ToolDef，将 ../../Tool.js 中已经封装好的能力接到本文件流程里。
 import { buildTool, type ToolDef } from '../../Tool.js';
+// 类型依赖 { LocalAgentTaskState } 来自 ../../tasks/LocalAgentTask/LocalAgentTask.js，用于校准工具调用的数据契约。
 import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
+// 类型依赖 { LocalShellTaskState } 来自 ../../tasks/LocalShellTask/guards.js，用于校准工具调用的数据契约。
 import type { LocalShellTaskState } from '../../tasks/LocalShellTask/guards.js';
+// 类型依赖 { RemoteAgentTaskState } 来自 ../../tasks/RemoteAgentTask/RemoteAgentTask.js，用于校准工具调用的数据契约。
 import type { RemoteAgentTaskState } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js';
+// 类型依赖 { TaskState } 来自 ../../tasks/types.js，用于校准工具调用的数据契约。
 import type { TaskState } from '../../tasks/types.js';
+// 复用 AbortError 工具函数，把通用处理留在 ../../utils/errors.js 中维护。
 import { AbortError } from '../../utils/errors.js';
+// 复用 lazySchema 工具函数，把通用处理留在 ../../utils/lazySchema.js 中维护。
 import { lazySchema } from '../../utils/lazySchema.js';
+// 复用 extractTextContent 工具函数，把通用处理留在 ../../utils/messages.js 中维护。
 import { extractTextContent } from '../../utils/messages.js';
+// 复用 semanticBoolean 工具函数，把通用处理留在 ../../utils/semanticBoolean.js 中维护。
 import { semanticBoolean } from '../../utils/semanticBoolean.js';
+// 复用 sleep 工具函数，把通用处理留在 ../../utils/sleep.js 中维护。
 import { sleep } from '../../utils/sleep.js';
+// 复用 jsonParse 工具函数，把通用处理留在 ../../utils/slowOperations.js 中维护。
 import { jsonParse } from '../../utils/slowOperations.js';
+// 复用 countCharInString 工具函数，把通用处理留在 ../../utils/stringUtils.js 中维护。
 import { countCharInString } from '../../utils/stringUtils.js';
+// 复用 getTaskOutput 工具函数，把通用处理留在 ../../utils/task/diskOutput.js 中维护。
 import { getTaskOutput } from '../../utils/task/diskOutput.js';
+// 复用 updateTaskState 工具函数，把通用处理留在 ../../utils/task/framework.js 中维护。
 import { updateTaskState } from '../../utils/task/framework.js';
+// 复用 formatTaskOutput 工具函数，把通用处理留在 ../../utils/task/outputFormatting.js 中维护。
 import { formatTaskOutput } from '../../utils/task/outputFormatting.js';
+// 类型依赖 { ThemeName } 来自 ../../utils/theme.js，用于校准工具调用的数据契约。
 import type { ThemeName } from '../../utils/theme.js';
+// 引入 AgentPromptDisplay、AgentResponseDisplay，将 ../AgentTool/UI.js 中已经封装好的能力接到本文件流程里。
 import { AgentPromptDisplay, AgentResponseDisplay } from '../AgentTool/UI.js';
+// 引入 BashToolResultMessage，将 ../BashTool/BashToolResultMessage.js 中已经封装好的能力接到本文件流程里。
 import BashToolResultMessage from '../BashTool/BashToolResultMessage.js';
+// 引入 TASK_OUTPUT_TOOL_NAME，将 ./constants.js 中已经封装好的能力接到本文件流程里。
 import { TASK_OUTPUT_TOOL_NAME } from './constants.js';
+// inputSchema保存`lazySchema`，供工具调用后续处理使用。
 const inputSchema = lazySchema(() => z.strictObject({
   task_id: z.string().describe('The task ID to get output from'),
   block: semanticBoolean(z.boolean().default(true)).describe('Whether to wait for completion'),
   timeout: z.number().min(0).max(600000).default(30000).describe('Max wait time in ms')
 }));
+// InputSchema 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type InputSchema = ReturnType<typeof inputSchema>;
+// TaskOutputToolInput 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type TaskOutputToolInput = z.infer<InputSchema>;
 
 // Unified output type covering all task types
+// TaskOutput 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type TaskOutput = {
   task_id: string;
   task_type: TaskType;
@@ -48,30 +81,44 @@ type TaskOutput = {
   prompt?: string;
   result?: string;
 };
+// TaskOutputToolOutput 固化工具调用里传递的数据形状，帮助调用方按同一结构读写字段。
 type TaskOutputToolOutput = {
   retrieval_status: 'success' | 'timeout' | 'not_ready';
   task: TaskOutput | null;
 };
 
 // Re-export Progress from centralized types to break import cycles
+// 导出类型定义，让其他模块沿用工具实现 Task Output Tool的数据契约。
 export type { TaskOutputProgress as Progress } from '../../types/tools.js';
 
 // Get output for any task type
+// getTaskOutputData 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function getTaskOutputData(task: TaskState): Promise<TaskOutput> {
+  // output 先占位，稍后的条件分支会根据实际输入补齐它。
   let output: string;
+  // 当 `task.type` 匹配 `'local_bash'` 时，工具调用执行对应分支。
   if (task.type === 'local_bash') {
+    // bashTask保存`task as LocalShellTaskState`，供后续判断或组装使用。
     const bashTask = task as LocalShellTaskState;
+    // taskOutputObj保存`bashTask.shellCommand?.taskOutput`，供后续判断或组装使用。
     const taskOutputObj = bashTask.shellCommand?.taskOutput;
+    // 满足 `taskOutputObj` 时，工具调用执行该分支。
     if (taskOutputObj) {
+      // stdout读取`taskOutputObj.getStdout`，供工具调用后续处理使用。
       const stdout = await taskOutputObj.getStdout();
+      // stderr读取`taskOutputObj.getStderr`，供工具调用后续处理使用。
       const stderr = taskOutputObj.getStderr();
+      // output更新为 `[stdout, stderr].filter(Boolean).join('\n')`，确保工具调用后续读取最新状态。
       output = [stdout, stderr].filter(Boolean).join('\n');
     } else {
+      // output更新为 `await getTaskOutput(task.id)`，确保工具调用后续读取最新状态。
       output = await getTaskOutput(task.id);
     }
   } else {
+    // output更新为 `await getTaskOutput(task.id)`，确保工具调用后续读取最新状态。
     output = await getTaskOutput(task.id);
   }
+  // baseOutput 集中保存工具实现 Task Output Tool要一起传递的字段。
   const baseOutput: TaskOutput = {
     task_id: task.id,
     task_type: task.type,
@@ -81,21 +128,28 @@ async function getTaskOutputData(task: TaskState): Promise<TaskOutput> {
   };
 
   // Add type-specific fields
+  // 当 `task.type` 匹配 `'local_bash'` 时，工具调用执行对应分支。
   if (task.type === 'local_bash') {
+    // bashTask保存`task as LocalShellTaskState`，供后续判断或组装使用。
     const bashTask = task as LocalShellTaskState;
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       ...baseOutput,
       exitCode: bashTask.result?.code ?? null
     };
   }
+  // 当 `task.type` 匹配 `'local_agent'` 时，工具调用执行对应分支。
   if (task.type === 'local_agent') {
+    // agentTask 命名 `task as LocalAgentTaskState`，让后续代码直接表达这个值的用途。
     const agentTask = task as LocalAgentTaskState;
     // Prefer the clean final answer from the in-memory result over the raw
     // JSONL transcript on disk. The disk output is a symlink to the full
     // session transcript (every message, tool use, etc.), not just the
     // subagent's answer. The in-memory result contains only the final
     // assistant text content blocks.
+    // cleanResult保存`extractTextContent`，供工具调用后续处理使用。
     const cleanResult = agentTask.result ? extractTextContent(agentTask.result.content, '\n') : undefined;
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       ...baseOutput,
       prompt: agentTask.prompt,
@@ -104,43 +158,62 @@ async function getTaskOutputData(task: TaskState): Promise<TaskOutput> {
       error: agentTask.error
     };
   }
+  // 当 `task.type` 匹配 `'remote_agent'` 时，工具调用执行对应分支。
   if (task.type === 'remote_agent') {
+    // remoteTask保存`task as RemoteAgentTaskState`，供工具实现 Task Output Tool后续判断或输出使用。
     const remoteTask = task as RemoteAgentTaskState;
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       ...baseOutput,
       prompt: remoteTask.command
     };
   }
+  // 返回 `baseOutput`，作为工具调用这次计算的结果。
   return baseOutput;
 }
 
 // Wait for task to complete
+// waitForTaskCompletion 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 async function waitForTaskCompletion(taskId: string, getAppState: () => {
   tasks?: Record<string, TaskState>;
 }, timeoutMs: number, abortController?: AbortController): Promise<TaskState | null> {
+  // startTime记录时间`Date.now`，供工具调用后续处理使用。
   const startTime = Date.now();
+  // 只要 Date.now() - startTime < timeoutMs 成立，就持续推进工具调用中的循环处理。
   while (Date.now() - startTime < timeoutMs) {
     // Check abort signal
+    // 满足 `abortController?.signal.aborted` 时，工具调用执行该分支。
     if (abortController?.signal.aborted) {
+      // 抛出 new AbortError();，阻止工具调用在无效状态下继续运行。
       throw new AbortError();
     }
+    // 状态读取`getAppState`，供工具调用后续处理使用。
     const state = getAppState();
+    // task保存`state.tasks?.[taskId] as TaskState | undefined`，供工具实现 Task Output Tool后续判断或输出使用。
     const task = state.tasks?.[taskId] as TaskState | undefined;
+    // task缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!task) {
+      // 返回 `null`，作为工具调用这次计算的结果。
       return null;
     }
+    // `task.status` 与 `'running' && task.status !== 'p...` 不一致时刷新派生状态，避免使用过期结果。
     if (task.status !== 'running' && task.status !== 'pending') {
+      // 返回 `task`，作为工具调用这次计算的结果。
       return task;
     }
 
     // Wait before polling again
+    // 等待 `sleep(100)` 完成，再继续工具实现 Task Output Tool的异步流程。
     await sleep(100);
   }
 
   // Timeout - return current state
+  // finalState 状态读取`getAppState`，供工具调用后续处理使用。
   const finalState = getAppState();
+  // 返回 `finalState.tasks?.[taskId] as TaskState ?? null`，作为工具调用这次计算的结果。
   return finalState.tasks?.[taskId] as TaskState ?? null;
 }
+// TaskOutputTool构建`buildTool({` 整理出中间结果，供工具实现 Task Output Tool后续步骤使用。
 export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool({
   name: TASK_OUTPUT_TOOL_NAME,
   searchHint: 'read output/logs from a background task',
@@ -148,28 +221,44 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
   shouldDefer: true,
   // Backwards-compatible aliases for renamed tools
   aliases: ['AgentOutputTool', 'BashOutputTool'],
+  // userFacingName 使用 无 完成工具调用里的对应操作。
   userFacingName() {
+    // 返回 `'Task Output'`，作为工具调用这次计算的结果。
     return 'Task Output';
   },
+  // 工具实现 Task Output Tool在这里处理 `get inputSchema(): InputSchema {`，完成这一小步状态转换。
   get inputSchema(): InputSchema {
+    // 返回 `inputSchema()`，作为工具调用这次计算的结果。
     return inputSchema();
   },
+  // description 使用 无 完成工具调用里的对应操作。
   async description() {
+    // 返回 `'[Deprecated] — prefer Read on the task output file path'`，作为工具调用这次计算的结果。
     return '[Deprecated] — prefer Read on the task output file path';
   },
+  // isConcurrencySafe 用 _input 判断工具调用是否满足条件。
   isConcurrencySafe(_input) {
+    // 返回 `this.isReadOnly?.(_input) ?? false`，作为工具调用这次计算的结果。
     return this.isReadOnly?.(_input) ?? false;
   },
+  // isEnabled 用 无 判断工具调用是否满足条件。
   isEnabled() {
+    // 返回 `"external" !== 'ant'`，作为工具调用这次计算的结果。
     return "external" !== 'ant';
   },
+  // isReadOnly 用 _input 判断工具调用是否满足条件。
   isReadOnly(_input) {
+    // 返回 true 表示当前检查通过，调用方可以继续走允许路径。
     return true;
   },
+  // toAutoClassifierInput 使用 input 完成工具调用里的对应操作。
   toAutoClassifierInput(input) {
+    // 返回 `input.task_id`，作为工具调用这次计算的结果。
     return input.task_id;
   },
+  // prompt 使用 无 完成工具调用里的对应操作。
   async prompt() {
+    // 返回 ``DEPRECATED: Prefer using the Read tool on the task's output file path ...`，作为工具调用这次计算的结果。
     return `DEPRECATED: Prefer using the Read tool on the task's output file path instead. Background tasks return their output file path in the tool result, and you receive a <task-notification> with the same path when the task completes — Read that file directly.
 
 - Retrieves output from a running or completed task (background shell, agent, or remote session)
@@ -180,50 +269,68 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
 - Task IDs can be found using the /tasks command
 - Works with all task types: background shells, async agents, and remote sessions`;
   },
+  // 工具实现 Task Output Tool在这里处理 `async validateInput({`，完成这一小步状态转换。
   async validateInput({
     task_id
   }, {
     getAppState
   }) {
+    // task_id缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!task_id) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         result: false,
         message: 'Task ID is required',
         errorCode: 1
       };
     }
+    // appState 状态读取`getAppState`，供工具调用后续处理使用。
     const appState = getAppState();
+    // task 命名 `appState.tasks?.[task_id] as TaskState | undefined`，让后续代码直接表达这个值的用途。
     const task = appState.tasks?.[task_id] as TaskState | undefined;
+    // task缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!task) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         result: false,
         message: `No task found with ID: ${task_id}`,
         errorCode: 2
       };
     }
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       result: true
     };
   },
+  // call 使用 input: TaskOutputToolInput, toolUseContext, _canU… 完成工具调用里的对应操作。
   async call(input: TaskOutputToolInput, toolUseContext, _canUseTool, _parentMessage, onProgress) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       task_id,
       block,
       timeout
     } = input;
+    // appState 状态读取`toolUseContext.getAppState`，供工具调用后续处理使用。
     const appState = toolUseContext.getAppState();
+    // task 命名 `appState.tasks?.[task_id] as TaskState | undefined`，让后续代码直接表达这个值的用途。
     const task = appState.tasks?.[task_id] as TaskState | undefined;
+    // task缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!task) {
+      // 抛出 new Error(`No task found with ID: ${task_id}`);，阻止工具调用在无效状态下继续运行。
       throw new Error(`No task found with ID: ${task_id}`);
     }
+    // block缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!block) {
       // Non-blocking: return current state
+      // `task.status` 与 `'running' && task.status !== 'p...` 不一致时刷新派生状态，避免使用过期结果。
       if (task.status !== 'running' && task.status !== 'pending') {
         // Mark as notified
+        // 调用 updateTaskState，触发工具调用此处需要的副作用。
         updateTaskState(task_id, toolUseContext.setAppState, t => ({
           ...t,
           notified: true
         }));
+        // 返回结构化结果，集中表达工具调用已经整理出的状态。
         return {
           data: {
             retrieval_status: 'success' as const,
@@ -231,6 +338,7 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
           }
         };
       }
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         data: {
           retrieval_status: 'not_ready' as const,
@@ -240,7 +348,9 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
     }
 
     // Blocking: wait for completion
+    // 满足 `onProgress` 时，工具调用执行该分支。
     if (onProgress) {
+      // 调用 onProgress，触发工具调用此处需要的副作用。
       onProgress({
         toolUseID: `task-output-waiting-${Date.now()}`,
         data: {
@@ -250,8 +360,11 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
         }
       });
     }
+    // completedTask保存`waitForTaskCompletion`，供工具调用后续处理使用。
     const completedTask = await waitForTaskCompletion(task_id, toolUseContext.getAppState, timeout, toolUseContext.abortController);
+    // completedTask缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!completedTask) {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         data: {
           retrieval_status: 'timeout' as const,
@@ -259,7 +372,9 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
         }
       };
     }
+    // 只有 `completedTask.status === 'running' || completedTa` 满足时，工具调用才执行该分支。
     if (completedTask.status === 'running' || completedTask.status === 'pending') {
+      // 返回结构化结果，集中表达工具调用已经整理出的状态。
       return {
         data: {
           retrieval_status: 'timeout' as const,
@@ -269,10 +384,12 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
     }
 
     // Mark as notified
+    // 调用 updateTaskState，触发工具调用此处需要的副作用。
     updateTaskState(task_id, toolUseContext.setAppState, t => ({
       ...t,
       notified: true
     }));
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       data: {
         retrieval_status: 'success' as const,
@@ -280,53 +397,81 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
       }
     };
   },
+  // mapToolResultToToolResultBlockParam 使用 data, toolUseID 完成工具调用里的对应操作。
   mapToolResultToToolResultBlockParam(data, toolUseID) {
+    // 片段列表 从空数组开始收集，后续循环会按处理顺序追加条目。
     const parts: string[] = [];
+    // 片段列表追加新条目，保持收集顺序与输入顺序一致。
     parts.push(`<retrieval_status>${data.retrieval_status}</retrieval_status>`);
+    // 满足 `data.task` 时，工具调用执行该分支。
     if (data.task) {
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`<task_id>${data.task.task_id}</task_id>`);
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`<task_type>${data.task.task_type}</task_type>`);
+      // 片段列表追加新条目，保持收集顺序与输入顺序一致。
       parts.push(`<status>${data.task.status}</status>`);
+      // `data.task.exitCode` 与 `undefined && data.task.exi` 不一致时刷新派生状态，避免使用过期结果。
       if (data.task.exitCode !== undefined && data.task.exitCode !== null) {
+        // 片段列表追加新条目，保持收集顺序与输入顺序一致。
         parts.push(`<exit_code>${data.task.exitCode}</exit_code>`);
       }
+      // 满足 `data.task.output?.trim()` 时，工具调用执行该分支。
       if (data.task.output?.trim()) {
+        // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
         const {
           content
         } = formatTaskOutput(data.task.output, data.task.task_id);
+        // 片段列表追加新条目，保持收集顺序与输入顺序一致。
         parts.push(`<output>\n${content.trimEnd()}\n</output>`);
       }
+      // 满足 `data.task.error` 时，工具调用执行该分支。
       if (data.task.error) {
+        // 片段列表追加新条目，保持收集顺序与输入顺序一致。
         parts.push(`<error>${data.task.error}</error>`);
       }
     }
+    // 返回结构化结果，集中表达工具调用已经整理出的状态。
     return {
       tool_use_id: toolUseID,
       type: 'tool_result' as const,
       content: parts.join('\n\n')
     };
   },
+  // renderToolUseMessage 使用 input 完成工具调用里的对应操作。
   renderToolUseMessage(input) {
+    // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
     const {
       block = true
     } = input;
+    // block缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!block) {
+      // 返回 `'non-blocking'`，作为工具调用这次计算的结果。
       return 'non-blocking';
     }
+    // 返回空字符串表示没有可用文本，调用方会按空输入处理。
     return '';
   },
+  // renderToolUseTag 使用 input 完成工具调用里的对应操作。
   renderToolUseTag(input) {
+    // input.task_id缺失时直接走兜底路径，避免工具调用使用无效输入。
     if (!input.task_id) {
+      // 返回 `null`，作为工具调用这次计算的结果。
       return null;
     }
+    // 返回 `<Text dimColor> {input.task_id}</Text>`，作为工具调用这次计算的结果。
     return <Text dimColor> {input.task_id}</Text>;
   },
+  // renderToolUseProgressMessage 使用 progressMessages 完成工具调用里的对应操作。
   renderToolUseProgressMessage(progressMessages) {
+    // lastProgress 集合 命名 `progressMessages[progressMessages.length - 1]`，让后续代码直接表达这个值的用途。
     const lastProgress = progressMessages[progressMessages.length - 1];
+    // progressData 命名 `lastProgress?.data as {`，让后续代码直接表达这个值的用途。
     const progressData = lastProgress?.data as {
       taskDescription?: string;
       taskType?: string;
     } | undefined;
+    // 返回 `<Box flexDirection="column">`，作为工具调用这次计算的结果。
     return <Box flexDirection="column">
           {progressData?.taskDescription && <Text>&nbsp;&nbsp;{progressData.taskDescription}</Text>}
           <Text>
@@ -335,55 +480,84 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
           </Text>
         </Box>;
   },
+  // 调用 renderToolResultMessage，触发工具调用此处需要的副作用。
   renderToolResultMessage(content, _, {
     verbose,
     theme
   }) {
+    // 返回 `<TaskOutputResultDisplay content={content} verbose={verbose} theme={the...`，作为工具调用这次计算的结果。
     return <TaskOutputResultDisplay content={content} verbose={verbose} theme={theme} />;
   },
+  // renderToolUseRejectedMessage 使用 无 完成工具调用里的对应操作。
   renderToolUseRejectedMessage() {
+    // 返回 `<FallbackToolUseRejectedMessage />`，作为工具调用这次计算的结果。
     return <FallbackToolUseRejectedMessage />;
   },
   renderToolUseErrorMessage(result, {
     verbose
   }) {
+    // 返回 `<FallbackToolUseErrorMessage result={result} verbose={verbose} />`，作为工具调用这次计算的结果。
     return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
   }
 } satisfies ToolDef<InputSchema, TaskOutputToolOutput>);
+// TaskOutputResultDisplay 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 function TaskOutputResultDisplay(t0) {
+  // $保存`_c`，供工具调用后续处理使用。
   const $ = _c(54);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     content,
     verbose: t1,
     theme
   } = t0;
+  // verbose标记工具实现 Task Output Tool是否启用对应路径。
   const verbose = t1 === undefined ? false : t1;
+  // expandShortcut保存`useShortcutDisplay`，供工具调用后续处理使用。
   const expandShortcut = useShortcutDisplay("app:toggleTranscript", "Global", "ctrl+o");
+  // t2 暂存 `typeof content === "string" ? jsonParse(content) : content` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== content) {
+    // t2 暂存 `typeof content === "string" ? jsonParse(content) : content` 生成的渲染片段，后续返回路径直接复用。
     t2 = typeof content === "string" ? jsonParse(content) : content;
+    // $[0] 缓存 `content`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = content;
+    // $[1] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[1] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[1];
   }
+  // 结果沿用 `t2` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const result = t2;
+  // result.task缺失时直接走兜底路径，避免工具调用使用无效输入。
   if (!result.task) {
+    // t3 暂存 `<MessageResponse><Text dimColor={true}>No task output ava...` 的派生结果，便于缓存命中时直接复用。
     let t3;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
+      // t3 暂存 `<MessageResponse><Text dimColor={true}>No task output ava...` 生成的渲染片段，后续返回路径直接复用。
       t3 = <MessageResponse><Text dimColor={true}>No task output available</Text></MessageResponse>;
+      // $[2] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
       $[2] = t3;
     } else {
+      // t3 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
       t3 = $[2];
     }
+    // 返回 `t3`，作为工具调用这次计算的结果。
     return t3;
   }
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     task
   } = result;
+  // 当 `task.task_type` 匹配 `"local_bash"` 时，工具调用执行对应分支。
   if (task.task_type === "local_bash") {
+    // t3 暂存 `{` 的派生结果，便于缓存命中时直接复用。
     let t3;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[3] !== task.error || $[4] !== task.output) {
+      // t3 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
       t3 = {
         stdout: task.output,
         stderr: "",
@@ -391,193 +565,333 @@ function TaskOutputResultDisplay(t0) {
         dangerouslyDisableSandbox: true,
         returnCodeInterpretation: task.error
       };
+      // $[3] 缓存 `task.error`，下次依赖未变时 React 编译产物可直接复用。
       $[3] = task.error;
+      // $[4] 缓存 `task.output`，下次依赖未变时 React 编译产物可直接复用。
       $[4] = task.output;
+      // $[5] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
       $[5] = t3;
     } else {
+      // t3 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
       t3 = $[5];
     }
+    // bashOut 命名 `t3`，让后续代码直接表达这个值的用途。
     const bashOut = t3;
+    // t4 暂存 `<BashToolResultMessage content={bashOut} verbose={verbose...` 的派生结果，便于缓存命中时直接复用。
     let t4;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[6] !== bashOut || $[7] !== verbose) {
+      // t4 暂存 `<BashToolResultMessage content={bashOut} verbose={verbose...` 生成的渲染片段，后续返回路径直接复用。
       t4 = <BashToolResultMessage content={bashOut} verbose={verbose} />;
+      // $[6] 缓存 `bashOut`，下次依赖未变时 React 编译产物可直接复用。
       $[6] = bashOut;
+      // $[7] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
       $[7] = verbose;
+      // $[8] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[8] = t4;
     } else {
+      // t4 从 React 编译缓存槽 $[8] 取回渲染片段，避免依赖未变时重建 JSX。
       t4 = $[8];
     }
+    // 返回 `t4`，作为工具调用这次计算的结果。
     return t4;
   }
+  // 当 `task.task_type` 匹配 `"local_agent"` 时，工具调用执行对应分支。
   if (task.task_type === "local_agent") {
+    // lineCount 数量统计`countCharInString`，供工具调用后续处理使用。
     const lineCount = task.result ? countCharInString(task.result, "\n") + 1 : 0;
+    // 当 `result.retrieval_status` 匹配 `"success"` 时，工具调用执行对应分支。
     if (result.retrieval_status === "success") {
+      // 满足 `verbose` 时，工具调用执行该分支。
       if (verbose) {
+        // t3 暂存 `<Text>{task.description} ({lineCount} lines)</Text>` 的派生结果，便于缓存命中时直接复用。
         let t3;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[9] !== lineCount || $[10] !== task.description) {
+          // t3 暂存 `<Text>{task.description} ({lineCount} lines)</Text>` 生成的渲染片段，后续返回路径直接复用。
           t3 = <Text>{task.description} ({lineCount} lines)</Text>;
+          // $[9] 缓存 `lineCount`，下次依赖未变时 React 编译产物可直接复用。
           $[9] = lineCount;
+          // $[10] 缓存 `task.description`，下次依赖未变时 React 编译产物可直接复用。
           $[10] = task.description;
+          // $[11] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[11] = t3;
         } else {
+          // t3 从 React 编译缓存槽 $[11] 取回渲染片段，避免依赖未变时重建 JSX。
           t3 = $[11];
         }
+        // t4 暂存 `task.prompt && <AgentPromptDisplay prompt={task.prompt} t...` 的派生结果，便于缓存命中时直接复用。
         let t4;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[12] !== task.prompt || $[13] !== theme) {
+          // t4 暂存 `task.prompt && <AgentPromptDisplay prompt={task.prompt} t...` 生成的渲染片段，后续返回路径直接复用。
           t4 = task.prompt && <AgentPromptDisplay prompt={task.prompt} theme={theme} dim={true} />;
+          // $[12] 缓存 `task.prompt`，下次依赖未变时 React 编译产物可直接复用。
           $[12] = task.prompt;
+          // $[13] 缓存 `theme`，下次依赖未变时 React 编译产物可直接复用。
           $[13] = theme;
+          // $[14] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[14] = t4;
         } else {
+          // t4 从 React 编译缓存槽 $[14] 取回渲染片段，避免依赖未变时重建 JSX。
           t4 = $[14];
         }
+        // t5 暂存 `task.result && <Box marginTop={1}><AgentResponseDisplay c...` 的派生结果，便于缓存命中时直接复用。
         let t5;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[15] !== task.result || $[16] !== theme) {
+          // t5 暂存 `task.result && <Box marginTop={1}><AgentResponseDisplay c...` 生成的渲染片段，后续返回路径直接复用。
           t5 = task.result && <Box marginTop={1}><AgentResponseDisplay content={[{
               type: "text",
               text: task.result
             }]} theme={theme} /></Box>;
+          // $[15] 缓存 `task.result`，下次依赖未变时 React 编译产物可直接复用。
           $[15] = task.result;
+          // $[16] 缓存 `theme`，下次依赖未变时 React 编译产物可直接复用。
           $[16] = theme;
+          // $[17] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[17] = t5;
         } else {
+          // t5 从 React 编译缓存槽 $[17] 取回渲染片段，避免依赖未变时重建 JSX。
           t5 = $[17];
         }
+        // t6 暂存 `task.error && <Box flexDirection="column" marginTop={1}><...` 的派生结果，便于缓存命中时直接复用。
         let t6;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[18] !== task.error) {
+          // t6 暂存 `task.error && <Box flexDirection="column" marginTop={1}><...` 生成的渲染片段，后续返回路径直接复用。
           t6 = task.error && <Box flexDirection="column" marginTop={1}><Text color="error" bold={true}>Error:</Text><Box paddingLeft={2}><Text color="error">{task.error}</Text></Box></Box>;
+          // $[18] 缓存 `task.error`，下次依赖未变时 React 编译产物可直接复用。
           $[18] = task.error;
+          // $[19] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[19] = t6;
         } else {
+          // t6 从 React 编译缓存槽 $[19] 取回渲染片段，避免依赖未变时重建 JSX。
           t6 = $[19];
         }
+        // t7 暂存 `<Box flexDirection="column" paddingLeft={2} marginTop={1}...` 的派生结果，便于缓存命中时直接复用。
         let t7;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[20] !== t4 || $[21] !== t5 || $[22] !== t6) {
+          // t7 暂存 `<Box flexDirection="column" paddingLeft={2} marginTop={1}...` 生成的渲染片段，后续返回路径直接复用。
           t7 = <Box flexDirection="column" paddingLeft={2} marginTop={1}>{t4}{t5}{t6}</Box>;
+          // $[20] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
           $[20] = t4;
+          // $[21] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
           $[21] = t5;
+          // $[22] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
           $[22] = t6;
+          // $[23] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
           $[23] = t7;
         } else {
+          // t7 从 React 编译缓存槽 $[23] 取回渲染片段，避免依赖未变时重建 JSX。
           t7 = $[23];
         }
+        // t8 暂存 `<Box flexDirection="column">{t3}{t7}</Box>` 的派生结果，便于缓存命中时直接复用。
         let t8;
+        // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
         if ($[24] !== t3 || $[25] !== t7) {
+          // t8 暂存 `<Box flexDirection="column">{t3}{t7}</Box>` 生成的渲染片段，后续返回路径直接复用。
           t8 = <Box flexDirection="column">{t3}{t7}</Box>;
+          // $[24] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
           $[24] = t3;
+          // $[25] 缓存 `t7`，下次依赖未变时 React 编译产物可直接复用。
           $[25] = t7;
+          // $[26] 缓存 `t8`，下次依赖未变时 React 编译产物可直接复用。
           $[26] = t8;
         } else {
+          // t8 从 React 编译缓存槽 $[26] 取回渲染片段，避免依赖未变时重建 JSX。
           t8 = $[26];
         }
+        // 返回 `t8`，作为工具调用这次计算的结果。
         return t8;
       }
+      // t3 暂存 `<MessageResponse><Text dimColor={true}>Read output ({expa...` 的派生结果，便于缓存命中时直接复用。
       let t3;
+      // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
       if ($[27] !== expandShortcut) {
+        // t3 暂存 `<MessageResponse><Text dimColor={true}>Read output ({expa...` 生成的渲染片段，后续返回路径直接复用。
         t3 = <MessageResponse><Text dimColor={true}>Read output ({expandShortcut} to expand)</Text></MessageResponse>;
+        // $[27] 缓存 `expandShortcut`，下次依赖未变时 React 编译产物可直接复用。
         $[27] = expandShortcut;
+        // $[28] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
         $[28] = t3;
       } else {
+        // t3 从 React 编译缓存槽 $[28] 取回渲染片段，避免依赖未变时重建 JSX。
         t3 = $[28];
       }
+      // 返回 `t3`，作为工具调用这次计算的结果。
       return t3;
     }
+    // 只有 `result.retrieval_status === "timeout" || task.sta` 满足时，工具调用才执行该分支。
     if (result.retrieval_status === "timeout" || task.status === "running") {
+      // t3 暂存 `<MessageResponse><Text dimColor={true}>Task is still runn...` 的派生结果，便于缓存命中时直接复用。
       let t3;
+      // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
       if ($[29] === Symbol.for("react.memo_cache_sentinel")) {
+        // t3 暂存 `<MessageResponse><Text dimColor={true}>Task is still runn...` 生成的渲染片段，后续返回路径直接复用。
         t3 = <MessageResponse><Text dimColor={true}>Task is still running…</Text></MessageResponse>;
+        // $[29] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
         $[29] = t3;
       } else {
+        // t3 从 React 编译缓存槽 $[29] 取回渲染片段，避免依赖未变时重建 JSX。
         t3 = $[29];
       }
+      // 返回 `t3`，作为工具调用这次计算的结果。
       return t3;
     }
+    // 当 `result.retrieval_status` 匹配 `"not_ready"` 时，工具调用执行对应分支。
     if (result.retrieval_status === "not_ready") {
+      // t3 暂存 `<MessageResponse><Text dimColor={true}>Task is still runn...` 的派生结果，便于缓存命中时直接复用。
       let t3;
+      // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
       if ($[30] === Symbol.for("react.memo_cache_sentinel")) {
+        // t3 暂存 `<MessageResponse><Text dimColor={true}>Task is still runn...` 生成的渲染片段，后续返回路径直接复用。
         t3 = <MessageResponse><Text dimColor={true}>Task is still running…</Text></MessageResponse>;
+        // $[30] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
         $[30] = t3;
       } else {
+        // t3 从 React 编译缓存槽 $[30] 取回渲染片段，避免依赖未变时重建 JSX。
         t3 = $[30];
       }
+      // 返回 `t3`，作为工具调用这次计算的结果。
       return t3;
     }
+    // t3 暂存 `<MessageResponse><Text dimColor={true}>Task not ready</Te...` 的派生结果，便于缓存命中时直接复用。
     let t3;
+    // React 编译缓存还未初始化时创建新值，之后相同依赖会复用缓存。
     if ($[31] === Symbol.for("react.memo_cache_sentinel")) {
+      // t3 暂存 `<MessageResponse><Text dimColor={true}>Task not ready</Te...` 生成的渲染片段，后续返回路径直接复用。
       t3 = <MessageResponse><Text dimColor={true}>Task not ready</Text></MessageResponse>;
+      // $[31] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
       $[31] = t3;
     } else {
+      // t3 从 React 编译缓存槽 $[31] 取回渲染片段，避免依赖未变时重建 JSX。
       t3 = $[31];
     }
+    // 返回 `t3`，作为工具调用这次计算的结果。
     return t3;
   }
+  // 当 `task.task_type` 匹配 `"remote_agent"` 时，工具调用执行对应分支。
   if (task.task_type === "remote_agent") {
+    // t3 暂存 `<Text> {task.description} [{task.status}]</Text>` 的派生结果，便于缓存命中时直接复用。
     let t3;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[32] !== task.description || $[33] !== task.status) {
+      // t3 暂存 `<Text> {task.description} [{task.status}]</Text>` 生成的渲染片段，后续返回路径直接复用。
       t3 = <Text>  {task.description} [{task.status}]</Text>;
+      // $[32] 缓存 `task.description`，下次依赖未变时 React 编译产物可直接复用。
       $[32] = task.description;
+      // $[33] 缓存 `task.status`，下次依赖未变时 React 编译产物可直接复用。
       $[33] = task.status;
+      // $[34] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
       $[34] = t3;
     } else {
+      // t3 从 React 编译缓存槽 $[34] 取回渲染片段，避免依赖未变时重建 JSX。
       t3 = $[34];
     }
+    // t4 暂存 `task.output && verbose && <Box paddingLeft={4} marginTop=...` 的派生结果，便于缓存命中时直接复用。
     let t4;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[35] !== task.output || $[36] !== verbose) {
+      // t4 暂存 `task.output && verbose && <Box paddingLeft={4} marginTop=...` 生成的渲染片段，后续返回路径直接复用。
       t4 = task.output && verbose && <Box paddingLeft={4} marginTop={1}><Text>{task.output}</Text></Box>;
+      // $[35] 缓存 `task.output`，下次依赖未变时 React 编译产物可直接复用。
       $[35] = task.output;
+      // $[36] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
       $[36] = verbose;
+      // $[37] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[37] = t4;
     } else {
+      // t4 从 React 编译缓存槽 $[37] 取回渲染片段，避免依赖未变时重建 JSX。
       t4 = $[37];
     }
+    // t5 暂存 `!verbose && task.output && <Text dimColor={true}>{" "}({e...` 的派生结果，便于缓存命中时直接复用。
     let t5;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[38] !== expandShortcut || $[39] !== task.output || $[40] !== verbose) {
+      // t5 暂存 `!verbose && task.output && <Text dimColor={true}>{" "}({e...` 生成的渲染片段，后续返回路径直接复用。
       t5 = !verbose && task.output && <Text dimColor={true}>{"     "}({expandShortcut} to expand)</Text>;
+      // $[38] 缓存 `expandShortcut`，下次依赖未变时 React 编译产物可直接复用。
       $[38] = expandShortcut;
+      // $[39] 缓存 `task.output`，下次依赖未变时 React 编译产物可直接复用。
       $[39] = task.output;
+      // $[40] 缓存 `verbose`，下次依赖未变时 React 编译产物可直接复用。
       $[40] = verbose;
+      // $[41] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[41] = t5;
     } else {
+      // t5 从 React 编译缓存槽 $[41] 取回渲染片段，避免依赖未变时重建 JSX。
       t5 = $[41];
     }
+    // t6 暂存 `<Box flexDirection="column">{t3}{t4}{t5}</Box>` 的派生结果，便于缓存命中时直接复用。
     let t6;
+    // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
     if ($[42] !== t3 || $[43] !== t4 || $[44] !== t5) {
+      // t6 暂存 `<Box flexDirection="column">{t3}{t4}{t5}</Box>` 生成的渲染片段，后续返回路径直接复用。
       t6 = <Box flexDirection="column">{t3}{t4}{t5}</Box>;
+      // $[42] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
       $[42] = t3;
+      // $[43] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
       $[43] = t4;
+      // $[44] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
       $[44] = t5;
+      // $[45] 缓存 `t6`，下次依赖未变时 React 编译产物可直接复用。
       $[45] = t6;
     } else {
+      // t6 从 React 编译缓存槽 $[45] 取回渲染片段，避免依赖未变时重建 JSX。
       t6 = $[45];
     }
+    // 返回 `t6`，作为工具调用这次计算的结果。
     return t6;
   }
+  // t3 暂存 `<Text> {task.description} [{task.status}]</Text>` 的派生结果，便于缓存命中时直接复用。
   let t3;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[46] !== task.description || $[47] !== task.status) {
+    // t3 暂存 `<Text> {task.description} [{task.status}]</Text>` 生成的渲染片段，后续返回路径直接复用。
     t3 = <Text>  {task.description} [{task.status}]</Text>;
+    // $[46] 缓存 `task.description`，下次依赖未变时 React 编译产物可直接复用。
     $[46] = task.description;
+    // $[47] 缓存 `task.status`，下次依赖未变时 React 编译产物可直接复用。
     $[47] = task.status;
+    // $[48] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[48] = t3;
   } else {
+    // t3 从 React 编译缓存槽 $[48] 取回渲染片段，避免依赖未变时重建 JSX。
     t3 = $[48];
   }
+  // t4 暂存 `task.output && <Box paddingLeft={4}><Text>{task.output.sl...` 的派生结果，便于缓存命中时直接复用。
   let t4;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[49] !== task.output) {
+    // t4 暂存 `task.output && <Box paddingLeft={4}><Text>{task.output.sl...` 生成的渲染片段，后续返回路径直接复用。
     t4 = task.output && <Box paddingLeft={4}><Text>{task.output.slice(0, 500)}</Text></Box>;
+    // $[49] 缓存 `task.output`，下次依赖未变时 React 编译产物可直接复用。
     $[49] = task.output;
+    // $[50] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[50] = t4;
   } else {
+    // t4 从 React 编译缓存槽 $[50] 取回渲染片段，避免依赖未变时重建 JSX。
     t4 = $[50];
   }
+  // t5 暂存 `<Box flexDirection="column">{t3}{t4}</Box>` 的派生结果，便于缓存命中时直接复用。
   let t5;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[51] !== t3 || $[52] !== t4) {
+    // t5 暂存 `<Box flexDirection="column">{t3}{t4}</Box>` 生成的渲染片段，后续返回路径直接复用。
     t5 = <Box flexDirection="column">{t3}{t4}</Box>;
+    // $[51] 缓存 `t3`，下次依赖未变时 React 编译产物可直接复用。
     $[51] = t3;
+    // $[52] 缓存 `t4`，下次依赖未变时 React 编译产物可直接复用。
     $[52] = t4;
+    // $[53] 缓存 `t5`，下次依赖未变时 React 编译产物可直接复用。
     $[53] = t5;
   } else {
+    // t5 从 React 编译缓存槽 $[53] 取回渲染片段，避免依赖未变时重建 JSX。
     t5 = $[53];
   }
+  // 返回 `t5`，作为工具调用这次计算的结果。
   return t5;
 }
 export default TaskOutputTool;

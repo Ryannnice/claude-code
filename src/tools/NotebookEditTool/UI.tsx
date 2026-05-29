@@ -1,24 +1,44 @@
+// 类型依赖 { ToolResultBlockParam } 来自 @anthropic-ai/sdk/resources/index.mjs，用于校准工具调用的数据契约。
 import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+// 引入 * as React，将 react 中已经封装好的能力接到本文件流程里。
 import * as React from 'react';
+// 类型依赖 { Message, ProgressMessage } 来自 src/types/message.js，用于校准工具调用的数据契约。
 import type { Message, ProgressMessage } from 'src/types/message.js';
+// 复用 extractTag 工具函数，把通用处理留在 src/utils/messages.js 中维护。
 import { extractTag } from 'src/utils/messages.js';
+// 类型依赖 { ThemeName } 来自 src/utils/theme.js，用于校准工具调用的数据契约。
 import type { ThemeName } from 'src/utils/theme.js';
+// 类型依赖 { z } 来自 zod/v4，用于校准工具调用的数据契约。
 import type { z } from 'zod/v4';
+// 复用 FallbackToolUseErrorMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FallbackToolUseErrorMessage } from '../../components/FallbackToolUseErrorMessage.js';
+// 复用 FilePathLink 终端界面组件，避免在这里重复拼装显示逻辑。
 import { FilePathLink } from '../../components/FilePathLink.js';
+// 复用 HighlightedCode 终端界面组件，避免在这里重复拼装显示逻辑。
 import { HighlightedCode } from '../../components/HighlightedCode.js';
+// 复用 MessageResponse 终端界面组件，避免在这里重复拼装显示逻辑。
 import { MessageResponse } from '../../components/MessageResponse.js';
+// 复用 NotebookEditToolUseRejectedMessage 终端界面组件，避免在这里重复拼装显示逻辑。
 import { NotebookEditToolUseRejectedMessage } from '../../components/NotebookEditToolUseRejectedMessage.js';
+// 引入 Box、Text，将 ../../ink.js 中已经封装好的能力接到本文件流程里。
 import { Box, Text } from '../../ink.js';
+// 类型依赖 { Tools } 来自 ../../Tool.js，用于校准工具调用的数据契约。
 import type { Tools } from '../../Tool.js';
+// 复用 getDisplayPath 工具函数，把通用处理留在 ../../utils/file.js 中维护。
 import { getDisplayPath } from '../../utils/file.js';
+// 类型依赖 { inputSchema, Output } 来自 ./NotebookEditTool.js，用于校准工具调用的数据契约。
 import type { inputSchema, Output } from './NotebookEditTool.js';
+// getToolUseSummary 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function getToolUseSummary(input: Partial<z.infer<ReturnType<typeof inputSchema>>> | undefined): string | null {
+  // 满足 `!input?.notebook_path` 时，工具调用执行该分支。
   if (!input?.notebook_path) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // 返回 `getDisplayPath(input.notebook_path)`，作为工具调用这次计算的结果。
   return getDisplayPath(input.notebook_path);
 }
+// renderToolUseMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseMessage({
   notebook_path,
   cell_id,
@@ -30,21 +50,28 @@ export function renderToolUseMessage({
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // 只有 `!notebook_path || !new_source || !cell_type` 满足时，工具调用才执行该分支。
   if (!notebook_path || !new_source || !cell_type) {
+    // 返回 `null`，作为工具调用这次计算的结果。
     return null;
   }
+  // displayPath 路径数据读取`getDisplayPath`，供工具调用后续处理使用。
   const displayPath = verbose ? notebook_path : getDisplayPath(notebook_path);
+  // 满足 `verbose` 时，工具调用执行该分支。
   if (verbose) {
+    // 返回 `<>`，作为工具调用这次计算的结果。
     return <>
         <FilePathLink filePath={notebook_path}>{displayPath}</FilePathLink>
         {`@${cell_id}, content: ${new_source.slice(0, 30)}…, cell_type: ${cell_type}, edit_mode: ${edit_mode ?? 'replace'}`}
       </>;
   }
+  // 返回 `<>`，作为工具调用这次计算的结果。
   return <>
       <FilePathLink filePath={notebook_path}>{displayPath}</FilePathLink>
       {`@${cell_id}`}
     </>;
 }
+// renderToolUseRejectedMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseRejectedMessage(input: z.infer<ReturnType<typeof inputSchema>>, {
   verbose
 }: {
@@ -55,30 +82,39 @@ export function renderToolUseRejectedMessage(input: z.infer<ReturnType<typeof in
   tools?: Tools;
   verbose: boolean;
 }): React.ReactNode {
+  // 返回 `<NotebookEditToolUseRejectedMessage notebook_path={input.notebook_path}...`，作为工具调用这次计算的结果。
   return <NotebookEditToolUseRejectedMessage notebook_path={input.notebook_path} cell_id={input.cell_id} new_source={input.new_source} cell_type={input.cell_type} edit_mode={input.edit_mode} verbose={verbose} />;
 }
+// renderToolUseErrorMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'], {
   verbose
 }: {
   verbose: boolean;
 }): React.ReactNode {
+  // 只有 `!verbose && typeof result === 'string' && extractTag(result, 'tool_use_erro...` 满足时，工具调用才执行该分支。
   if (!verbose && typeof result === 'string' && extractTag(result, 'tool_use_error')) {
+    // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
     return <MessageResponse>
         <Text color="error">Error editing notebook</Text>
       </MessageResponse>;
   }
+  // 返回 `<FallbackToolUseErrorMessage result={result} verbose={verbose} />`，作为工具调用这次计算的结果。
   return <FallbackToolUseErrorMessage result={result} verbose={verbose} />;
 }
+// renderToolResultMessage 封装工具调用的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function renderToolResultMessage({
   cell_id,
   new_source,
   error
 }: Output): React.ReactNode {
+  // 满足 `error` 时，工具调用执行该分支。
   if (error) {
+    // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
     return <MessageResponse>
         <Text color="error">{error}</Text>
       </MessageResponse>;
   }
+  // 返回 `<MessageResponse>`，作为工具调用这次计算的结果。
   return <MessageResponse>
       <Box flexDirection="column">
         <Text>

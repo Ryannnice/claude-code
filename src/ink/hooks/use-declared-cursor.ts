@@ -1,5 +1,8 @@
+// 引入 useCallback、useContext、useLayoutEffect、useRef，将 react 中已经封装好的能力接到本文件流程里。
 import { useCallback, useContext, useLayoutEffect, useRef } from 'react'
+// 复用 CursorDeclarationContext 终端界面组件，避免在这里重复拼装显示逻辑。
 import CursorDeclarationContext from '../components/CursorDeclarationContext.js'
+// 类型依赖 { DOMElement } 来自 ../dom.js，用于校准终端渲染的数据契约。
 import type { DOMElement } from '../dom.js'
 
 /**
@@ -22,6 +25,7 @@ import type { DOMElement } from '../dom.js'
  * no microtask), so tests compensate by calling ink.onRender()
  * explicitly after render.
  */
+// useDeclaredCursor 封装Ink 渲染层的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function useDeclaredCursor({
   line,
   column,
@@ -30,11 +34,16 @@ export function useDeclaredCursor({
   line: number
   column: number
   active: boolean
+// 这个回调绑定到 }): (element: DOMElement | null) => void {，负责终端渲染在该局部场景下的响应。
 }): (element: DOMElement | null) => void {
+  // setCursorDeclaration保存`useContext`，供终端渲染后续处理使用。
   const setCursorDeclaration = useContext(CursorDeclarationContext)
+  // nodeRef 引用保存 hook 状态，让Ink 渲染层 use declared cursor跨渲染复用同一个容器。
   const nodeRef = useRef<DOMElement | null>(null)
 
+  // setNode保存`useCallback`，供终端渲染后续处理使用。
   const setNode = useCallback((node: DOMElement | null) => {
+    // current更新为 `node`，确保Ink 渲染层后续读取最新状态。
     nodeRef.current = node
   }, [])
 
@@ -51,11 +60,16 @@ export function useDeclaredCursor({
   // No dep array: must re-declare every commit so the active instance
   // re-claims the declaration after another instance's unmount-cleanup or
   // sibling handoff nulls it.
+  // 调用 useLayoutEffect，触发终端渲染此处需要的副作用。
   useLayoutEffect(() => {
+    // node保存`nodeRef.current`，供Ink 渲染层 use declared cursor后续判断或输出使用。
     const node = nodeRef.current
+    // 只有 `active && node` 满足时，终端渲染才执行该分支。
     if (active && node) {
+      // setCursorDeclaration 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorDeclaration({ relativeX: column, relativeY: line, node })
     } else {
+      // setCursorDeclaration 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorDeclaration(null, node)
     }
   })
@@ -63,11 +77,15 @@ export function useDeclaredCursor({
   // Clear on unmount (conditionally — another instance may own by then).
   // Separate effect with empty deps so cleanup only fires once — not on
   // every line/column change, which would transiently null between commits.
+  // 调用 useLayoutEffect，触发终端渲染此处需要的副作用。
   useLayoutEffect(() => {
+    // 返回 `() => {`，作为终端渲染这次计算的结果。
     return () => {
+      // setCursorDeclaration 写入新的状态值，使终端渲染后续读取保持一致。
       setCursorDeclaration(null, nodeRef.current)
     }
   }, [setCursorDeclaration])
 
+  // 返回 `setNode`，作为终端渲染这次计算的结果。
   return setNode
 }

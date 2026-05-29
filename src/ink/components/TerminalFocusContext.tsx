@@ -1,51 +1,79 @@
+// 引入 c as _c，将 react/compiler-runtime 中已经封装好的能力接到本文件流程里。
 import { c as _c } from "react/compiler-runtime";
+// 引入 React、createContext、useMemo、useSyncExternalStore，将 react 中已经封装好的能力接到本文件流程里。
 import React, { createContext, useMemo, useSyncExternalStore } from 'react';
+// 引入 getTerminalFocused、getTerminalFocusState、subscribeTerminalFocus、TerminalFocusState，将 ../terminal-focus-state.js 中已经封装好的能力接到本文件流程里。
 import { getTerminalFocused, getTerminalFocusState, subscribeTerminalFocus, type TerminalFocusState } from '../terminal-focus-state.js';
+// 导出类型定义，让其他模块沿用终端 UI 组件 Terminal Focus Context的数据契约。
 export type { TerminalFocusState };
+// TerminalFocusContextProps 固化终端渲染里传递的数据形状，帮助调用方按同一结构读写字段。
 export type TerminalFocusContextProps = {
   readonly isTerminalFocused: boolean;
   readonly terminalFocusState: TerminalFocusState;
 };
+// TerminalFocusContext 命名 `createContext<TerminalFocusContextProps>({`，让后续代码直接表达这个值的用途。
 const TerminalFocusContext = createContext<TerminalFocusContextProps>({
   isTerminalFocused: true,
   terminalFocusState: 'unknown'
 });
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
+// displayName更新为 `'TerminalFocusContext'`，确保终端 UI后续读取最新状态。
 TerminalFocusContext.displayName = 'TerminalFocusContext';
 
 // Separate component so App.tsx doesn't re-render on focus changes.
 // Children are a stable prop reference, so they don't re-render either —
 // only components that consume the context will re-render.
+// TerminalFocusProvider 封装终端 UI的一段完整流程，把输入整理、状态决策和输出组合在同一个入口中。
 export function TerminalFocusProvider(t0) {
+  // $保存`_c`，供终端渲染后续处理使用。
   const $ = _c(6);
+  // 这里从对象中解构出后续要用的字段，减少重复访问嵌套属性。
   const {
     children
   } = t0;
+  // isTerminalFocused记录 `useSyncExternalStore` 是否成立，终端渲染随后按该结果分支。
   const isTerminalFocused = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocused);
+  // terminalFocusState 状态保存`useSyncExternalStore`，供终端渲染后续处理使用。
   const terminalFocusState = useSyncExternalStore(subscribeTerminalFocus, getTerminalFocusState);
+  // t1 暂存 `{` 的派生结果，便于缓存命中时直接复用。
   let t1;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[0] !== isTerminalFocused || $[1] !== terminalFocusState) {
+    // t1 暂存 `{` 生成的渲染片段，后续返回路径直接复用。
     t1 = {
       isTerminalFocused,
       terminalFocusState
     };
+    // $[0] 缓存 `isTerminalFocused`，下次依赖未变时 React 编译产物可直接复用。
     $[0] = isTerminalFocused;
+    // $[1] 缓存 `terminalFocusState`，下次依赖未变时 React 编译产物可直接复用。
     $[1] = terminalFocusState;
+    // $[2] 缓存 `t1`，下次依赖未变时 React 编译产物可直接复用。
     $[2] = t1;
   } else {
+    // t1 从 React 编译缓存槽 $[2] 取回渲染片段，避免依赖未变时重建 JSX。
     t1 = $[2];
   }
+  // 取值沿用 `t1` 的缓存值，保持 React 编译产物在依赖稳定时不重建。
   const value = t1;
+  // t2 暂存 `<TerminalFocusContext.Provider value={value}>{children}</...` 的派生结果，便于缓存命中时直接复用。
   let t2;
+  // React 缓存槽依赖变化时重新计算，依赖稳定时沿用上一轮渲染产物。
   if ($[3] !== children || $[4] !== value) {
+    // t2 暂存 `<TerminalFocusContext.Provider value={value}>{children}</...` 生成的渲染片段，后续返回路径直接复用。
     t2 = <TerminalFocusContext.Provider value={value}>{children}</TerminalFocusContext.Provider>;
+    // $[3] 缓存 `children`，下次依赖未变时 React 编译产物可直接复用。
     $[3] = children;
+    // $[4] 缓存 `value`，下次依赖未变时 React 编译产物可直接复用。
     $[4] = value;
+    // $[5] 缓存 `t2`，下次依赖未变时 React 编译产物可直接复用。
     $[5] = t2;
   } else {
+    // t2 从 React 编译缓存槽 $[5] 取回渲染片段，避免依赖未变时重建 JSX。
     t2 = $[5];
   }
+  // 返回 `t2`，作为终端渲染这次计算的结果。
   return t2;
 }
 export default TerminalFocusContext;
